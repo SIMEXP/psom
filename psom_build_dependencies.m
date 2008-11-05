@@ -1,4 +1,4 @@
-function deps = psom_build_dependencies(pipeline)
+function [deps,list_jobs,files_in,files_out,graph_deps] = psom_build_dependencies(pipeline)
 %
 % _________________________________________________________________________
 % SUMMARY PSOM_BUILD_DEPENDENCIES
@@ -39,7 +39,28 @@ function deps = psom_build_dependencies(pipeline)
 %               The presence of this field means that the job <JOB_NAME> is
 %               using an output of <JOB_NAME2> as one of his inputs. The
 %               exact list of inputs of <JOB_NAME> that comes from
-%               <JOB_NAME2> is actually listed in the cell.
+%               <JOB_NAME2> is actually listed in the cell.*
+%
+% FILES_IN
+%       (structure) the field names are identical to PIPELINE
+%
+%       <JOB_NAME> 
+%           (cell of strings) the list of input files for the job
+%
+% FILES_OUT
+%       (structure) the field names are identical to PIPELINE
+%
+%       <JOB_NAME> 
+%           (cell of strings) the list of output files for the job
+%
+% LIST_JOBS
+%       (cell of strings)
+%       The list of all job names
+% 
+% GRAPH_DEPS
+%       (sparse matrix)
+%       GRAPH_DEPS(I,J) == 1 if and only if the job LIST_JOBS{J} depends on
+%       the job LIST_JOBS{I}
 %
 % _________________________________________________________________________
 % SEE ALSO
@@ -86,6 +107,7 @@ for num_j = 1:nb_jobs
     files_out.(name_job) = unique(psom_files2cell(pipeline.(name_job).files_out));
 end
 
+graph_deps = sparse(nb_jobs,nb_jobs);
 for num_j = 1:nb_jobs
     name_job1 = list_jobs{num_j};
     
@@ -96,7 +118,8 @@ for num_j = 1:nb_jobs
             mask_dep = ismember(files_in.(name_job1),files_out.(name_job2));
             if max(mask_dep) == 1
                 deps.(name_job1).(name_job2) = files_in.(name_job1)(mask_dep);
-            end
+                graph_deps(num_k,num_j) = 1;
+            end            
         end
     end
     
