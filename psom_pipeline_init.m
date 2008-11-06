@@ -137,7 +137,7 @@ function file_pipeline = psom_pipeline_init(pipeline,opt)
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008.
 % Maintainer : pbellec@bic.mni.mcgill.ca
 % See licensing information in the code.
-% Keywords : medical imaging, pipeline, fMRI, PMP
+% Keywords : pipeline
 
 % Permission is hereby granted, free of charge, to any person obtaining a copy
 % of this software and associated documentation files (the "Software"), to deal
