@@ -57,12 +57,12 @@ function file_pipeline = psom_pipeline_init(pipeline,opt)
 %           No space, no weird characters please.
 %
 %       COMMAND_MATLAB
-%           (string, default GB_NIAK_COMMAND_MATLAB or
-%           GB_NIAK_COMMAND_OCTAVE depending on the current environment)
+%           (string, default GB_PSOM_COMMAND_MATLAB or
+%           GB_PSOM_COMMAND_OCTAVE depending on the current environment)
 %           how to invoke matlab (or OCTAVE).
 %           You may want to update that to add the full path of the command.
 %           The defaut for this field can be set using the variable
-%           GB_NIAK_COMMAND_MATLAB/OCTAVE in the file NIAK_GB_VARS.
+%           GB_PSOM_COMMAND_MATLAB/OCTAVE in the file PSOM_GB_VARS.
 %
 %       FLAG_VERBOSE
 %           (boolean, default 1) if the flag is 1, then the function prints
@@ -165,14 +165,14 @@ psom_gb_vars
 
 %% Syntax
 if ~exist('pipeline','var')|~exist('opt','var')
-    error('syntax: FILE_PIPELINE = PSOM_PIPELINE_INIT(PIPELINE,OPT).\n Type ''help niak_init_pipeline'' for more info.')
+    error('syntax: FILE_PIPELINE = PSOM_PIPELINE_INIT(PIPELINE,OPT).\n Type ''help psom_pipeline_init'' for more info.')
 end
 
 %% Options
 gb_name_structure = 'opt';
 gb_list_fields = {'path_logs','name_pipeline','command_matlab','flag_verbose'};
-gb_list_defaults = {NaN,'NIAK_pipeline','',true};
-niak_set_defaults
+gb_list_defaults = {NaN,'PSOM_pipeline','',true};
+psom_set_defaults
 
 if isempty(opt.command_matlab)
     if strcmp(gb_psom_language,'matlab')
@@ -263,7 +263,7 @@ if flag_verbose
 end
 
 if ~exist(path_logs,'dir')
-    [succ,messg,messgid] = niak_mkdir(path_logs);
+    [succ,messg,messgid] = psom_mkdir(path_logs);
 
     if succ == 0
         warning(messg);
@@ -281,7 +281,7 @@ for num_j = 1:length(list_jobs)
 
         if ~exist(path_f,'dir')
 
-            [succ,messg,messgid] = niak_mkdir(path_f);
+            [succ,messg,messgid] = psom_mkdir(path_f);
 
             if succ == 0
                 warning(messg);
@@ -301,7 +301,7 @@ if flag_verbose
     fprintf('Saving the pipeline structure in %s...\n',file_pipeline);
 end
 
-history = [datestr(now) ' ' gb_psom_user ' on a ' gb_psom_OS ' system used NIAK v' gb_psom_version '>>>> Created a pipeline !\n'];
+history = [datestr(now) ' ' gb_psom_user ' on a ' gb_psom_OS ' system used PSOM v' gb_psom_version '>>>> Created a pipeline !\n'];
 save(file_pipeline,'pipeline','opt','history','deps','graph_deps','list_jobs','files_in','files_out')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -339,7 +339,7 @@ for num_j = 1:length(list_jobs)
     gb_name_structure = 'job';
     gb_list_fields = {'command','files_in','files_out','opt'};
     gb_list_defaults = {NaN,NaN,NaN,NaN};
-    niak_set_defaults
+    psom_set_defaults
 
     %% Creation of the .mat file with all variables necessary to perform
     %% the stage

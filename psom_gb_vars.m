@@ -89,6 +89,7 @@ end
 switch (gb_psom_OS)
 case 'unix'
 	[gb_psom_tmp_var,gb_psom_localhost] = system('uname -n');
+    gb_psom_localhost = deblank(gb_psom_localhost);
 otherwise
 	gb_psom_localhost = 'unknown';
 end

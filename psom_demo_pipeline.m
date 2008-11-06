@@ -62,3 +62,4 @@ pipeline.fft.files_in = {pipeline.tseries1.files_out,pipeline.tseries2.files_out
 pipeline.fft.files_out = [gb_psom_path_demo 'ftseries.mat'];
 pipeline.fft.opt = struct([]);
 
+opt_pipe.path_logs = [gb_psom_path_demo 'logs' filesep];
