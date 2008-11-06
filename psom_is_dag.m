@@ -1,4 +1,4 @@
-function flag_dag = psom_is_dag(adj)
+function [flag_dag,list_vert_cycle] = psom_is_dag(adj)
 %
 % _________________________________________________________________________
 % SUMMARY PSOM_IS_DAG
@@ -7,7 +7,7 @@ function flag_dag = psom_is_dag(adj)
 % acyclic graph
 %
 % SYNTAX :
-% FLAG_DAG = PSOM_IS_DAG(ADJ)
+% [FLAG_DAG,LIST_VERT_CYCLE] = PSOM_IS_DAG(ADJ)
 %
 % _________________________________________________________________________
 % INPUTS :
@@ -22,6 +22,9 @@ function flag_dag = psom_is_dag(adj)
 % FLAG_DAG
 %       (boolean) FLAG_DAG == 1 only if ADJ is the adjacency matrix of an
 %       acyclic directed graph.
+%
+% LIST_VERT_CYCLE
+%       (vector) the list of vertices number which are involved in cycles.
 %
 % _________________________________________________________________________
 % COMMENTS : 
@@ -51,24 +54,27 @@ function flag_dag = psom_is_dag(adj)
 
 %% SYNTAX
 if ~exist('adj','var')
-    error('SYNTAX: FLAG_DAG= PSOM_IS_DAG(ADJ). Type ''help psom_is_dag'' for more info.')
+    error('SYNTAX: [FLAG_DAG,LIST_VERT_CYCLE] = PSOM_IS_DAG(ADJ). Type ''help psom_is_dag'' for more info.')
 end
 
 flag_dag = true;
-list_term_old = [];
+nb_vertices = size(adj,1);
+list_vert_cycle = [];
+lab_vertices = 1:nb_vertices;
 
-while (max(adj(:)) > 0) && flag_dag
-    list_term_new = find(max(adj,[],1) == 0); % find terminal nodes
-    mask_new = ~ismember(list_term_new,list_term_old);
+while ~isempty(adj) && flag_dag
     
-    if max(mask_new)==0
-        %% There is no new terminal node, but the matrix is not empty,
+    mask_term = max(adj,[],1) == 0; % find terminal nodes    
+    
+    if  max(mask_term)==0
+        %% There is no terminal node, but the matrix is not empty,
         %% there must be a cycle
         flag_dag = false;
+        list_vert_cycle = lab_vertices;
     else
-        adj(list_term_new(mask_new),:) = 0; % kill all edges pointing at terminal nodes
+        %% Get rid of terminal nodes and start again
+        adj = adj(~mask_term,~mask_term);
+        lab_vertices = lab_vertices(~mask_term);
     end
-    list_term_old = list_term_new;
+    
 end
-    
-    

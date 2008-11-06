@@ -1,4 +1,4 @@
-function [flag_ok,list_files_failed,list_job_failed] = psom_is_files_out_ok(files_out)
+function [flag_ok,list_files_failed,list_jobs_failed] = psom_is_files_out_ok(files_out)
 %
 % _________________________________________________________________________
 % SUMMARY PSOM_IS_FILES_OUT_OK
@@ -6,7 +6,7 @@ function [flag_ok,list_files_failed,list_job_failed] = psom_is_files_out_ok(file
 % Check if some files are not generated twice in a pipeline
 %
 % SYNTAX:
-% FLAG_OK = PSOM_IS_FILES_OUT_OK(FILES_OUT)
+% [FLAG_OK,LIST_FILES_FAILED,LIST_JOBS_FAILED] = PSOM_IS_FILES_OUT_OK(FILES_OUT)
 %
 % _________________________________________________________________________
 % INPUTS
@@ -23,6 +23,14 @@ function [flag_ok,list_files_failed,list_job_failed] = psom_is_files_out_ok(file
 % FLAG_OK
 %       (boolean) FLAG_OK == 1 only if every file is created only by one
 %       job.
+%
+% LIST_FILES_FAILED
+%       (cell of strings) a list of the files that are being generated
+%       twice.
+%
+% LIST_JOBS_FAILED
+%       (cell of strings) a list of job names involved in multiple
+%       generation of the same file name.
 %
 % _________________________________________________________________________
 % SEE ALSO
@@ -56,18 +64,35 @@ function [flag_ok,list_files_failed,list_job_failed] = psom_is_files_out_ok(file
 % THE SOFTWARE.
 
 %% SYNTAX
-if ~exist('pipeline','var')
-    error('SYNTAX: FLAG_OK = PSOM_IS_FILES_OUT_OK(FILES_OUT). Type ''help psom_is_files_out_ok'' for more info.')
+if ~exist('files_out','var')
+    error('SYNTAX: [FLAG_OK,LIST_FILES_FAILED,LIST_JOBS_FAILED] = PSOM_IS_FILES_OUT_OK(FILES_OUT). Type ''help psom_is_files_out_ok'' for more info.')
 end
 
+list_jobs = fieldnames(files_out);
+nb_jobs = length(list_jobs);
 list_files_failed = {};
 list_jobs_failed = {};
 
 list_files = psom_files2cell(files_out);
 nb_files = length(list_files);
-[list_files2,I] = unique(files_out);
+[list_files2,I,J] = unique(list_files);
 nb_files2 = length(list_files2);
+flag_ok = length(list_files2)==length(list_files);
 
-%if length(list_files2)~=length(list_files)
+if ~flag_ok
     
-%	mask_failed = 
+	mask_files_failed = false([nb_files2 1]);
+    for num_f = 1:nb_files2
+        mask_files_failed(num_f) = sum(J==num_f)>1;
+    end
+    
+    list_files_failed = list_files2(mask_files_failed);
+    
+    mask_jobs_failed = false([nb_jobs 1]);
+    
+    for num_j = 1:nb_jobs
+        mask_jobs_failed(num_j) = max(ismember(files_out.(list_jobs{num_j}),list_files_failed));
+    end
+    
+    list_jobs_failed = list_jobs(mask_jobs_failed);
+end

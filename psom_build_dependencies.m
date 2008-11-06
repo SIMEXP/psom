@@ -6,7 +6,7 @@ function [deps,list_jobs,files_in,files_out,graph_deps] = psom_build_dependencie
 % Generate a dependencie structure from a pipeline structure
 %
 % SYNTAX:
-% DEPS = NIAK_BUILD_DEPENDENCIES(PIPELINE)
+% [DEPS,LIST_JOBS,FILES_IN,FILES_OUT,GRAPH_DEPS] = NIAK_BUILD_DEPENDENCIES(PIPELINE)
 %
 % _________________________________________________________________________
 % INPUTS
@@ -41,6 +41,10 @@ function [deps,list_jobs,files_in,files_out,graph_deps] = psom_build_dependencie
 %               exact list of inputs of <JOB_NAME> that comes from
 %               <JOB_NAME2> is actually listed in the cell.*
 %
+% LIST_JOBS
+%       (cell of strings)
+%       The list of all job names
+% 
 % FILES_IN
 %       (structure) the field names are identical to PIPELINE
 %
@@ -53,10 +57,6 @@ function [deps,list_jobs,files_in,files_out,graph_deps] = psom_build_dependencie
 %       <JOB_NAME> 
 %           (cell of strings) the list of output files for the job
 %
-% LIST_JOBS
-%       (cell of strings)
-%       The list of all job names
-% 
 % GRAPH_DEPS
 %       (sparse matrix)
 %       GRAPH_DEPS(I,J) == 1 if and only if the job LIST_JOBS{J} depends on
