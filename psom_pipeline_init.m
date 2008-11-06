@@ -164,7 +164,7 @@ function file_pipeline = psom_pipeline_init(pipeline,opt)
 psom_gb_vars
 
 %% Syntax
-if ~exist('pipeline','var')|~exist('opt','var')
+if ~exist('pipeline','var')||~exist('opt','var')
     error('syntax: FILE_PIPELINE = PSOM_PIPELINE_INIT(PIPELINE,OPT).\n Type ''help psom_pipeline_init'' for more info.')
 end
 
@@ -181,7 +181,6 @@ if isempty(opt.command_matlab)
         opt.command_matlab = gb_psom_command_octave;
     end
 end
-command_matlab = opt.command_matlab;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Generating file names %%
@@ -266,7 +265,7 @@ if ~exist(path_logs,'dir')
     [succ,messg,messgid] = psom_mkdir(path_logs);
 
     if succ == 0
-        warning(messg);
+        warning(messgid,messg);
     end
 end
 
@@ -284,7 +283,7 @@ for num_j = 1:length(list_jobs)
             [succ,messg,messgid] = psom_mkdir(path_f);
 
             if succ == 0
-                warning(messg);
+                warning(messgid,messg);
             end
 
         end
@@ -337,8 +336,8 @@ for num_j = 1:length(list_jobs)
     job = pipeline.(job_name);
 
     gb_name_structure = 'job';
-    gb_list_fields = {'command','files_in','files_out','opt'};
-    gb_list_defaults = {NaN,NaN,NaN,NaN};
+    gb_list_fields = {'command','files_in','files_out','opt','label','environment'};
+    gb_list_defaults = {NaN,NaN,NaN,NaN,'',''};
     psom_set_defaults
 
     %% Creation of the .mat file with all variables necessary to perform
