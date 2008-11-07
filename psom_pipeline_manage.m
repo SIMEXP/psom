@@ -1,12 +1,12 @@
-function [] = psom_pipeline_manage(file_pipeline,action,opt)
+function [] = psom_pipeline_manage(file_pipeline,opt)
 %
 % _________________________________________________________________________
 % SUMMARY OF PSOM_PIPELINE_MANAGE
 %
-% Run or reset a PMP pipeline.
+% Run or reset a pipeline that has previously been initialized.
 %
 % SYNTAX:
-% [] = PSOM_PIPELINE_MANAGE(FILE_PIPELINE,ACTION,OPT)
+% [] = PSOM_PIPELINE_MANAGE(FILE_PIPELINE,OPT)
 %
 % _________________________________________________________________________
 % INPUTS:
@@ -14,18 +14,19 @@ function [] = psom_pipeline_manage(file_pipeline,action,opt)
 % FILE_PIPELINE  
 %       (string) The file name of a .MAT file generated using 
 %       PSOM_PIPELINE_INIT. 
-%               
-% ACTION             
-%       (string) Available actions :
-%
-%           'run' : start a pipeline. If the pipeline is tagged as already 
-%                   running, the pipeline manager will not do anything.
-%
-%           'restart' : reset all 'running' and 'failed' tags to
-%                   'unfinished' and restart the pipeline from there.
-%
+%              
 % OPT
 %       (structure) with the following fields :
+%
+%       ACTION             
+%           (string, default 'run') Available actions :
+%
+%               'run' : start a pipeline. If the pipeline is tagged as 
+%                   already running, the pipeline manager will not do 
+%                   anything.
+%
+%               'restart' : reset all 'running' and 'failed' tags to
+%                   'unfinished' and restart the pipeline from there.
 %
 %       MODE
 %           (string, default 'session') how to execute the pipeline :
@@ -104,29 +105,41 @@ function [] = psom_pipeline_manage(file_pipeline,action,opt)
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
 
-niak_gb_vars
+psom_gb_vars
 
-init_shell = cat(2,gb_niak_path_quarantine,gb_niak_init_civet);
-type_shell = gb_niak_shell;
+%% SYNTAX
+if ~exist('file_pipeline','opt')
+    error('SYNTAX: [] = PSOM_PIPELINE_MANAGE(FILE_PIPELINE,OPT). Type ''help psom_pipeline_manage'' for more info.')
+end
 
-if ~exist('action','var'); error('niak:pipeline','please specify an action'); end
+%% Options
+gb_name_structure = 'opt';
+gb_list_fields = {'action','mode','max_queued','qsub_options'};
+gb_list_defaults = {'run','session',0,''};
+psom_set_defaults
 
-if ~exist('execution_mode','var'); execution_mode = 'spawn'; end
+if max_queued == 0
+    switch action
+        case {'session','batch'}
+            opt.max_queued = 1;
+        case {'sge','pbs'}
+            opt.max_queued = Inf;
+    end
+end
 
-if ~exist('max_queued','var'); max_queued = 9999; end
+%% Generating file names
 
 [path_logs,name_pipeline,ext_pl] = fileparts(file_pipeline);
 
-file_lock = cat(2,path_logs,filesep,name_pipeline,'.lock');
+file_running = cat(2,path_logs,filesep,name_pipeline,'.running');
 file_log = cat(2,path_logs,filesep,name_pipeline,'.log');
-file_run = cat(2,path_logs,filesep,name_pipeline,'.run');
-file_start = cat(2,path_logs,filesep,name_pipeline,'.start');
 
 switch action
     
     case 'run'
-        if exist(file_lock,'file')
-            error('niak:pipeline: A lock file has been found ! This means the pipeline is either running or crashed.\n If it is crashed, try a ''restart'' or ''reset'' action instead of ''run''')
+        
+        if exist(file_running,'file')
+            error('psom:pipeline: A running tag has been found on the pipeline ! This means the pipeline is either running or crashed.\n If it is crashed, try a ''restart'' action instead of ''run''.\n Sorry Dude, I must quit ...')
         end
         
         fprintf('Starting the pipeline ... \n');        
