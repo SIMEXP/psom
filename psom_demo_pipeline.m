@@ -1,6 +1,7 @@
 %
 % _________________________________________________________________________
 % SUMMARY OF NIAK_DEMO_PIPELINE
+%
 % This is a script to demonstrate how to use the pipeline system for Octave
 % and Matlab (PSOM)
 %
@@ -8,6 +9,7 @@
 % Just type in PSOM_DEMO_PIPELINE
 %
 % This is a script and it will clear the workspace !!
+% It will also create some files and one folder in ~/psom/data_demo/
 %
 % _________________________________________________________________________
 % COMMENTS:
@@ -63,3 +65,11 @@ pipeline.fft.files_out = [gb_psom_path_demo 'ftseries.mat'];
 pipeline.fft.opt = struct([]);
 
 opt_pipe.path_logs = [gb_psom_path_demo 'logs' filesep];
+
+%%%%%%%%%%%%%%%%%%%%%%
+%% Run the pipeline %%
+%%%%%%%%%%%%%%%%%%%%%%
+
+file_pipeline = psom_pipeline_init(pipeline,opt_pipe);
+psom_pipeline_process(file_pipeline);
+psom_pipeline_visu(file_pipeline,'monitor');

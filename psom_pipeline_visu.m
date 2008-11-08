@@ -44,7 +44,7 @@ function [] = psom_pipeline_visu(file_pipeline,action,opt_action)
 % ACTION = 'log'
 %       Print the log files for all jobs whose name include the string OPT.
 %
-% ACTION = 'MONITOR'
+% ACTION = 'monitor'
 %       Print (with updates) the last line of the pipeline execution.
 %
 % ACTION = 'graph_stages'
@@ -53,22 +53,11 @@ function [] = psom_pipeline_visu(file_pipeline,action,opt_action)
 % _________________________________________________________________________
 % SEE ALSO:
 %
-% PSOM_PIPELINE_INIT, PSOM_PIPELINE_MANAGE, PSOM_RUN_PIPELINE, 
+% PSOM_PIPELINE_INIT, PSOM_PIPELINE_PROCESS, PSOM_RUN_PIPELINE, 
 % PSOM_DEMO_PIPELINE
 %
 % _________________________________________________________________________
 % COMMENTS:
-%
-% NOTE 1:
-%   A description of the Poor Man's Pipeline system written in PERL can be
-%   found on the BIC wiki :
-%   http://wiki.bic.mni.mcgill.ca/index.php/PoorMansPipeline
-%
-% NOTE 2:
-%   This function needs a CIVET quarantine to run, see :
-%   http://wiki.bic.mni.mcgill.ca/index.php/CIVET
-%   The path to the quarantine can be manually specified in the variable
-%   GB_NIAK_PATH_CIVET of the file NIAK_GB_VARS.
 %
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008.
 % Maintainer : pbellec@bic.mni.mcgill.ca

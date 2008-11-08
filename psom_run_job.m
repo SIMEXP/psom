@@ -156,10 +156,11 @@ catch
     flag_failed = true;
     errmsg = lasterror;
     fprintf('\n\n%s\nSomething went bad ... the job has FAILED !\nThe last error message occured was :\n%s\n',stars,errmsg.message);
-    for num_e = 1:length(errmsg.stack)
-        fprintf('File %s at line %i\n',errmsg.stack(num_e).file,errmsg.stack(num_e).line);
+    if isfield(errmsg,'stack')
+        for num_e = 1:length(errmsg.stack)
+            fprintf('File %s at line %i\n',errmsg.stack(num_e).file,errmsg.stack(num_e).line);
+        end
     end
-    
 end
 
 %% Checking outputs

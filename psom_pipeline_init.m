@@ -78,7 +78,7 @@ function file_pipeline = psom_pipeline_init(pipeline,opt)
 % _________________________________________________________________________
 % SEE ALSO:
 %
-% PSOM_PIPELINE_MANAGE, PSOM_PIPELINE_VISU, PSOM_DEMO_PIPELINE
+% PSOM_PIPELINE_PROCESS, PSOM_PIPELINE_VISU, PSOM_DEMO_PIPELINE
 %
 % _________________________________________________________________________
 % COMMENTS:
@@ -347,5 +347,5 @@ for num_j = 1:length(list_jobs)
 end
 
 if flag_verbose
-    fprintf('\n\n*********************************************************************\n The pipeline has been successfully initialized\n It is now possible to use PSOM_PIPELINE_MANAGE or PSOM_PIPELINE_VISU\n*********************************************************************\n');
+    fprintf('\n\n*********************************************************************\n The pipeline has been successfully initialized\n It is now possible to use PSOM_PIPELINE_PROCESS or PSOM_PIPELINE_VISU\n*********************************************************************\n');
 end
