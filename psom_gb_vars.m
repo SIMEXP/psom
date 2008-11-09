@@ -13,7 +13,7 @@ gb_psom_tmp = cat(2,filesep,'tmp',filesep); % where to store temporary files
 
 gb_psom_command_matlab = 'matlab -nojvm -nosplash'; % how to invoke matlab   
 
-gb_psom_command_octave = 'octave-2.9.9'; % how to invoke octave
+gb_psom_command_octave = 'octave-2.9.9 --silent'; % how to invoke octave
 
 gb_psom_sge_options = ''; % Options for the sge qsub system, example : '-q all.q@yeatman,all.q@zeus' will force qsub to only use the yeatman workstation;
 

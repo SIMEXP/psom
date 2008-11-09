@@ -227,15 +227,21 @@ end
 
 [flag_ok,list_files_failed,list_jobs_failed] = psom_is_files_out_ok(files_out);
 
-if ~flag_ok
-    str_files = [];
+if ~flag_ok    
     for num_f = 1:length(list_files_failed)
-        str_files = [str_files ' ; '  list_files_failed{num_f}];
+        if num_f == 1
+            str_files = list_files_failed{num_f};
+        else
+            str_files = [str_files ' ; '  list_files_failed{num_f}];
+        end
     end
-
-    str_jobs = [];
+    
     for num_j = 1:length(list_jobs_failed)
-        str_jobs = [str_files ' ; ' list_jobs_failed{num_j}];
+        if num_j == 1
+            str_jobs = list_jobs_failed{num_j};
+        else
+            str_jobs = [str_jobs ' ; ' list_jobs_failed{num_j}];
+        end
     end
 
     error('The following output files are generated multiple times : %s.\nThe following jobs are responsible for that : %s',str_files,str_jobs);
@@ -246,11 +252,15 @@ end
 [flag_dag,list_vert_cycle] = psom_is_dag(graph_deps);
 
 if ~flag_dag
-    str_files = [];
+    
     for num_f = 1:length(list_vert_cycle)
-        str_files = [str_files ' ; '  list_jobs{list_vert_cycle(num_f)}];
+        if num_f == 1
+            str_files = list_jobs{list_vert_cycle(num_f)};
+        else
+            str_files = [str_files ' ; '  list_jobs{list_vert_cycle(num_f)}];
+        end
     end
-    error('There are cycles in the dependency graph of the pipeline. The following jobs are involved in at least one cycle: %s',str_files);
+    error('There are cycles in the dependency graph of the pipeline. The following jobs are involved in at least one cycle : %s',str_files);
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

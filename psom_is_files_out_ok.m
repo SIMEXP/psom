@@ -91,7 +91,9 @@ if ~flag_ok
     mask_jobs_failed = false([nb_jobs 1]);
     
     for num_j = 1:nb_jobs
-        mask_jobs_failed(num_j) = max(ismember(files_out.(list_jobs{num_j}),list_files_failed));
+        if ~isempty(files_out.(list_jobs{num_j}))
+            mask_jobs_failed(num_j) = max(ismember(files_out.(list_jobs{num_j}),list_files_failed));
+        end
     end
     
     list_jobs_failed = list_jobs(mask_jobs_failed);

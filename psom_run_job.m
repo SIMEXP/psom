@@ -8,7 +8,7 @@ function [status,msg] = psom_run_job(file_job)
 % (running, failed or finished). It also verboses some information.
 %
 % SYNTAX:
-% [STATUS,MSG] = PSOM_RUN_JOB(FILE_JOB)
+% [STATUS,MSG] = PSOM_RUN_JOB(FILE_JOB,FILE_LOG)
 %
 % _________________________________________________________________________
 % INPUTS:
@@ -113,9 +113,12 @@ end
 file_running = [path_f filesep name_f '.running'];
 file_failed = [path_f filesep name_f '.failed'];
 file_finished = [path_f filesep name_f '.finished'];
+file_log = [path_f filesep name_f '.log'];
+hf = fopen(file_log,'w');
 
 if exist(file_running,'file')|exist(file_failed,'file')|exist(file_finished,'file')
-    error('Already found a tag on that job. Sorry dude, I must quit ...')
+    fprintf(hf,'Already found a tag on that job. Sorry dude, I must quit ...');
+    return
 end
 
 %% Create a running tag for the job
@@ -124,8 +127,8 @@ save(file_running,'tmp')
 
 %% Print general info about the job
 msg = sprintf('Log of the (%s) job : %s\nStarted on %s\nUser: %s\nhost : %s\nsystem : %s',gb_psom_language,name_f,datestr(clock),gb_psom_user,gb_psom_localhost,gb_psom_OS);
-stars = repmat('*',[1 size(msg,2)]);
-fprintf('\n%s\n%s\n%s\n',stars,msg,stars)
+stars = repmat('*',[1 30]);
+fprintf(hf,'\n%s\n%s\n%s\n',stars,msg,stars);
 
 job = load(file_job);
 
@@ -134,31 +137,31 @@ gb_list_fields = {'files_in','files_out','command','opt'};
 gb_list_defaults = {NaN,NaN,NaN,NaN};
 psom_set_defaults
 
-command
-files_in
-files_out
-opt
+str_log = evalc('command, files_in, files_out, opt,');
+fprintf(hf,'%s',str_log);
 
 try
 %% The job starts now !
 msg = sprintf('The job starts now !');
 stars = repmat('*',[1 size(msg,2)]);
-fprintf('\n%s\n%s\n%s\n',stars,msg,stars)
+fprintf(hf,'\n%s\n%s\n%s\n',stars,msg,stars);
 
 flag_failed = false;
 
 try
     tic;
-    eval(command)
+    str_log = evalc(command);
+    fprintf(hf,'%s',str_log);
     telapsed = toc;
-catch
+catch    
     telapsed = toc;    
+    fprintf(hf,'%s',str_log);
     flag_failed = true;
     errmsg = lasterror;
-    fprintf('\n\n%s\nSomething went bad ... the job has FAILED !\nThe last error message occured was :\n%s\n',stars,errmsg.message);
+    fprintf(hf,'\n\n%s\nSomething went bad ... the job has FAILED !\nThe last error message occured was :\n%s\n',stars,errmsg.message);
     if isfield(errmsg,'stack')
         for num_e = 1:length(errmsg.stack)
-            fprintf('File %s at line %i\n',errmsg.stack(num_e).file,errmsg.stack(num_e).line);
+            fprintf(hf,'File %s at line %i\n',errmsg.stack(num_e).file,errmsg.stack(num_e).line);
         end
     end
 end
@@ -166,21 +169,21 @@ end
 %% Checking outputs
 msg = sprintf('Checking outputs');
 stars = repmat('*',[1 size(msg,2)]);
-fprintf('\n%s\n%s\n%s\n',stars,msg,stars)
+fprintf(hf,'\n%s\n%s\n%s\n',stars,msg,stars);
 
 list_files = psom_files2cell(files_out);
 
 for num_f = 1:length(list_files)
     if ~exist(list_files{num_f})
-        fprintf('The output file %s has not been generated!\n',list_files{num_f});
+        fprintf(hf,'The output file %s has not been generated!\n',list_files{num_f});
         flag_failed = true;
     else
-        fprintf('The output file %s was successfully generated!\n',list_files{num_f});
+        fprintf(hf,'The output file %s was successfully generated!\n',list_files{num_f});
     end
 end
 
 %% Finishing the job
-delete(file_running)
+delete(file_running);
 if flag_failed
     msg1 = sprintf('The job has FAILED');
     tmp = datestr(clock);
@@ -193,9 +196,14 @@ end
 
 msg2 = sprintf('Total time used to process the job : %1.2f sec.',telapsed);
 stars = repmat('*',[1 max(size(msg1,2),size(msg2,2))]);
-fprintf('\n%s\n%s\n%s\n%s\n',stars,msg1,msg2,stars)
+fprintf(hf,'\n%s\n%s\n%s\n%s\n',stars,msg1,msg2,stars);
+fclose(hf);
+
 catch
-    delete(file_running)
+    if exist('hf','var')
+        fprintf(hf,'%s',str_log);
+    end
+    delete(file_running);
     errmsg = lasterror;    
     rethrow(errmsg)
 end

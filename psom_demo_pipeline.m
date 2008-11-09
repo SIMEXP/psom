@@ -64,6 +64,11 @@ pipeline.fft.files_in = {pipeline.tseries1.files_out,pipeline.tseries2.files_out
 pipeline.fft.files_out = [gb_psom_path_demo 'ftseries.mat'];
 pipeline.fft.opt = struct([]);
 
+pipeline.weights.command = 'load(files_in{1}); load(files_in{2}); res = ftseries * weights; save(files_out,''res'')';
+pipeline.weights.files_in = {pipeline.fft.files_out,[gb_psom_path_demo 'weights.mat']};
+pipeline.weights.files_out = [gb_psom_path_demo 'results.mat'];
+pipeline.weights.opt = struct([]);
+
 opt_pipe.path_logs = [gb_psom_path_demo 'logs' filesep];
 
 %%%%%%%%%%%%%%%%%%%%%%
@@ -71,5 +76,10 @@ opt_pipe.path_logs = [gb_psom_path_demo 'logs' filesep];
 %%%%%%%%%%%%%%%%%%%%%%
 
 file_pipeline = psom_pipeline_init(pipeline,opt_pipe);
-psom_pipeline_process(file_pipeline);
+opt_proc.flag_batch = true;
+opt_proc.mode = 'batch';
+opt_proc.max_queued = 2;
+opt_proc.time_between_checks = 1;
+opt_proc.nb_checks_per_point = 1;
+psom_pipeline_process(file_pipeline,opt_proc);
 psom_pipeline_visu(file_pipeline,'monitor');
