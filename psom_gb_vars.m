@@ -54,7 +54,7 @@ gb_psom_path_demo = cat(2,gb_psom_path_psom,'data_demo',filesep);
 
 %% What is the operating system ?
 comp = computer;
-tag_unix = {'SOL2','GLNX86','unix','linux'};
+tag_unix = {'SOL2','GLNX86','GLNXA64','unix','linux'};
 tag_windaub = {'PCWIN','windows'};
 
 if max(ismember(comp,tag_unix))>0
