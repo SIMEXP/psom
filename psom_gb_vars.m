@@ -8,12 +8,6 @@
 %% system                                                               %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-gb_psom_pipeline_mode = 'session';
-
-gb_psom_pipeline_flag_batch = false;
-
-gb_psom_pipeline_max_queued = Inf;
-
 gb_psom_command_matlab = 'matlab -nojvm -nosplash'; % how to invoke matlab   
 
 gb_psom_command_octave = 'octave-2.9.9 --silent'; % how to invoke octave

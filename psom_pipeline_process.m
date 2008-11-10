@@ -71,6 +71,14 @@ function [] = psom_pipeline_process(file_pipeline,opt)
 %           all.q queue. It can also be used to put restrictions on the
 %           minimum avalaible memory, etc.
 %
+%       COMMAND_MATLAB
+%           (string, default GB_PSOM_COMMAND_MATLAB or
+%           GB_PSOM_COMMAND_OCTAVE depending on the current environment)
+%           how to invoke matlab (or OCTAVE).
+%           You may want to update that to add the full path of the command.
+%           The defaut for this field can be set using the variable
+%           GB_PSOM_COMMAND_MATLAB/OCTAVE in the file PSOM_GB_VARS.
+%
 %       TIME_BETWEEN_CHECKS
 %           (real value, default 0 in 'session' mode, 10 otherwise)
 %           The time (in seconds) where the pipeline processing remains
@@ -134,9 +142,17 @@ end
 
 %% Options
 gb_name_structure = 'opt';
-gb_list_fields = {'mode','flag_batch','max_queued','qsub_options','time_between_checks','nb_checks_per_point'};
-gb_list_defaults = {'session',false,0,'',[],[]};
+gb_list_fields = {'command_matlab','mode','flag_batch','max_queued','qsub_options','time_between_checks','nb_checks_per_point'};
+gb_list_defaults = {'','session',false,0,'',[],[]};
 psom_set_defaults
+
+if isempty(opt.command_matlab)
+    if strcmp(gb_psom_language,'matlab')
+        opt.command_matlab = gb_psom_command_matlab;
+    else
+        opt.command_matlab = gb_psom_command_octave;
+    end
+end
 
 if max_queued == 0
     switch mode
@@ -200,9 +216,9 @@ if flag_batch
     if ~strcmp(mode,'session')
         switch gb_psom_language
             case 'matlab'
-                instr_job = sprintf('%s -logfile %s -r "cd %s, load %s, path(path_work), opt.mode = ''%s''; opt.flag_batch = false; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s''),"\n',gb_psom_command_matlab,file_pipe_log,path_logs,file_pipe_path,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
+                instr_job = sprintf('%s -logfile %s -r "cd %s, load %s, path(path_work), opt.mode = ''%s''; opt.flag_batch = false; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s''),"\n',opt.command_matlab,file_pipe_log,path_logs,file_pipe_path,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
             case 'octave'
-                instr_job = sprintf('%s --eval "diary ''%s'', cd %s, load %s, path(path_work), opt.mode = ''%s''; opt.flag_batch = false; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s''),"\n',gb_psom_command_matlab,file_pipe_log,path_logs,file_pipe_path,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
+                instr_job = sprintf('%s --eval "diary ''%s'', cd %s, load %s, path(path_work), opt.mode = ''%s''; opt.flag_batch = false; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s''),"\n',opt.command_matlab,file_pipe_log,path_logs,file_pipe_path,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
         end
     end
 
@@ -223,8 +239,8 @@ end
 
 % a try/catch block is used to clean temporary file if the user is
 % interrupting the pipeline of if an error occurs
-try
-    
+try        
+
     load(file_pipeline);
 
     %% Check if all the files necessary to complete the pipeline can be found
@@ -288,9 +304,11 @@ try
     %%%%%%%%%%%%%%%%%%%%%%
     %% Run the pipeline %%
     %%%%%%%%%%%%%%%%%%%%%%
-    msg = 'Starting the pipeline ...';
-    stars = repmat('*',size(msg));
-    fprintf('\n%s\n%s\n%s\n\n',stars,msg,stars);
+    
+    %% Print general info about the pipeline
+    msg = sprintf('The pipeline %s is now being processed.\nStarted on %s\nUser: %s\nhost : %s\nsystem : %s',name_pipeline,datestr(clock),gb_psom_user,gb_psom_localhost,gb_psom_OS);
+    stars = repmat('*',[1 30]);
+    fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
 
     nb_checks = 0;
     nb_points = 0;        
@@ -328,7 +346,7 @@ try
             end
             for num_f = 1:length(list_jobs_failed)
                 name_job = list_jobs_failed{num_f};
-                fprintf('The job %s has failed.\n',name_job);
+                fprintf('%s - The job %s has failed.\n',datestr(clock),name_job);
             end
         end        
 
@@ -355,7 +373,7 @@ try
             end
             for num_f = 1:length(list_jobs_finished)
                 name_job = list_jobs_finished{num_f};
-                fprintf('The job %s has been successfully completed.\n',name_job);
+                fprintf('%s - The job %s has been successfully completed.\n',datestr(clock),name_job);
             end
 
             for num_f = 1:length(list_jobs)
@@ -398,15 +416,15 @@ try
             mask_todo(num_job) = false;
             mask_running(num_job) = true;
             nb_queued = nb_queued + 1;
-            fprintf('The job %s is now running.\n',name_job)
+            fprintf('%s - The job %s is now running.\n',datestr(clock),name_job)
 
             %% Create a temporary shell scripts for 'batch' or 'qsub' modes
             if ~strcmp(mode,'session')
                 switch gb_psom_language
                     case 'matlab'
-                        instr_job = sprintf('%s -r "cd %s, load %s, path(path_work), psom_run_job(''%s''),"\n',gb_psom_command_matlab,path_logs,file_pipe_path,file_job,file_log);
+                        instr_job = sprintf('%s -r "cd %s, load %s, path(path_work), psom_run_job(''%s''),"\n',opt.command_matlab,path_logs,file_pipe_path,file_job,file_log);
                     case 'octave'
-                        instr_job = sprintf('%s --eval "cd %s, load %s, path(path_work), psom_run_job(''%s''),"\n',gb_psom_command_matlab,path_logs,file_pipe_path,file_job,file_log);
+                        instr_job = sprintf('%s --eval "cd %s, load %s, path(path_work), psom_run_job(''%s''),"\n',opt.command_matlab,path_logs,file_pipe_path,file_job,file_log);
                 end
 
                 file_shell = [path_tmp filesep name_job '.sh'];
@@ -489,7 +507,11 @@ if exist('file_pipe_running','var')
     end
 end
 
-fprintf('\n********\n Done ! \n********\n')
+%% Print general info about the job
+msg = sprintf('The processing of the pipeline %s was closed on %s',name_pipeline,datestr(clock));
+stars = repmat('*',[1 length(msg)]);
+fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
+
 
 %%%%%%%%%%%%%%%%%%
 %% subfunctions %%
