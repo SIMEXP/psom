@@ -311,7 +311,7 @@ if flag_verbose
 end
 
 history = [datestr(now) ' ' gb_psom_user ' on a ' gb_psom_OS ' system used PSOM v' gb_psom_version '>>>> Created a pipeline !\n'];
-save(file_pipeline,'pipeline','opt','history','deps','graph_deps','list_jobs','files_in','files_out')
+save(file_pipeline,'pipeline','history','deps','graph_deps','list_jobs','files_in','files_out')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Setting up path for the Matlab/Octave environment %%
