@@ -256,7 +256,7 @@ try
         for num_f = 1:length(list_files_necessary)
             if ~exist(list_files_necessary{num_f})
                 fprintf('The file %s is necessary to run the pipeline, but is unfortunately missing.\n',list_files_necessary{num_f})
-                flag_ready = false
+                flag_ready = false;
             end
         end
     end
