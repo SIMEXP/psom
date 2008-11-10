@@ -155,7 +155,7 @@ if isempty(opt.command_matlab)
 end
 
 if max_queued == 0
-    switch mode
+    switch opt.mode
         case {'batch'}
             opt.max_queued = 1;
             max_queued = 1;
