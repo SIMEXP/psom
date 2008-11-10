@@ -236,7 +236,7 @@ if flag_batch
         error('Something went bad with the at command. The error message was : %s',msg)
     end
 
-    %delete(file_shell)
+    delete(file_shell)
     return
 end
 
