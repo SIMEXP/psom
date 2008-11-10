@@ -76,7 +76,7 @@ opt_pipe.path_logs = [gb_psom_path_demo 'logs' filesep];
 %%%%%%%%%%%%%%%%%%%%%%
 
 file_pipeline = psom_pipeline_init(pipeline,opt_pipe);
-opt_proc.flag_batch = true;
+opt_proc.flag_batch = false;
 opt_proc.mode = 'batch';
 opt_proc.max_queued = 2;
 opt_proc.time_between_checks = 1;

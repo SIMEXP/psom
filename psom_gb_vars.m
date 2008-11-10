@@ -3,13 +3,16 @@
 %% this script to initialize the variables. If PSOM does not behave the way
 %% you want, this might be the place to fix that.
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% The following variables need to be changed to configure the pipeline %%
 %% system                                                               %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-gb_psom_tmp = cat(2,filesep,'tmp',filesep); % where to store temporary files
+gb_psom_pipeline_mode = 'session';
+
+gb_psom_pipeline_flag_batch = false;
+
+gb_psom_pipeline_max_queued = Inf;
 
 gb_psom_command_matlab = 'matlab -nojvm -nosplash'; % how to invoke matlab   
 
@@ -21,20 +24,14 @@ gb_psom_sge_options = ''; % Options for the sge qsub system, example : '-q all.q
 %% The following variables describe the folders and external tools PSOM is using for various tasks %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-gb_psom_viewerps = 'evince'; % program to display ps files
-
-gb_psom_viewerjpg = 'eog'; % program to display jpg files
-
-gb_psom_viewersvg = 'eog'; % program to display svg files
-
-gb_psom_ps2pdf = 'ps2pdf'; % The command to convert ps or eps documents into the pdf file format
+gb_psom_tmp = cat(2,filesep,'tmp',filesep); % where to store temporary files
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% The following variables should not be changed %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% NIAK version
-gb_psom_version = '0.0'; % 
+%% PSOM version
+gb_psom_version = '0.4'; % 
 
 %% Is the environment Octave or Matlab ?
 if exist('OCTAVE_VERSION')    
