@@ -169,7 +169,7 @@ if ~ismember(opt.mode,{'session','batch','qsub'})
     error('%s is an unknown mode of pipeline execution. Sorry dude, I must quit ...',opt.mode);
 end
 
-switch mode
+switch opt.mode
     case 'session'
         if isempty(time_between_checks)
             time_between_checks = 0;
@@ -213,7 +213,7 @@ save(file_pipe_running,'str_now'); %% Put a running tag on the pipeline
 if flag_batch
 
     file_shell = psom_file_tmp('_process_pipe.sh');
-    if ~strcmp(mode,'session')
+    if ~strcmp(opt.mode,'session')
         switch gb_psom_language
             case 'matlab'
                 instr_job = sprintf('%s -logfile %s -r "cd %s, load %s, path(path_work), opt.mode = ''%s''; opt.flag_batch = false; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s''),"\n',opt.command_matlab,file_pipe_log,path_logs,file_pipe_path,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
@@ -419,7 +419,7 @@ try
             fprintf('%s - The job %s is now running.\n',datestr(clock),name_job)
 
             %% Create a temporary shell scripts for 'batch' or 'qsub' modes
-            if ~strcmp(mode,'session')
+            if ~strcmp(opt.mode,'session')
                 switch gb_psom_language
                     case 'matlab'
                         instr_job = sprintf('%s -r "cd %s, load %s, path(path_work), psom_run_job(''%s''),"\n',opt.command_matlab,path_logs,file_pipe_path,file_job,file_log);
@@ -434,7 +434,7 @@ try
             end
 
             %% run the job
-            switch mode
+            switch opt.mode
 
                 case 'session'
 
