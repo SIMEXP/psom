@@ -1,4 +1,4 @@
-    %
+%
 % _________________________________________________________________________
 % SUMMARY OF NIAK_DEMO_PIPELINE
 %
@@ -74,8 +74,8 @@ pipeline.weights.opt = struct([]);
 %%%%%%%%%%%%%%%%%%%%%%
 opt.path_logs = [gb_psom_path_demo 'logs' filesep];
 opt.flag_batch = true;
-opt.mode = 'batch';
+opt.mode = 'session';
 opt.max_queued = 2;
-opt.time_between_checks = 1;
-opt.nb_checks_per_point = 1;
+%opt.time_between_checks = 1;
+%opt.nb_checks_per_point = 1;
 psom_run_pipeline(pipeline,opt);

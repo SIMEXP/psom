@@ -174,16 +174,20 @@ end
 switch opt.mode
     case 'session'
         if isempty(time_between_checks)
+            opt.time_between_checks = 0;
             time_between_checks = 0;
         end
         if isempty(nb_checks_per_point)
+            opt.nb_checks_per_point = Inf;
             nb_checks_per_point = Inf;
         end        
     otherwise
         if isempty(time_between_checks)
+            opt.time_between_checks = 10;
             time_between_checks = 10;
         end
         if isempty(nb_checks_per_point)
+            opt.nb_checks_per_point = 6;
             nb_checks_per_point = 6;
         end
 end
@@ -213,8 +217,6 @@ save(file_pipe_running,'str_now'); %% Put a running tag on the pipeline
 
 %% If specified, start the pipeline in the background
 if flag_batch
-
-    file_shell = psom_file_tmp('_process_pipe.sh');
 
     switch gb_psom_language
         case 'matlab'
