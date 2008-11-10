@@ -216,9 +216,9 @@ if flag_batch
     if ~strcmp(opt.mode,'session')
         switch gb_psom_language
             case 'matlab'
-                instr_job = sprintf('%s -logfile %s -r "cd %s, load %s, path(path_work), opt.mode = ''%s''; opt.flag_batch = false; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s''),"\n',opt.command_matlab,file_pipe_log,path_logs,file_pipe_path,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
+                instr_job = sprintf('%s -logfile %s -r "cd %s, load %s, path(path_work), opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.flag_batch = false; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,file_pipe_log,path_logs,file_pipe_path,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
             case 'octave'
-                instr_job = sprintf('%s --eval "diary ''%s'', cd %s, load %s, path(path_work), opt.mode = ''%s''; opt.flag_batch = false; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s''),"\n',opt.command_matlab,file_pipe_log,path_logs,file_pipe_path,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
+                instr_job = sprintf('%s --eval "diary ''%s'', cd %s, load %s, path(path_work), opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.flag_batch = false; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,file_pipe_log,path_logs,file_pipe_path,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
         end
     end
 
@@ -434,6 +434,7 @@ try
             end
 
             %% run the job
+            opt.mode
             switch opt.mode
 
                 case 'session'
@@ -450,9 +451,11 @@ try
 
                 case 'qsub'
 
-                    instr_qsub = ['qsub -N ' name_job ' ' opt.opt_qsub ' ' file_shell];
-                    system(instr_qsub);
-
+                    instr_qsub = ['qsub -N ' name_job ' ' opt.qsub_options ' ' file_shell];
+                    [fail,msg] = system(instr_qsub);
+                    if fail~=0
+                        error('Something went bad with the qsub command. The error message was : %s',msg)
+                    end
             end % switch mode
 
 
