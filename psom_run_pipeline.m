@@ -199,7 +199,7 @@ if ~ismember(opt.mode,{'session','batch','qsub'})
     error('%s is an unknown mode of pipeline execution. Sorry dude, I must quit ...',opt.mode);
 end
 
-switch mode
+switch opt.mode
     case 'session'
         if isempty(time_between_checks)
             time_between_checks = 0;
