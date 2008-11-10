@@ -24,7 +24,9 @@ function [] = psom_pipeline_process(file_pipeline,opt)
 %           'session'
 %               the pipeline is executed within the current session. The
 %               current matlab search path will be used instead of the one
-%               that was active when the pipeline was initialized.
+%               that was active when the pipeline was initialized. In that
+%               mode, the log files of individual jobs are appendend to the 
+%               log file of the pipeline. 
 %
 %           'batch'
 %               Start the pipeline manager and each job in independent
@@ -47,7 +49,7 @@ function [] = psom_pipeline_process(file_pipeline,opt)
 %           If FLAG_BATCH == 0, the pipeline is executed within the session.
 %               Interrupting the pipeline with CTRL-C will result in
 %               interrupting the pipeline (you can always do a 'restart'
-%               latter). 
+%               latter).
 %
 %           If FLAG_BATCH == 1, the pipeline manager is started as a
 %               separate process in its own Matlab or Octave session using
@@ -213,13 +215,12 @@ save(file_pipe_running,'str_now'); %% Put a running tag on the pipeline
 if flag_batch
 
     file_shell = psom_file_tmp('_process_pipe.sh');
-    if ~strcmp(opt.mode,'session')
-        switch gb_psom_language
-            case 'matlab'
-                instr_job = sprintf('%s -logfile %s -r "cd %s, load %s, path(path_work), opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.flag_batch = false; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,file_pipe_log,path_logs,file_pipe_path,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
-            case 'octave'
-                instr_job = sprintf('%s --eval "diary ''%s'', cd %s, load %s, path(path_work), opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.flag_batch = false; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,file_pipe_log,path_logs,file_pipe_path,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
-        end
+
+    switch gb_psom_language
+        case 'matlab'
+            instr_job = sprintf('%s -logfile %s -r "cd %s, load %s, path(path_work), opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.flag_batch = false; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,file_pipe_log,path_logs,file_pipe_path,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
+        case 'octave'
+            instr_job = sprintf('%s --eval "diary ''%s'', cd %s, load %s, path(path_work), opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.flag_batch = false; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,file_pipe_log,path_logs,file_pipe_path,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
     end
 
     file_shell = psom_file_tmp('_proc_pipe.sh');
@@ -254,7 +255,7 @@ try
         list_files_necessary = list_files_needed(~ismember(list_files_needed,list_files_tobe));
 
         for num_f = 1:length(list_files_necessary)
-            if ~exist(list_files_necessary{num_f})
+            if ~exist(list_files_necessary{num_f},'file')
                 fprintf('The file %s is necessary to run the pipeline, but is unfortunately missing.\n',list_files_necessary{num_f})
                 flag_ready = false;
             end
@@ -352,7 +353,7 @@ try
 
         for num_f = 1:length(list_jobs_failed)
             name_job = list_jobs_failed{num_f};            
-            list_jobs_child = sub_find_children(name_job,deps);
+            list_jobs_children = sub_find_children(name_job,deps);
             mask_child = ismember(list_jobs,list_jobs_children);
             mask_todo(mask_child) = false;
         end                
@@ -397,7 +398,7 @@ try
         mask_running(mask_running) = mask_running(mask_running)&~mask_done(mask_running);
         
         %% Time to submit jobs !!
-        while (nb_queued <= max_queued)&(max(mask_todo&~mask_deps)>0)
+        while (nb_queued <= max_queued) && (max(mask_todo&~mask_deps)>0)
 
             if flag_nothing_happened
                 flag_nothing_happened = false;
@@ -422,9 +423,9 @@ try
             if ~strcmp(opt.mode,'session')
                 switch gb_psom_language
                     case 'matlab'
-                        instr_job = sprintf('%s -r "cd %s, load %s, path(path_work), psom_run_job(''%s''),"\n',opt.command_matlab,path_logs,file_pipe_path,file_job,file_log);
+                        instr_job = sprintf('%s -r "cd %s, load %s, path(path_work), psom_run_job(''%s''),">%s\n',opt.command_matlab,path_logs,file_pipe_path,file_job,file_log);
                     case 'octave'
-                        instr_job = sprintf('%s --eval "cd %s, load %s, path(path_work), psom_run_job(''%s''),"\n',opt.command_matlab,path_logs,file_pipe_path,file_job,file_log);
+                        instr_job = sprintf('%s --eval "cd %s, load %s, path(path_work), psom_run_job(''%s''),">%s\n',opt.command_matlab,path_logs,file_pipe_path,file_job,file_log);
                 end
 
                 file_shell = [path_tmp filesep name_job '.sh'];
@@ -434,7 +435,7 @@ try
             end
 
             %% run the job
-            opt.mode
+
             switch opt.mode
 
                 case 'session'
@@ -520,7 +521,7 @@ fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
 %% subfunctions %%
 %%%%%%%%%%%%%%%%%%
 
-function list_jobs_child = sub_find_children(name_job,deps);
+function list_jobs_child = sub_find_children(name_job,deps)
 
 list_jobs_child = fieldnames(deps.(name_job));
 
