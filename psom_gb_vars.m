@@ -8,9 +8,9 @@
 %% system                                                               %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-gb_psom_command_matlab = 'matlab -nojvm -nosplash'; % how to invoke matlab   
+gb_psom_command_matlab = 'matlab'; % how to invoke matlab   
 
-gb_psom_command_octave = 'octave-2.9.9 --silent'; % how to invoke octave
+gb_psom_command_octave = 'octave'; % how to invoke octave
 
 gb_psom_sge_options = ''; % Options for the sge qsub system, example : '-q all.q@yeatman,all.q@zeus' will force qsub to only use the yeatman workstation;
 
