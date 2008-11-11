@@ -65,8 +65,14 @@ function [] = psom_pipeline_process(file_pipeline,opt)
 %           simultaneously. Some qsub systems actually put restrictions
 %           on that. Contact your local system administrator for more info.
 %
+%       SHELL_OPTIONS
+%           (string, default GB_PSOM_SHELL_OPTIONS defined in PSOM_GB_VARS)
+%           some commands that will be added at the begining of the shell
+%           script submitted to batch or qsub. This can be used to set 
+%           important variables, or source an initialization script.
+%
 %       QSUB_OPTIONS
-%           (string)
+%           (string, GB_PSOM_QSUB_OPTIONS defined in PSOM_GB_VARS)
 %           This field can be used to pass any argument when submitting a
 %           job with qsub. For example, '-q all.q@yeatman,all.q@zeus' will
 %           force qsub to only use the yeatman and zeus workstations in the
@@ -144,8 +150,8 @@ end
 
 %% Options
 gb_name_structure = 'opt';
-gb_list_fields = {'command_matlab','mode','flag_batch','max_queued','qsub_options','time_between_checks','nb_checks_per_point'};
-gb_list_defaults = {'','session',false,0,'',[],[]};
+gb_list_fields = {'shell_options','command_matlab','mode','flag_batch','max_queued','qsub_options','time_between_checks','nb_checks_per_point'};
+gb_list_defaults = {'','','session',false,0,'',[],[]};
 psom_set_defaults
 
 if isempty(opt.command_matlab)
@@ -154,6 +160,14 @@ if isempty(opt.command_matlab)
     else
         opt.command_matlab = gb_psom_command_octave;
     end
+end
+
+if isempty(opt.qsub_options)
+    opt.qsub_options = gb_psom_qsub_options;
+end
+
+if isempty(opt.shell_options)
+    opt.shell_options = gb_psom_shell_options;
 end
 
 if max_queued == 0
@@ -424,9 +438,17 @@ try
             if ~strcmp(opt.mode,'session')
                 switch gb_psom_language
                     case 'matlab'
-                        instr_job = sprintf('%s -r "cd %s, load %s, path(path_work), psom_run_job(''%s''),">%s\n',opt.command_matlab,path_logs,file_pipe_path,file_job,file_log);
+                        if ~isempty(opt.shell_options)
+                            instr_job = sprintf('%s\n%s -r "cd %s, load %s, path(path_work), psom_run_job(''%s''),">%s\n',opt.shell_options,opt.command_matlab,path_logs,file_pipe_path,file_job,file_log);
+                        else
+                            instr_job = sprintf('%s -r "cd %s, load %s, path(path_work), psom_run_job(''%s''),">%s\n',opt.command_matlab,path_logs,file_pipe_path,file_job,file_log);
+                        end
                     case 'octave'
-                        instr_job = sprintf('%s --eval "cd %s, load %s, path(path_work), psom_run_job(''%s''),">%s\n',opt.command_matlab,path_logs,file_pipe_path,file_job,file_log);
+                        if ~isempty(opt.shell_options)
+                            instr_job = sprintf('%s\n%s --eval "cd %s, load %s, path(path_work), psom_run_job(''%s''),">%s\n',opt.shell_options,opt.shell_options,opt.command_matlab,path_logs,file_pipe_path,file_job,file_log);
+                        else
+                            instr_job = sprintf('%s --eval "cd %s, load %s, path(path_work), psom_run_job(''%s''),">%s\n',opt.shell_options,opt.command_matlab,path_logs,file_pipe_path,file_job,file_log);
+                        end
                 end
 
                 file_shell = [path_tmp filesep name_job '.sh'];
@@ -453,7 +475,7 @@ try
 
                 case 'qsub'
 
-                    instr_qsub = ['qsub -N ' name_job(1:min(15,length(name_job))) ' ' opt.qsub_options ' ' file_shell];
+                    instr_qsub = ['qsub --N ' name_job(1:min(15,length(name_job))) ' ' opt.qsub_options ' ' file_shell];
                     [fail,msg] = system(instr_qsub);
                     if fail~=0
                         error('Something went bad with the qsub command. The command was : %s . The error message was : %s',instr_qsub,msg)

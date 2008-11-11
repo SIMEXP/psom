@@ -186,12 +186,6 @@ end
 %% Generating file names %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if flag_verbose
-    mesg = 'Saving the pipeline and its dependencies !';
-    stars = repmat('*',size(mesg));
-    fprintf('\n%s\n%s\n%s\n',stars,mesg,stars);
-end
-
 file_pipeline = cat(2,path_logs,filesep,name_pipeline,'.mat');
 file_path = cat(2,path_logs,filesep,name_pipeline,'.path_def.mat');
 list_jobs = fieldnames(pipeline);
@@ -329,16 +323,10 @@ save(file_path,'path_work')
 %% Creating the bash scripts for all stages of the pipeline, as well as the core of the PMP script %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if flag_verbose
-    mesg = 'Adding new jobs now !';
-    stars = repmat('*',size(mesg));
-    fprintf('\n%s\n%s\n%s\n',stars,mesg,stars);
-end
-
 for num_j = 1:length(list_jobs)
 
     if flag_verbose
-        fprintf('Job : %s\n',job_name);
+        fprintf('Adding job : %s\n',job_name);
     end
 
     %% Getting information on the stage
@@ -357,5 +345,5 @@ for num_j = 1:length(list_jobs)
 end
 
 if flag_verbose
-    fprintf('\n\n*********************************************************************\n The pipeline has been successfully initialized\n It is now possible to use PSOM_PIPELINE_PROCESS or PSOM_PIPELINE_VISU\n*********************************************************************\n');
+    fprintf('The pipeline has been successfully initialized\n');
 end

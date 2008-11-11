@@ -100,8 +100,14 @@ function [] = psom_run_pipeline(pipeline,opt)
 %           simultaneously. Some qsub systems actually put restrictions
 %           on that. Contact your local system administrator for more info.
 %
+%       SHELL_OPTIONS
+%           (string, default GB_PSOM_SHELL_OPTIONS defined in PSOM_GB_VARS)
+%           some commands that will be added at the begining of the shell
+%           script submitted to batch or qsub. This can be used to set 
+%           important variables, or source an initialization script.
+%
 %       QSUB_OPTIONS
-%           (string)
+%           (string, GB_PSOM_QSUB_OPTIONS defined in PSOM_GB_VARS)
 %           This field can be used to pass any argument when submitting a
 %           job with qsub. For example, '-q all.q@yeatman,all.q@zeus' will
 %           force qsub to only use the yeatman and zeus workstations in the
@@ -172,8 +178,8 @@ end
 
 %% Options
 gb_name_structure = 'opt';
-gb_list_fields = {'flag_restart','path_logs','name_pipeline','command_matlab','flag_verbose','mode','flag_batch','max_queued','qsub_options','time_between_checks','nb_checks_per_point'};
-gb_list_defaults = {false,NaN,'PSOM_pipeline','',true,'session',false,0,'',[],[]};
+gb_list_fields = {'shell_options','flag_restart','path_logs','name_pipeline','command_matlab','flag_verbose','mode','flag_batch','max_queued','qsub_options','time_between_checks','nb_checks_per_point'};
+gb_list_defaults = {'',false,NaN,'PSOM_pipeline','',true,'session',false,0,'',[],[]};
 psom_set_defaults
 
 if isempty(opt.command_matlab)
@@ -182,6 +188,14 @@ if isempty(opt.command_matlab)
     else
         opt.command_matlab = gb_psom_command_octave;
     end
+end
+
+if isempty(opt.qsub_options)
+    opt.qsub_options = gb_psom_qsub_options;
+end
+
+if isempty(opt.shell_options)
+    opt.shell_options = gb_psom_shell_options;
 end
 
 if max_queued == 0
