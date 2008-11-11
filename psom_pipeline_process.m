@@ -449,7 +449,7 @@ try
                     instr_batch = ['at -f ' file_shell ' now'];
                     [fail,msg] = system(instr_batch);
                     if fail~=0
-                        error('Something went bad with the at command. The error message was : %s',msg)
+                        error('Something went bad with the at command. The command was : %s . The error message was : %s',instr_batch,msg)
                     end
 
                 case 'qsub'
@@ -457,7 +457,7 @@ try
                     instr_qsub = ['qsub -N ' name_job ' ' opt.qsub_options ' ' file_shell];
                     [fail,msg] = system(instr_qsub);
                     if fail~=0
-                        error('Something went bad with the qsub command. The error message was : %s',msg)
+                        error('Something went bad with the qsub command. The error message was : %s',instr_qsub,msg)
                     end
             end % switch mode
 
