@@ -454,10 +454,10 @@ try
 
                 case 'qsub'
 
-                    instr_qsub = ['qsub -N ' name_job ' ' opt.qsub_options ' ' file_shell];
+                    instr_qsub = ['qsub -N ' name_job(1:15) ' ' opt.qsub_options ' ' file_shell];
                     [fail,msg] = system(instr_qsub);
                     if fail~=0
-                        error('Something went bad with the qsub command. The error message was : %s',instr_qsub,msg)
+                        error('Something went bad with the qsub command. The command was : %s . The error message was : %s',instr_qsub,msg)
                     end
             end % switch mode
 
