@@ -49,7 +49,7 @@ pipeline.message.files_in = {};
 pipeline.message.files_out = {};
 pipeline.message.opt.nb_samples = 100;
 
-pipeline.tseries1.command = 'tseries = randn([opt.nb_samples 1]); save(files_out,''tseries'')';
+pipeline.tseries1.command = 'tseries = randn([opt.nb_samples 1]); tr,save(files_out,''tseries'')';
 pipeline.tseries1.files_in = {};
 pipeline.tseries1.files_out = [gb_psom_path_demo 'tseries1.mat'];
 pipeline.tseries1.opt.nb_samples = pipeline.message.opt.nb_samples;
@@ -73,8 +73,8 @@ pipeline.weights.opt = struct([]);
 %% Run the pipeline %%
 %%%%%%%%%%%%%%%%%%%%%%
 opt.path_logs = [gb_psom_path_demo 'logs' filesep];
-opt.flag_batch = true;
-opt.mode = 'session';
+opt.flag_batch = false;
+opt.mode = 'batch';
 opt.max_queued = 2;
 %opt.time_between_checks = 1;
 %opt.nb_checks_per_point = 1;

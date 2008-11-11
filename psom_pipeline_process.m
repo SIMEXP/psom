@@ -355,8 +355,7 @@ try
 
         for num_f = 1:length(list_jobs_failed)
             name_job = list_jobs_failed{num_f};            
-            list_jobs_children = sub_find_children(name_job,deps);
-            mask_child = ismember(list_jobs,list_jobs_children);
+            mask_child = sub_find_children(name_job,deps);            
             mask_todo(mask_child) = false;
         end                
 
@@ -400,7 +399,7 @@ try
         mask_running(mask_running) = mask_running(mask_running)&~mask_done(mask_running);
         
         %% Time to submit jobs !!
-        while (nb_queued <= max_queued) && (max(mask_todo&~mask_deps)>0)
+        while (nb_queued < max_queued) && (max(mask_todo&~mask_deps)>0)
 
             if flag_nothing_happened
                 flag_nothing_happened = false;
@@ -523,14 +522,21 @@ fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
 %% subfunctions %%
 %%%%%%%%%%%%%%%%%%
 
-function list_jobs_child = sub_find_children(name_job,deps)
+function mask_child = sub_find_children(name_job,deps)
 
-list_jobs_child = fieldnames(deps.(name_job));
+list_jobs = fieldnames(deps);
+mask_child = false([length(list_jobs) 1]);
+for num_j = 1:length(list_jobs)
+    name_job2 = list_jobs{num_j};
+    mask_child(num_j) = ismember(name_job,fieldnames(deps.(name_job2)));
+end
 
-if ~isempty(list_jobs_child)
+if max(mask_child) == 1
+    
+    list_child = find(mask_child);
 
-    for num_c = 1:length(list_jobs_child)
-        name_child = list_jobs_child{num_c};
-        list_jobs_child = union(list_jobs_child,sub_find_children(name_child,deps));
+    for num_c = list_child'
+        name_child = list_jobs{num_c};
+        mask_child = (mask_child | sub_find_children(name_child,deps));
     end
 end
