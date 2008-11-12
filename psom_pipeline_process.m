@@ -336,7 +336,7 @@ try
     mask_todo = mask_todo(:);
     mask_done = ~mask_todo;   
     mask_running = mask_done; % Start back at the point where all the finished jobs have just finished
-    nb_queued = sum(mask_running),
+    nb_queued = sum(mask_running);
 
     %% Loop until there are jobs to do, or some jobs are still running
     while (max(mask_todo)>0) || (max(mask_running)>0)
@@ -363,8 +363,8 @@ try
             end
             for num_f = 1:length(list_jobs_failed)
                 name_job = list_jobs_failed{num_f};
-                fprintf('%s - The job %s has failed.\n',datestr(clock),name_job);
-                nb_queued = nb_queued - 1,
+                nb_queued = nb_queued - 1;
+                fprintf('%s - The job %s has failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);                
             end
         end
 
@@ -388,8 +388,8 @@ try
             end
             for num_f = 1:length(list_jobs_finished)
                 name_job = list_jobs_finished{num_f};
-                fprintf('%s - The job %s has been successfully completed.\n',datestr(clock),name_job);
-                nb_queued = nb_queued - 1,
+                nb_queued = nb_queued - 1;
+                fprintf('%s - The job %s has been successfully completed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
             end
 
             for num_f = 1:length(list_jobs)
@@ -430,9 +430,9 @@ try
             file_job = [path_logs filesep name_job '.mat'];
             file_log = [path_logs filesep name_job '.log'];
             mask_todo(num_job) = false;
-            mask_running(num_job) = true;
-            nb_queued = nb_queued + 1
-            fprintf('%s - The job %s is now running.\n',datestr(clock),name_job)
+            mask_running(num_job) = true;            
+            nb_queued = nb_queued + 1;
+            fprintf('%s - The job %s is now running (%i jobs in queue).\n',datestr(clock),name_job,nb_queued)
 
             %% Create a temporary shell scripts for 'batch' or 'qsub' modes
             if ~strcmp(opt.mode,'session')
