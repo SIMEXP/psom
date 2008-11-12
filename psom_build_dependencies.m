@@ -101,6 +101,7 @@ end
 list_jobs = fieldnames(pipeline);
 nb_jobs = length(list_jobs);
 
+fprintf('   reorganizing inputs/outputs ...\n')
 for num_j = 1:nb_jobs
     name_job = list_jobs{num_j};
     files_in.(name_job) = unique(psom_files2cell(pipeline.(name_job).files_in));

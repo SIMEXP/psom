@@ -132,8 +132,11 @@ job = load(file_job);
 
 gb_name_structure = 'job';
 gb_list_fields = {'files_in','files_out','command','opt'};
-gb_list_defaults = {NaN,NaN,NaN,NaN};
+gb_list_defaults = {{},{},NaN,{}};
 psom_set_defaults
+
+str_default = evalc('psom_set_defaults');
+fprintf('%s',str_default);
 
 str_log = evalc('command, files_in, files_out, opt,');
 fprintf('%s',str_log);

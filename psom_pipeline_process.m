@@ -345,12 +345,14 @@ try
         flag_nothing_happened = true;
 
         %% Update the status of running jobs
-        new_status_running_jobs = psom_job_status(path_logs,list_jobs(mask_running));
+        list_jobs_running = list_jobs(mask_running);
+        new_status_running_jobs = psom_job_status(path_logs,list_jobs_running);
         mask_done(mask_running) = ismember(new_status_running_jobs,{'finished','failed'});
         mask_todo(mask_running) = mask_todo(mask_running)&~mask_done(mask_running);                        
 
         %% Remove the children of failed jobs from the to-do list
-        list_jobs_failed = list_jobs(ismember(new_status_running_jobs,'failed'));
+
+        list_jobs_failed = list_jobs_running(ismember(new_status_running_jobs,'failed'));
         nb_queued = nb_queued - length(list_jobs_failed);
         if ~isempty(list_jobs_failed)
             if flag_nothing_happened
@@ -365,17 +367,16 @@ try
                 name_job = list_jobs_failed{num_f};
                 fprintf('%s - The job %s has failed.\n',datestr(clock),name_job);
             end
-        end        
+        end
 
         for num_f = 1:length(list_jobs_failed)
-            name_job = list_jobs_failed{num_f};            
-            mask_child = sub_find_children(name_job,deps);            
+            name_job = list_jobs_failed{num_f};
+            mask_child = sub_find_children(name_job,deps);
             mask_todo(mask_child) = false;
         end                
 
         %% Remove the dependencies on finished jobs
-        list_jobs_finished = list_jobs(mask_running);
-        list_jobs_finished = list_jobs_finished(ismember(new_status_running_jobs,'finished'));
+        list_jobs_finished = list_jobs_running(ismember(new_status_running_jobs,'finished'));
         nb_queued = nb_queued - length(list_jobs_finished);
         
         if ~isempty(list_jobs_finished)

@@ -76,10 +76,6 @@ for num_j = 1:nb_jobs
     file_failed = [path_logs filesep name_job '.failed'];
     file_finished = [path_logs filesep name_job '.finished'];
     
-    if exist(file_running,'file');
-        flag_running = true;
-    end
-    
     if exist(file_failed,'file');
         flag_failed = true;
     end
@@ -87,6 +83,10 @@ for num_j = 1:nb_jobs
     if exist(file_finished,'file');
         flag_finished = true;
     end
+    
+    if exist(file_running,'file');
+        flag_running = true;
+    end        
     
     if (flag_running+flag_finished+flag_failed)>1
         error('I am confused : job %s has multiple tags. Sorry dude, I must quit ...',name_job);
