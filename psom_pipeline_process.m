@@ -271,7 +271,7 @@ try
 
         for num_f = 1:length(list_files_necessary)
             if ~exist(list_files_necessary{num_f},'file')
-                fprintf('The file %s is necessary to run the pipeline, but is unfortunately missing.\n',list_files_necessary{num_f})
+                fprintf('The file %s is necessary to run job %s, but is unfortunately missing.\n',list_files_necessary{num_f},name_job)
                 flag_ready = false;
             end
         end
