@@ -108,9 +108,10 @@ for num_j = 1:nb_jobs
 end
 
 graph_deps = sparse(nb_jobs,nb_jobs);
+fprintf('   Analyzing job : ')
 for num_j = 1:nb_jobs
     name_job1 = list_jobs{num_j};
-    
+    fprintf('%s; ',name_job1);
     for num_k = 1:nb_jobs
         name_job2 = list_jobs{num_k};
         
@@ -131,4 +132,5 @@ for num_j = 1:nb_jobs
         end
     end
 end
+fprintf('\n')
             
