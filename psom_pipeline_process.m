@@ -270,7 +270,7 @@ try
         list_files_necessary = list_files_needed(~ismember(list_files_needed,list_files_tobe));
 
         for num_f = 1:length(list_files_necessary)
-            if ~exist(list_files_necessary{num_f},'file')
+            if ~exist(list_files_necessary{num_f},'file')&~isempty(list_files_necessary{num_f})&~strcmp(list_files_necessary{num_f},'gb_niak_omitted')
                 fprintf('The file %s is necessary to run job %s, but is unfortunately missing.\n',list_files_necessary{num_f},name_job)
                 flag_ready = false;
             end
