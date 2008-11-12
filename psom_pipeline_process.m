@@ -336,7 +336,7 @@ try
     mask_todo = mask_todo(:);
     mask_done = ~mask_todo;   
     mask_running = mask_done; % Start back at the point where all the finished jobs have just finished
-    nb_queued = sum(mask_running);
+    nb_queued = sum(mask_running),
 
     %% Loop until there are jobs to do, or some jobs are still running
     while (max(mask_todo)>0) || (max(mask_running)>0)
@@ -352,7 +352,6 @@ try
         %% Remove the children of failed jobs from the to-do list
 
         list_jobs_failed = list_jobs_running(ismember(new_status_running_jobs,'failed'));
-        nb_queued = nb_queued - length(list_jobs_failed);
         if ~isempty(list_jobs_failed)
             if flag_nothing_happened
                 flag_nothing_happened = false;
@@ -365,6 +364,7 @@ try
             for num_f = 1:length(list_jobs_failed)
                 name_job = list_jobs_failed{num_f};
                 fprintf('%s - The job %s has failed.\n',datestr(clock),name_job);
+                nb_queued = nb_queued - 1,
             end
         end
 
@@ -376,7 +376,6 @@ try
 
         %% Remove the dependencies on finished jobs
         list_jobs_finished = list_jobs_running(ismember(new_status_running_jobs,'finished'));
-        nb_queued = nb_queued - length(list_jobs_finished);
         
         if ~isempty(list_jobs_finished)
             if flag_nothing_happened
@@ -390,6 +389,7 @@ try
             for num_f = 1:length(list_jobs_finished)
                 name_job = list_jobs_finished{num_f};
                 fprintf('%s - The job %s has been successfully completed.\n',datestr(clock),name_job);
+                nb_queued = nb_queued - 1,
             end
 
             for num_f = 1:length(list_jobs)
@@ -431,7 +431,7 @@ try
             file_log = [path_logs filesep name_job '.log'];
             mask_todo(num_job) = false;
             mask_running(num_job) = true;
-            nb_queued = nb_queued + 1;
+            nb_queued = nb_queued + 1
             fprintf('%s - The job %s is now running.\n',datestr(clock),name_job)
 
             %% Create a temporary shell scripts for 'batch' or 'qsub' modes
