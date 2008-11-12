@@ -211,7 +211,6 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Generating file names
-
 [path_logs,name_pipeline,ext_pl] = fileparts(file_pipeline);
 file_pipe_running = cat(2,path_logs,filesep,name_pipeline,'.running');
 file_pipe_log = cat(2,path_logs,filesep,name_pipeline,'.log');
@@ -331,13 +330,13 @@ try
     nb_points = 0;        
     path_tmp = psom_path_tmp(['_',name_pipeline]); % Create a temporary folder for shell scripts
 
-    %% Initialize job status
-    nb_queued = 0;
+    %% Initialize job status    
     curr_status = psom_job_status(path_logs,list_jobs);    
-    mask_todo = ~ismember(curr_status,{'finished'}); % done jobs (there is no failed jobs at this stage)
+    mask_todo = ~ismember(curr_status,{'finished'}); % done jobs (there is no failed jobs at this stage)    
     mask_todo = mask_todo(:);
     mask_done = ~mask_todo;   
     mask_running = mask_done; % Start back at the point where all the finished jobs have just finished
+    nb_queued = sum(mask_running);
 
     %% Loop until there are jobs to do, or some jobs are still running
     while (max(mask_todo)>0) || (max(mask_running)>0)
