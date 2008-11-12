@@ -266,7 +266,7 @@ if ~exist(file_running,'file') || opt.flag_restart
     opt_proc.nb_checks_per_point = opt.nb_checks_per_point;
     psom_pipeline_process(file_pipeline,opt_proc);
 else
-    fprintf('The pipeline is already running and FLAG_RESTART is off. I won''t do anything');
+    fprintf('The pipeline is already running and FLAG_RESTART is off. I won''t do anything\n');
 end
 
 if opt.flag_batch

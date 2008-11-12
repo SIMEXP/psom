@@ -349,8 +349,60 @@ try
         mask_done(mask_running) = ismember(new_status_running_jobs,{'finished','failed'});
         mask_todo(mask_running) = mask_todo(mask_running)&~mask_done(mask_running);                        
 
+        %% In qsub mode, check if there was nothing wrong with the
+        %% execution of the script
+        if strcmp(opt.mode,'qsub') 
+            mask_unfinished = ismember(new_status_running_jobs,{'unfinished'});
+            list_num_unfinished = find(mask_unfinished);
+            list_num_unfinished = list_num_unfinished(:)';
+            for num_f = list_num_unfinished
+                name_job = list_jobs_running{num_f};
+                file_qsub_o = [path_tmp filesep name_job '.oqsub'];
+                file_qsub_e = [path_tmp filesep name_job '.eqsub'];
+                
+                if (exist(file_qsub_o,'file')||exist(file_qsub_e,'file'))
+                    %% Huho !! the qsub script terminated, but the job is
+                    %% still neither failed or finished. The script itself
+                    %% must have crashed
+                    fprintf('%s - The script of job %s crashed, I guess we will count that one as failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
+                    
+                    file_log = [path_logs filesep name_job '.log'];
+                    file_failed = [path_logs filesep name_job '.failed']; % put a failed tag
+                    hff = fopen(file_failed,'w');
+                    fprintf(hff,'%s',datestr(clock));
+                    fclose(hff);
+                    
+                    if exist(file_log,'file') % read log file
+                        hfl = fopen(file_log,'r');
+                        str_log = fread(hfl,Inf,'uint8=>char')';
+                        fclose(hfl);                        
+                    else
+                        str_log = '';
+                    end
+                    if exist(file_qsub_o,'file') % read qsub output file
+                        hfl = fopen(file_qsub_o,'r');
+                        str_o = fread(hfl,Inf,'uint8=>char')';
+                        fclose(hfl); 
+                    else
+                        str_o = '';                        
+                    end
+                    if exist(file_qsub_e,'file') % read qusb error file
+                        hfl = fopen(file_qsub_e,'r');
+                        str_e = fread(hfl,Inf,'uint8=>char')';
+                        fclose(hfl); 
+                    else
+                        str_e = '';                        
+                    end
+                    hfl = fopen(file_log,'w'); % Append the log, qsub output and qsub error in the log file
+                    fprintf(hf,'*********\nLOG FILE\n*********\n%s',str_log);
+                    fprintf(hf,'*********\nQSUB OUTPUT\n*********\n%s',str_o);
+                    fprintf(hf,'*********\nQSUB INPUT\n*********\n%s',str_e);
+                    fclose(hfl);
+                end
+            end
+        end
+        
         %% Remove the children of failed jobs from the to-do list
-
         list_jobs_failed = list_jobs_running(ismember(new_status_running_jobs,'failed'));
         if ~isempty(list_jobs_failed)
             if flag_nothing_happened
@@ -436,6 +488,7 @@ try
 
             %% Create a temporary shell scripts for 'batch' or 'qsub' modes
             if ~strcmp(opt.mode,'session')
+                
                 switch gb_psom_language
                     case 'matlab'
                         if ~isempty(opt.shell_options)
@@ -450,11 +503,12 @@ try
                             instr_job = sprintf('%s --eval "cd %s, load %s, path(path_work), psom_run_job(''%s''),">%s\n',opt.shell_options,opt.command_matlab,path_logs,file_pipe_path,file_job,file_log);
                         end
                 end
-
+                                  
                 file_shell = [path_tmp filesep name_job '.sh'];
                 hf = fopen(file_shell,'w');
                 fprintf(hf,'%s',instr_job);
                 fclose(hf);
+                
             end
 
             %% run the job
@@ -474,8 +528,11 @@ try
                     end
 
                 case 'qsub'
+                    
+                    file_qsub_o = [path_tmp filesep name_job '.oqsub'];
+                    file_qsub_e = [path_tmp filesep name_job '.eqsub'];
 
-                    instr_qsub = ['qsub -N ' name_job(1:min(15,length(name_job))) ' ' opt.qsub_options ' ' file_shell];
+                    instr_qsub = ['qsub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_job(1:min(15,length(name_job))) ' ' opt.qsub_options ' ' file_shell];
                     [fail,msg] = system(instr_qsub);
                     if fail~=0
                         error('Something went bad with the qsub command. The command was : %s . The error message was : %s',instr_qsub,msg)
