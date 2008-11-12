@@ -80,7 +80,7 @@ elseif iscellstr(files) %% That's a cell
 elseif ischar(files) % That's a string
 
     for num_f = 1:size(files,1)
-        if ~strcmp(deblank(files(num_f,:)),'gb_niak_omitted')&~isempty(files{num_i})
+        if ~strcmp(deblank(files(num_f,:)),'gb_niak_omitted')&~isempty(deblank(files(num_f,:)))
             cell_files{num_cell} = sub_suppress_doublon(files(num_f,:));
         end
     end
