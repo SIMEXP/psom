@@ -109,10 +109,17 @@ for num_j = 1:nb_jobs
 end
 
 graph_deps = sparse(nb_jobs,nb_jobs);
-fprintf('   Analyzing job : ')
+fprintf('   Analyzing job inputs/outputs, percentage completed : ')
+curr_perc = -1;
+
 for num_j = 1:nb_jobs
     name_job1 = list_jobs{num_j};
-    fprintf('%s; ',name_job1);
+    new_perc = 2*floor(50*num_j/nb_jobs);
+    if curr_perc~=new_perc
+        fprintf(' %1.0f',new_perc);
+        curr_perc = new_perc;
+    end
+    
     for num_k = 1:nb_jobs
         name_job2 = list_jobs{num_k};
         
