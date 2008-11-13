@@ -602,34 +602,36 @@ file_qsub_o = [path_logs filesep name_job '.oqsub'];
 file_qsub_e = [path_logs filesep name_job '.eqsub'];
 file_log = [path_logs filesep name_job '.log'];
 
-if exist(file_log,'file') % read log file
-    hfl = fopen(file_log,'r');
-    str_log = fread(hfl,Inf,'uint8=>char')';
-    fclose(hfl);
-else
-    str_log = '';
-end
+if exist(file_qsub_o)|exist(file_qsub_e)
+    if exist(file_log,'file') % read log file
+        hfl = fopen(file_log,'r');
+        str_log = fread(hfl,Inf,'uint8=>char')';
+        fclose(hfl);
+    else
+        str_log = '';
+    end
 
-if exist(file_qsub_o,'file') % read qsub output file
-    hfl = fopen(file_qsub_o,'r');
-    str_o = fread(hfl,Inf,'uint8=>char')';
-    fclose(hfl);
-    delete(file_qsub_o)
-else
-    str_o = '';
-end
+    if exist(file_qsub_o,'file') % read qsub output file
+        hfl = fopen(file_qsub_o,'r');
+        str_o = fread(hfl,Inf,'uint8=>char')';
+        fclose(hfl);
+        delete(file_qsub_o)
+    else
+        str_o = '';
+    end
 
-if exist(file_qsub_e,'file') % read qusb error file
-    hfl = fopen(file_qsub_e,'r');
-    str_e = fread(hfl,Inf,'uint8=>char')';
-    fclose(hfl);
-    delete(file_qsub_e)
-else
-    str_e = '';
-end
+    if exist(file_qsub_e,'file') % read qusb error file
+        hfl = fopen(file_qsub_e,'r');
+        str_e = fread(hfl,Inf,'uint8=>char')';
+        fclose(hfl);
+        delete(file_qsub_e)
+    else
+        str_e = '';
+    end
 
-hfl = fopen(file_log,'w'); % Append the log, qsub output and qsub error in the log file
-fprintf(hfl,'*********\nLOG FILE\n*********\n%s',str_log);
-fprintf(hfl,'*********\nQSUB OUTPUT\n*********\n%s',str_o);
-fprintf(hfl,'*********\nQSUB INPUT\n*********\n%s',str_e);
-fclose(hfl);
+    hfl = fopen(file_log,'w'); % Append the log, qsub output and qsub error in the log file
+    fprintf(hfl,'*********\nLOG FILE\n*********\n%s',str_log);
+    fprintf(hfl,'*********\nQSUB OUTPUT\n*********\n%s',str_o);
+    fprintf(hfl,'*********\nQSUB INPUT\n*********\n%s',str_e);
+    fclose(hfl);
+end
