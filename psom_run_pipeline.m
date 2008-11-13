@@ -138,8 +138,9 @@ function [] = psom_run_pipeline(pipeline,opt)
 % _________________________________________________________________________
 % COMMENTS:
 %
-% Empty file strings in the pipeline description are simply ignored in the
-% dependency graph and checks for the existence of required files.
+% Empty file strings or strings equal to 'gb_niak_omitted' in the pipeline 
+% description are ignored in the dependency graph and checks for 
+% the existence of required files.
 %
 % Existing 'running' or 'failed' tags will be removed. Make sure the
 % pipeline is not already running if the background if you do that. That

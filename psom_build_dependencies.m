@@ -70,6 +70,8 @@ function [deps,list_jobs,files_in,files_out,graph_deps] = psom_build_dependencie
 % _________________________________________________________________________
 % COMMENTS
 %
+% Empty file names, or file names equal to 'gb_niak_omitted' are ignored.
+%
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008.
 % Maintainer : pbellec@bic.mni.mcgill.ca
 % See licensing information in the code.

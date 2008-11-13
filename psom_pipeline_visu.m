@@ -17,7 +17,7 @@ function [] = psom_pipeline_visu(file_pipeline,action,opt_action)
 %               
 % ACTION         
 %       (string) Possible values :
-%           'running', 'failed', 'finished', 'unfinished', 'log', 
+%           'running', 'failed', 'finished', 'none', 'log', 
 %           'graph_stages',
 %           
 % OPT           
@@ -29,17 +29,18 @@ function [] = psom_pipeline_visu(file_pipeline,action,opt_action)
 % What the function does depends on the argument ACTION :
 %
 % ACTION = 'running'
-%       Display a list of the stages of the pipeline that are currently 
+%       Display a list of the jobs of the pipeline that are currently 
 %       running and that are scheduled in the queue.
 %
 % ACTION = 'failed'
-%       Display a list of the stages of the pipeline that have failed.
+%       Display a list of the jobs of the pipeline that have failed.
 %
 % ACTION = 'finished'
-%       Display a list of finished stages of the pipeline.
+%       Display a list of finished jobs of the pipeline.
 %
-% ACTION = 'unfinished'
-%       Display a list of unfinished stages.
+% ACTION = 'none'
+%       Display a list of jobs without tag (no attempt has been made to
+%       process the job).
 %
 % ACTION = 'log'
 %       Print the log files for all jobs whose name include the string OPT.
@@ -97,7 +98,7 @@ curr_status = psom_job_status(path_logs,list_jobs);
 
 switch action
     
-    case {'finished','failed','unfinished','running'}
+    case {'finished','failed','none','running'}
         
         mask_jobs = ismember(curr_status,action);
         jobs_action = list_jobs(mask_jobs);

@@ -27,6 +27,8 @@ function cell_files = psom_files2cell(files)
 % _________________________________________________________________________
 % COMMENTS : 
 %
+% Empty file names, or file names equal to 'gb_niak_omitted' are ignored.
+%
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008.
 % Maintainer : pbellec@bic.mni.mcgill.ca
 % See licensing information in the code.

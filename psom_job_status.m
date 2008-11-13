@@ -27,7 +27,8 @@ function curr_status = psom_job_status(path_logs,list_jobs)
 %           'failed' : the job was processed, but the execution somehow
 %                  failed.
 %           'finished' : the job has been successfully processed.
-%           'unfinished' : no attempt has been made to process the job yet.
+%           'none' : no attempt has been made to process the job yet 
+%                  (neither 'failed', 'running' or 'finished').
 %
 % _________________________________________________________________________
 % COMMENTS : 
@@ -68,7 +69,7 @@ for num_j = 1:nb_jobs
     flag_running = false;
     flag_finished = false;
     flag_failed = false;
-    flag_unfinished = false;
+    flag_none = false;
     
     name_job = list_jobs{num_j};
     
@@ -93,11 +94,11 @@ for num_j = 1:nb_jobs
     end
     
     if ~(flag_running || flag_finished || flag_failed)
-        flag_unfinished = true;
+        flag_none = true;
     end
     
-    if flag_unfinished
-        curr_status{num_j} = 'unfinished';
+    if flag_none
+        curr_status{num_j} = 'none';
     elseif flag_finished
         curr_status{num_j} = 'finished';
     elseif flag_failed

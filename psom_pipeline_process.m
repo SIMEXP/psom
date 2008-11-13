@@ -110,6 +110,9 @@ function [] = psom_pipeline_process(file_pipeline,opt)
 % _________________________________________________________________________
 % COMMENTS:
 %
+% Empty file names, or file names equal to 'gb_niak_omitted' are ignored
+% when building the dependency graph between jobs.
+%
 % Existing 'running' or 'failed' tags will be removed. Make sure the
 % pipeline is not already running if the background if you do that. That
 % behavior is useful to restart a pipeline that has somehow crashed.
@@ -286,7 +289,7 @@ try
     mask_running = ismember(curr_status,'running'); % running jobs
 
     if max(mask_running)>0
-        fprintf('Some running tags were found on some jobs before even starting the pipeline. I reseted all tags to ''unfinished''.\n');
+        fprintf('Some running tags were found on some jobs before even starting the pipeline. I reseted all tags to ''none''.\n');
         list_jobs_running = list_jobs(mask_running);
         for num_f = 1:length(list_jobs_running)
             file_running = [path_logs filesep list_jobs_running{num_f} '.running'];
@@ -311,8 +314,24 @@ try
         list_jobs_unfinished = list_jobs(mask_unfinished);
         for num_f = 1:length(list_jobs_unfinished)
             file_log = [path_logs filesep list_jobs_unfinished{num_f} '.log'];
+            file_qsub_o = [path_logs filesep name_job '.oqsub'];
+            file_qsub_e = [path_logs filesep name_job '.eqsub'];
+            file_exit = [path_logs filesep name_job '.exit'];
+            
             if exist(file_log,'file')
                 delete(file_log)
+            end
+            
+            if exist(file_qsub_o,'file')
+                delete(file_qsub_o)
+            end
+            
+            if exist(file_qsub_e,'file')
+                delete(file_qsub_e)
+            end
+            
+            if exist(file_qsub_e,'file')
+                delete(file_exit)
             end
         end
     end
@@ -352,19 +371,18 @@ try
         %% In qsub mode, check if there was nothing wrong with the
         %% execution of the script
         if strcmp(opt.mode,'qsub') 
-            mask_unfinished = ismember(new_status_running_jobs,{'unfinished'});
-            list_num_unfinished = find(mask_unfinished);
-            list_num_unfinished = list_num_unfinished(:)';
-            for num_f = list_num_unfinished
+            mask_none = ismember(new_status_running_jobs,{'none'});
+            list_num_none = find(mask_none);
+            list_num_none = list_num_none(:)';
+            for num_f = list_num_none
                 name_job = list_jobs_running{num_f};
-                file_qsub_o = [path_logs filesep name_job '.oqsub'];
-                file_qsub_e = [path_logs filesep name_job '.eqsub'];
+                file_exit = [path_logs filesep name_job '.exit'];                
                 
-                if (exist(file_qsub_o,'file')||exist(file_qsub_e,'file'))
+                if exist(file_exit,'file')
                     %% Huho !! the qsub script terminated, but the job is
-                    %% still neither failed or finished. The script itself
-                    %% must have crashed
-                    fprintf('%s - The script of job %s crashed, I guess we will count that one as failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);                                        
+                    %% still neither running, failed or finished. 
+                    %% The script itself must have crashed
+                    fprintf('%s - The script of job %s terminated without generating any tag, I guess we will count that one as failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
                     file_failed = [path_logs filesep name_job '.failed']; % put a failed tag
                     hf = fopen(file_failed,'w');
                     fprintf(hf,'%s',datestr(clock));
@@ -389,6 +407,10 @@ try
                 name_job = list_jobs_failed{num_f};
                 nb_queued = nb_queued - 1;
                 fprintf('%s - The job %s has failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
+                file_exit = [path_logs filesep name_job '.exit'];
+                if exist(file_exit)
+                    delete(file_exit);
+                end
                 if strcmp(opt.mode,'qsub')
                     sub_merge_logs(path_logs,name_job); % merge the various log files
                 end
@@ -417,6 +439,10 @@ try
                 name_job = list_jobs_finished{num_f};
                 nb_queued = nb_queued - 1;
                 fprintf('%s - The job %s has been successfully completed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
+                file_exit = [path_logs filesep name_job '.exit'];
+                if exist(file_exit)
+                    delete(file_exit);
+                end
                 if strcmp(opt.mode,'qsub')
                     sub_merge_logs(path_logs,name_job); % merge the various log files
                 end
@@ -483,8 +509,9 @@ try
                 end
                                   
                 file_shell = [path_tmp filesep name_job '.sh'];
+                file_exit = [path_tmp filesep name_job '.exit'];
                 hf = fopen(file_shell,'w');
-                fprintf(hf,'%s',instr_job);
+                fprintf(hf,'%s\ntouch %s',instr_job,file_exit);
                 fclose(hf);
                 
             end
@@ -530,7 +557,7 @@ try
             nb_checks = nb_checks+1;
         end
 
-    end % While there are unfinished jobs
+    end % While there are none jobs
 
 catch
 

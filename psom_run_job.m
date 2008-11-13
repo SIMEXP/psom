@@ -186,6 +186,11 @@ try
 
     %% Finishing the job
     delete(file_running);
+    if exist(file_failed)
+        flag_failed = true;
+        fprintf('Huho the job completed successfully but I found a FAILED tag. There must be something weird going on with the pipeline manager. Anyway, I will let the FAILED tag just in case ...');
+    end
+        
     if flag_failed
         msg1 = sprintf('The job has FAILED');
         tmp = datestr(clock);
@@ -201,10 +206,14 @@ try
     fprintf('\n%s\n%s\n%s\n%s\n',stars,msg1,msg2,stars);
 
 catch
+    
     if exist('hf','var')
         fprintf('%s',str_log);
     end
     delete(file_running);
+    msg1 = sprintf('The job has FAILED');
+    tmp = datestr(clock);
+    save(file_failed,'tmp');
     errmsg = lasterror;
     rethrow(errmsg)
 end
