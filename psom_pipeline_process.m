@@ -492,9 +492,9 @@ try
                 switch gb_psom_language
                     case 'matlab'
                         if ~isempty(opt.shell_options)
-                            instr_job = sprintf('%s\n%s -r "cd %s, load %s, path(path_work), psom_run_job(''%s''),">%s\n',opt.shell_options,opt.command_matlab,path_logs,file_pipe_path,file_job,file_log);
+                            instr_job = sprintf('%s\n%s -nosplash -nojvm -r "cd %s, load %s, path(path_work), psom_run_job(''%s''),">%s\n',opt.shell_options,opt.command_matlab,path_logs,file_pipe_path,file_job,file_log);
                         else
-                            instr_job = sprintf('%s -r "cd %s, load %s, path(path_work), psom_run_job(''%s''),">%s\n',opt.command_matlab,path_logs,file_pipe_path,file_job,file_log);
+                            instr_job = sprintf('%s -nosplash -nojvm -r "cd %s, load %s, path(path_work), psom_run_job(''%s''),">%s\n',opt.command_matlab,path_logs,file_pipe_path,file_job,file_log);
                         end
                     case 'octave'
                         if ~isempty(opt.shell_options)
