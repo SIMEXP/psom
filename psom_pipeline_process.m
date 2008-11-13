@@ -224,16 +224,11 @@ if ~exist(file_pipeline,'file') % Does the pipeline exist ?
     error('Could not find the pipeline file %s. You first need to initialize the pipeline using PSOM_PIPELINE_INIT !',file_pipeline);
 end
 
-if exist(file_pipe_running,'file') % Is the pipeline running ?
-    fprintf('A running tag has been found on the pipeline ! This means the pipeline was either running or crashed.\nI will assume it crashed and restart the pipeline.\n')
-    delete(file_pipe_running);
-end
-str_now = datestr(clock);
-save(file_pipe_running,'str_now'); %% Put a running tag on the pipeline
-
 %% If specified, start the pipeline in the background
 if flag_batch
 
+    fprintf('I am sending the pipeline manager in the background using the ''at'' command.\n')
+    
     switch gb_psom_language
         case 'matlab'
             instr_job = sprintf('%s -nosplash -nojvm -logfile %s -r "cd %s, load %s, path(path_work), opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.flag_batch = false; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,file_pipe_log,path_logs,file_pipe_path,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
@@ -259,6 +254,14 @@ end
 % a try/catch block is used to clean temporary file if the user is
 % interrupting the pipeline of if an error occurs
 try        
+    
+    %% Check if the pipeline was not already running
+    if exist(file_pipe_running,'file') % Is the pipeline running ?
+        fprintf('A running tag has been found on the pipeline ! This means the pipeline was either running or crashed.\nI will assume it crashed and restart the pipeline.\n')
+        delete(file_pipe_running);
+    end
+    str_now = datestr(clock);
+    save(file_pipe_running,'str_now'); %% Put a running tag on the pipeline
 
     load(file_pipeline);
 
@@ -509,7 +512,7 @@ try
                 end
                                   
                 file_shell = [path_tmp filesep name_job '.sh'];
-                file_exit = [path_tmp filesep name_job '.exit'];
+                file_exit = [path_logs filesep name_job '.exit'];
                 hf = fopen(file_shell,'w');
                 fprintf(hf,'%s\ntouch %s',instr_job,file_exit);
                 fclose(hf);
