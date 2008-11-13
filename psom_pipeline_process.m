@@ -365,7 +365,11 @@ try
                     %% still neither failed or finished. The script itself
                     %% must have crashed
                     fprintf('%s - The script of job %s crashed, I guess we will count that one as failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);                                        
-                    file_failed = [path_logs filesep name_job '.failed']; % put a failed tag                    
+                    file_failed = [path_logs filesep name_job '.failed']; % put a failed tag
+                    hf = fopen(file_failed,'w');
+                    fprintf(hf,'%s',datestr(clock));
+                    fclose(hf);
+                    new_status_running_jobs{num_f} = 'failed';
                 end
             end
         end
@@ -603,6 +607,7 @@ file_qsub_e = [path_logs filesep name_job '.eqsub'];
 file_log = [path_logs filesep name_job '.log'];
 
 if exist(file_qsub_o)|exist(file_qsub_e)
+    
     if exist(file_log,'file') % read log file
         hfl = fopen(file_log,'r');
         str_log = fread(hfl,Inf,'uint8=>char')';
