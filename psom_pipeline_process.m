@@ -383,6 +383,7 @@ try
                         hfl = fopen(file_qsub_o,'r');
                         str_o = fread(hfl,Inf,'uint8=>char')';
                         fclose(hfl); 
+                        delete(file_qsub_o)
                     else
                         str_o = '';                        
                     end
@@ -390,6 +391,7 @@ try
                         hfl = fopen(file_qsub_e,'r');
                         str_e = fread(hfl,Inf,'uint8=>char')';
                         fclose(hfl); 
+                        delete(file_qsub_e)
                     else
                         str_e = '';                        
                     end
@@ -529,8 +531,8 @@ try
 
                 case 'qsub'
                     
-                    file_qsub_o = [path_tmp filesep name_job '.oqsub'];
-                    file_qsub_e = [path_tmp filesep name_job '.eqsub'];
+                    file_qsub_o = [path_logs filesep name_job '.oqsub'];
+                    file_qsub_e = [path_logs filesep name_job '.eqsub'];
 
                     instr_qsub = ['qsub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_job(1:min(15,length(name_job))) ' ' opt.qsub_options ' ' file_shell];
                     [fail,msg] = system(instr_qsub);

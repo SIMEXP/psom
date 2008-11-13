@@ -12,7 +12,7 @@ gb_psom_command_matlab = 'matlab'; % how to invoke matlab
 
 gb_psom_command_octave = 'octave'; % how to invoke octave
 
-gb_psom_qsub_options = ''; % Options for the sge qsub system, example : '-q all.q@yeatman,all.q@zeus' will force qsub to only use the yeatman workstation;
+gb_psom_qsub_options = '-r y'; % Options for the sge qsub system, example : '-q all.q@yeatman,all.q@zeus' will force qsub to only use the yeatman workstation;
 
 gb_psom_shell_options = ''; % Options for the shell in batch or qsub modes
 
