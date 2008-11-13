@@ -189,7 +189,7 @@ try
     
     if exist(file_failed)
         flag_failed = true;
-        fprintf('Huho the job completed successfully but I found a FAILED tag. There must be something weird going on with the pipeline manager. Anyway, I will let the FAILED tag just in case ...');
+        fprintf('Huho the job just finished but I found a FAILED tag. There must be something weird going on with the pipeline manager. Anyway, I will let the FAILED tag just in case ...');
     end
         
     if flag_failed
