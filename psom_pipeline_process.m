@@ -357,49 +357,15 @@ try
             list_num_unfinished = list_num_unfinished(:)';
             for num_f = list_num_unfinished
                 name_job = list_jobs_running{num_f};
-                file_qsub_o = [path_tmp filesep name_job '.oqsub'];
-                file_qsub_e = [path_tmp filesep name_job '.eqsub'];
+                file_qsub_o = [path_logs filesep name_job '.oqsub'];
+                file_qsub_e = [path_logs filesep name_job '.eqsub'];
                 
                 if (exist(file_qsub_o,'file')||exist(file_qsub_e,'file'))
                     %% Huho !! the qsub script terminated, but the job is
                     %% still neither failed or finished. The script itself
                     %% must have crashed
-                    fprintf('%s - The script of job %s crashed, I guess we will count that one as failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
-                    
-                    file_log = [path_logs filesep name_job '.log'];
-                    file_failed = [path_logs filesep name_job '.failed']; % put a failed tag
-                    hff = fopen(file_failed,'w');
-                    fprintf(hff,'%s',datestr(clock));
-                    fclose(hff);
-                    
-                    if exist(file_log,'file') % read log file
-                        hfl = fopen(file_log,'r');
-                        str_log = fread(hfl,Inf,'uint8=>char')';
-                        fclose(hfl);                        
-                    else
-                        str_log = '';
-                    end
-                    if exist(file_qsub_o,'file') % read qsub output file
-                        hfl = fopen(file_qsub_o,'r');
-                        str_o = fread(hfl,Inf,'uint8=>char')';
-                        fclose(hfl); 
-                        delete(file_qsub_o)
-                    else
-                        str_o = '';                        
-                    end
-                    if exist(file_qsub_e,'file') % read qusb error file
-                        hfl = fopen(file_qsub_e,'r');
-                        str_e = fread(hfl,Inf,'uint8=>char')';
-                        fclose(hfl); 
-                        delete(file_qsub_e)
-                    else
-                        str_e = '';                        
-                    end
-                    hfl = fopen(file_log,'w'); % Append the log, qsub output and qsub error in the log file
-                    fprintf(hf,'*********\nLOG FILE\n*********\n%s',str_log);
-                    fprintf(hf,'*********\nQSUB OUTPUT\n*********\n%s',str_o);
-                    fprintf(hf,'*********\nQSUB INPUT\n*********\n%s',str_e);
-                    fclose(hfl);
+                    fprintf('%s - The script of job %s crashed, I guess we will count that one as failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);                                        
+                    file_failed = [path_logs filesep name_job '.failed']; % put a failed tag                    
                 end
             end
         end
@@ -418,7 +384,10 @@ try
             for num_f = 1:length(list_jobs_failed)
                 name_job = list_jobs_failed{num_f};
                 nb_queued = nb_queued - 1;
-                fprintf('%s - The job %s has failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);                
+                fprintf('%s - The job %s has failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
+                if strcmp(opt.mode,'qsub')
+                    sub_merge_logs(path_logs,name_job); % merge the various log files
+                end
             end
         end
 
@@ -444,6 +413,9 @@ try
                 name_job = list_jobs_finished{num_f};
                 nb_queued = nb_queued - 1;
                 fprintf('%s - The job %s has been successfully completed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
+                if strcmp(opt.mode,'qsub')
+                    sub_merge_logs(path_logs,name_job); % merge the various log files
+                end
             end
 
             for num_f = 1:length(list_jobs)
@@ -621,3 +593,43 @@ if max(mask_child) == 1
         mask_child = (mask_child | sub_find_children(name_child,deps));
     end
 end
+
+function [] = sub_merge_logs(path_logs,name_job)
+
+%% In qsub mode, merge the output and error streams from qsub with the
+%% regular log file
+file_qsub_o = [path_logs filesep name_job '.oqsub'];
+file_qsub_e = [path_logs filesep name_job '.eqsub'];
+file_log = [path_logs filesep name_job '.log'];
+
+if exist(file_log,'file') % read log file
+    hfl = fopen(file_log,'r');
+    str_log = fread(hfl,Inf,'uint8=>char')';
+    fclose(hfl);
+else
+    str_log = '';
+end
+
+if exist(file_qsub_o,'file') % read qsub output file
+    hfl = fopen(file_qsub_o,'r');
+    str_o = fread(hfl,Inf,'uint8=>char')';
+    fclose(hfl);
+    delete(file_qsub_o)
+else
+    str_o = '';
+end
+
+if exist(file_qsub_e,'file') % read qusb error file
+    hfl = fopen(file_qsub_e,'r');
+    str_e = fread(hfl,Inf,'uint8=>char')';
+    fclose(hfl);
+    delete(file_qsub_e)
+else
+    str_e = '';
+end
+
+hfl = fopen(file_log,'w'); % Append the log, qsub output and qsub error in the log file
+fprintf(hf,'*********\nLOG FILE\n*********\n%s',str_log);
+fprintf(hf,'*********\nQSUB OUTPUT\n*********\n%s',str_o);
+fprintf(hf,'*********\nQSUB INPUT\n*********\n%s',str_e);
+fclose(hfl);
