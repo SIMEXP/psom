@@ -194,12 +194,12 @@ try
         
     if flag_failed
         msg1 = sprintf('The job has FAILED');
-        tmp = datestr(clock);
-        save(file_failed,'tmp');
+        instr_failed = ['touch ',file_failed];
+        system(instr_failed);
     else
         msg1 = sprintf('The job was successfully completed');
-        tmp = datestr(clock);
-        save(file_finished,'tmp');
+        instr_finished = ['touch ',file_finished];
+        system(instr_finished);
     end
 
     msg2 = sprintf('Total time used to process the job : %1.2f sec.',telapsed);
