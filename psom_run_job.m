@@ -186,6 +186,7 @@ try
 
     %% Finishing the job
     delete(file_running);
+    
     if exist(file_failed)
         flag_failed = true;
         fprintf('Huho the job completed successfully but I found a FAILED tag. There must be something weird going on with the pipeline manager. Anyway, I will let the FAILED tag just in case ...');
@@ -203,7 +204,7 @@ try
 
     msg2 = sprintf('Total time used to process the job : %1.2f sec.',telapsed);
     stars = repmat('*',[1 max(size(msg1,2),size(msg2,2))]);
-    fprintf('\n%s\n%s\n%s\n%s\n',stars,msg1,msg2,stars);
+    fprintf('\n%s\n%s\n%s\n%s\n',stars,msg1,msg2,stars);    
 
 catch
     
