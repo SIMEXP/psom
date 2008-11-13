@@ -629,7 +629,7 @@ else
 end
 
 hfl = fopen(file_log,'w'); % Append the log, qsub output and qsub error in the log file
-fprintf(hf,'*********\nLOG FILE\n*********\n%s',str_log);
-fprintf(hf,'*********\nQSUB OUTPUT\n*********\n%s',str_o);
-fprintf(hf,'*********\nQSUB INPUT\n*********\n%s',str_e);
+fprintf(hfl,'*********\nLOG FILE\n*********\n%s',str_log);
+fprintf(hfl,'*********\nQSUB OUTPUT\n*********\n%s',str_o);
+fprintf(hfl,'*********\nQSUB INPUT\n*********\n%s',str_e);
 fclose(hfl);
