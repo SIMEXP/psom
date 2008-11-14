@@ -54,7 +54,7 @@ pipeline.tseries1.files_in = {};
 pipeline.tseries1.files_out = [gb_psom_path_demo 'tseries1.mat'];
 pipeline.tseries1.opt.nb_samples = pipeline.message.opt.nb_samples;
 
-pipeline.tseries2.command = 'tseries = randn([100 1]); totosave(files_out,''tseries'')';
+pipeline.tseries2.command = 'tseries = randn([100 1]); save(files_out,''tseries'')';
 pipeline.tseries2.files_in = {};
 pipeline.tseries2.files_out = [gb_psom_path_demo 'tseries2.mat'];
 pipeline.tseries2.opt.nb_samples = pipeline.message.opt.nb_samples;
