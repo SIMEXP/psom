@@ -29,6 +29,9 @@ function curr_status = psom_job_status(path_logs,list_jobs)
 %           'finished' : the job has been successfully processed.
 %           'none' : no attempt has been made to process the job yet 
 %                  (neither 'failed', 'running' or 'finished').
+%           'exit' : there is no tag on the job, yet the associated script
+%                   was terminated. That implies that the script somehow 
+%                   crashed. Sad ...
 %
 % _________________________________________________________________________
 % COMMENTS : 
@@ -70,13 +73,19 @@ for num_j = 1:nb_jobs
     flag_finished = false;
     flag_failed = false;
     flag_none = false;
+    flag_exit = false;
     
     name_job = list_jobs{num_j};
     
     file_running = [path_logs filesep name_job '.running'];
     file_failed = [path_logs filesep name_job '.failed'];
     file_finished = [path_logs filesep name_job '.finished'];
+    file_exit = [path_logs filesep name_job '.exit'];
     
+    if exist(file_exit,'file');
+        flag_exit = true;
+    end
+
     if exist(file_failed,'file');
         flag_failed = true;
     end
@@ -87,7 +96,7 @@ for num_j = 1:nb_jobs
     
     if exist(file_running,'file');
         flag_running = true;
-    end        
+    end               
     
     if (flag_running+flag_finished+flag_failed)>1
         error('I am confused : job %s has multiple tags. Sorry dude, I must quit ...',name_job);
@@ -96,14 +105,26 @@ for num_j = 1:nb_jobs
     if ~(flag_running || flag_finished || flag_failed)
         flag_none = true;
     end
-    
+        
     if flag_none
-        curr_status{num_j} = 'none';
+        
+        if flag_exit
+            curr_status{num_j} = 'exit';
+        else
+            curr_status{num_j} = 'none';
+        end
+        
     elseif flag_finished
+        
         curr_status{num_j} = 'finished';
+        
     elseif flag_failed
+        
         curr_status{num_j} = 'failed';
+        
     elseif flag_running
+        
         curr_status{num_j} = 'running';
+        
     end
 end

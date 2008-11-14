@@ -367,36 +367,33 @@ try
 
         %% Update the status of running jobs
         list_jobs_running = list_jobs(mask_running);
+        list_num_running = find(mask_running);
         new_status_running_jobs = psom_job_status(path_logs,list_jobs_running);
         mask_done(mask_running) = ismember(new_status_running_jobs,{'finished','failed'});
         mask_todo(mask_running) = mask_todo(mask_running)&~mask_done(mask_running);                        
 
-        %% In qsub mode, check if there was nothing wrong with the
-        %% execution of the script
-        if strcmp(opt.mode,'qsub') 
-            mask_none = ismember(new_status_running_jobs,{'none'});
-            list_num_none = find(mask_none);
-            list_num_none = list_num_none(:)';
-            for num_f = list_num_none
+        %% In qsub mode, check if a script crashed ('exit' tag)
+        if strcmp(opt.mode,'qsub')
+            mask_exit = ismember(new_status_running_jobs,{'exit'});
+            list_num_exit = find(mask_exit);
+            list_num_exit = list_num_exit(:)';
+            for num_f = list_num_exit                
                 name_job = list_jobs_running{num_f};
-                file_exit = [path_logs filesep name_job '.exit'];                
-                
-                if exist(file_exit,'file')
-                    %% Huho !! the qsub script terminated, but the job is
-                    %% still neither running, failed or finished. 
-                    %% The script itself must have crashed
-                    fprintf('%s - The script of job %s terminated without generating any tag, I guess we will count that one as failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
-                    file_failed = [path_logs filesep name_job '.failed']; % put a failed tag
-                    hf = fopen(file_failed,'w');
-                    fprintf(hf,'%s',datestr(clock));
-                    fclose(hf);
-                    new_status_running_jobs{num_f} = 'failed';
-                end
+                fprintf('%s - The script of job %s terminated without generating any tag, I guess we will count that one as failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
+                file_failed = [path_logs filesep name_job '.failed']; % put a failed tag
+                hf = fopen(file_failed,'w');
+                fprintf(hf,'%s',datestr(clock));
+                fclose(hf);
+                new_status_running_jobs{num_f} = 'failed';
             end
         end
         
         %% Remove the children of failed jobs from the to-do list
-        list_jobs_failed = list_jobs_running(ismember(new_status_running_jobs,'failed'));
+        mask_failed = ismember(new_status_running_jobs,'failed');
+        list_num_failed = list_num_running(mask_failed);
+        list_num_failed = list_num_failed(:)';
+        list_jobs_failed = list_jobs_running(mask_failed);
+                
         if ~isempty(list_jobs_failed)
             if flag_nothing_happened
                 flag_nothing_happened = false;
@@ -420,14 +417,16 @@ try
             end
         end
 
-        for num_f = 1:length(list_jobs_failed)
-            name_job = list_jobs_failed{num_f};
-            mask_child = sub_find_children(name_job,deps);
-            mask_todo(mask_child) = false;
+        for num_j = list_num_failed           
+            list_num_child = sub_find_children(num_j,graph_deps);
+            mask_todo(list_num_child) = false;
         end                
 
         %% Remove the dependencies on finished jobs
-        list_jobs_finished = list_jobs_running(ismember(new_status_running_jobs,'finished'));
+        mask_finished = ismember(new_status_running_jobs,'finished');
+        list_num_finished = list_num_running(mask_finished);
+        list_num_finished = list_num_finished(:)';
+        list_jobs_finished = list_jobs_running(mask_finished);
         
         if ~isempty(list_jobs_finished)
             if flag_nothing_happened
@@ -451,13 +450,16 @@ try
                 end
             end
 
-            for num_f = 1:length(list_jobs)
-                name_job = list_jobs{num_f};
-                list_deps = fieldnames(deps.(name_job));
-                if ~isempty(list_deps)
-                    mask_torm = ismember(list_jobs_finished,list_deps);
-                    deps.(name_job) = rmfield(deps.(name_job),list_jobs_finished(mask_torm));
+            num_e = 1;
+            for num_j = list_num_finished
+                list_num_deps = find(graph_deps(num_j,:));
+                list_num_deps = list_num_deps(:)';
+
+                for num_f = list_num_deps
+                    name_job = list_jobs{num_f};
+                    deps.(name_job) = rmfield(deps.(name_job),list_jobs_finished{num_e});
                 end
+                num_e = num_e+1;
             end
         end        
 
@@ -560,7 +562,7 @@ try
             nb_checks = nb_checks+1;
         end
 
-    end % While there are none jobs
+    end % While there are jobs to do
 
 catch
 
@@ -609,36 +611,33 @@ fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
 %% subfunctions %%
 %%%%%%%%%%%%%%%%%%
 
-function mask_child = sub_find_children(name_job,deps)
+function list_num_child = sub_find_children(num_j,graph_deps)
+%% GRAPH_DEPS(J,K) == 1 if and only if JOB K depends on JOB J. GRAPH_DEPS =
+%% 0 otherwise. This (ugly but reasonably fast) recursive code will work
+%% only if the directed graph defined by GRAPH_DEPS is acyclic.
+list_num_child = find(graph_deps(num_j,:));
+list_num_child = list_num_child(:)';
 
-list_jobs = fieldnames(deps);
-mask_child = false([length(list_jobs) 1]);
-for num_j = 1:length(list_jobs)
-    name_job2 = list_jobs{num_j};
-    mask_child(num_j) = ismember(name_job,fieldnames(deps.(name_job2)));
-end
-
-if max(mask_child) == 1
-    
-    list_child = find(mask_child);
-
-    for num_c = list_child'
-        name_child = list_jobs{num_c};
-        mask_child = (mask_child | sub_find_children(name_child,deps));
+if ~isempty(list_num_child)
+    for num_c = list_num_child        
+        list_num_child = union(list_num_child,sub_find_children(num_c,graph_deps));
     end
 end
 
 function [] = sub_merge_logs(path_logs,name_job)
 
 %% In qsub mode, merge the output and error streams from qsub with the
-%% regular log file
+%% regular log file if they exist
 file_qsub_o = [path_logs filesep name_job '.oqsub'];
 file_qsub_e = [path_logs filesep name_job '.eqsub'];
 file_log = [path_logs filesep name_job '.log'];
 
-if exist(file_qsub_o)|exist(file_qsub_e)
-    
-    if exist(file_log,'file') % read log file
+flag_log = exist(file_log,'file');
+flag_qsub_o = exist(file_qsub_o,'file');
+flag_qsub_e = exist(file_qsub_e,'file');
+
+if flag_qsub_e||flag_qsub_o
+    if flag_log % read log file
         hfl = fopen(file_log,'r');
         str_log = fread(hfl,Inf,'uint8=>char')';
         fclose(hfl);
@@ -646,7 +645,7 @@ if exist(file_qsub_o)|exist(file_qsub_e)
         str_log = '';
     end
 
-    if exist(file_qsub_o,'file') % read qsub output file
+    if flag_qsub_o % read qsub output file
         hfl = fopen(file_qsub_o,'r');
         str_o = fread(hfl,Inf,'uint8=>char')';
         fclose(hfl);
@@ -655,7 +654,7 @@ if exist(file_qsub_o)|exist(file_qsub_e)
         str_o = '';
     end
 
-    if exist(file_qsub_e,'file') % read qusb error file
+    if flag_qsub_e % read qusb error file
         hfl = fopen(file_qsub_e,'r');
         str_e = fread(hfl,Inf,'uint8=>char')';
         fclose(hfl);
