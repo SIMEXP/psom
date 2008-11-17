@@ -418,7 +418,7 @@ try
         end
 
         for num_j = list_num_failed           
-            list_num_child = sub_find_children(num_j,graph_deps);
+            list_num_child = find(sub_find_children(num_j,graph_deps));
             mask_todo(list_num_child) = false;
         end                
 
@@ -451,30 +451,21 @@ try
             end
 
             num_e = 1;
-            for num_j = list_num_finished
-                list_num_deps = find(graph_deps(num_j,:));
-                list_num_deps = list_num_deps(:)';
-
-                for num_f = list_num_deps
-                    name_job = list_jobs{num_f};
-                    deps.(name_job) = rmfield(deps.(name_job),list_jobs_finished{num_e});
-                end
-                num_e = num_e+1;
-            end
+            graph_deps(list_num_finished,:) = 0;
         end        
 
         % Update the dependency mask
-        mask_deps = false(size(list_jobs));
-        for num_j = find(mask_todo)'
-            name_job = list_jobs{num_j};
-            mask_deps(num_j) = ~isempty(fieldnames(deps.(name_job)));
-        end
+        mask_deps = max(graph_deps,[],1)>0;
+        mask_deps = mask_deps(:);
         
         %% Finally update the list of currently running jobs
         mask_running(mask_running) = mask_running(mask_running)&~mask_done(mask_running);
         
         %% Time to submit jobs !!
-        while (nb_queued < max_queued) && (max(mask_todo&~mask_deps)>0)
+        list_num_to_run = find(mask_todo&~mask_deps);
+        num_jr = 1;
+        
+        while (nb_queued < max_queued) && (num_jr <= length(list_num_to_run))
 
             if flag_nothing_happened
                 flag_nothing_happened = false;
@@ -486,7 +477,8 @@ try
             end
 
             %% Pick up a job to run
-            num_job = find(mask_todo&~mask_deps,1);
+            num_job = list_num_to_run(num_jr);
+            num_jr = num_jr + 1;
             name_job = list_jobs{num_job};
             file_job = [path_logs filesep name_job '.mat'];
             file_log = [path_logs filesep name_job '.log'];
@@ -611,16 +603,16 @@ fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
 %% subfunctions %%
 %%%%%%%%%%%%%%%%%%
 
-function list_num_child = sub_find_children(num_j,graph_deps)
+function mask_child = sub_find_children(num_j,graph_deps)
 %% GRAPH_DEPS(J,K) == 1 if and only if JOB K depends on JOB J. GRAPH_DEPS =
 %% 0 otherwise. This (ugly but reasonably fast) recursive code will work
 %% only if the directed graph defined by GRAPH_DEPS is acyclic.
-list_num_child = find(graph_deps(num_j,:));
-list_num_child = list_num_child(:)';
+mask_child = graph_deps(num_j,:);
+list_num_child = find(mask_child);
 
 if ~isempty(list_num_child)
     for num_c = list_num_child        
-        list_num_child = union(list_num_child,sub_find_children(num_c,graph_deps));
+        mask_child = mask_child | sub_find_children(num_c,graph_deps);
     end
 end
 
