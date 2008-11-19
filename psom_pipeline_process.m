@@ -227,7 +227,12 @@ end
 %% If specified, start the pipeline in the background
 if flag_batch
 
-    fprintf('I am sending the pipeline manager in the background using the ''at'' command.\n')
+    switch mode
+        case 'qsub'
+            fprintf('I am sending the pipeline manager in the background using the ''qsub'' command.\n')
+        otherwise
+            fprintf('I am sending the pipeline manager in the background using the ''at'' command.\n')
+    end
     
     switch gb_psom_language
         case 'matlab'
@@ -241,7 +246,14 @@ if flag_batch
     fprintf(hf,'%s',instr_job);
     fclose(hf);
 
-    instr_batch = ['at -f ' file_shell ' now'];
+     switch mode
+         case 'qsub'
+             file_qsub_o = [path_logs filesep name_pipeline '.oqsub'];
+             file_qsub_e = [path_logs filesep name_pipeline '.eqsub'];
+             instr_qsub = ['qsub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_pipeline(1:min(15,length(name_pipeline))) ' ' opt.qsub_options ' ' file_shell];
+         otherwise
+             instr_batch = ['at -f ' file_shell ' now'];
+     end
     [fail,msg] = system(instr_batch);
     if fail~=0
         error('Something went bad with the at command. The error message was : %s',msg)
@@ -267,7 +279,7 @@ try
 
     %% Check if all the files necessary to complete the pipeline can be found
     flag_ready = true;
-
+    fprintf('I am checking if all the files necessary to complete the pipeline can be found ...\n')
     for num_j = 1:length(list_jobs)
 
         name_job = list_jobs{num_j};
@@ -288,6 +300,7 @@ try
     end
 
     %% Clean up left-over 'running' tags
+    fprintf('I am checking the current status of jobs ...\n')
     curr_status = psom_job_status(path_logs,list_jobs);
     mask_running = ismember(curr_status,'running'); % running jobs
 
