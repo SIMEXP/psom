@@ -246,7 +246,7 @@ if flag_batch
     fprintf(hf,'%s',instr_job);
     fclose(hf);
 
-     switch mode
+     switch opt.mode
          case 'qsub'
              file_qsub_o = [path_logs filesep name_pipeline '.oqsub'];
              file_qsub_e = [path_logs filesep name_pipeline '.eqsub'];
