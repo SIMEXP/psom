@@ -227,7 +227,7 @@ end
 %% If specified, start the pipeline in the background
 if flag_batch
 
-    switch mode
+    switch opt.mode
         case 'qsub'
             fprintf('I am sending the pipeline manager in the background using the ''qsub'' command.\n')
         otherwise
