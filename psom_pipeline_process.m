@@ -361,7 +361,7 @@ try
 
     nb_checks = 0;
     nb_points = 0;
-    path_tmp = [path_logs tmp]; % Create a temporary folder for shell scripts
+    path_tmp = [path_logs filesep 'tmp']; % Create a temporary folder for shell scripts
     if exist(path_tmp,'dir')
         rmdir(path_tmp,'s');
     end
