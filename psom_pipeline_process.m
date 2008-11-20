@@ -274,12 +274,14 @@ try
     end
     str_now = datestr(clock);
     save(file_pipe_running,'str_now'); %% Put a running tag on the pipeline
-
-    load(file_pipeline);
+    
+    %% Load the pipeline
+    fprintf('Loading the pipeline dependencies ...\n')
+    load(file_pipeline,'list_jobs','deps','graph_deps','files_in');
 
     %% Check if all the files necessary to complete the pipeline can be found
     flag_ready = true;
-    fprintf('I am checking if all the files necessary to complete the pipeline can be found ...\n')
+    fprintf('Checking if all the files necessary to complete the pipeline can be found ...\n')
     for num_j = 1:length(list_jobs)
 
         name_job = list_jobs{num_j};
@@ -294,13 +296,14 @@ try
             end
         end
     end
+    clear files_in
 
     if ~flag_ready
         error('Some files are missing, sorry dude I must quit ...')
     end
 
     %% Clean up left-over 'running' tags
-    fprintf('I am checking the current status of jobs ...\n')
+    fprintf('Checking the current status of jobs ...\n')
     curr_status = psom_job_status(path_logs,list_jobs);
     mask_running = ismember(curr_status,'running'); % running jobs
 
@@ -370,8 +373,7 @@ try
     path_tmp = psom_path_tmp(['_',name_pipeline]); % Create a temporary folder for shell scripts
 
     %% Initialize job status
-    fprintf('Initialize job status ...\n')
-    curr_status = psom_job_status(path_logs,list_jobs);
+    fprintf('Initializing job status ...\n')
     mask_todo = ~ismember(curr_status,{'finished'}); % done jobs (there is no failed jobs at this stage)
     mask_todo = mask_todo(:);
     mask_done = ~mask_todo;
@@ -379,6 +381,7 @@ try
     nb_queued = sum(mask_running);
 
     %% Loop until there are jobs to do, or some jobs are still running
+    fprintf('The pipeline manager starts now !\n')
     while (max(mask_todo)>0) || (max(mask_running)>0)
 
         flag_nothing_happened = true;
