@@ -533,6 +533,7 @@ try
                     if fail~=0
                         error('Something went bad with the at command. The command was : %s . The error message was : %s',instr_batch,msg)
                     end
+                    delete(file_shell);
 
                 case 'qsub'
 
@@ -544,6 +545,7 @@ try
                     if fail~=0
                         error('Something went bad with the qsub command. The command was : %s . The error message was : %s',instr_qsub,msg)
                     end
+                    delete(file_shell);
                     
             end % switch mode
         end % submit jobs
