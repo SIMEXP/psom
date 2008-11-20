@@ -25,8 +25,8 @@ function [] = psom_pipeline_process(file_pipeline,opt)
 %               the pipeline is executed within the current session. The
 %               current matlab search path will be used instead of the one
 %               that was active when the pipeline was initialized. In that
-%               mode, the log files of individual jobs are appendend to the 
-%               log file of the pipeline. 
+%               mode, the log files of individual jobs are appendend to the
+%               log file of the pipeline.
 %
 %           'batch'
 %               Start the pipeline manager and each job in independent
@@ -56,7 +56,7 @@ function [] = psom_pipeline_process(file_pipeline,opt)
 %               the 'at' system command. The pipeline will thus run in the
 %               background and you can continue to work, close matlab or
 %               even unlog from your machine on a linux system without
-%               interrupting it. 
+%               interrupting it.
 %
 %       MAX_QUEUED
 %           (integer, default 1 'batch' modes, Inf in 'session' and 'qsub'
@@ -68,7 +68,7 @@ function [] = psom_pipeline_process(file_pipeline,opt)
 %       SHELL_OPTIONS
 %           (string, default GB_PSOM_SHELL_OPTIONS defined in PSOM_GB_VARS)
 %           some commands that will be added at the begining of the shell
-%           script submitted to batch or qsub. This can be used to set 
+%           script submitted to batch or qsub. This can be used to set
 %           important variables, or source an initialization script.
 %
 %       QSUB_OPTIONS
@@ -197,7 +197,7 @@ switch opt.mode
         if isempty(nb_checks_per_point)
             opt.nb_checks_per_point = Inf;
             nb_checks_per_point = Inf;
-        end        
+        end
     otherwise
         if isempty(time_between_checks)
             opt.time_between_checks = 10;
@@ -233,7 +233,7 @@ if flag_batch
         otherwise
             fprintf('I am sending the pipeline manager in the background using the ''at'' command.\n')
     end
-    
+
     switch gb_psom_language
         case 'matlab'
             instr_job = sprintf('%s -nosplash -nojvm -logfile %s -r "cd %s, load %s, path(path_work), opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.flag_batch = false; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,file_pipe_log,path_logs,file_pipe_path,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
@@ -246,14 +246,14 @@ if flag_batch
     fprintf(hf,'%s',instr_job);
     fclose(hf);
 
-     switch opt.mode
-         case 'qsub'
-             file_qsub_o = [path_logs filesep name_pipeline '.oqsub'];
-             file_qsub_e = [path_logs filesep name_pipeline '.eqsub'];
-             instr_batch = ['qsub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_pipeline(1:min(15,length(name_pipeline))) ' ' opt.qsub_options ' ' file_shell];
-         otherwise
-             instr_batch = ['at -f ' file_shell ' now'];
-     end
+    switch opt.mode
+        case 'qsub'
+            file_qsub_o = [path_logs filesep name_pipeline '.oqsub'];
+            file_qsub_e = [path_logs filesep name_pipeline '.eqsub'];
+            instr_batch = ['qsub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_pipeline(1:min(15,length(name_pipeline))) ' ' opt.qsub_options ' ' file_shell];
+        otherwise
+            instr_batch = ['at -f ' file_shell ' now'];
+    end
     [fail,msg] = system(instr_batch);
     if fail~=0
         error('Something went bad with the at command. The error message was : %s',msg)
@@ -265,8 +265,8 @@ end
 
 % a try/catch block is used to clean temporary file if the user is
 % interrupting the pipeline of if an error occurs
-try        
-    
+try
+
     %% Check if the pipeline was not already running
     if exist(file_pipe_running,'file') % Is the pipeline running ?
         fprintf('A running tag has been found on the pipeline ! This means the pipeline was either running or crashed.\nI will assume it crashed and restart the pipeline.\n')
@@ -304,8 +304,9 @@ try
     curr_status = psom_job_status(path_logs,list_jobs);
     mask_running = ismember(curr_status,'running'); % running jobs
 
+    fprintf('Checking for ''running'' tags ...\n')
     if max(mask_running)>0
-        fprintf('Some running tags were found on some jobs before even starting the pipeline. I reseted all tags to ''none''.\n');
+        fprintf('   Some running tags were found on some jobs before even starting the pipeline. I reseted all tags to ''none''.\n');
         list_jobs_running = list_jobs(mask_running);
         for num_f = 1:length(list_jobs_running)
             file_running = [path_logs filesep list_jobs_running{num_f} '.running'];
@@ -313,6 +314,7 @@ try
         end
     end
 
+    fprintf('Checking for ''failed'' tags ...\n')
     %% Clean up left-over 'failed' tags
     mask_failed = ismember(curr_status,{'failed'}); % failed jobs
     if max(mask_failed)>0
@@ -325,28 +327,30 @@ try
     end
 
     %% Clean up log files for unfinished jobs
+    fprintf('Clean up left-over ''log'', ''exit'' and ''qsub'' error/outputs of unfinished jobs ...\n')
     mask_unfinished = ~ismember(curr_status,'finished'); % non finished jobs
     if max(mask_unfinished)>0
         list_jobs_unfinished = list_jobs(mask_unfinished);
         for num_f = 1:length(list_jobs_unfinished)
-            file_log = [path_logs filesep list_jobs_unfinished{num_f} '.log'];
+            name_job = list_jobs_unfinished{num_f};
+            file_log = [path_logs filesep name_job '.log'];
             file_qsub_o = [path_logs filesep name_job '.oqsub'];
             file_qsub_e = [path_logs filesep name_job '.eqsub'];
             file_exit = [path_logs filesep name_job '.exit'];
-            
+
             if exist(file_log,'file')
                 delete(file_log)
             end
-            
+
             if exist(file_qsub_o,'file')
                 delete(file_qsub_o)
             end
-            
+
             if exist(file_qsub_e,'file')
                 delete(file_qsub_e)
             end
-            
-            if exist(file_qsub_e,'file')
+
+            if exist(file_exit,'file')
                 delete(file_exit)
             end
         end
@@ -355,21 +359,22 @@ try
     %%%%%%%%%%%%%%%%%%%%%%
     %% Run the pipeline %%
     %%%%%%%%%%%%%%%%%%%%%%
-    
+
     %% Print general info about the pipeline
     msg = sprintf('The pipeline %s is now being processed.\nStarted on %s\nUser: %s\nhost : %s\nsystem : %s',name_pipeline,datestr(clock),gb_psom_user,gb_psom_localhost,gb_psom_OS);
     stars = repmat('*',[1 30]);
     fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
 
     nb_checks = 0;
-    nb_points = 0;        
+    nb_points = 0;
     path_tmp = psom_path_tmp(['_',name_pipeline]); % Create a temporary folder for shell scripts
 
-    %% Initialize job status    
-    curr_status = psom_job_status(path_logs,list_jobs);    
-    mask_todo = ~ismember(curr_status,{'finished'}); % done jobs (there is no failed jobs at this stage)    
+    %% Initialize job status
+    fprintf('Initialize job status ...\n')
+    curr_status = psom_job_status(path_logs,list_jobs);
+    mask_todo = ~ismember(curr_status,{'finished'}); % done jobs (there is no failed jobs at this stage)
     mask_todo = mask_todo(:);
-    mask_done = ~mask_todo;   
+    mask_done = ~mask_todo;
     mask_running = mask_done; % Start back at the point where all the finished jobs have just finished
     nb_queued = sum(mask_running);
 
@@ -383,34 +388,33 @@ try
         list_num_running = find(mask_running);
         new_status_running_jobs = psom_job_status(path_logs,list_jobs_running);
         mask_done(mask_running) = ismember(new_status_running_jobs,{'finished','failed'});
-        mask_todo(mask_running) = mask_todo(mask_running)&~mask_done(mask_running);                        
+        mask_todo(mask_running) = mask_todo(mask_running)&~mask_done(mask_running);
 
         %% In qsub mode, check if a script crashed ('exit' tag)
         if strcmp(opt.mode,'qsub')
             mask_exit = ismember(new_status_running_jobs,{'exit'});
             list_num_exit = find(mask_exit);
             list_num_exit = list_num_exit(:)';
-            for num_f = list_num_exit                
+            for num_f = list_num_exit
                 name_job = list_jobs_running{num_f};
                 fprintf('%s - The script of job %s terminated without generating any tag, I guess we will count that one as failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
                 file_failed = [path_logs filesep name_job '.failed']; % put a failed tag
-                hf = fopen(file_failed,'w');
-                fprintf(hf,'%s',datestr(clock));
-                fclose(hf);
+                system(['touch ' file_failed]);
                 new_status_running_jobs{num_f} = 'failed';
             end
         end
-        
+
         %% Remove the children of failed jobs from the to-do list
         mask_failed = ismember(new_status_running_jobs,'failed');
-        list_num_failed = list_num_running(mask_failed);
-        list_num_failed = list_num_failed(:)';
-        list_jobs_failed = list_jobs_running(mask_failed);
-                
-        if ~isempty(list_jobs_failed)
+
+        if max(mask_failed)>0
+            list_num_failed = list_num_running(mask_failed);
+            list_num_failed = list_num_failed(:)';
+            list_jobs_failed = list_jobs_running(mask_failed);
+
             if flag_nothing_happened
                 flag_nothing_happened = false;
-                nb_checks = 0;                
+                nb_checks = 0;
                 if nb_points>0
                     fprintf('\n');
                 end
@@ -420,28 +424,23 @@ try
                 name_job = list_jobs_failed{num_f};
                 nb_queued = nb_queued - 1;
                 fprintf('%s - The job %s has failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
-                file_exit = [path_logs filesep name_job '.exit'];
-                if exist(file_exit)
-                    delete(file_exit);
-                end
-                if strcmp(opt.mode,'qsub')
-                    sub_merge_logs(path_logs,name_job); % merge the various log files
-                end
+            end
+
+            for num_j = list_num_failed
+                list_num_child = find(sub_find_children(num_j,graph_deps));
+                mask_todo(list_num_child) = false;
             end
         end
 
-        for num_j = list_num_failed           
-            list_num_child = find(sub_find_children(num_j,graph_deps));
-            mask_todo(list_num_child) = false;
-        end                
-
         %% Remove the dependencies on finished jobs
         mask_finished = ismember(new_status_running_jobs,'finished');
-        list_num_finished = list_num_running(mask_finished);
-        list_num_finished = list_num_finished(:)';
-        list_jobs_finished = list_jobs_running(mask_finished);
-        
-        if ~isempty(list_jobs_finished)
+
+        if max(mask_finished)>0
+
+            list_num_finished = list_num_running(mask_finished);
+            list_num_finished = list_num_finished(:)';
+            list_jobs_finished = list_jobs_running(mask_finished);
+
             if flag_nothing_happened
                 flag_nothing_happened = false;
                 nb_checks = 0;
@@ -450,34 +449,44 @@ try
                 end
                 nb_points = 0;
             end
+
             for num_f = 1:length(list_jobs_finished)
                 name_job = list_jobs_finished{num_f};
                 nb_queued = nb_queued - 1;
                 fprintf('%s - The job %s has been successfully completed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
+
+                %% Delete additional tag & log files. As the job was
+                %% successfull, no one really cares about that anymore...
                 file_exit = [path_logs filesep name_job '.exit'];
-                if exist(file_exit)
+                file_qsub_o = [path_logs filesep name_job '.oqsub'];
+                file_qsub_e = [path_logs filesep name_job '.oqsub'];
+
+                if exist(file_exit,'file')
                     delete(file_exit);
                 end
-                if strcmp(opt.mode,'qsub')
-                    sub_merge_logs(path_logs,name_job); % merge the various log files
+                if exist(file_qsub_o,'file')
+                    delete(file_qsub_o);
+                end
+                if exist(file_qsub_e,'file')
+                    delete(file_qsub_e);
                 end
             end
 
             num_e = 1;
             graph_deps(list_num_finished,:) = 0;
-        end        
+        end
 
-        % Update the dependency mask
+        %% Update the dependency mask
         mask_deps = max(graph_deps,[],1)>0;
         mask_deps = mask_deps(:);
-        
+
         %% Finally update the list of currently running jobs
         mask_running(mask_running) = mask_running(mask_running)&~mask_done(mask_running);
-        
+
         %% Time to submit jobs !!
         list_num_to_run = find(mask_todo&~mask_deps);
         num_jr = 1;
-        
+
         while (nb_queued < max_queued) && (num_jr <= length(list_num_to_run))
 
             if flag_nothing_happened
@@ -496,13 +505,13 @@ try
             file_job = [path_logs filesep name_job '.mat'];
             file_log = [path_logs filesep name_job '.log'];
             mask_todo(num_job) = false;
-            mask_running(num_job) = true;            
+            mask_running(num_job) = true;
             nb_queued = nb_queued + 1;
             fprintf('%s - The job %s is now running (%i jobs in queue).\n',datestr(clock),name_job,nb_queued)
 
             %% Create a temporary shell scripts for 'batch' or 'qsub' modes
             if ~strcmp(opt.mode,'session')
-                
+
                 switch gb_psom_language
                     case 'matlab'
                         if ~isempty(opt.shell_options)
@@ -517,13 +526,13 @@ try
                             instr_job = sprintf('%s --eval "cd %s, load %s, path(path_work), psom_run_job(''%s''),">%s\n',opt.shell_options,opt.command_matlab,path_logs,file_pipe_path,file_job,file_log);
                         end
                 end
-                                  
+
                 file_shell = [path_tmp filesep name_job '.sh'];
                 file_exit = [path_logs filesep name_job '.exit'];
                 hf = fopen(file_shell,'w');
                 fprintf(hf,'%s\ntouch %s',instr_job,file_exit);
                 fclose(hf);
-                
+
             end
 
             %% run the job
@@ -543,7 +552,7 @@ try
                     end
 
                 case 'qsub'
-                    
+
                     file_qsub_o = [path_logs filesep name_job '.oqsub'];
                     file_qsub_e = [path_logs filesep name_job '.eqsub'];
 
@@ -627,50 +636,4 @@ if ~isempty(list_num_child)
     for num_c = list_num_child        
         mask_child = mask_child | sub_find_children(num_c,graph_deps);
     end
-end
-
-function [] = sub_merge_logs(path_logs,name_job)
-
-%% In qsub mode, merge the output and error streams from qsub with the
-%% regular log file if they exist
-file_qsub_o = [path_logs filesep name_job '.oqsub'];
-file_qsub_e = [path_logs filesep name_job '.eqsub'];
-file_log = [path_logs filesep name_job '.log'];
-
-flag_log = exist(file_log,'file');
-flag_qsub_o = exist(file_qsub_o,'file');
-flag_qsub_e = exist(file_qsub_e,'file');
-
-if flag_qsub_e||flag_qsub_o
-    if flag_log % read log file
-        hfl = fopen(file_log,'r');
-        str_log = fread(hfl,Inf,'uint8=>char')';
-        fclose(hfl);
-    else
-        str_log = '';
-    end
-
-    if flag_qsub_o % read qsub output file
-        hfl = fopen(file_qsub_o,'r');
-        str_o = fread(hfl,Inf,'uint8=>char')';
-        fclose(hfl);
-        delete(file_qsub_o)
-    else
-        str_o = '';
-    end
-
-    if flag_qsub_e % read qusb error file
-        hfl = fopen(file_qsub_e,'r');
-        str_e = fread(hfl,Inf,'uint8=>char')';
-        fclose(hfl);
-        delete(file_qsub_e)
-    else
-        str_e = '';
-    end
-
-    hfl = fopen(file_log,'w'); % Append the log, qsub output and qsub error in the log file
-    fprintf(hfl,'*********\nLOG FILE\n*********\n%s',str_log);
-    fprintf(hfl,'*********\nQSUB OUTPUT\n*********\n%s',str_o);
-    fprintf(hfl,'*********\nQSUB INPUT\n*********\n%s',str_e);
-    fclose(hfl);
 end
