@@ -342,19 +342,19 @@ try
             file_exit = [path_logs filesep name_job '.exit'];
 
             if exist(file_log,'file')
-                delete(file_log)
+                system(['rm ' file_log]);
             end
 
             if exist(file_qsub_o,'file')
-                delete(file_qsub_o)
+                system(['rm ' file_qsub_o]);
             end
 
             if exist(file_qsub_e,'file')
-                delete(file_qsub_e)
+                system(['rm ' file_qsub_e]);
             end
 
             if exist(file_exit,'file')
-                delete(file_exit)
+                system(['rm ' file_exit]);
             end
         end
     end
@@ -465,17 +465,17 @@ try
                 file_qsub_e = [path_logs filesep name_job '.oqsub'];
 
                 if exist(file_exit,'file')
-                    delete(file_exit);
+                    system(['rm ' file_exit]);
                 end
                 if exist(file_qsub_o,'file')
-                    delete(file_qsub_o);
+                    system(['rm ' file_qsub_o]);
                 end
                 if exist(file_qsub_e,'file')
-                    delete(file_qsub_e);
+                    system(['rm ' file_qsub_e]);
                 end
             end
 
-            num_e = 1;
+            %% update dependencies
             graph_deps(list_num_finished,:) = 0;
         end
 

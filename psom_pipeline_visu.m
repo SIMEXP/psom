@@ -92,14 +92,15 @@ end
 
 %% get status 
 [path_logs,name_pipeline] = fileparts(file_pipeline);
-load(file_pipeline);
-list_jobs = fieldnames(pipeline);
-curr_status = psom_job_status(path_logs,list_jobs);
+
 
 switch action
     
     case {'finished','failed','none','running'}
         
+        load(file_pipeline,'pipeline','list_jobs');
+        curr_status = psom_job_status(path_logs,list_jobs);
+
         mask_jobs = ismember(curr_status,action);
         jobs_action = list_jobs(mask_jobs);
 
@@ -118,6 +119,7 @@ switch action
         
     case 'graph_stages'
         
+        load(file_pipeline,'graph_deps','list_jobs');        
         bg = biograph(graph_deps,list_jobs);
         dolayout(bg);
         view(bg);
@@ -145,6 +147,7 @@ switch action
         
     case 'log'
 
+        curr_status = psom_job_status(path_logs,opt_action)
         mask_jobs = ismember(curr_status,{'finished','failed','running'});
         jobs_action = list_jobs(mask_jobs);
         
@@ -155,7 +158,6 @@ switch action
             fprintf('\n\n%s\n%s\n%s\n\n',stars,msg,stars);
 
         else
-
 
             for num_j = 1:length(jobs_action)
 
