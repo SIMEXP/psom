@@ -26,12 +26,14 @@ function curr_status = psom_job_status(path_logs,list_jobs)
 %           'running' : the job is currently being processed.
 %           'failed' : the job was processed, but the execution somehow
 %                  failed.
-%           'finished' : the job has been successfully processed.
+%           'finished' : the job was successfully processed.
 %           'none' : no attempt has been made to process the job yet 
 %                  (neither 'failed', 'running' or 'finished').
 %           'exit' : there is no tag on the job, yet the associated script
 %                   was terminated. That implies that the script somehow 
 %                   crashed. Sad ...
+%           'absent' : there is no tag file and no job file. It looks like
+%                   the job name does not exist in the pipeline.
 %
 % _________________________________________________________________________
 % COMMENTS : 
@@ -64,6 +66,16 @@ if ~exist('path_logs','var') || ~exist('list_jobs','var')
     error('SYNTAX: CURR_STATUS = PSOM_JOB_STATUS(PATH_LOGS,LIST_JOBS). Type ''help psom_job_status'' for more info.')
 end
 
+%% Read the list of all files in the log folder, and reorganize them into a
+%% cell of strings
+struct_files_log = dir(path_logs);
+list_logs = cell([length(struct_files_log) 1]);
+for num_l = 1:length(list_logs)
+    list_logs{num_l} = struct_files_log(num_l).name;
+end
+clear struct_files_log
+
+%% Loop over all job names, and check for the existence of tag files
 nb_jobs = length(list_jobs);
 curr_status = cell([nb_jobs 1]);
 
@@ -76,28 +88,21 @@ for num_j = 1:nb_jobs
     flag_exit = false;
     
     name_job = list_jobs{num_j};
+    mask_job = psom_find_str_cell(list_logs,name_job);
+    list_job = list_logs(mask_job);
     
-    file_running = [path_logs filesep name_job '.running'];
-    file_failed = [path_logs filesep name_job '.failed'];
-    file_finished = [path_logs filesep name_job '.finished'];
-    file_exit = [path_logs filesep name_job '.exit'];
+    file_job = [name_job '.mat'];
+    file_running = [name_job '.running'];
+    file_failed = [name_job '.failed'];
+    file_finished = [name_job '.finished'];
+    file_exit = [name_job '.exit'];
     
-    if exist(file_exit,'file');
-        flag_exit = true;
-    end
-
-    if exist(file_failed,'file');
-        flag_failed = true;
-    end
-    
-    if exist(file_finished,'file');
-        flag_finished = true;
-    end
-    
-    if exist(file_running,'file');
-        flag_running = true;
-    end               
-    
+    flag_job = ismember(file_job,list_job);
+    flag_running = ismember(file_running,list_job);
+    flag_failed = ismember(file_failed,list_job);
+    flag_finished = ismember(file_finished,list_job);
+    flag_exit = ismember(file_exit,list_job);
+        
     if (flag_running+flag_finished+flag_failed)>1
         error('I am confused : job %s has multiple tags. Sorry dude, I must quit ...',name_job);
     end
@@ -106,7 +111,7 @@ for num_j = 1:nb_jobs
         flag_none = true;
     end
         
-    if flag_none
+    if flag_none&flag_job
         
         if flag_exit
             curr_status{num_j} = 'exit';
@@ -125,6 +130,10 @@ for num_j = 1:nb_jobs
     elseif flag_running
         
         curr_status{num_j} = 'running';
+        
+    elseif ~flag_job
+        
+        curr_status{num_j} = 'absent';
         
     end
 end
