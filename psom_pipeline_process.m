@@ -337,25 +337,16 @@ try
         for num_f = 1:length(list_jobs_unfinished)
             name_job = list_jobs_unfinished{num_f};
             file_log = [path_logs filesep name_job '.log'];
-            file_qsub_o = [path_logs filesep name_job '.oqsub'];
-            file_qsub_e = [path_logs filesep name_job '.eqsub'];
             file_exit = [path_logs filesep name_job '.exit'];
-
+            
             if exist(file_log,'file')
                 system(['rm ' file_log]);
             end
-
-            if exist(file_qsub_o,'file')
-                system(['rm ' file_qsub_o]);
-            end
-
-            if exist(file_qsub_e,'file')
-                system(['rm ' file_qsub_e]);
-            end
-
+            
             if exist(file_exit,'file')
                 system(['rm ' file_exit]);
             end
+
         end
     end
 
@@ -370,7 +361,11 @@ try
 
     nb_checks = 0;
     nb_points = 0;
-    path_tmp = psom_path_tmp(['_',name_pipeline]); % Create a temporary folder for shell scripts
+    path_tmp = [path_logs tmp]; % Create a temporary folder for shell scripts
+    if exist(path_tmp,'dir')
+        rmdir(path_tmp,'s');
+    end
+    mkdir(path_tmp);
 
     %% Initialize job status
     fprintf('Initializing job status ...\n')
@@ -382,6 +377,7 @@ try
 
     %% Loop until there are jobs to do, or some jobs are still running
     fprintf('The pipeline manager starts now !\n')
+    
     while (max(mask_todo)>0) || (max(mask_running)>0)
 
         flag_nothing_happened = true;
@@ -457,22 +453,6 @@ try
                 name_job = list_jobs_finished{num_f};
                 nb_queued = nb_queued - 1;
                 fprintf('%s - The job %s has been successfully completed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
-
-                %% Delete additional tag & log files. As the job was
-                %% successfull, no one really cares about that anymore...
-                file_exit = [path_logs filesep name_job '.exit'];
-                file_qsub_o = [path_logs filesep name_job '.oqsub'];
-                file_qsub_e = [path_logs filesep name_job '.oqsub'];
-
-                if exist(file_exit,'file')
-                    system(['rm ' file_exit]);
-                end
-                if exist(file_qsub_o,'file')
-                    system(['rm ' file_qsub_o]);
-                end
-                if exist(file_qsub_e,'file')
-                    system(['rm ' file_qsub_e]);
-                end
             end
 
             %% update dependencies
@@ -564,9 +544,8 @@ try
                     if fail~=0
                         error('Something went bad with the qsub command. The command was : %s . The error message was : %s',instr_qsub,msg)
                     end
+                    
             end % switch mode
-
-
         end % submit jobs
 
         pause(time_between_checks); % To avoid wasting resources, wait a bit before re-trying to submit jobs
