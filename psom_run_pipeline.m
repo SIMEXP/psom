@@ -263,7 +263,10 @@ else
     fprintf('The pipeline is already running and FLAG_RESTART is off. I won''t do anything\n');
 end
 
-if opt.flag_batch
-    psom_pipeline_visu(file_pipeline,'monitor');
+switch opt.mode_pipeline_manager
+    
+    case {'batch','qsub'}
+        psom_pipeline_visu(file_pipeline,'monitor');
+
 end
 
