@@ -218,42 +218,45 @@ if ~exist(file_pipeline,'file') % Does the pipeline exist ?
 end
 
 %% If specified, start the pipeline in the background
-if flag_batch
+switch opt.mode_pipeline_manager
 
-    switch opt.mode
-        case 'qsub'
-            fprintf('I am sending the pipeline manager in the background using the ''qsub'' command.\n')
-        otherwise
-            fprintf('I am sending the pipeline manager in the background using the ''at'' command.\n')
-    end
+    case {'batch','qsub'}
 
-    switch gb_psom_language
-        case 'matlab'
-            instr_job = sprintf('%s -nosplash -nojvm -logfile %s -r "cd %s, load %s, path(path_work), opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.flag_batch = false; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,file_pipe_log,path_logs,file_pipe_path,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
-        case 'octave'
-            instr_job = sprintf('%s --silent --eval "diary ''%s'', cd %s, load %s, path(path_work), opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.flag_batch = false; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,file_pipe_log,path_logs,file_pipe_path,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
-    end
+        switch opt.mode_pipeline_manager
+            case 'qsub'
+                fprintf('I am sending the pipeline manager in the background using the ''qsub'' command.\n')
+            otherwise
+                fprintf('I am sending the pipeline manager in the background using the ''at'' command.\n')
+        end
 
-    file_shell = psom_file_tmp('_proc_pipe.sh');
-    hf = fopen(file_shell,'w');
-    fprintf(hf,'%s',instr_job);
-    fclose(hf);
+        switch gb_psom_language
+            case 'matlab'
+                instr_job = sprintf('%s -nosplash -nojvm -logfile %s -r "cd %s, load %s, path(path_work), opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.flag_batch = false; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,file_pipe_log,path_logs,file_pipe_path,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
+            case 'octave'
+                instr_job = sprintf('%s --silent --eval "diary ''%s'', cd %s, load %s, path(path_work), opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.flag_batch = false; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,file_pipe_log,path_logs,file_pipe_path,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
+        end
 
-    switch opt.mode
-        case 'qsub'
-            file_qsub_o = [path_logs filesep name_pipeline '.oqsub'];
-            file_qsub_e = [path_logs filesep name_pipeline '.eqsub'];
-            instr_batch = ['qsub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_pipeline(1:min(15,length(name_pipeline))) ' ' opt.qsub_options ' ' file_shell];
-        otherwise
-            instr_batch = ['at -f ' file_shell ' now'];
-    end
-    [fail,msg] = system(instr_batch);
-    if fail~=0
-        error('Something went bad with the at command. The error message was : %s',msg)
-    end
+        file_shell = psom_file_tmp('_proc_pipe.sh');
+        hf = fopen(file_shell,'w');
+        fprintf(hf,'%s',instr_job);
+        fclose(hf);
 
-    delete(file_shell)
-    return
+        switch opt.mode_pipeline_manager
+            case 'qsub'
+                file_qsub_o = [path_logs filesep name_pipeline '.oqsub'];
+                file_qsub_e = [path_logs filesep name_pipeline '.eqsub'];
+                instr_batch = ['qsub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_pipeline(1:min(15,length(name_pipeline))) ' ' opt.qsub_options ' ' file_shell];
+            otherwise
+                instr_batch = ['at -f ' file_shell ' now'];
+        end
+        [fail,msg] = system(instr_batch);
+        if fail~=0
+            error('Something went bad with the at command. The error message was : %s',msg)
+        end
+
+        delete(file_shell)
+        return
+
 end
 
 % a try/catch block is used to clean temporary file if the user is
