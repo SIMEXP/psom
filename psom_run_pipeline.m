@@ -78,20 +78,9 @@ function [] = psom_run_pipeline(pipeline,opt)
 %               Use the qsub system (sge or pbs) to process the jobs. The
 %               pipeline runs in the background.
 %
-%       FLAG_BATCH
-%           (boolean, default 0) how to execute the pipeline :
-%
-%           If FLAG_BATCH == 0, the pipeline is executed within the session.
-%               Interrupting the pipeline with CTRL-C will result in
-%               interrupting the pipeline (you can always do a 'restart'
-%               latter). 
-%
-%           If FLAG_BATCH == 1, the pipeline manager is started as a
-%               separate process in its own Matlab or Octave session using
-%               the 'at' system command. The pipeline will thus run in the
-%               background and you can continue to work, close matlab or
-%               even unlog from your machine on a linux system without
-%               interrupting it. 
+%       MODE_PIPELINE_MANAGER
+%           (string, default same as OPT.MODE) same as OPT.MODE, but
+%           applies to the pipeline manager itself.
 %
 %       MAX_QUEUED
 %           (integer, default 1 'batch' modes, Inf in 'session' and 'qsub'
@@ -182,9 +171,13 @@ end
 
 %% Options
 gb_name_structure = 'opt';
-gb_list_fields = {'shell_options','flag_restart','path_logs','name_pipeline','command_matlab','flag_verbose','mode','flag_batch','max_queued','qsub_options','time_between_checks','nb_checks_per_point'};
-gb_list_defaults = {'',false,NaN,'PSOM_pipeline','',true,'session',false,0,'',[],[]};
+gb_list_fields = {'shell_options','flag_restart','path_logs','name_pipeline','command_matlab','flag_verbose','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point'};
+gb_list_defaults = {'',false,NaN,'PSOM_pipeline','',true,'session','',0,'',[],[]};
 psom_set_defaults
+
+if isempty(opt.mode_pipeline_manager)
+    opt.mode_pipeline_manager = opt.mode;
+end
 
 if isempty(opt.command_matlab)
     if strcmp(gb_psom_language,'matlab')
@@ -259,7 +252,7 @@ file_running = cat(2,path_logs,filesep,name_pipeline,'.running');
 
 if ~exist(file_running,'file') || opt.flag_restart
     opt_proc.mode = opt.mode;
-    opt_proc.flag_batch = opt.flag_batch;
+    opt_proc.mode_pipeline_manager = opt.mode_pipeline_manager;
     opt_proc.max_queued = opt.max_queued;
     opt_proc.qsub_options = opt.qsub_options;
     opt_proc.command_matlab = opt.command_matlab;
