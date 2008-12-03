@@ -73,7 +73,6 @@ pipeline.weights.opt = struct([]);
 %% Run the pipeline %%
 %%%%%%%%%%%%%%%%%%%%%%
 opt.path_logs = [gb_psom_path_demo 'logs' filesep];
-opt.flag_batch = false;
-opt.mode = 'session';
+opt.mode = 'batch';
 opt.max_queued = 2;
 psom_run_pipeline(pipeline,opt);

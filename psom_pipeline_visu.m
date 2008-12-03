@@ -134,6 +134,7 @@ switch action
         else
             msg = 'The pipeline is NOT currently running';
         end
+        
         stars = repmat('*',size(msg));
         fprintf('\n\n%s\n%s\n%s\n\n',stars,msg,stars);
         

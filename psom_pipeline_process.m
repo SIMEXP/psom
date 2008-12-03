@@ -217,6 +217,14 @@ if ~exist(file_pipeline,'file') % Does the pipeline exist ?
     error('Could not find the pipeline file %s. You first need to initialize the pipeline using PSOM_PIPELINE_INIT !',file_pipeline);
 end
 
+%% Check if the pipeline was not already running
+if exist(file_pipe_running,'file') % Is the pipeline running ?
+    fprintf('A running tag has been found on the pipeline ! This means the pipeline was either running or crashed.\nI will assume it crashed and restart the pipeline.\n')
+    delete(file_pipe_running);
+end
+str_now = datestr(clock);
+save(file_pipe_running,'str_now'); %% Put a running tag on the pipeline
+
 %% If specified, start the pipeline in the background
 switch opt.mode_pipeline_manager
 
@@ -231,9 +239,9 @@ switch opt.mode_pipeline_manager
 
         switch gb_psom_language
             case 'matlab'
-                instr_job = sprintf('%s -nosplash -nojvm -logfile %s -r "cd %s, load %s, path(path_work), opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.flag_batch = false; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,file_pipe_log,path_logs,file_pipe_path,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
+                instr_job = sprintf('%s -nosplash -nojvm -logfile %s -r "cd %s, load %s, path(path_work), opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.mode_pipeline_manager = ''session''; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,file_pipe_log,path_logs,file_pipe_path,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
             case 'octave'
-                instr_job = sprintf('%s --silent --eval "diary ''%s'', cd %s, load %s, path(path_work), opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.flag_batch = false; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,file_pipe_log,path_logs,file_pipe_path,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
+                instr_job = sprintf('%s --silent --eval "diary ''%s'', cd %s, load %s, path(path_work), opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.mode_pipeline_manager = ''session''; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,file_pipe_log,path_logs,file_pipe_path,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
         end
 
         file_shell = psom_file_tmp('_proc_pipe.sh');
@@ -261,15 +269,7 @@ end
 
 % a try/catch block is used to clean temporary file if the user is
 % interrupting the pipeline of if an error occurs
-try
-
-    %% Check if the pipeline was not already running
-    if exist(file_pipe_running,'file') % Is the pipeline running ?
-        fprintf('A running tag has been found on the pipeline ! This means the pipeline was either running or crashed.\nI will assume it crashed and restart the pipeline.\n')
-        delete(file_pipe_running);
-    end
-    str_now = datestr(clock);
-    save(file_pipe_running,'str_now'); %% Put a running tag on the pipeline
+try    
     
     %% Load the pipeline
     fprintf('Loading the pipeline dependencies ...\n')
