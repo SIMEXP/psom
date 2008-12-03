@@ -112,26 +112,26 @@ end
 [char_in,ind_in] = psom_struct_cell_string2char(files_in);
 [char_out,ind_out] = psom_struct_cell_string2char(files_out);
 
-if size(char_in,2)<size(char_out,2)
-    char_in = [char_in repmat(' ',[size(char_in,1) size(char_out,2)-size(char_in,2)])];
-end
-
-if size(char_out,2)<size(char_in,2)
-    char_out = [char_out repmat(' ',[size(char_out,1) size(char_in,2)-size(char_out,2)])];
-end
+char_all = char(char_in,char_out);
+mask_out = false([size(char_all,1) 1]);
+mask_out(size(char_in,1)+1:size(char_all,1)) = true;
+[val_tmp,ind_tmp,char_all] = unique(char_all,'rows');
+num_in = char_all(~mask_out);
+num_out = char_all(mask_out);
+clear char_all mask_out val_tmp ind_tmp
 
 graph_deps = sparse(nb_jobs,nb_jobs);
 fprintf('   Analyzing job inputs/outputs, percentage completed : ')
 curr_perc = -1;
 
 for num_j = 1:nb_jobs
-    new_perc = 2*floor(50*num_j/nb_jobs);
+    new_perc = 5*floor(20*num_j/nb_jobs);
     if curr_perc~=new_perc
         fprintf(' %1.0f',new_perc);
         curr_perc = new_perc;
     end
     name_job1 = list_jobs{num_j};
-    mask_dep = ismember(char_out,char_in(ind_in==num_j,:),'rows');
+    mask_dep = ismember(num_out,num_in(ind_in==num_j));
     list_job_dep = unique(ind_out(mask_dep));
     
     if ~isempty(list_job_dep)
