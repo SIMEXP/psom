@@ -109,37 +109,39 @@ for num_j = 1:nb_jobs
     files_in.(name_job) = unique(psom_files2cell(pipeline.(name_job).files_in));
     files_out.(name_job) = unique(psom_files2cell(pipeline.(name_job).files_out));
 end
+[char_in,ind_in] = psom_struct_cell_string2char(files_in);
+[char_out,ind_out] = psom_struct_cell_string2char(files_out);
+
+if size(char_in,2)<size(char_out,2)
+    char_in = [char_in repmat(' ',[size(char_in,1) size(char_out,2)-size(char_in,2)])];
+end
+
+if size(char_out,2)<size(char_in,2)
+    char_out = [char_out repmat(' ',[size(char_out,1) size(char_in,2)-size(char_out,2)])];
+end
 
 graph_deps = sparse(nb_jobs,nb_jobs);
 fprintf('   Analyzing job inputs/outputs, percentage completed : ')
 curr_perc = -1;
 
 for num_j = 1:nb_jobs
-    name_job1 = list_jobs{num_j};
     new_perc = 2*floor(50*num_j/nb_jobs);
     if curr_perc~=new_perc
         fprintf(' %1.0f',new_perc);
         curr_perc = new_perc;
     end
+    name_job1 = list_jobs{num_j};
+    mask_dep = ismember(char_out,char_in(ind_in==num_j,:),'rows');
+    list_job_dep = unique(ind_out(mask_dep));
     
-    for num_k = 1:nb_jobs
-        name_job2 = list_jobs{num_k};
-        
-        if num_j ~= num_k
-            mask_dep = ismember(files_in.(name_job1),files_out.(name_job2));
-            if max(mask_dep) == 1
-                deps.(name_job1).(name_job2) = files_in.(name_job1)(mask_dep);
-                graph_deps(num_k,num_j) = 1;
-            end            
+    if ~isempty(list_job_dep)
+        for num_l = list_job_dep'
+            name_job2 = list_jobs{num_l};
+            graph_deps(num_l,num_j) = true;
+            deps.(name_job1).(name_job2) = psom_char2cell(char_out(mask_dep & (ind_out==num_l),:));
         end
-    end
-    
-    if ~exist('deps','var')
-        deps.(name_job1) = struct([]);
     else
-        if ~isfield(deps,name_job1)
-            deps.(name_job1) = struct([]);
-        end
+        deps.(name_job1) = struct([]);
     end
 end
 fprintf('\n')
