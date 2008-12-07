@@ -70,7 +70,7 @@ else
                 flag_equal = false;
                 return
             else
-                flag_equal = max(var1(:) ~= var2(:));
+                flag_equal = ~max(var1(:) ~= var2(:));
             end
 
         case 'cell'
@@ -82,7 +82,7 @@ else
                 var1 = var1(:);
                 var2 = var2(:);
                 flag_equal = true;
-                for num_e = 1:lengh(var1)
+                for num_e = 1:length(var1)
                     if ~psom_cmp_var(var1{num_e},var2{num_e})
                         flag_equal = false;
                         return
@@ -90,7 +90,7 @@ else
                 end
             end
 
-        case 'cell'
+        case 'struct'
             list_fields1 = fieldnames(var1);
             list_fields2 = fieldnames(var2);
 
