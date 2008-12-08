@@ -56,8 +56,7 @@ file_failed = [path_f filesep name_job '.failed'];
 file_finished = [path_f filesep name_job '.finished'];
 
 if exist(file_running,'file')|exist(file_failed,'file')|exist(file_finished,'file')
-    fprintf('Already found a tag on that job. Sorry dude, I must quit ...');
-    return
+    error('Already found a tag on that job. Sorry dude, I must quit ...');
 end
 
 %% Create a running tag for the job

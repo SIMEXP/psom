@@ -1,4 +1,4 @@
-function curr_status = psom_job_status(path_logs,list_jobs)
+function curr_status = psom_job_status(path_logs,list_jobs,mode_pipe)
 %
 % _________________________________________________________________________
 % SUMMARY PSOM_JOB_STATUS
@@ -6,7 +6,7 @@ function curr_status = psom_job_status(path_logs,list_jobs)
 % Get the current status of a list of jobs.
 %
 % SYNTAX :
-% CURR_STATUS = PSOM_JOB_STATUS(PATH_LOGS,LIST_JOBS)
+% CURR_STATUS = PSOM_JOB_STATUS(PATH_LOGS,LIST_JOBS,MODE_PIPE)
 %
 % _________________________________________________________________________
 % INPUTS :
@@ -16,6 +16,10 @@ function curr_status = psom_job_status(path_logs,list_jobs)
 %
 % LIST_JOBS
 %       (cell of strings) a list of job names
+%
+% MODE_PIPE
+%       (string) the execution mode of the pipeline.
+%       Possible values : 'session', 'batch', 'qsub'.
 %
 % _________________________________________________________________________
 % OUTPUTS :
@@ -62,8 +66,8 @@ function curr_status = psom_job_status(path_logs,list_jobs)
 % THE SOFTWARE.
 
 %% SYNTAX
-if ~exist('path_logs','var') || ~exist('list_jobs','var')
-    error('SYNTAX: CURR_STATUS = PSOM_JOB_STATUS(PATH_LOGS,LIST_JOBS). Type ''help psom_job_status'' for more info.')
+if ~exist('path_logs','var') || ~exist('list_jobs','var') || ~exist('mode_pipe','var')
+    error('SYNTAX: CURR_STATUS = PSOM_JOB_STATUS(PATH_LOGS,LIST_JOBS,MODE). Type ''help psom_job_status'' for more info.')
 end
 
 %% Read the list of all files in the log folder, and reorganize them into a
@@ -121,16 +125,34 @@ for num_j = 1:nb_jobs
         
     elseif flag_finished
         
-        curr_status{num_j} = 'finished';
-        
+        switch mode_pipe
+            case {'qsub','batch'}
+                if flag_exit
+                    curr_status{num_j} = 'finished';
+                else
+                    curr_status{num_j} = 'running';
+                end
+            otherwise
+                curr_status{num_j} = 'finished';
+        end
+
     elseif flag_failed
-        
-        curr_status{num_j} = 'failed';
-        
+
+        switch mode_pipe
+            case {'qsub','batch'}
+                if flag_exit
+                    curr_status{num_j} = 'failed';
+                else
+                    curr_status{num_j} = 'running';
+                end
+            otherwise
+                curr_status{num_j} = 'failed';
+        end
+
     elseif flag_running
-        
+
         curr_status{num_j} = 'running';
-        
+
     elseif ~flag_job
         
         curr_status{num_j} = 'absent';

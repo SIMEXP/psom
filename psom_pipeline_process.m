@@ -329,7 +329,7 @@ try
     list_num_inq = find(mask_inq);
     list_num_inq = list_num_inq(:)';
     list_jobs_inq = list_jobs(mask_inq);
-    curr_status = psom_job_status(path_logs,list_jobs_inq);        
+    curr_status = psom_job_status(path_logs,list_jobs_inq,opt.mode);        
         
     %% Remove the dependencies on finished jobs
     mask_finished = ismember(curr_status,'finished');       
@@ -410,7 +410,7 @@ try
         list_num_running = find(mask_running);
         list_num_running = list_num_running(:)';
         list_jobs_running = list_jobs(list_num_running);
-        new_status_running_jobs = psom_job_status(path_logs,list_jobs_running);
+        new_status_running_jobs = psom_job_status(path_logs,list_jobs_running,opt.mode);
         
         %% Loop over running jobs to check the new status
         num_l = 0;
@@ -521,15 +521,15 @@ try
                 switch gb_psom_language
                     case 'matlab'
                         if ~isempty(opt.shell_options)
-                            instr_job = sprintf('%s\n%s -nosplash -nojvm -r "cd %s, load(''%s'',''path_work''), path(path_work), psom_run_job(''%s''),">%s\n',opt.shell_options,opt.command_matlab,path_logs,file_pipeline,file_job,file_log);
+                            instr_job = sprintf('%s\n%s -nosplash -nojvm -r "cd %s, load(''%s'',''path_work''), path(path_work), psom_run_job(''%s''),exit">%s\n',opt.shell_options,opt.command_matlab,path_logs,file_pipeline,file_job,file_log);
                         else
-                            instr_job = sprintf('%s -nosplash -nojvm -r "cd %s, load(''%s'',''path_work''), path(path_work), psom_run_job(''%s''),">%s\n',opt.command_matlab,path_logs,file_pipeline,file_job,file_log);
+                            instr_job = sprintf('%s -nosplash -nojvm -r "cd %s, load(''%s'',''path_work''), path(path_work), psom_run_job(''%s''),exit">%s\n',opt.command_matlab,path_logs,file_pipeline,file_job,file_log);
                         end
                     case 'octave'
                         if ~isempty(opt.shell_options)
-                            instr_job = sprintf('%s\n%s --eval "cd %s, load(''%s'',''path_work''), path(path_work), psom_run_job(''%s''),">%s\n',opt.shell_options,opt.shell_options,opt.command_matlab,path_logs,file_pipeline,file_job,file_log);
+                            instr_job = sprintf('%s\n%s --eval "cd %s, load(''%s'',''path_work''), path(path_work), psom_run_job(''%s''),exit">%s\n',opt.shell_options,opt.shell_options,opt.command_matlab,path_logs,file_pipeline,file_job,file_log);
                         else
-                            instr_job = sprintf('%s --eval "cd %s, load(''%s'',''path_work''), path(path_work), psom_run_job(''%s''),">%s\n',opt.shell_options,opt.command_matlab,path_logs,file_pipeline,file_job,file_log);
+                            instr_job = sprintf('%s --eval "cd %s, load(''%s'',''path_work''), path(path_work), psom_run_job(''%s''),exit">%s\n',opt.shell_options,opt.command_matlab,path_logs,file_pipeline,file_job,file_log);
                         end
                 end
 
