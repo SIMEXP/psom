@@ -17,7 +17,7 @@ function [] = psom_pipeline_visu(file_pipeline,action,opt_action)
 %               
 % ACTION         
 %       (string) Possible values :
-%           'running', 'failed', 'finished', 'none', 'log', 
+%           'submitted', 'running', 'failed', 'finished', 'none', 'log',
 %           'graph_stages',
 %           
 % OPT           
@@ -28,9 +28,13 @@ function [] = psom_pipeline_visu(file_pipeline,action,opt_action)
 % 
 % What the function does depends on the argument ACTION :
 %
+% ACTION = 'submitted'
+%       Display a list of the jobs of the pipeline that are scheduled in 
+%       the queue but not currently running.
+%
 % ACTION = 'running'
 %       Display a list of the jobs of the pipeline that are currently 
-%       running and that are scheduled in the queue.
+%       running 
 %
 % ACTION = 'failed'
 %       Display a list of the jobs of the pipeline that have failed.
@@ -92,16 +96,15 @@ end
 
 %% get status 
 [path_logs,name_pipeline] = fileparts(file_pipeline);
-
+file_status = [path_logs filesep name_pipeline '_status.mat'];
+load(file_status,'job_status')
+load(file_pipeline,'list_jobs');
 
 switch action
     
-    case {'finished','failed','none','running'}
-        
-        load(file_pipeline,'pipeline','list_jobs');
-        curr_status = psom_job_status(path_logs,list_jobs);
+    case {'finished','failed','none','running','submitted'}                
 
-        mask_jobs = ismember(curr_status,action);
+        mask_jobs = ismember(job_status,action);
         jobs_action = list_jobs(mask_jobs);
 
         if isempty(jobs_action)

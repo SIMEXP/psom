@@ -69,7 +69,7 @@ msg = sprintf('Log of the (%s) job : %s\nStarted on %s\nUser: %s\nhost : %s\nsys
 stars = repmat('*',[1 30]);
 fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
 
-job = sub_load_job(files_jobs,name_job);
+job = sub_load_job(file_jobs,name_job);
 
 gb_name_structure = 'job';
 gb_list_fields = {'files_in','files_out','command','opt'};
@@ -167,4 +167,4 @@ end
 function job = sub_load_job(file_jobs,name_job)
 
 load(file_jobs,name_job);
-eval(['job = ' name_job ';'];
+eval(['job = ' name_job ';']);

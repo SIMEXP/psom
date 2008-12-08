@@ -288,12 +288,14 @@ try
     
     %% Check if all the files necessary to complete the pipeline can be
     %% found
+    fprintf('Checking if all the files necessary to complete the pipeline can be found ...\n')
     flag_ready = true;
     mask_unfinished = ~ismember(job_status,'finished');
-    
-    fprintf('Checking if all the files necessary to complete the pipeline can be found ...\n')
-    for num_j = find(mask_unfinished')
+    list_num_unfinished = find(mask_unfinished);
+    list_num_unfinished = list_num_unfinished(:)';
 
+    for num_j = list_num_unfinished 
+        
         name_job = list_jobs{num_j};
         list_files_needed = files_in.(name_job);
         list_files_tobe = psom_files2cell(deps.(name_job));
@@ -313,18 +315,21 @@ try
     
     %% Reset failed jobs 
     mask_failed = ismember(job_status,'failed');    
+    list_num_failed = find(mask_failed);
+    list_num_failed = list_num_failed(:)';
     
-    for num_j = find(mask_failed')
-        job_status{num_f} = 'none';
+    for num_j = list_num_failed
+        job_status{num_j} = 'none';
         sub_add_var(file_logs,list_jobs{num_j},'');
     end    
     
     %% Update the job status using the tags that can be found in the log
     %% folder    
-    mask_inq = ismember(job_status,{'submitted','running'}); 
-    list_num_inq = list_num_jobs(mask_inq);
+    mask_inq = ismember(job_status,{'submitted','running'});    
+    list_num_inq = find(mask_inq);
+    list_num_inq = list_num_inq(:)';
     list_jobs_inq = list_jobs(mask_inq);
-    curr_status = psom_job_status(path_logs,list_jobs(mask_inq));        
+    curr_status = psom_job_status(path_logs,list_jobs_inq);        
         
     %% Remove the dependencies on finished jobs
     mask_finished = ismember(curr_status,'finished');       
@@ -332,21 +337,22 @@ try
     list_num_finished = list_num_finished(:)';
 
     for num_j = list_num_finished
-        name_job = list_jobs_inq{num_j};
-        log = sub_read_txt([path_logs filesep name_job '.log']);
-        qsub_o = sub_read_txt([path_logs filesep name_job '.oqsub']);
-        qsub_e = sub_read_txt([path_logs filesep name_job '.eqsub']);
+        name_job = list_jobs{num_j};
+        text_log = sub_read_txt([path_logs filesep name_job '.log']);
+        text_qsub_o = sub_read_txt([path_logs filesep name_job '.oqsub']);
+        text_qsub_e = sub_read_txt([path_logs filesep name_job '.eqsub']);
 
-        if isempty(qsub_o)&isempty(qsub_e)
-            sub_add_var(file_logs,name_job,log);
+        if isempty(text_qsub_o)&isempty(text_qsub_e)
+            sub_add_var(file_logs,name_job,text_log);
         else
-            sub_add_var(file_logs,name_job,[log hat_qsub_o qsub_o hat_qsub_e qsub_e]);
+            sub_add_var(file_logs,name_job,[text_log hat_qsub_o text_qsub_o hat_qsub_e text_qsub_e]);
         end
         job_status{num_j} = 'finished';
     end
     
     %% update dependencies
-    graph_deps(list_num_finished,:) = 0;    
+    mask_finished = ismember(job_status,'finished');       
+    graph_deps(mask_finished,:) = 0;    
     mask_deps = max(graph_deps,[],1)>0;
     mask_deps = mask_deps(:);
 
@@ -359,7 +365,10 @@ try
     
     %% Finally reset all the left-overs submitted/running jobs  
     mask_inq = ismember(job_status,{'submitted','running'}); 
-    for num_j = find(mask_inq')
+    list_num_inq = find(mask_inq);
+    list_num_inq = list_num_inq(:)';
+    
+    for num_j = list_num_inq
         job_status{num_f} = 'none';
         sub_add_var(file_logs,list_jobs{num_j},'');
     end
@@ -372,6 +381,7 @@ try
     %%%%%%%%%%%%%%%%%%%%%%
 
     %% Print general info about the pipeline
+
     msg = sprintf('The pipeline %s is now being processed.\nStarted on %s\nUser: %s\nhost : %s\nsystem : %s',name_pipeline,datestr(clock),gb_psom_user,gb_psom_localhost,gb_psom_OS);
     stars = repmat('*',[1 30]);
     fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
@@ -406,7 +416,7 @@ try
         num_l = 0;
         for num_j = list_num_running
             num_l = num_l+1;
-            name_job = list_jobs(num_j);
+            name_job = list_jobs{num_j};
             flag_changed = ~strcmp(job_status{num_j},new_status_running_jobs{num_l});
             flag_nothing_happened = flag_nothing_happened & ~flag_changed;
 
@@ -422,13 +432,13 @@ try
                     %% for finished or failed jobs, transfer the individual
                     %% test log files to the matlab global logs structure
                     nb_queued = nb_queued - 1;
-                    log = sub_read_txt([path_logs filesep name_job '.log']);
-                    qsub_o = sub_read_txt([path_logs filesep name_job '.oqsub']);
-                    qsub_e = sub_read_txt([path_logs filesep name_job '.eqsub']);
-                    if isempty(qsub_o)&isempty(qsub_e)
-                        sub_add_var(file_logs,name_job,log);
+                    text_log = sub_read_txt([path_logs filesep name_job '.log']);
+                    text_qsub_o = sub_read_txt([path_logs filesep name_job '.oqsub']);
+                    text_qsub_e = sub_read_txt([path_logs filesep name_job '.eqsub']);
+                    if isempty(text_qsub_o)&isempty(text_qsub_e)
+                        sub_add_var(file_logs,name_job,text_log);
                     else
-                        sub_add_var(file_logs,name_job,[log hat_qsub_o qsub_o hat_qsub_e qsub_e]);
+                        sub_add_var(file_logs,name_job,[text_log hat_qsub_o text_qsub_o hat_qsub_e text_qsub_e]);
                     end
                     sub_clean_job(path_logs,name_job); % clean up all tags & log
                 end
@@ -444,7 +454,7 @@ try
                     case 'finished'
 
                         fprintf('%s - The job %s has been successfully completed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
-                        graph_deps(list_num_finished,:) = 0; % update dependencies
+                        graph_deps(num_j,:) = 0; % update dependencies
 
                     case 'running'
 
@@ -453,28 +463,30 @@ try
 
             end % if flag changed
         end % loop over running jobs
-        
-        %% Reset the 'dot counter' if something happened, and save the new
-        %% job status
-        if ~flag_nothing_happened
-            save(file_status,'job_status');            
+                 
+        if ~flag_nothing_happened % if something happened ...
+            
+            %% Save the job status
+            save(file_status,'job_status');
+            
+            %% Reset the 'dot counter'            
             nb_checks = 0;
             if nb_points>0
                 fprintf('\n');
             end
             nb_points = 0;
-        end
-        
-        %% update the to-do list
-        mask_done(mask_running) = ismember(new_status_running_jobs,{'finished','failed','exit'});
-        mask_todo(mask_running) = mask_todo(mask_running)&~mask_done(mask_running);
-     
-        %% Update the dependency mask
-        mask_deps = max(graph_deps,[],1)>0;
-        mask_deps = mask_deps(:);
 
-        %% Finally update the list of currently running jobs
-        mask_running(mask_running) = mask_running(mask_running)&~mask_done(mask_running);
+            %% update the to-do list
+            mask_done(mask_running) = ismember(new_status_running_jobs,{'finished','failed','exit'});
+            mask_todo(mask_running) = mask_todo(mask_running)&~mask_done(mask_running);
+
+            %% Update the dependency mask
+            mask_deps = max(graph_deps,[],1)>0;
+            mask_deps = mask_deps(:);
+
+            %% Finally update the list of currently running jobs
+            mask_running(mask_running) = mask_running(mask_running)&~mask_done(mask_running);
+        end
 
         %% Time to submit jobs !!
         list_num_to_run = find(mask_todo&~mask_deps);
@@ -561,6 +573,10 @@ try
             end % switch mode
         end % submit jobs
 
+        if ~flag_nothing_happened % if something happened ...           
+            save(file_status,'job_status');
+        end
+        
         pause(time_between_checks); % To avoid wasting resources, wait a bit before re-trying to submit jobs
 
         if nb_checks >= nb_checks_per_point
@@ -645,22 +661,22 @@ end
 function str_txt = sub_read_txt(file_name)
 
 if exist(file_name,'file')
-    hf = fread(file_name,'r');
+    hf = fopen(file_name,'r');
     str_txt = fread(hf,Inf,'uint8=>char')';
-    fclose(hf)
+    fclose(hf);
 else
     str_txt = '';
 end
 
 function [] = sub_clean_job(path_logs,name_job)
 
-files{1} = [path_logs filesep name_pipeline '.log'];
-files{2} = [path_logs filesep name_pipeline '.finished'];
-files{3} = [path_logs filesep name_pipeline '.failed'];
-files{4} = [path_logs filesep name_pipeline '.running'];
-files{5} = [path_logs filesep name_pipeline '.exit'];
-files{6} = [path_logs filesep name_pipeline '.eqsub'];
-files{7} = [path_logs filesep name_pipeline '.oqsub'];
+files{1} = [path_logs filesep name_job '.log'];
+files{2} = [path_logs filesep name_job '.finished'];
+files{3} = [path_logs filesep name_job '.failed'];
+files{4} = [path_logs filesep name_job '.running'];
+files{5} = [path_logs filesep name_job '.exit'];
+files{6} = [path_logs filesep name_job '.eqsub'];
+files{7} = [path_logs filesep name_job '.oqsub'];
 
 for num_f = 1:length(files)
     if exist(files{num_f},'file')

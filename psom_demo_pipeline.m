@@ -49,7 +49,7 @@ pipeline.message.files_in = {};
 pipeline.message.files_out = {};
 pipeline.message.opt.nb_samples = 100;
 
-pipeline.tseries1.command = 'tseries = randn([opt.nb_samples 1]); save(files_out,''tseries'')';
+pipeline.tseries1.command = 'niak_string2lines(''test''); tseries = randn([opt.nb_samples 1]); save(files_out,''tseries'')';
 pipeline.tseries1.files_in = {};
 pipeline.tseries1.files_out = [gb_psom_path_demo 'tseries1.mat'];
 pipeline.tseries1.opt.nb_samples = pipeline.message.opt.nb_samples;
