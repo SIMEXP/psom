@@ -51,10 +51,6 @@ function [] = psom_run_pipeline(pipeline,opt)
 %       PATH_LOGS
 %           (string) The folder where the .M and .MAT files will be stored.
 %
-%       NAME_PIPELINE
-%           (string, default 'PSOM_pipeline') the name of the pipeline.
-%           No space, no weird characters please.
-%
 %       MODE
 %           (string, default 'session') how to execute the jobs :
 %
@@ -102,15 +98,6 @@ function [] = psom_run_pipeline(pipeline,opt)
 %           force qsub to only use the yeatman and zeus workstations in the
 %           all.q queue. It can also be used to put restrictions on the
 %           minimum avalaible memory, etc.
-%
-%       FLAG_RESTART
-%           (boolean, default 0)
-%           If FLAG_RESTART == 1, the processing of the pipeline will be
-%           restarted even if a 'running' tag is found on the pipeline.
-%           That is usefull to force a restart after a crash. In the
-%           default behavior (FLAG_RESTART == 0), the pipeline will not be 
-%           restarted, but the pipeline log will still be displayed if 
-%           FLAG_BATCH == 1.
 %
 %       There are other minor options available, see PSOM_PIPELINE_INIT and
 %       PSOM_PIPELINE_PROCESS.
@@ -170,9 +157,11 @@ if ~exist('pipeline','var')||~exist('opt','var')
 end
 
 %% Options
+name_pipeline = 'PIPE';
+
 gb_name_structure = 'opt';
-gb_list_fields = {'shell_options','flag_restart','path_logs','name_pipeline','command_matlab','flag_verbose','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point'};
-gb_list_defaults = {'',false,NaN,'PSOM_pipeline','',true,'session','',0,'',[],[]};
+gb_list_fields = {'shell_options','path_logs','command_matlab','flag_verbose','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point'};
+gb_list_defaults = {'',NaN,'',true,'session','',0,'',[],[]};
 psom_set_defaults
 
 if isempty(opt.mode_pipeline_manager)
@@ -239,8 +228,7 @@ if ~exist(file_pipeline,'file')
     stars = repmat('*',[1 size(msg,2)]);
     fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
     
-    opt_init.path_logs = opt.path_logs;
-    opt_init.name_pipeline = opt.name_pipeline;
+    opt_init.path_logs = opt.path_logs; 
     opt_init.command_matlab = opt.command_matlab;
     opt_init.flag_verbose = opt.flag_verbose;
     
@@ -248,20 +236,21 @@ if ~exist(file_pipeline,'file')
 end
 
 %% Run pipeline
-file_running = cat(2,path_logs,filesep,name_pipeline,'.running');
-
-if ~exist(file_running,'file') || opt.flag_restart
-    opt_proc.mode = opt.mode;
-    opt_proc.mode_pipeline_manager = opt.mode_pipeline_manager;
-    opt_proc.max_queued = opt.max_queued;
-    opt_proc.qsub_options = opt.qsub_options;
-    opt_proc.command_matlab = opt.command_matlab;
-    opt_proc.time_between_checks = opt.time_between_checks;
-    opt_proc.nb_checks_per_point = opt.nb_checks_per_point;
-    psom_pipeline_process(file_pipeline,opt_proc);
-else
-    fprintf('The pipeline is already running and FLAG_RESTART is off. I won''t do anything\n');
+file_pipe_running = cat(2,path_logs,filesep,name_pipeline,'.running');
+if exist(file_pipe_running,'file') % Is the pipeline running ?
+    fprintf('A running tag has been found on the pipeline ! This means the pipeline was either running or crashed.\nI will assume it crashed and restart the pipeline.\nIf you are NOT CERTAIN that you want to restart the pipeline, press CTRL-C now !\n')
+    pause
+    delete(file_pipe_running);
 end
+
+opt_proc.mode = opt.mode;
+opt_proc.mode_pipeline_manager = opt.mode_pipeline_manager;
+opt_proc.max_queued = opt.max_queued;
+opt_proc.qsub_options = opt.qsub_options;
+opt_proc.command_matlab = opt.command_matlab;
+opt_proc.time_between_checks = opt.time_between_checks;
+opt_proc.nb_checks_per_point = opt.nb_checks_per_point;
+psom_pipeline_process(file_pipeline,opt_proc);
 
 switch opt.mode_pipeline_manager
     

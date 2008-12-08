@@ -4,7 +4,8 @@ function file_pipeline = psom_pipeline_init(pipeline,opt)
 % SUMMARY PSOM_PIPELINE_INIT
 %
 % Convert a matlab-based pipeline structure into a set of mat files
-% describing each job separatly.
+% describing the pipeline dependencies, initial status and initial log
+% files.
 %
 % SYNTAX:
 % FILE_PIPELINE = PSOM_PIPELINE_INIT(PIPELINE,OPT)
@@ -50,11 +51,10 @@ function file_pipeline = psom_pipeline_init(pipeline,opt)
 %       (structure) with the following fields :
 %
 %       PATH_LOGS
-%           (string) The folder where the .M and .MAT files will be stored.
-%
-%       NAME_PIPELINE
-%           (string, default 'PSOM_pipeline') the name of the pipeline.
-%           No space, no weird characters please.
+%           (string) The folder where the .mat files will be stored. That
+%           folder needs to be empty, and left untouched during the whole
+%           pipeline processing. Renaming or deleting files from the
+%           PATH_LOGS may result in unrecoverable crash of the pipeline.
 %
 %       COMMAND_MATLAB
 %           (string, default GB_PSOM_COMMAND_MATLAB or
@@ -87,13 +87,16 @@ function file_pipeline = psom_pipeline_init(pipeline,opt)
 %
 %   All directories for output files are created by PSOM_INIT_PIPELINE.
 %
-%   The directory PATH_LOGS is created. It contains the following files :
+%   The directory PATH_LOGS is created. It contains four files :
 %
-%   PATH_LOGS/NAME_PIPELINE.MAT
+%   <PATH_LOGS>/PIPE.mat
 %       A .MAT file with the following variables:
 %
-%       PIPELINE, OPT
-%           The inputs of the initialization
+%       OPT
+%           The options used to initialize the pipeline
+%
+%       PIPELINE
+%           The pipeline structure
 %
 %       HISTORY
 %           A string recapituling when and who created the pipeline, (and
@@ -102,17 +105,29 @@ function file_pipeline = psom_pipeline_init(pipeline,opt)
 %       DEPS, LIST_JOBS, FILES_IN, FILES_OUT, GRAPH_DEPS
 %           See PSOM_BUILD_DEPENDENCIES for more info.
 %
-%   PATH_LOGS/NAME_PIPELINE.path_def.mat
-%       The matlab search path for the pipeline (it is using the current
-%       path, so make sure all the tools you need are available before
-%       initializing the pipeline).
+%       PATH_WORK
+%           The matlab/octave search path
 %
-%   PATH_LOGS/<JOB_NAME>.M : A matlab or octave .M file which runs the
-%       associated job.
+%   <PATH_LOGS>/PIPE_jobs.mat
+%       A .MAT file with the following variables:
 %
-%   PATH_LOGS/<JOB_NAME>.MAT : this file contains the variables FILES_IN,
-%       FILES_OUT and OPT of the current stage.
+%       <JOB_NAME>
+%           One variable per job. It is identical to PIPELINE.<JOB_NAME>.
 %
+%   PATH_LOGS/PIPE_status.mat
+%       A .mat file with the following variable : 
+%
+%       JOB_STATUS
+%           A structure. Each entry corresponds to one job name and is a
+%           string describing the current status of the job (upon
+%           initialization, it is 'none', meaning that nothing has been
+%           done with the job yet).
+%
+%   PATH_LOGS/PIPE_logs.mat
+%       A .mat file with the following variable : 
+%       
+%       <JOB_NAME>
+%           a string containg the current log of the job.
 %
 % NOTE 2:
 %
@@ -124,15 +139,16 @@ function file_pipeline = psom_pipeline_init(pipeline,opt)
 %
 % NOTE 3:
 %
-%   There will be some checks done on the pipeline before initializing it :
+%   There will be some viability checks done on the pipeline before 
+%   initializing it :
 %
-%   1. That the dependency graph of the pipeline is a directed acyclic
+%   1. Check that the dependency graph of the pipeline is a directed acyclic
 %   graph, i.e. if job A depends on job B, job B does not depend (even
 %   indirectly) on job A.
 %
-%   2. That an output file is not created twice. Overwritting on files is
-%   regarded as a bug in a pipeline (forgetting to edit a copy-paste is a
-%   common mistake).
+%   2. Check that an output file is not created twice. Overwritting on 
+%   files is regarded as a bug in a pipeline (forgetting to edit a 
+%   copy-paste is a common mistake that leads to overwritting).
 %
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008.
 % Maintainer : pbellec@bic.mni.mcgill.ca
@@ -170,9 +186,10 @@ end
 
 %% Options
 gb_name_structure = 'opt';
-gb_list_fields = {'path_logs','name_pipeline','command_matlab','flag_verbose'};
-gb_list_defaults = {NaN,'PSOM_pipeline','',true};
+gb_list_fields = {'path_logs','command_matlab','flag_verbose'};
+gb_list_defaults = {NaN,'',true};
 psom_set_defaults
+name_pipeline = 'PIPE';
 
 if isempty(opt.command_matlab)
     if strcmp(gb_psom_language,'matlab')
@@ -187,17 +204,11 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 file_pipeline = cat(2,path_logs,filesep,name_pipeline,'.mat');
-file_path = cat(2,path_logs,filesep,name_pipeline,'.path_def.mat');
+file_jobs = cat(2,path_logs,filesep,name_pipeline,'_jobs.mat');
+file_logs = cat(2,path_logs,filesep,name_pipeline,'_logs.mat');
+file_status = cat(2,path_logs,filesep,name_pipeline,'_status.mat');
 list_jobs = fieldnames(pipeline);
 nb_jobs = length(list_jobs);
-
-for num_j = 1:nb_jobs
-
-    name_job = list_jobs{num_j};
-    files_var.(name_job) = cat(2,path_logs,filesep,name_job,'.mat');
-    files_m.(name_job) = cat(2,path_logs,filesep,name_job,'.mat');
-
-end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Test for an existing pipeline %%
@@ -296,54 +307,70 @@ for num_j = 1:length(list_jobs)
 
 end % for jobs
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Saving the matlab version of the pipeline %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Saving the dependencies of the pipeline %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if flag_verbose
     fprintf('Saving the pipeline structure in %s...\n',file_pipeline);
 end
 
 history = [datestr(now) ' ' gb_psom_user ' on a ' gb_psom_OS ' system used PSOM v' gb_psom_version '>>>> Created a pipeline !\n'];
-save(file_pipeline,'pipeline','history','deps','graph_deps','list_jobs','files_in','files_out')
+path_work = path;
+save(file_pipeline,'history','deps','graph_deps','list_jobs','files_in','files_out','path_work')
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Setting up path for the Matlab/Octave environment %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Creating job structure %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if flag_verbose
-    fprintf('Saving the search path for Matlab or octave in %s... \n',file_path);
+    fprintf('Creating the ''jobs'' file %s ...\n',file_jobs);
 end
 
-path_work = path;
-save(file_path,'path_work')
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Creating the bash scripts for all stages of the pipeline, as well as the core of the PMP script %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-for num_j = 1:length(list_jobs)
-
-    if flag_verbose
-        fprintf('Adding job : %s\n',job_name);
-    end
-
-    %% Getting information on the stage
-    job_name = list_jobs{num_j};
-    job = pipeline.(job_name);
-
-    gb_name_structure = 'job';
-    gb_list_fields = {'command','files_in','files_out','opt','label','environment'};
-    gb_list_defaults = {NaN,NaN,NaN,NaN,'',''};
-    psom_set_defaults
-
-    %% Creation of the .mat file with all variables necessary to perform
-    %% the stage
-    save(files_var.(job_name),'command','files_in','files_out','opt')
-    
+for num_j = 1:length(list_jobs) 
+    sub_add_var(file_jobs,list_jobs{num_j},pipeline.(list_jobs{num_j}));        
 end
+
+%%%%%%%%%%%%%%%%%%%
+%% Creating logs %%
+%%%%%%%%%%%%%%%%%%%
+
+if flag_verbose
+    fprintf('Creating the ''logs'' file %s ...\n',file_logs);
+end
+
+for num_j = 1:length(list_jobs)       
+    sub_add_var(file_logs,list_jobs{num_j},'');          
+end
+
+%%%%%%%%%%%%%%%%%%%%%
+%% Creating status %%
+%%%%%%%%%%%%%%%%%%%%%
+
+if flag_verbose
+    fprintf('Creating the ''status'' file %s ...\n',file_status);
+end
+
+curr_status = cell([length(list_jobs) 1]);
+for num_j = 1:length(list_jobs)        
+    job_status{num_j} = 'none';            
+end
+
+save(file_status,'job_status')
 
 if flag_verbose
     fprintf('The pipeline has been successfully initialized\n');
+end
+
+%%%%%%%%%%%%%%%%%
+%% Subfunction %%
+%%%%%%%%%%%%%%%%%
+
+function sub_add_var(file_name,var_name,var_value)
+
+eval([var_name ' = var_value;']);
+if ~exist(file_name,'file')
+    save(file_name,var_name)
+else
+    save(file_name,'-append',var_name)
 end

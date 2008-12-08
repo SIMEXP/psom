@@ -206,24 +206,26 @@ end
 %% The pipeline processing starts now  %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% Generic messages
+hat_qsub_o = sprintf('\n\n*****************\nOUTPUT QSUB\n*****************\n');
+hat_qsub_e = sprintf('\n\n*****************\nERROR QSUB\n*****************\n');
+
 %% Generating file names
 [path_logs,name_pipeline,ext_pl] = fileparts(file_pipeline);
 file_pipe_running = cat(2,path_logs,filesep,name_pipeline,'.running');
 file_pipe_log = cat(2,path_logs,filesep,name_pipeline,'.log');
-file_pipe_path = cat(2,path_logs,filesep,name_pipeline,'.path_def.mat');
+file_logs = cat(2,path_logs,filesep,name_pipeline,'_logs.mat');
+file_status = cat(2,path_logs,filesep,name_pipeline,'_status.mat');
+file_jobs = cat(2,path_logs,filesep,name_pipeline,'_jobs.mat');
 
 %% Check for the existence of the pipeline
 if ~exist(file_pipeline,'file') % Does the pipeline exist ?
     error('Could not find the pipeline file %s. You first need to initialize the pipeline using PSOM_PIPELINE_INIT !',file_pipeline);
 end
 
-%% Check if the pipeline was not already running
-if exist(file_pipe_running,'file') % Is the pipeline running ?
-    fprintf('A running tag has been found on the pipeline ! This means the pipeline was either running or crashed.\nI will assume it crashed and restart the pipeline.\n')
-    delete(file_pipe_running);
-end
+%% Create a running tag on the pipeline
 str_now = datestr(clock);
-save(file_pipe_running,'str_now'); %% Put a running tag on the pipeline
+save(file_pipe_running,'str_now'); 
 
 %% If specified, start the pipeline in the background
 switch opt.mode_pipeline_manager
@@ -239,9 +241,9 @@ switch opt.mode_pipeline_manager
 
         switch gb_psom_language
             case 'matlab'
-                instr_job = sprintf('%s -nosplash -nojvm -logfile %s -r "cd %s, load %s, path(path_work), opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.mode_pipeline_manager = ''session''; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,file_pipe_log,path_logs,file_pipe_path,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
+                instr_job = sprintf('%s -nosplash -nojvm -logfile %s -r "cd %s, load(''%s'',''path_work''), path(path_work), opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.mode_pipeline_manager = ''session''; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,file_pipe_log,path_logs,file_pipeline,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
             case 'octave'
-                instr_job = sprintf('%s --silent --eval "diary ''%s'', cd %s, load %s, path(path_work), opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.mode_pipeline_manager = ''session''; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,file_pipe_log,path_logs,file_pipe_path,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
+                instr_job = sprintf('%s --silent --eval "diary ''%s'', cd %s, load(''%s'',''path_work''), path(path_work), opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.mode_pipeline_manager = ''session''; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,file_pipe_log,path_logs,file_pipeline,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
         end
 
         file_shell = psom_file_tmp('_proc_pipe.sh');
@@ -271,14 +273,26 @@ end
 % interrupting the pipeline of if an error occurs
 try    
     
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %% Initialize job status %%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
     %% Load the pipeline
     fprintf('Loading the pipeline dependencies ...\n')
     load(file_pipeline,'list_jobs','deps','graph_deps','files_in');
 
-    %% Check if all the files necessary to complete the pipeline can be found
+    %% Loading the current status of the pipeline
+    fprintf('Loading the current status of jobs ...\n')
+    load(file_status,'job_status')   
+    list_num_jobs = 1:length(job_status);
+    
+    %% Check if all the files necessary to complete the pipeline can be
+    %% found
     flag_ready = true;
+    mask_unfinished = ~ismember(job_status,'finished');
+    
     fprintf('Checking if all the files necessary to complete the pipeline can be found ...\n')
-    for num_j = 1:length(list_jobs)
+    for num_j = find(mask_unfinished')
 
         name_job = list_jobs{num_j};
         list_files_needed = files_in.(name_job);
@@ -293,59 +307,66 @@ try
         end
     end
     clear files_in
-
     if ~flag_ready
         error('Some files are missing, sorry dude I must quit ...')
     end
+    
+    %% Reset failed jobs 
+    mask_failed = ismember(job_status,'failed');    
+    
+    for num_j = find(mask_failed')
+        job_status{num_f} = 'none';
+        sub_add_var(file_logs,list_jobs{num_j},'');
+    end    
+    
+    %% Update the job status using the tags that can be found in the log
+    %% folder    
+    mask_inq = ismember(job_status,{'submitted','running'}); 
+    list_num_inq = list_num_jobs(mask_inq);
+    list_jobs_inq = list_jobs(mask_inq);
+    curr_status = psom_job_status(path_logs,list_jobs(mask_inq));        
+        
+    %% Remove the dependencies on finished jobs
+    mask_finished = ismember(curr_status,'finished');       
+    list_num_finished = list_num_inq(mask_finished);
+    list_num_finished = list_num_finished(:)';
 
-    %% Clean up left-over 'running' tags
-    fprintf('Checking the current status of jobs ...\n')
-    curr_status = psom_job_status(path_logs,list_jobs);
-    mask_running = ismember(curr_status,'running'); % running jobs
+    for num_j = list_num_finished
+        name_job = list_jobs_inq{num_j};
+        log = sub_read_txt([path_logs filesep name_job '.log']);
+        qsub_o = sub_read_txt([path_logs filesep name_job '.oqsub']);
+        qsub_e = sub_read_txt([path_logs filesep name_job '.eqsub']);
 
-    fprintf('Checking for ''running'' tags ...\n')
-    if max(mask_running)>0
-        fprintf('   Some running tags were found on some jobs before even starting the pipeline. I reseted all tags to ''none''.\n');
-        list_jobs_running = list_jobs(mask_running);
-        for num_f = 1:length(list_jobs_running)
-            file_running = [path_logs filesep list_jobs_running{num_f} '.running'];
-            delete(file_running)
+        if isempty(qsub_o)&isempty(qsub_e)
+            sub_add_var(file_logs,name_job,log);
+        else
+            sub_add_var(file_logs,name_job,[log hat_qsub_o qsub_o hat_qsub_e qsub_e]);
         end
+        job_status{num_j} = 'finished';
     end
+    
+    %% update dependencies
+    graph_deps(list_num_finished,:) = 0;    
+    mask_deps = max(graph_deps,[],1)>0;
+    mask_deps = mask_deps(:);
 
-    fprintf('Checking for ''failed'' tags ...\n')
-    %% Clean up left-over 'failed' tags
-    mask_failed = ismember(curr_status,{'failed'}); % failed jobs
-    if max(mask_failed)>0
-        fprintf('Some failed tags were found on some jobs. I will restart them.\n');
-        list_jobs_failed = list_jobs(mask_failed);
-        for num_f = 1:length(list_jobs_failed)
-            file_failed = [path_logs filesep list_jobs_failed{num_f} '.failed'];
-            delete(file_failed)
-        end
+    %% Clean up the log folders from old tags
+    delete([path_logs filesep '*.running']);
+    delete([path_logs filesep '*.failed']);
+    delete([path_logs filesep '*.finished']);
+    delete([path_logs filesep '*.exit']);
+    delete([path_logs filesep '*.log']);
+    
+    %% Finally reset all the left-overs submitted/running jobs  
+    mask_inq = ismember(job_status,{'submitted','running'}); 
+    for num_j = find(mask_inq')
+        job_status{num_f} = 'none';
+        sub_add_var(file_logs,list_jobs{num_j},'');
     end
-
-    %% Clean up log files for unfinished jobs
-    fprintf('Clean up left-over ''log'', ''exit'' and ''qsub'' error/outputs of unfinished jobs ...\n')
-    mask_unfinished = ~ismember(curr_status,'finished'); % non finished jobs
-    if max(mask_unfinished)>0
-        list_jobs_unfinished = list_jobs(mask_unfinished);
-        for num_f = 1:length(list_jobs_unfinished)
-            name_job = list_jobs_unfinished{num_f};
-            file_log = [path_logs filesep name_job '.log'];
-            file_exit = [path_logs filesep name_job '.exit'];
-            
-            if exist(file_log,'file')
-                system(['rm ' file_log]);
-            end
-            
-            if exist(file_exit,'file')
-                system(['rm ' file_exit]);
-            end
-
-        end
-    end
-
+    
+    %% Save the current status
+    save(file_status,'job_status');
+    
     %%%%%%%%%%%%%%%%%%%%%%
     %% Run the pipeline %%
     %%%%%%%%%%%%%%%%%%%%%%
@@ -363,98 +384,91 @@ try
     end
     mkdir(path_tmp);
 
-    %% Initialize job status
+    %% Initialize the to-do list
     fprintf('Initializing job status ...\n')
-    mask_todo = ~ismember(curr_status,{'finished'}); % done jobs (there is no failed jobs at this stage)
+    mask_todo = ~ismember(job_status,{'finished'}); % done jobs (there is no failed jobs at this stage)
     mask_todo = mask_todo(:);
-    mask_done = ~mask_todo;
-    mask_running = mask_done; % Start back at the point where all the finished jobs have just finished
-    nb_queued = sum(mask_running);
-
-    %% Loop until there are jobs to do, or some jobs are still running
-    fprintf('The pipeline manager starts now !\n')
+    mask_done = ~mask_todo; 
+    mask_running = false(size(mask_done));
+    nb_queued = 0;
     
     while (max(mask_todo)>0) || (max(mask_running)>0)
 
         flag_nothing_happened = true;
 
-        %% Update the status of running jobs
-        list_jobs_running = list_jobs(mask_running);
+        %% Update the status of running jobs         
         list_num_running = find(mask_running);
+        list_num_running = list_num_running(:)';
+        list_jobs_running = list_jobs(list_num_running);
         new_status_running_jobs = psom_job_status(path_logs,list_jobs_running);
-        mask_done(mask_running) = ismember(new_status_running_jobs,{'finished','failed'});
+        
+        %% Loop over running jobs to check the new status
+        num_l = 0;
+        for num_j = list_num_running
+            num_l = num_l+1;
+            name_job = list_jobs(num_j);
+            flag_changed = ~strcmp(job_status{num_j},new_status_running_jobs{num_l});
+            flag_nothing_happened = flag_nothing_happened & ~flag_changed;
+
+            if flag_changed
+                job_status{num_j} = new_status_running_jobs{num_l};
+
+                if strcmp(job_status{num_j},'exit') % the script crashed ('exit' tag)
+                    fprintf('%s - The script of job %s terminated without generating any tag, I guess we will count that one as failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
+                    job_status{num_j} = 'failed';
+                end
+
+                if strcmp(job_status{num_j},'failed')||strcmp(job_status{num_j},'finished')
+                    %% for finished or failed jobs, transfer the individual
+                    %% test log files to the matlab global logs structure
+                    nb_queued = nb_queued - 1;
+                    log = sub_read_txt([path_logs filesep name_job '.log']);
+                    qsub_o = sub_read_txt([path_logs filesep name_job '.oqsub']);
+                    qsub_e = sub_read_txt([path_logs filesep name_job '.eqsub']);
+                    if isempty(qsub_o)&isempty(qsub_e)
+                        sub_add_var(file_logs,name_job,log);
+                    else
+                        sub_add_var(file_logs,name_job,[log hat_qsub_o qsub_o hat_qsub_e qsub_e]);
+                    end
+                    sub_clean_job(path_logs,name_job); % clean up all tags & log
+                end
+
+                switch job_status{num_j}
+
+                    case 'failed' % the job has failed, darn it !
+
+                        fprintf('%s - The job %s has failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
+                        list_num_child = find(sub_find_children(num_j,graph_deps));
+                        mask_todo(list_num_child) = false; % Remove the children of the failed job from the to-do list
+
+                    case 'finished'
+
+                        fprintf('%s - The job %s has been successfully completed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
+                        graph_deps(list_num_finished,:) = 0; % update dependencies
+
+                    case 'running'
+
+                        fprintf('%s - The job %s is now running (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
+                end
+
+            end % if flag changed
+        end % loop over running jobs
+        
+        %% Reset the 'dot counter' if something happened, and save the new
+        %% job status
+        if ~flag_nothing_happened
+            save(file_status,'job_status');            
+            nb_checks = 0;
+            if nb_points>0
+                fprintf('\n');
+            end
+            nb_points = 0;
+        end
+        
+        %% update the to-do list
+        mask_done(mask_running) = ismember(new_status_running_jobs,{'finished','failed','exit'});
         mask_todo(mask_running) = mask_todo(mask_running)&~mask_done(mask_running);
-
-        %% In qsub mode, check if a script crashed ('exit' tag)
-        if strcmp(opt.mode,'qsub')
-            mask_exit = ismember(new_status_running_jobs,{'exit'});
-            list_num_exit = find(mask_exit);
-            list_num_exit = list_num_exit(:)';
-            for num_f = list_num_exit
-                name_job = list_jobs_running{num_f};
-                fprintf('%s - The script of job %s terminated without generating any tag, I guess we will count that one as failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
-                file_failed = [path_logs filesep name_job '.failed']; % put a failed tag
-                system(['touch ' file_failed]);
-                new_status_running_jobs{num_f} = 'failed';
-            end
-        end
-
-        %% Remove the children of failed jobs from the to-do list
-        mask_failed = ismember(new_status_running_jobs,'failed');
-
-        if max(mask_failed)>0
-            list_num_failed = list_num_running(mask_failed);
-            list_num_failed = list_num_failed(:)';
-            list_jobs_failed = list_jobs_running(mask_failed);
-
-            if flag_nothing_happened
-                flag_nothing_happened = false;
-                nb_checks = 0;
-                if nb_points>0
-                    fprintf('\n');
-                end
-                nb_points = 0;
-            end
-            for num_f = 1:length(list_jobs_failed)
-                name_job = list_jobs_failed{num_f};
-                nb_queued = nb_queued - 1;
-                fprintf('%s - The job %s has failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
-            end
-
-            for num_j = list_num_failed
-                list_num_child = find(sub_find_children(num_j,graph_deps));
-                mask_todo(list_num_child) = false;
-            end
-        end
-
-        %% Remove the dependencies on finished jobs
-        mask_finished = ismember(new_status_running_jobs,'finished');
-
-        if max(mask_finished)>0
-
-            list_num_finished = list_num_running(mask_finished);
-            list_num_finished = list_num_finished(:)';
-            list_jobs_finished = list_jobs_running(mask_finished);
-
-            if flag_nothing_happened
-                flag_nothing_happened = false;
-                nb_checks = 0;
-                if nb_points>0
-                    fprintf('\n');
-                end
-                nb_points = 0;
-            end
-
-            for num_f = 1:length(list_jobs_finished)
-                name_job = list_jobs_finished{num_f};
-                nb_queued = nb_queued - 1;
-                fprintf('%s - The job %s has been successfully completed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
-            end
-
-            %% update dependencies
-            graph_deps(list_num_finished,:) = 0;
-        end
-
+     
         %% Update the dependency mask
         mask_deps = max(graph_deps,[],1)>0;
         mask_deps = mask_deps(:);
@@ -486,7 +500,8 @@ try
             mask_todo(num_job) = false;
             mask_running(num_job) = true;
             nb_queued = nb_queued + 1;
-            fprintf('%s - The job %s is now running (%i jobs in queue).\n',datestr(clock),name_job,nb_queued)
+            job_status{num_job} = 'submitted';
+            fprintf('%s - The job %s has been submitted to the queue (%i jobs in queue).\n',datestr(clock),name_job,nb_queued)
 
             %% Create a temporary shell scripts for 'batch' or 'qsub' modes
             if ~strcmp(opt.mode,'session')
@@ -494,15 +509,15 @@ try
                 switch gb_psom_language
                     case 'matlab'
                         if ~isempty(opt.shell_options)
-                            instr_job = sprintf('%s\n%s -nosplash -nojvm -r "cd %s, load %s, path(path_work), psom_run_job(''%s''),">%s\n',opt.shell_options,opt.command_matlab,path_logs,file_pipe_path,file_job,file_log);
+                            instr_job = sprintf('%s\n%s -nosplash -nojvm -r "cd %s, load(''%s'',''path_work''), path(path_work), psom_run_job(''%s''),">%s\n',opt.shell_options,opt.command_matlab,path_logs,file_pipeline,file_job,file_log);
                         else
-                            instr_job = sprintf('%s -nosplash -nojvm -r "cd %s, load %s, path(path_work), psom_run_job(''%s''),">%s\n',opt.command_matlab,path_logs,file_pipe_path,file_job,file_log);
+                            instr_job = sprintf('%s -nosplash -nojvm -r "cd %s, load(''%s'',''path_work''), path(path_work), psom_run_job(''%s''),">%s\n',opt.command_matlab,path_logs,file_pipeline,file_job,file_log);
                         end
                     case 'octave'
                         if ~isempty(opt.shell_options)
-                            instr_job = sprintf('%s\n%s --eval "cd %s, load %s, path(path_work), psom_run_job(''%s''),">%s\n',opt.shell_options,opt.shell_options,opt.command_matlab,path_logs,file_pipe_path,file_job,file_log);
+                            instr_job = sprintf('%s\n%s --eval "cd %s, load(''%s'',''path_work''), path(path_work), psom_run_job(''%s''),">%s\n',opt.shell_options,opt.shell_options,opt.command_matlab,path_logs,file_pipeline,file_job,file_log);
                         else
-                            instr_job = sprintf('%s --eval "cd %s, load %s, path(path_work), psom_run_job(''%s''),">%s\n',opt.shell_options,opt.command_matlab,path_logs,file_pipe_path,file_job,file_log);
+                            instr_job = sprintf('%s --eval "cd %s, load(''%s'',''path_work''), path(path_work), psom_run_job(''%s''),">%s\n',opt.shell_options,opt.command_matlab,path_logs,file_pipeline,file_job,file_log);
                         end
                 end
 
@@ -615,5 +630,40 @@ list_num_child = find(mask_child);
 if ~isempty(list_num_child)
     for num_c = list_num_child        
         mask_child = mask_child | sub_find_children(num_c,graph_deps);
+    end
+end
+
+function sub_add_var(file_name,var_name,var_value)
+
+eval([var_name ' = var_value;']);
+if ~exist(file_name,'file')
+    save(file_name,var_name)
+else
+    save(file_name,'-append',var_name)
+end
+
+function str_txt = sub_read_txt(file_name)
+
+if exist(file_name,'file')
+    hf = fread(file_name,'r');
+    str_txt = fread(hf,Inf,'uint8=>char')';
+    fclose(hf)
+else
+    str_txt = '';
+end
+
+function [] = sub_clean_job(path_logs,name_job)
+
+files{1} = [path_logs filesep name_pipeline '.log'];
+files{2} = [path_logs filesep name_pipeline '.finished'];
+files{3} = [path_logs filesep name_pipeline '.failed'];
+files{4} = [path_logs filesep name_pipeline '.running'];
+files{5} = [path_logs filesep name_pipeline '.exit'];
+files{6} = [path_logs filesep name_pipeline '.eqsub'];
+files{7} = [path_logs filesep name_pipeline '.oqsub'];
+
+for num_f = 1:length(files)
+    if exist(files{num_f},'file')
+        delete(files{num_f});
     end
 end
