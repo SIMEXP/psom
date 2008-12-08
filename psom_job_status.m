@@ -100,13 +100,15 @@ for num_j = 1:nb_jobs
     file_failed = [name_job '.failed'];
     file_finished = [name_job '.finished'];
     file_exit = [name_job '.exit'];
+    file_oqsub = [name_job '.oqsub'];
     
     flag_job = ismember(file_job,list_job);
     flag_running = ismember(file_running,list_job);
     flag_failed = ismember(file_failed,list_job);
     flag_finished = ismember(file_finished,list_job);
     flag_exit = ismember(file_exit,list_job);
-        
+    flag_oqsub = ismember(file_oqsub,list_job);    
+    
     if (flag_running+flag_finished+flag_failed)>1
         error('I am confused : job %s has multiple tags. Sorry dude, I must quit ...',name_job);
     end
@@ -126,7 +128,13 @@ for num_j = 1:nb_jobs
     elseif flag_finished
         
         switch mode_pipe
-            case {'qsub','batch'}
+            case 'qsub'
+                if flag_oqsub
+                    curr_status{num_j} = 'finished';
+                else
+                    curr_status{num_j} = 'running';
+                end
+            case 'batch'
                 if flag_exit
                     curr_status{num_j} = 'finished';
                 else
@@ -139,7 +147,13 @@ for num_j = 1:nb_jobs
     elseif flag_failed
 
         switch mode_pipe
-            case {'qsub','batch'}
+            case 'qsub'
+                if flag_oqsub
+                    curr_status{num_j} = 'failed';
+                else
+                    curr_status{num_j} = 'running';
+                end
+            case 'batch'
                 if flag_exit
                     curr_status{num_j} = 'failed';
                 else
