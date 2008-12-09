@@ -83,26 +83,18 @@ clear struct_files_log
 nb_jobs = length(list_jobs);
 curr_status = cell([nb_jobs 1]);
 
-for num_j = 1:nb_jobs
-    
-    flag_running = false;
-    flag_finished = false;
-    flag_failed = false;
-    flag_none = false;
-    flag_exit = false;
+for num_j = 1:nb_jobs        
     
     name_job = list_jobs{num_j};
     mask_job = psom_find_str_cell(list_logs,name_job);
     list_job = list_logs(mask_job);
-    
-    file_job = [name_job '.mat'];
+        
     file_running = [name_job '.running'];
     file_failed = [name_job '.failed'];
     file_finished = [name_job '.finished'];
     file_exit = [name_job '.exit'];
     file_oqsub = [name_job '.oqsub'];
-    
-    flag_job = ismember(file_job,list_job);
+        
     flag_running = ismember(file_running,list_job);
     flag_failed = ismember(file_failed,list_job);
     flag_finished = ismember(file_finished,list_job);
@@ -111,19 +103,11 @@ for num_j = 1:nb_jobs
     
     if (flag_running+flag_finished+flag_failed)>1
         error('I am confused : job %s has multiple tags. Sorry dude, I must quit ...',name_job);
-    end
-    
-    if ~(flag_running || flag_finished || flag_failed)
-        flag_none = true;
-    end
+    end          
         
-    if flag_none&flag_job
-        
-        if flag_exit
-            curr_status{num_j} = 'exit';
-        else
-            curr_status{num_j} = 'none';
-        end
+    if ~(flag_finished || flag_failed) & flag_exit
+                
+            curr_status{num_j} = 'exit';                    
         
     elseif flag_finished
         
@@ -167,9 +151,9 @@ for num_j = 1:nb_jobs
 
         curr_status{num_j} = 'running';
 
-    elseif ~flag_job
+    else
         
-        curr_status{num_j} = 'absent';
-        
+        curr_status{num_j} = 'submitted';        
+                
     end
 end

@@ -129,8 +129,8 @@ switch action
         
     case 'monitor'
         
-        file_monitor = [path_logs filesep name_pipeline '.log'];
-        file_pipe_running = [path_logs filesep name_pipeline '.running'];
+        file_monitor = [path_logs filesep name_pipeline '_history.txt'];
+        file_pipe_running = [path_logs filesep name_pipeline '.lock'];
         
         if exist(file_pipe_running,'file')
             msg = 'The pipeline is currently running';
@@ -147,7 +147,7 @@ switch action
             pause(1)
             
         end
-        system(sprintf('tail -f %s',file_monitor));
+        sub_tail(file_monitor,file_pipe_running);
         
     case 'log'
 
@@ -182,4 +182,24 @@ switch action
 
         error('psom:pipeline: unknown action %s',action);
         
+end
+
+%%%%%%%%%%%%%%%%%%%
+%% sub-funcitons %%
+%%%%%%%%%%%%%%%%%%%
+
+function [] = sub_tail(file_read,file_running,time_pause)
+%% prints out the content of the text file FILE_READ with constant updates
+%% as long as the file FILE_RUNNING exists. TIME_PAUSE (default 0.5) is the
+%% time between two prints.
+if nargin < 3
+    time_pause = 0.5;
+end
+
+hf = fopen(file_read,'r');
+
+while exist(file_running,'file')
+    str_read = fread(hf, Inf, 'uint8=>char')';
+    fprintf('%s',str_read);
+    pause(time_pause)
 end

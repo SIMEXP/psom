@@ -99,8 +99,8 @@ function [] = psom_run_pipeline(pipeline,opt)
 %           all.q queue. It can also be used to put restrictions on the
 %           minimum avalaible memory, etc.
 %
-%       There are other minor options available, see PSOM_PIPELINE_INIT and
-%       PSOM_PIPELINE_PROCESS.
+%       There are actually other minor options available, see 
+%       PSOM_PIPELINE_INIT and PSOM_PIPELINE_PROCESS for details.
 %
 % _________________________________________________________________________
 % OUTPUTS:
@@ -160,8 +160,8 @@ end
 name_pipeline = 'PIPE';
 
 gb_name_structure = 'opt';
-gb_list_fields = {'shell_options','path_logs','command_matlab','flag_verbose','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point'};
-gb_list_defaults = {'',NaN,'',true,'session','',0,'',[],[]};
+gb_list_fields = {'shell_options','path_logs','command_matlab','flag_verbose','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point','time_cool_down'};
+gb_list_defaults = {'',NaN,'',true,'session','',0,'',[],[],[]};
 psom_set_defaults
 
 if isempty(opt.mode_pipeline_manager)
@@ -236,9 +236,9 @@ if ~exist(file_pipeline,'file')
 end
 
 %% Run pipeline
-file_pipe_running = cat(2,path_logs,filesep,name_pipeline,'.running');
+file_pipe_running = cat(2,path_logs,filesep,name_pipeline,'.lock');
 if exist(file_pipe_running,'file') % Is the pipeline running ?
-    fprintf('A running tag has been found on the pipeline ! This means the pipeline was either running or crashed.\nI will assume it crashed and restart the pipeline.\nIf you are NOT CERTAIN that you want to restart the pipeline, press CTRL-C now !\n')
+    fprintf('A lock tag has been found on the pipeline ! This means the pipeline was either running or crashed.\nI will assume it crashed and restart the pipeline.\nIf you are NOT CERTAIN that you want to restart the pipeline, press CTRL-C now !\n')
     pause
     delete(file_pipe_running);
 end
