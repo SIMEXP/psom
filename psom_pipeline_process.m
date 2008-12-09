@@ -321,8 +321,8 @@ try
     
     %% Check if all the files necessary to complete the pipeline can be
     %% found
-    fprintf('Checking if all the files necessary to complete the pipeline can be found ...\n')
-    fprintf(hfpl,'Checking if all the files necessary to complete the pipeline can be found ...\n')
+    fprintf('Checking if all the files necessary to complete the pipeline can be found ...\n');
+    fprintf(hfpl,'Checking if all the files necessary to complete the pipeline can be found ...\n');
     flag_ready = true;
     mask_unfinished = ~ismember(job_status,'finished');
     list_num_unfinished = find(mask_unfinished);
