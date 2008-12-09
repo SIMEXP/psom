@@ -327,9 +327,7 @@ if flag_verbose
     fprintf('Creating the ''jobs'' file %s ...\n',file_jobs);
 end
 
-for num_j = 1:length(list_jobs) 
-    sub_add_var(file_jobs,list_jobs{num_j},pipeline.(list_jobs{num_j}));        
-end
+sub_save_struct_fields(file_jobs,pipeline);
 
 %%%%%%%%%%%%%%%%%%%
 %% Creating logs %%
@@ -339,9 +337,12 @@ if flag_verbose
     fprintf('Creating the ''logs'' file %s ...\n',file_logs);
 end
 
-for num_j = 1:length(list_jobs)       
-    sub_add_var(file_logs,list_jobs{num_j},'');          
+for num_j = 1:length(list_jobs)
+    job_name = list_jobs{num_j};
+    pipeline.(job_name) = '';    
 end
+
+sub_save_struct_fields(file_logs,pipeline);
 
 %%%%%%%%%%%%%%%%%%%%%
 %% Creating status %%
@@ -366,11 +367,15 @@ end
 %% Subfunction %%
 %%%%%%%%%%%%%%%%%
 
-function sub_add_var(file_name,var_name,var_value)
+function sub_save_struct_fields(gb_psom_file_name,gb_psom_struct)
 
-eval([var_name ' = var_value;']);
-if ~exist(file_name,'file')
-    save(file_name,var_name)
-else
-    save(file_name,'-append',var_name)
+gb_psom_list_fields = fieldnames(gb_psom_struct);
+
+for gb_psom_num_f = 1:length(gb_psom_list_fields)
+    gb_psom_field_name = gb_psom_list_fields{gb_psom_num_f};
+    eval([gb_psom_field_name ' = gb_psom_struct.(gb_psom_field_name);']);
 end
+
+clear gb_psom_num_f gb_psom_list_fields gb_psom_struct gb_psom_field_name
+
+eval(['clear gb_psom_file_name; save ' gb_psom_file_name]);
