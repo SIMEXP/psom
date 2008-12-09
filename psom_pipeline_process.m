@@ -633,8 +633,8 @@ try
 
         if nb_checks >= nb_checks_per_point
             nb_checks = 0;
-            fprintf('.')
-            fprintf(hfpl,'.')
+            fprintf('.');
+            fprintf(hfpl,'.');
             nb_points = nb_points+1;
         else
             nb_checks = nb_checks+1;
