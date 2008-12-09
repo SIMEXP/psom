@@ -337,7 +337,7 @@ try
 
         for num_f = 1:length(list_files_necessary)
             if ~exist(list_files_necessary{num_f},'file')&~isempty(list_files_necessary{num_f})&~strcmp(list_files_necessary{num_f},'gb_niak_omitted')
-                fprintf('The file %s is necessary to run job %s, but is unfortunately missing.\n',list_files_necessary{num_f},name_job)
+                fprintf('The file %s is necessary to run job %s, but is unfortunately missing.\n',list_files_necessary{num_f},name_job);
                 fprintf(hfpl,'The file %s is necessary to run job %s, but is unfortunately missing.\n',list_files_necessary{num_f},name_job);
                 flag_ready = false;
             end
@@ -345,6 +345,7 @@ try
     end
     clear files_in
     if ~flag_ready
+        fprintf(hfpl,'Some files are missing, sorry dude I must quit ...\n');
         error('Some files are missing, sorry dude I must quit ...')
     end
     
