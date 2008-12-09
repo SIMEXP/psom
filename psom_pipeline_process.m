@@ -411,6 +411,9 @@ try
         list_num_running = list_num_running(:)';
         list_jobs_running = list_jobs(list_num_running);
         new_status_running_jobs = psom_job_status(path_logs,list_jobs_running,opt.mode);
+        if strcmp(opt.mode,'qsub')
+            pause(1); % pause for a while to let the system finish to write eqsub and oqsub files 
+        end
         
         %% Loop over running jobs to check the new status
         num_l = 0;
