@@ -405,7 +405,7 @@ try
     list_num_inq = list_num_inq(:)';
     
     for num_j = list_num_inq
-        job_status{num_f} = 'none';
+        job_status{num_j} = 'none';
         sub_add_var(file_logs,list_jobs{num_j},'');
     end
     
