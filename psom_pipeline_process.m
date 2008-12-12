@@ -398,6 +398,8 @@ try
     delete([path_logs filesep '*.finished']);
     delete([path_logs filesep '*.exit']);
     delete([path_logs filesep '*.log']);
+    delete([path_logs filesep '*.oqsub']);
+    delete([path_logs filesep '*.eqsub']);
     
     %% Finally reset all the left-overs submitted/running jobs  
     mask_inq = ismember(job_status,{'submitted','running'}); 
