@@ -1,32 +1,39 @@
 ﻿Summary of the project : Pipeline System for Octave and Matlab (PSOM).
-This is PSOM v. 0.6. Please visit http://code.google.com/p/psom/ for more details.
+This is PSOM v. 0.6.0.3 Please visit http://code.google.com/p/psom/ for more details.
 
 ==What is PSOM ?==
+The PSOM project is a small set of .m Matlab/octave functions to manage pipelines, both within a single session or in a parallel computing environment. A pipeline is a collection of jobs, i.e. some matlab or octave code that uses files as inputs and produce files as outputs. PSOM is automatizing all the boring tasks for you: 
+  * Determine which jobs can run in parallel by examining the dependencies between inputs and outputs of jobs. Note that it is possible to specify the number of processes that can be started in parallel.
+  * Take care of processing each job. Three modes are available:
+    * in a single matlab/octave session, on a single machine
+    * in multiple matlab/octave sessions through batch, on a single machine with multiple CPUs.
+    * in multiple matlab/octave sessions trough qsub (pbs and sge are supported), on multiple computers.
+  * Job failure will not crash the pipeline. The pipeline manager identifies the jobs that have failed to produce their expected outputs, and will be able to restart these failed jobs latter.
+  * Update the options of a pipeline, and restart only the jobs that these new options will impact.
+  * Generate log files
+  * Keep track of options
+  * Create folders for outputs
 
-The PSOM project is a small set of functions to manage pipelines, that works both under Matlab and Octave. A pipeline is a collection of jobs, i.e. some matlab or octave code that uses files as inputs and produce files as outputs. PSOM is automatizing all the boring tasks : it generate log files, keeps track of options, tests if a job failed, is able to restart the failed jobs only, create folders for outputs, among others.
+----
+==Why use PSOM ?==
+Here comes the propaganda. Using PSOM compared to a 'quick-and-dirty' script has the following critical advantages : 
+  * Parallelize your code with no effort !The same code can run a pipeline locally or in parallel on multiple PCs. Just change one option.
+  * Save time : no need to write the 'quick-and-dirty' script. That limits the possibility for bugs, too.
+  * All steps of processing are precisely tracked. 
+  * The pipeline manager makes viability checks on the pipeline BEFORE starting it. If one gets mixed up with file names, it is better to know sooner than latter. Looking at the graph of the pipeline also helps a lot to debug.
+  * Deal with failed jobs in a smart and safe way.
+  * Deal with pipeline updates in a smart and safe way.
 
-More importantly, by examining the names of inputs and outputs, PSOM is able to determine which jobs can run in parallel. That can be useful on a single machine with multiple processors, and even more useful in a supercomputing environment with a large number of machines (sge and pbs qsub systems are supported). 
+----
+==Who has contributed to PSOM ?==
+The pipeline system was implemented by Pierre [http://wiki.bic.mni.mcgill.ca/index.php/PierreBellec Bellec] at the !McConnell Brain Imaging Center, Montreal Neurological Institute, !McGill University, Canada, 2008. Core ideas for PSOM have been inspired by the [http://wiki.bic.mni.mcgill.ca/index.php/PoorMansPipeline Poor Man's Pipeline (PMP) project], that was coded in PERL. 
 
-==What do the PSOM exactly do ?==
-
-The current realease includes : 
-  * A pipeline manager that initializes, runs and monitors the execution of a pipeline, which can be done in different modes :
-    * in the current session.
-    * in independent sessions using batch.
-    * in independent sessions using a qsub system (compatible with SGE and PBS).
-  * A tool to represent the pipeline as a graph.
-  * A simple demonstration script.
-  * A stub of documentation, see [http://code.google.com/p/psom/ the wiki page].
-
-==Who has contributed to the NIAK ?==
-
-The pipeline system was implemented by Pierre [http://wiki.bic.mni.mcgill.ca/index.php/PierreBellec Bellec] at the !McConnell Brain Imaging Center, Montreal Neurological Institute, !McGill University, Canada, 2008. However, PSOM ports many of the ideas implemented in the Poor Man's Pipeline (PMP) project from Perl to Matlab. 
-
+----
 ==How to use PSOM ?==
-To install PSOM, just uncompress the archive in a folder and add that folder to you matlab search path. You're done !
 
-To use PSOM, you can have a look at the code of PSOM_DEMO_PIPELINE, or read the wiki pages on [http://code.google.com/p/psom/ the PSOM project's website].
+To install PSOM, just extract the archive in a folder and add that folder to you matlab search path. You're done ! To use PSOM, you can have a look at the code of PSOM_DEMO_PIPELINE, or read [http://code.google.com/p/psom/w/list the wiki pages].
 
+----
 ==Is PSOM opensource ?==
 
 Sure ! it is distributed under an MIT opensource license (see below).
