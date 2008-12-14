@@ -175,7 +175,7 @@ switch action
             
             file_job_log = [path_logs opt_action '.log'];
             file_job_running = [path_logs opt_action '.running'];
-            sub_tail(file_log,file_running);
+            sub_tail(file_job_log,file_job_running);
             
         else
             
