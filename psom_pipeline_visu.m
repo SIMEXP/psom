@@ -171,7 +171,7 @@ switch action
         fprintf('\n\n%s\n%s\n%s\n\n',stars,msg,stars);
         
         
-        if str_cmp(curr_status,'running');
+        if strcmp(curr_status,'running');
             
             file_job_log = [path_logs opt_action '.log'];
             file_job_running = [path_logs opt_action '.running'];
