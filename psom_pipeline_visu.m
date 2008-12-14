@@ -95,8 +95,8 @@ function [] = psom_pipeline_visu(path_logs,action,opt_action)
 psom_gb_vars
 
 %% SYNTAX
-if ~exist('file_pipeline','var') || ~exist('action','var')
-    error('SYNTAX: [] = PSOM_PIPELINE_VISU(FILE_PIPELINE,ACTION,OPT). Type ''help psom_pipeline_visu'' for more info.')
+if ~exist('path_logs','var') || ~exist('action','var')
+    error('SYNTAX: [] = PSOM_PIPELINE_VISU(PATH_LOGS,ACTION,OPT). Type ''help psom_pipeline_visu'' for more info.')
 end
 
 %% get status 
