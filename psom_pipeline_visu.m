@@ -166,7 +166,7 @@ switch action
 
         curr_status = job_status{ind_job};
         
-        msg = sprintf('  Log file of job %s (status %s) ',name_job,curr_status);
+        msg = sprintf('  Log file of job %s (status %s) ',opt_action,curr_status);
         stars = repmat('*',size(msg));
         fprintf('\n\n%s\n%s\n%s\n\n',stars,msg,stars);
         
