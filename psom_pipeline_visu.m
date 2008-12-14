@@ -1,4 +1,4 @@
-function [] = psom_pipeline_visu(file_pipeline,action,opt_action)
+function [] = psom_pipeline_visu(path_logs,action,opt_action)
 %
 % _________________________________________________________________________
 % SUMMARY OF PSOM_PIPELINE_VISU
@@ -6,22 +6,27 @@ function [] = psom_pipeline_visu(file_pipeline,action,opt_action)
 % Monitor the execution of a pipeline
 %
 % SYNTAX:
-% [] = PSOM_PIPELINE_VISU(FILE_PIPELINE,ACTION)
+% [] = PSOM_PIPELINE_VISU(PATH_LOGS,ACTION,OPT)
 %
 % _________________________________________________________________________
 % INPUTS:
 %
-% FILE_PIPELINE  
-%       (string) The file name of a .MAT file generated using 
-%       PSOM_PIPELINE_INIT.
+% PATH_LOGS 
+%       (string) The path of the pipeline logs
 %               
 % ACTION         
 %       (string) Possible values :
-%           'submitted', 'running', 'failed', 'finished', 'none', 'log',
-%           'graph_stages',
+%           Check the status of jobs :
+%               'submitted', 'running', 'failed', 'finished', 'none'
+%           Monitor the execution of the pipeline :
+%               'monitor'
+%           Display the log of a job :
+%               'log'
+%           Draw the graph of dependencies of the pipeline :
+%              'graph_stages'
 %           
 % OPT           
-%       (string) see action 'log'.
+%       (string) see the following notes on action 'log'.
 %
 % _________________________________________________________________________
 % OUTPUTS:
@@ -47,13 +52,13 @@ function [] = psom_pipeline_visu(file_pipeline,action,opt_action)
 %       process the job).
 %
 % ACTION = 'log'
-%       Print the log files for all jobs whose name include the string OPT.
+%       Print (with updates) the log files for the job OPT.
 %
 % ACTION = 'monitor'
-%       Print (with updates) the last line of the pipeline execution.
+%       Print (with updates) the pipeline master log.
 %
 % ACTION = 'graph_stages'
-%       Represent the dependency graph between jobs.
+%       Represent the dependency graph between jobs.  
 %
 % _________________________________________________________________________
 % SEE ALSO:
@@ -95,8 +100,10 @@ if ~exist('file_pipeline','var') || ~exist('action','var')
 end
 
 %% get status 
-[path_logs,name_pipeline] = fileparts(file_pipeline);
+file_pipeline = [path_logs 'PIPE.mat'];
+name_pipeline = 'PIPE';
 file_status = [path_logs filesep name_pipeline '_status.mat'];
+file_logs = [path_logs filesep name_pipeline '_logs.mat'];
 load(file_status,'job_status')
 load(file_pipeline,'list_jobs');
 
@@ -151,32 +158,31 @@ switch action
         
     case 'log'
 
-        curr_status = psom_job_status(path_logs,opt_action)
-        mask_jobs = ismember(curr_status,{'finished','failed','running'});
-        jobs_action = list_jobs(mask_jobs);
+        ind_job =  find(ismember(list_jobs,opt_action));
         
-        if max(mask_jobs) == 0
-            
-            msg = sprintf('  Could not find any log fitting the filter ''*%s*''  ',opt_action);
-            stars = repmat('*',size(msg));
-            fprintf('\n\n%s\n%s\n%s\n\n',stars,msg,stars);
-
-        else
-
-            for num_j = 1:length(jobs_action)
-
-                name_job = jobs_action{num_j};
-                file_log = [path_logs filesep name_job '.log'];
-                msg = sprintf('  Log file of job %s  ',name_job);
-                stars = repmat('*',size(msg));
-                fprintf('\n\n%s\n%s\n%s\n\n',stars,msg,stars);
-                hf = fopen(file_log,'r');
-                str_log = fread(hf,Inf,'uint8=>char');
-                fclose(hf);
-                fprintf('%s\n',str_log)
-
-            end
+        if isempty(ind_job)
+            error('%s : is not a job of this pipeline.');                    
         end
+
+        curr_status = job_status{ind_job};
+        
+        msg = sprintf('  Log file of job %s (status %s) ',name_job,curr_status);
+        stars = repmat('*',size(msg));
+        fprintf('\n\n%s\n%s\n%s\n\n',stars,msg,stars);
+        
+        
+        if str_cmp(curr_status,'running');
+            
+            file_job_log = [path_logs opt_action '.log'];
+            file_job_running = [path_logs opt_action '.running'];
+            sub_tail(file_log,file_running);
+            
+        else
+            
+            load(file_logs,opt_action);
+            eval(opt_action)
+        
+        end            
 
     otherwise
 
@@ -185,13 +191,15 @@ switch action
 end
 
 %%%%%%%%%%%%%%%%%%%
-%% sub-funcitons %%
+%% sub-functions %%
 %%%%%%%%%%%%%%%%%%%
 
 function [] = sub_tail(file_read,file_running,time_pause)
-%% prints out the content of the text file FILE_READ with constant updates
-%% as long as the file FILE_RUNNING exists. TIME_PAUSE (default 0.5) is the
-%% time between two prints.
+
+% prints out the content of the text file FILE_READ with constant updates
+% as long as the file FILE_RUNNING exists. TIME_PAUSE (default 0.5) is the
+% time between two prints.
+
 if nargin < 3
     time_pause = 0.5;
 end
@@ -203,3 +211,5 @@ while exist(file_running,'file')
     fprintf('%s',str_read);
     pause(time_pause)
 end
+
+fclose(hf)
