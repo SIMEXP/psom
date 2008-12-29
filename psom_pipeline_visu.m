@@ -194,7 +194,7 @@ switch action
         else
             
             load(file_logs,opt_action);
-            eval(opt_action)
+            eval(['fprintf(''%s'',',opt_action,');']);
         
         end            
 

@@ -282,6 +282,15 @@ if isempty(opt.command_matlab)
     end
 end
 
+%% Print a small banner for the initialization
+msg_line1 = sprintf('The pipeline description is now being prepared for execution.');
+msg_line2 = sprintf('The following folder will be used to store logs and status :');
+msg_line3 = sprintf('%s',path_logs);
+size_msg = max([size(msg_line1,2),size(msg_line2,2),size(msg_line3,2)]);
+msg = sprintf('%s\n%s\n%s',msg_line1,msg_line2,msg_line3);
+stars = repmat('*',[1 size_msg]);
+fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Stage 1: save the description of the pipeline %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -310,10 +319,6 @@ if flag_verbose
 end
 
 [deps,list_jobs,files_in,files_out,graph_deps] = psom_build_dependencies(pipeline);
-
-if flag_verbose
-    fprintf('\n');
-end
 
 %% Check if some outputs were not generated twice
 if flag_verbose
@@ -364,11 +369,11 @@ end
 
 %% Create logs folder
 
-if flag_verbose
-    fprintf('    Creating the logs folder ...\n');
-end
-
 if ~exist(path_logs,'dir')
+    if flag_verbose
+        fprintf('    Creating the logs folder ...\n');
+    end
+
     [succ,messg,messgid] = psom_mkdir(path_logs);
 
     if succ == 0
@@ -398,7 +403,7 @@ save(file_pipeline,'history','deps','graph_deps','list_jobs','files_in','files_o
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if flag_verbose
-    fprintf('Creating the individual ''jobs'' file %s ...\n',file_jobs);
+    fprintf('\nCreating the individual ''jobs'' file %s ...\n',file_jobs);
 end
 
 flag_restart = false([1 nb_jobs]);
@@ -412,6 +417,9 @@ else
     pipeline_old = struct([]);
 
 end
+
+%% Loop over the jobs and save the individual descriptions. Use that
+%% opportunity to set up the 'restart' flags
 
 for num_j = 1:nb_jobs
 
@@ -455,7 +463,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if flag_verbose
-    fprintf('Creating the ''logs'' and ''status'' files %s and %s...\n',file_logs,file_status);
+    fprintf('\nCreating the ''logs'' and ''status'' files ...\n');
 end
 
 %% If an old pipeline exists, update the status of the jobs based on the
@@ -466,6 +474,8 @@ if flag_verbose
 end
 
 if flag_old_pipeline
+    
+    if exist(file_status,'file')
 
     load(file_status);
 
@@ -498,6 +508,9 @@ if flag_old_pipeline
     end
 
     job_status_old = job_status;            
+    else
+        job_status_old = repmat({'none'},[nb_jobs 1]);
+    end
     
 end
 
@@ -551,31 +564,24 @@ for num_j = list_num_unfinished
         if ~exist(list_files_necessary{num_f},'file')&~isempty(list_files_necessary{num_f})&~strcmp(list_files_necessary{num_f},'gb_niak_omitted')
 
             if flag_job_OK
-                msg_files = fprintf('The file %s is necessary to run job %s, but is unfortunately missing.\n',list_files_necessary{num_f},name_job);
+                msg_files = sprintf('        Job %s : the file %s is unfortunately missing.\n',name_job,list_files_necessary{num_f});
             else
-                msg_files = char(msg_files,fprintf('The file %s is necessary to run job %s, but is unfortunately missing.\n',list_files_necessary{num_f},name_job));
+                msg_files = char(msg_files,sprintf('        Job %s : the file %s is unfortunately missing.\n',name_job,list_files_necessary{num_f}));
             end
             flag_ready = false;
+            flag_job_OK = false;
 
         end
     end
     
     if ~flag_job_OK
         job_status{num_j} = 'failed';
-        sub_add_var(file_logs,name_job,msg_files);
-        fprintf('%s',msg_files);
+        sub_add_var(file_logs,name_job,sprintf('%s\n\n%s',datestr(now),msg_files));
+        fprintf('%s',msg_files);        
     end
     
 end
 
-if ~flag_ready
-    if flag_verbose
-        fprintf('Some jobs were marked as failed because some inputs were mising. Press CTRL-C now if you do not wish to run the pipeline ...\n');
-        pause
-    else
-        warning('Some inputs of jobs of the pipeline were missing. Those jobs were marked as ''failed'', see the logs for more details.');
-    end
-end
 
 %% Save the jobs' status
 
@@ -587,6 +593,10 @@ flag_failed = ismember(job_status,'failed');
 save(file_status,'job_status')
 
 %% Initialize the log files
+
+if flag_verbose
+    fprintf('    Creating the ''logs'' file %s ...\n',file_logs);
+end
 
 for num_j = 1:nb_jobs
     
@@ -604,7 +614,16 @@ for num_j = 1:nb_jobs
     end
 end
 
-sub_save_struct_fields(file_logs,pipeline);
+sub_save_struct_fields(file_logs,all_logs);
+
+if ~flag_ready
+    if flag_verbose
+        fprintf('\nSome jobs were marked as failed because some inputs were mising.\nPress CTRL-C now if you do not wish to run the pipeline ...\n');
+        pause
+    else
+        warning('\nSome inputs of jobs of the pipeline were missing. Those jobs were marked as ''failed'', see the logs for more details.');
+    end
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Stage 4: Generating output folders and cleaning old files %%
@@ -613,7 +632,7 @@ sub_save_struct_fields(file_logs,pipeline);
 %% Creating log folders and removing old outputs
 
 if flag_verbose
-    fprintf('Creating log folders and removing old outputs ...\n')
+    fprintf('\nCreating log folders and removing old outputs ...\n')
 end
 
 for num_j = 1:length(list_jobs)
@@ -649,7 +668,7 @@ end % for jobs
 %% Clean up the log folders from old tag and log files
 
 if flag_verbose
-    fprintf('Cleanning up the log folders from old tag and log files...\n')
+    fprintf('\nCleanning up the log folders from old tag and log files...\n')
 end
 
 delete([path_logs filesep '*.running']);
@@ -666,7 +685,7 @@ end
 
 %% Done !
 if flag_verbose
-    fprintf('The pipeline has been successfully initialized !\n')
+    fprintf('\nThe pipeline has been successfully initialized !\n')
 end
 
 %%%%%%%%%%%%%%%%%%

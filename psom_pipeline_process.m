@@ -301,19 +301,19 @@ try
     hfpl = fopen(file_pipe_log,'w');
 
     %% Print general info about the pipeline
-    msg = sprintf('The pipeline %s is now being processed.\nStarted on %s\nUser: %s\nhost : %s\nsystem : %s',name_pipeline,datestr(clock),gb_psom_user,gb_psom_localhost,gb_psom_OS);
-    stars = repmat('*',[1 30]);
+    msg_line1 = sprintf('The pipeline %s is now being processed.',name_pipeline);    
+    msg_line2 = sprintf('Started on %s',datestr(clock));
+    msg_line3 = sprintf('user: %s, host: %s, system: %s',gb_psom_user,gb_psom_localhost,gb_psom_OS);
+    size_msg = max([size(msg_line1,2),size(msg_line2,2),size(msg_line3,2)]);
+    msg = sprintf('%s\n%s\n%s',msg_line1,msg_line2,msg_line3);
+    stars = repmat('*',[1 size_msg]);
     fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
     fprintf(hfpl,'\n%s\n%s\n%s\n',stars,msg,stars);
 
     %% Load the pipeline
-    fprintf('Loading the pipeline dependencies ...\n')
-    fprintf(hfpl,'Loading the pipeline dependencies ...\n');
     load(file_pipeline,'list_jobs','deps','graph_deps','files_in');
 
     %% Loading the current status of the pipeline
-    fprintf('Loading the current status of jobs ...\n')
-    fprintf(hfpl,'Loading the current status of jobs ...\n');
     load(file_status,'job_status')   
     list_num_jobs = 1:length(job_status);
             
@@ -591,8 +591,11 @@ if exist('file_pipe_running','var')
 end
 
 %% Print general info about the pipeline
-msg = sprintf('The processing of the pipeline %s was closed on %s',name_pipeline,datestr(clock));
-stars = repmat('*',[1 length(msg)]);
+msg_line1 = sprintf('The processing of the pipeline was completed.');
+msg_line2 = sprintf('%s',datestr(now));
+size_msg = max([size(msg_line1,2),size(msg_line2,2)]);
+msg = sprintf('%s\n%s',msg_line1,msg_line2);
+stars = repmat('*',[1 size_msg]);
 fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
 fprintf(hfpl,'\n%s\n%s\n%s\n',stars,msg,stars);
 
@@ -604,36 +607,46 @@ list_num_none = list_num_none(:)';
 flag_any_fail = ~isempty(list_num_failed);
 
 if flag_any_fail
-    fprintf('The execution of the following jobs have failed :\n');
-    fprintf(hfpl,'The execution of the following jobs have failed :\n');
+    if length(list_num_failed) == 1
+        fprintf('The execution of the following job has failed :\n\n    ');
+        fprintf(hfpl,'The execution of the following job has failed :\n\n    ');
+    else
+        fprintf('The execution of the following jobs have failed :\n\n    ');
+        fprintf(hfpl,'The execution of the following jobs have failed :\n\n    ');
+    end
     for num_j = list_num_failed
         name_job = list_jobs{num_j};
-        fprintf('%s ',name_job);
-        fprintf(hfpl,'%s ',name_job);
+        fprintf('%s ; ',name_job);
+        fprintf(hfpl,'%s ; ',name_job);
     end
-    fprintf('\n');
-    fprintf(hfpl,'\n');
-    fprintf('More infos can be found in the individual log files. Use the following command to display these logs :\n psom_pipeline_visu(''%s'',''log'',JOB_NAME)\n',path_logs);
-    fprintf(hfpl,'More infos can be found in the individual log files. Use the following command to display these logs :\n psom_pipeline_visu(''%s'',''log'',JOB_NAME)\n',path_logs);    
+    fprintf('\n\n');
+    fprintf(hfpl,'\n\n');
+    fprintf('More infos can be found in the individual log files. Use the following command to display these logs :\n\n    psom_pipeline_visu(''%s'',''log'',JOB_NAME)\n\n',path_logs);
+    fprintf(hfpl,'More infos can be found in the individual log files. Use the following command to display these logs :\n\n    psom_pipeline_visu(''%s'',''log'',JOB_NAME)\n\n',path_logs);    
 end
 
 %% Print a list of jobs that could not be processed
 if ~isempty(list_num_none)
-    fprintf('The following jobs have not been processed because they depend on a failed job:\n');
-    fprintf(hfpl,'The following jobs have not been processed because they depend on a failed job:\n');
+    if length(list_num_none) == 1
+        fprintf('The following job has not been processed due to a dependence on a failed job:\n\n    ');
+        fprintf(hfpl,'The following job has not been processed due to a dependence on a failed job:\n\n    ');
+    else
+        fprintf('The following jobs have not been processed due to a dependence on a failed job:\n\n    ');
+        fprintf(hfpl,'The following jobs have not been processed due to a dependence on a failed job:\n\n    ');
+    end
     for num_j = list_num_none
         name_job = list_jobs{num_j};
-        fprintf('%s ',name_job);
-        fprintf(hfpl,'%s ',name_job);
+        fprintf('%s ; ',name_job);
+        fprintf(hfpl,'%s ; ',name_job);
     end
-    fprintf('\n');
-    fprintf(hfpl,'\n');
+    fprintf('\n\n');
+    fprintf(hfpl,'\n\n');
 end
 
 %% Give a final one-line summary of the processing
 if flag_any_fail
-    fprintf('All jobs have been processed, but some jobs have failed. You may want to restart the pipeline latter if you managed to fix the problems.\n');
-    fprintf(hfpl,'All jobs have been processed, but some jobs have failed. You may want to restart the pipeline latter if you managed to fix the problems.\n');
+    fprintf('All jobs have been processed, but some jobs have failed.\nYou may want to restart the pipeline latter if you managed to fix the problems.\n');
+    fprintf(hfpl,'All jobs have been processed, but some jobs have failed.\nYou may want to restart the pipeline latter if you managed to fix the problems.\n');
 else
     fprintf('All jobs have been successfully completed.\n');
     fprintf(hfpl,'All jobs have been successfully completed.\n');

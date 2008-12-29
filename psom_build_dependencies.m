@@ -103,7 +103,7 @@ end
 list_jobs = fieldnames(pipeline);
 nb_jobs = length(list_jobs);
 
-fprintf('   reorganizing inputs/outputs ...\n')
+fprintf('       Reorganizing inputs/outputs ...\n')
 for num_j = 1:nb_jobs
     name_job = list_jobs{num_j};
     files_in.(name_job) = unique(psom_files2cell(pipeline.(name_job).files_in));
@@ -121,7 +121,7 @@ num_out = char_all(mask_out);
 clear char_all mask_out val_tmp ind_tmp
 
 graph_deps = sparse(nb_jobs,nb_jobs);
-fprintf('   Analyzing job inputs/outputs, percentage completed : ')
+fprintf('       Analyzing job inputs/outputs, percentage completed : ')
 curr_perc = -1;
 
 for num_j = 1:nb_jobs
