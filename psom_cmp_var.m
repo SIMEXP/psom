@@ -100,7 +100,7 @@ else
             else
                 flag_equal = true;
                 for num_e = 1:length(list_fields1)
-                    if ~psom_cmp_var(var1.(list_fields1{num_e}),var1.(list_fields2{num_e}))
+                    if ~psom_cmp_var(var1.(list_fields1{num_e}),var2.(list_fields2{num_e}))
                         flag_equal = false;
                         return
                     end

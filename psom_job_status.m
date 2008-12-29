@@ -27,21 +27,46 @@ function curr_status = psom_job_status(path_logs,list_jobs,mode_pipe)
 % CURR_STATUS
 %       (cell of string) CURR_STATUS{K} is the current status of
 %       LIST_JOBS{K}. Status can be :
+%
 %           'running' : the job is currently being processed.
+%
 %           'failed' : the job was processed, but the execution somehow
-%                  failed.
+%                  failed. That may mean that the function produced an
+%                  error, or that one of the expected outputs was not
+%                  generated. See the log file of the job for more info
+%                  using PSOM_PIPELINE_VISU.
+%
 %           'finished' : the job was successfully processed.
+%
 %           'none' : no attempt has been made to process the job yet 
 %                  (neither 'failed', 'running' or 'finished').
+%
 %           'exit' : there is no tag on the job, yet the associated script
 %                   was terminated. That implies that the script somehow 
 %                   crashed. Sad ...
+%
 %           'absent' : there is no tag file and no job file. It looks like
 %                   the job name does not exist in the pipeline.
 %
 % _________________________________________________________________________
 % COMMENTS : 
 %
+% The conditions for achieving a 'finished' status vary from one execution
+% mode to another : 
+%   
+%   1. In 'session' mode, the 'finished' status is achieved when a
+%   'finished' tag file can be found in the log folder. This means that the
+%   job has completed without producing any error, and all the outputs have
+%   been created.
+% 
+%   2. In 'batch' mode, in addition of the 'finished' tag file, an 'exit'
+%   tag file is also required, indicating that the batch script has
+%   terminated.
+%
+%  3. In 'qsub' mode, in addition to the 'finished' and 'exit' tag files,
+%  the presence of a 'oqsub' and 'eqsub' log files are required, indicating
+%  that the qsub job was properly terminated.
+%   
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008.
 % Maintainer : pbellec@bic.mni.mcgill.ca
 % See licensing information in the code.

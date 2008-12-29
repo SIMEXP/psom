@@ -118,9 +118,17 @@ function [] = psom_run_pipeline(pipeline,opt)
 % description are ignored in the dependency graph and checks for 
 % the existence of required files.
 %
-% Existing 'running' or 'failed' tags will be removed. Make sure the
-% pipeline is not already running if the background if you do that. That
-% behavior is useful to restart a pipeline that has somehow crashed.
+% If a pipeline is already running (a 'PIPE.lock' file could be found in
+% the logs folder), a warning will be issued and the user may choose to
+% stop the pipeline execution. Otherwise, the '.lock' file will be deleted
+% and the pipeline will be restarted.
+%
+% If this is not the first time a pipeline is executed, the pipeline
+% manager will check which jobs have successfully completed, and will
+% not restart these ones. If a job description has somehow been
+% modified since a previous processing, this job and all its children will be 
+% restarted. For more details on this behavior, please read the documentation of
+% PSOM_PIPELINE_INIT
 %
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008.
 % Maintainer : pbellec@bic.mni.mcgill.ca
@@ -160,8 +168,8 @@ end
 name_pipeline = 'PIPE';
 
 gb_name_structure = 'opt';
-gb_list_fields = {'shell_options','path_logs','command_matlab','flag_verbose','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point','time_cool_down'};
-gb_list_defaults = {'',NaN,'',true,'session','',0,'',[],[],[]};
+gb_list_fields = {'restart','shell_options','path_logs','command_matlab','flag_verbose','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point','time_cool_down'};
+gb_list_defaults = {{},'',NaN,'',true,'session','',0,'',[],[],[]};
 psom_set_defaults
 
 if isempty(opt.mode_pipeline_manager)
@@ -220,28 +228,24 @@ end
 %% The pipeline processing starts now  %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Generating file names
-file_pipeline = cat(2,path_logs,filesep,name_pipeline,'.mat');
-
-if ~exist(file_pipeline,'file')
-    msg = sprintf('The pipeline file does not exist. The logs are going to be initialized');
-    stars = repmat('*',[1 size(msg,2)]);
-    fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
-    
-    opt_init.path_logs = opt.path_logs; 
-    opt_init.command_matlab = opt.command_matlab;
-    opt_init.flag_verbose = opt.flag_verbose;
-    
-    psom_pipeline_init(pipeline,opt_init);
-end
-
-%% Run pipeline
+%% Check for a 'lock' tag
 file_pipe_running = cat(2,path_logs,filesep,name_pipeline,'.lock');
 if exist(file_pipe_running,'file') % Is the pipeline running ?
     fprintf('A lock tag has been found on the pipeline ! This means the pipeline was either running or crashed.\nI will assume it crashed and restart the pipeline.\nIf you are NOT CERTAIN that you want to restart the pipeline, press CTRL-C now !\n')
     pause
     delete(file_pipe_running);
 end
+
+%% Initialize the logs folder
+opt_init.path_logs = opt.path_logs;
+opt_init.command_matlab = opt.command_matlab;
+opt_init.flag_verbose = opt.flag_verbose;
+opt_init.restart = opt.restart;
+
+psom_pipeline_init(pipeline,opt_init);
+
+%% Run the pipeline manager
+file_pipeline = cat(2,path_logs,filesep,name_pipeline,'.mat');
 
 opt_proc.mode = opt.mode;
 opt_proc.mode_pipeline_manager = opt.mode_pipeline_manager;
@@ -250,11 +254,14 @@ opt_proc.qsub_options = opt.qsub_options;
 opt_proc.command_matlab = opt.command_matlab;
 opt_proc.time_between_checks = opt.time_between_checks;
 opt_proc.nb_checks_per_point = opt.nb_checks_per_point;
+
 psom_pipeline_process(file_pipeline,opt_proc);
 
+%% In batch and qsub modes, monitor the execution of the pipeline
 switch opt.mode_pipeline_manager
     
     case {'batch','qsub'}
+
         psom_pipeline_visu(file_pipeline,'monitor');
 
 end

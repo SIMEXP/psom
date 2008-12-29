@@ -3,7 +3,7 @@ function [deps,list_jobs,files_in,files_out,graph_deps] = psom_build_dependencie
 % _________________________________________________________________________
 % SUMMARY PSOM_BUILD_DEPENDENCIES
 %
-% Generate a dependencie structure from a pipeline structure
+% Generate the dependency graph of a pipeline.
 %
 % SYNTAX:
 % [DEPS,LIST_JOBS,FILES_IN,FILES_OUT,GRAPH_DEPS] = NIAK_BUILD_DEPENDENCIES(PIPELINE)

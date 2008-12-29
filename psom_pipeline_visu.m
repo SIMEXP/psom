@@ -3,7 +3,7 @@ function [] = psom_pipeline_visu(path_logs,action,opt_action)
 % _________________________________________________________________________
 % SUMMARY OF PSOM_PIPELINE_VISU
 %
-% Monitor the execution of a pipeline
+% Display various information on a pipeline.
 %
 % SYNTAX:
 % [] = PSOM_PIPELINE_VISU(PATH_LOGS,ACTION,OPT)
@@ -16,14 +16,19 @@ function [] = psom_pipeline_visu(path_logs,action,opt_action)
 %               
 % ACTION         
 %       (string) Possible values :
-%           Check the status of jobs :
-%               'submitted', 'running', 'failed', 'finished', 'none'
-%           Monitor the execution of the pipeline :
-%               'monitor'
-%           Display the log of a job :
-%               'log'
-%           Draw the graph of dependencies of the pipeline :
-%              'graph_stages'
+%
+%           'submitted', 'running', 'failed', 'finished', 'none'
+%               List the jobs that have this status.
+%
+%           'monitor'
+%               Monitor the execution of the pipeline.
+%               
+%           'log'
+%               Display the log of one job.
+%
+%           'graph_stages'
+%               Draw the graph of dependencies of the pipeline.
+%              
 %           
 % OPT           
 %       (string) see the following notes on action 'log'.
@@ -72,7 +77,7 @@ function [] = psom_pipeline_visu(path_logs,action,opt_action)
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008.
 % Maintainer : pbellec@bic.mni.mcgill.ca
 % See licensing information in the code.
-% Keywords : medical imaging, pipeline, fMRI, PMP
+% Keywords : pipeline
 
 % Permission is hereby granted, free of charge, to any person obtaining a copy
 % of this software and associated documentation files (the "Software"), to deal
@@ -99,7 +104,7 @@ if ~exist('path_logs','var') || ~exist('action','var')
     error('SYNTAX: [] = PSOM_PIPELINE_VISU(PATH_LOGS,ACTION,OPT). Type ''help psom_pipeline_visu'' for more info.')
 end
 
-%% get status 
+%% Get status 
 file_pipeline = [path_logs 'PIPE.mat'];
 name_pipeline = 'PIPE';
 file_status = [path_logs filesep name_pipeline '_status.mat'];
@@ -111,6 +116,8 @@ switch action
     
     case {'finished','failed','none','running','submitted'}                
 
+        %% List the jobs that have a specific status
+        
         mask_jobs = ismember(job_status,action);
         jobs_action = list_jobs(mask_jobs);
 
@@ -129,12 +136,16 @@ switch action
         
     case 'graph_stages'
         
+        %% Display the graph of dependencies of the pipeline
+        
         load(file_pipeline,'graph_deps','list_jobs');        
         bg = biograph(graph_deps,list_jobs);
         dolayout(bg);
         view(bg);
         
     case 'monitor'
+        
+        %% Prints the history of the pipeline, with updates
         
         file_monitor = [path_logs filesep name_pipeline '_history.txt'];
         file_pipe_running = [path_logs filesep name_pipeline '.lock'];
@@ -154,14 +165,17 @@ switch action
             pause(1)
             
         end
+        
         sub_tail(file_monitor,file_pipe_running);
         
     case 'log'
 
+        %% Prints the log of one job 
+        
         ind_job =  find(ismember(list_jobs,opt_action));
         
         if isempty(ind_job)
-            error('%s : is not a job of this pipeline.');                    
+            error('%s : is not a job of this pipeline.',opt_action);                    
         end
 
         curr_status = job_status{ind_job};
@@ -206,6 +220,9 @@ end
 
 hf = fopen(file_read,'r');
 
+str_read = fread(hf, Inf, 'uint8=>char')';
+fprintf('%s',str_read);
+    
 while exist(file_running,'file')
     str_read = fread(hf, Inf, 'uint8=>char')';
     fprintf('%s',str_read);

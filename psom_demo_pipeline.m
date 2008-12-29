@@ -47,14 +47,14 @@ psom_gb_vars
 pipeline.message.command = 'fprintf(''The number of samples was : %i. Well that info will be in the logs anyway but still...\n'',opt.nb_samples)';
 pipeline.message.files_in = {};
 pipeline.message.files_out = {};
-pipeline.message.opt.nb_samples = 100;
+pipeline.message.opt.nb_samples = 30;
 
 pipeline.tseries1.command = 'tseries = randn([opt.nb_samples 1]); save(files_out,''tseries'')';
 pipeline.tseries1.files_in = {};
 pipeline.tseries1.files_out = [gb_psom_path_demo 'tseries1.mat'];
 pipeline.tseries1.opt.nb_samples = pipeline.message.opt.nb_samples;
 
-pipeline.tseries2.command = 'tseries = randn([100 1]); save(files_out,''tseries'')';
+pipeline.tseries2.command = 'tseries = randn([opt.nb_samples 1]); save(files_out,''tseries'')';
 pipeline.tseries2.files_in = {};
 pipeline.tseries2.files_out = [gb_psom_path_demo 'tseries2.mat'];
 pipeline.tseries2.opt.nb_samples = pipeline.message.opt.nb_samples;
@@ -74,6 +74,8 @@ pipeline.weights.opt = struct([]);
 %%%%%%%%%%%%%%%%%%%%%%
 opt.path_logs = [gb_psom_path_demo 'logs' filesep];
 opt.mode = 'batch';
-opt.mode_pipeline_manager = 'batch';
+opt.mode_pipeline_manager = 'session';
 opt.max_queued = 2;
+opt.time_cool_down = 0;
+opt.time_between_checks = 0.5;
 psom_run_pipeline(pipeline,opt);

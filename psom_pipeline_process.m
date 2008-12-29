@@ -83,7 +83,7 @@ function [] = psom_pipeline_process(file_pipeline,opt)
 %           submit new jobs.
 %
 %       TIME_COOL_DOWN
-%           (real value, default 1 in 'qsub' mode, 1 otherwise)
+%           (real value, default 2 in 'qsub' mode, 0 otherwise)
 %           A small pause time between evaluation of status and flushing of
 %           tags. This is to let qsub the time to write the output/error
 %           log files.
@@ -107,10 +107,6 @@ function [] = psom_pipeline_process(file_pipeline,opt)
 %
 % Empty file names, or file names equal to 'gb_niak_omitted' are ignored
 % when building the dependency graph between jobs.
-%
-% Existing 'running' or 'failed' tags will be removed. Make sure the
-% pipeline is not already running if the background if you do that. That
-% behavior is useful to restart a pipeline that has somehow crashed.
 %
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008.
 % Maintainer : pbellec@bic.mni.mcgill.ca
@@ -225,13 +221,13 @@ switch opt.mode
         end
         if isempty(time_cool_down)
             opt.time_cool_down = 1;
-            time_cool_down = 1;
+            time_cool_down = 2;
         end
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% The pipeline processing starts now  %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Generic messages
 hat_qsub_o = sprintf('\n\n*****************\nOUTPUT QSUB\n*****************\n');
@@ -300,14 +296,16 @@ end
 % interrupting the pipeline of if an error occurs
 try    
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %% Initialize job status %%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
     %% If the pipeline manager is executed in the session, open the log
     %% file   
     hfpl = fopen(file_pipe_log,'w');
-    
+
+    %% Print general info about the pipeline
+    msg = sprintf('The pipeline %s is now being processed.\nStarted on %s\nUser: %s\nhost : %s\nsystem : %s',name_pipeline,datestr(clock),gb_psom_user,gb_psom_localhost,gb_psom_OS);
+    stars = repmat('*',[1 30]);
+    fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
+    fprintf(hfpl,'\n%s\n%s\n%s\n',stars,msg,stars);
+
     %% Load the pipeline
     fprintf('Loading the pipeline dependencies ...\n')
     fprintf(hfpl,'Loading the pipeline dependencies ...\n');
@@ -318,113 +316,30 @@ try
     fprintf(hfpl,'Loading the current status of jobs ...\n');
     load(file_status,'job_status')   
     list_num_jobs = 1:length(job_status);
-    
-    %% Check if all the files necessary to complete the pipeline can be
-    %% found
-    fprintf('Checking if all the files necessary to complete the pipeline can be found ...\n');
-    fprintf(hfpl,'Checking if all the files necessary to complete the pipeline can be found ...\n');
-    flag_ready = true;
-    mask_unfinished = ~ismember(job_status,'finished');
-    list_num_unfinished = find(mask_unfinished);
-    list_num_unfinished = list_num_unfinished(:)';
-
-    for num_j = list_num_unfinished 
-        
-        name_job = list_jobs{num_j};
-        list_files_needed = files_in.(name_job);
-        list_files_tobe = psom_files2cell(deps.(name_job));
-        list_files_necessary = list_files_needed(~ismember(list_files_needed,list_files_tobe));
-
-        for num_f = 1:length(list_files_necessary)
-            if ~exist(list_files_necessary{num_f},'file')&~isempty(list_files_necessary{num_f})&~strcmp(list_files_necessary{num_f},'gb_niak_omitted')
-                fprintf('The file %s is necessary to run job %s, but is unfortunately missing.\n',list_files_necessary{num_f},name_job);
-                fprintf(hfpl,'The file %s is necessary to run job %s, but is unfortunately missing.\n',list_files_necessary{num_f},name_job);
-                flag_ready = false;
-            end
-        end
-    end
-    clear files_in
-    if ~flag_ready
-        fprintf(hfpl,'Some files are missing, sorry dude I must quit ...\n');
-        error('Some files are missing, sorry dude I must quit ...')
-    end
-    
-    %% Reset failed jobs 
-    mask_failed = ismember(job_status,'failed');    
-    list_num_failed = find(mask_failed);
-    list_num_failed = list_num_failed(:)';
-    
-    for num_j = list_num_failed
-        job_status{num_j} = 'none';
-        sub_add_var(file_logs,list_jobs{num_j},'');
-    end    
-    
-    %% Update the job status using the tags that can be found in the log
-    %% folder    
-    mask_inq = ismember(job_status,{'submitted','running'});    
-    list_num_inq = find(mask_inq);
-    list_num_inq = list_num_inq(:)';
-    list_jobs_inq = list_jobs(mask_inq);
-    curr_status = psom_job_status(path_logs,list_jobs_inq,opt.mode);        
-        
-    %% Remove the dependencies on finished jobs
-    mask_finished = ismember(curr_status,'finished');       
-    list_num_finished = list_num_inq(mask_finished);
-    list_num_finished = list_num_finished(:)';
-
-    for num_j = list_num_finished
-        name_job = list_jobs{num_j};
-        text_log = sub_read_txt([path_logs filesep name_job '.log']);
-        text_qsub_o = sub_read_txt([path_logs filesep name_job '.oqsub']);
-        text_qsub_e = sub_read_txt([path_logs filesep name_job '.eqsub']);
-
-        if isempty(text_qsub_o)&isempty(text_qsub_e)
-            sub_add_var(file_logs,name_job,text_log);
-        else
-            sub_add_var(file_logs,name_job,[text_log hat_qsub_o text_qsub_o hat_qsub_e text_qsub_e]);
-        end
-        job_status{num_j} = 'finished';
-    end
-    
+            
     %% update dependencies
     mask_finished = ismember(job_status,'finished');       
     graph_deps(mask_finished,:) = 0;    
     mask_deps = max(graph_deps,[],1)>0;
-    mask_deps = mask_deps(:);
+    mask_deps = mask_deps(:);            
 
-    %% Clean up the log folders from old tags
-    delete([path_logs filesep '*.running']);
-    delete([path_logs filesep '*.failed']);
-    delete([path_logs filesep '*.finished']);
-    delete([path_logs filesep '*.exit']);
-    delete([path_logs filesep '*.log']);
-    delete([path_logs filesep '*.oqsub']);
-    delete([path_logs filesep '*.eqsub']);
+    %% Initialize the to-do list
+    mask_todo = ismember(job_status,{'none'}); 
+    mask_todo = mask_todo(:);
+    mask_done = ~mask_todo; 
     
-    %% Finally reset all the left-overs submitted/running jobs  
-    mask_inq = ismember(job_status,{'submitted','running'}); 
-    list_num_inq = find(mask_inq);
-    list_num_inq = list_num_inq(:)';
-    
-    for num_j = list_num_inq
-        job_status{num_j} = 'none';
-        sub_add_var(file_logs,list_jobs{num_j},'');
+    mask_failed = ismember(job_status,{'failed'});
+    list_num_failed = find(mask_failed);
+    list_num_failed = list_num_failed(:)';
+    for num_j = list_num_failed
+        list_num_child = find(sub_find_children(num_j,graph_deps));
+        mask_todo(list_num_child) = false; % Remove the children of the failed job from the to-do list
     end
     
-    %% Save the current status
-    save(file_status,'job_status');
+    mask_running = false(size(mask_done));
     
-    %%%%%%%%%%%%%%%%%%%%%%
-    %% Run the pipeline %%
-    %%%%%%%%%%%%%%%%%%%%%%
-
-    %% Print general info about the pipeline
-
-    msg = sprintf('The pipeline %s is now being processed.\nStarted on %s\nUser: %s\nhost : %s\nsystem : %s',name_pipeline,datestr(clock),gb_psom_user,gb_psom_localhost,gb_psom_OS);
-    stars = repmat('*',[1 30]);
-    fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
-    fprintf(hfpl,'\n%s\n%s\n%s\n',stars,msg,stars);
-
+    %% Initialize miscallenaous variables
+    nb_queued = 0;
     nb_checks = 0;
     nb_points = 0;
     path_tmp = [path_logs filesep 'tmp']; % Create a temporary folder for shell scripts
@@ -433,15 +348,7 @@ try
     end
     mkdir(path_tmp);
 
-    %% Initialize the to-do list
-    fprintf('Initializing job status ...\n')
-    fprintf(hfpl,'Initializing job status ...\n');
-    mask_todo = ~ismember(job_status,{'finished'}); % done jobs (there is no failed jobs at this stage)
-    mask_todo = mask_todo(:);
-    mask_done = ~mask_todo; 
-    mask_running = false(size(mask_done));
-    nb_queued = 0;
-    
+    %% The pipeline manager really starts here
     while (max(mask_todo)>0) || (max(mask_running)>0)
 
         flag_nothing_happened = true;
@@ -683,22 +590,68 @@ if exist('file_pipe_running','var')
     end
 end
 
-%% Print general info about the job
+%% Print general info about the pipeline
 msg = sprintf('The processing of the pipeline %s was closed on %s',name_pipeline,datestr(clock));
 stars = repmat('*',[1 length(msg)]);
 fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
 fprintf(hfpl,'\n%s\n%s\n%s\n',stars,msg,stars);
-fclose(hfpl)
+
+%% Print a list of failed jobs
+list_num_failed = find(ismember(job_status,'failed'));
+list_num_failed = list_num_failed(:)';
+list_num_none = find(ismember(job_status,'none'));
+list_num_none = list_num_none(:)';
+flag_any_fail = ~isempty(list_num_failed);
+
+if flag_any_fail
+    fprintf('The execution of the following jobs have failed :\n');
+    fprintf(hfpl,'The execution of the following jobs have failed :\n');
+    for num_j = list_num_failed
+        name_job = list_jobs{num_j};
+        fprintf('%s ',name_job);
+        fprintf(hfpl,'%s ',name_job);
+    end
+    fprintf('\n');
+    fprintf(hfpl,'\n');
+    fprintf('More infos can be found in the individual log files. Use the following command to display these logs :\n psom_pipeline_visu(''%s'',''log'',JOB_NAME)\n',path_logs);
+    fprintf(hfpl,'More infos can be found in the individual log files. Use the following command to display these logs :\n psom_pipeline_visu(''%s'',''log'',JOB_NAME)\n',path_logs);    
+end
+
+%% Print a list of jobs that could not be processed
+if ~isempty(list_num_none)
+    fprintf('The following jobs have not been processed because they depend on a failed job:\n');
+    fprintf(hfpl,'The following jobs have not been processed because they depend on a failed job:\n');
+    for num_j = list_num_none
+        name_job = list_jobs{num_j};
+        fprintf('%s ',name_job);
+        fprintf(hfpl,'%s ',name_job);
+    end
+    fprintf('\n');
+    fprintf(hfpl,'\n');
+end
+
+%% Give a final one-line summary of the processing
+if flag_any_fail
+    fprintf('All jobs have been processed, but some jobs have failed. You may want to restart the pipeline latter if you managed to fix the problems.\n');
+    fprintf(hfpl,'All jobs have been processed, but some jobs have failed. You may want to restart the pipeline latter if you managed to fix the problems.\n');
+else
+    fprintf('All jobs have been successfully completed.\n');
+    fprintf(hfpl,'All jobs have been successfully completed.\n');
+end
+
+fclose(hfpl);
 
 %%%%%%%%%%%%%%%%%%
 %% subfunctions %%
 %%%%%%%%%%%%%%%%%%
 
 function mask_child = sub_find_children(num_j,graph_deps)
-%% GRAPH_DEPS(J,K) == 1 if and only if JOB K depends on JOB J. GRAPH_DEPS =
-%% 0 otherwise. This (ugly but reasonably fast) recursive code will work
-%% only if the directed graph defined by GRAPH_DEPS is acyclic.
-mask_child = graph_deps(num_j,:);
+
+% GRAPH_DEPS(J,K) == 1 if and only if JOB K depends on JOB J. GRAPH_DEPS =
+% 0 otherwise. This (ugly but reasonably fast) recursive code will work
+% only if the directed graph defined by GRAPH_DEPS is acyclic.
+
+mask_child = graph_deps(num_j,:)>0;
 list_num_child = find(mask_child);
 
 if ~isempty(list_num_child)
