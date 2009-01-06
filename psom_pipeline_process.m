@@ -298,7 +298,7 @@ try
     
     %% If the pipeline manager is executed in the session, open the log
     %% file   
-    hfpl = fopen(file_pipe_log,'w');
+    hfpl = fopen(file_pipe_log,'a');
 
     %% Print general info about the pipeline
     msg_line1 = sprintf('The pipeline %s is now being processed.',name_pipeline);    
