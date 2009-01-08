@@ -91,13 +91,35 @@ else
             end
 
         case 'struct'
-            list_fields1 = fieldnames(var1);
-            list_fields2 = fieldnames(var2);
 
-            if ~psom_cmp_var(list_fields1,list_fields2)
+            %% compare sizes
+            if min(size(var1)==size(var2))==0
                 flag_equal = false;
                 return
+            end
+            
+            var1 = var1(:);
+            var2 = var2(:);
+            
+            if length(var1) > 1
+                %% if there are more than one entry, loop over all entries
+                flag_equal = true;
+                for num_e = 1:length(var1)
+                    flag_equal = flag_equal&&psom_cmp_var(var1(num_e),var2(num_e));
+                end
+                return
             else
+                
+                %% compare field names
+                list_fields1 = fieldnames(var1);
+                list_fields2 = fieldnames(var2);
+
+                if ~psom_cmp_var(list_fields1,list_fields2)
+                    flag_equal = false;
+                    return
+                end
+
+                %% Compare the values of all fields 
                 flag_equal = true;
                 for num_e = 1:length(list_fields1)
                     if ~psom_cmp_var(var1.(list_fields1{num_e}),var2.(list_fields2{num_e}))
@@ -105,6 +127,7 @@ else
                         return
                     end
                 end
+
             end
     end
 end
