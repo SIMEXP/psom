@@ -282,6 +282,10 @@ if isempty(opt.command_matlab)
     end
 end
 
+%% Misc variables
+hat_qsub_o = sprintf('\n\n*****************\nOUTPUT QSUB\n*****************\n');
+hat_qsub_e = sprintf('\n\n*****************\nERROR QSUB\n*****************\n');
+
 %% Print a small banner for the initialization
 msg_line1 = sprintf('The pipeline description is now being prepared for execution.');
 msg_line2 = sprintf('The following folder will be used to store logs and status :');
@@ -474,44 +478,44 @@ if flag_verbose
 end
 
 if flag_old_pipeline
-    
+
     if exist(file_status,'file')
 
-    load(file_status);
+        load(file_status);
 
-    %% Update the job status using the tags that can be found in the log
-    %% folder
-    mask_inq = ismember(job_status,{'submitted','running'});
-    list_num_inq = find(mask_inq);
-    list_num_inq = list_num_inq(:)';
-    list_jobs_inq = list_jobs(mask_inq);
-    curr_status = psom_job_status(path_logs,list_jobs_inq,'session');
+        %% Update the job status using the tags that can be found in the log
+        %% folder
+        mask_inq = ismember(job_status,{'submitted','running'});
+        list_num_inq = find(mask_inq);
+        list_num_inq = list_num_inq(:)';
+        list_jobs_inq = list_jobs(mask_inq);
+        curr_status = psom_job_status(path_logs,list_jobs_inq,'session');
 
-    %% Remove the dependencies on finished jobs
-    mask_finished = ismember(curr_status,'finished');
-    list_num_finished = list_num_inq(mask_finished);
-    list_num_finished = list_num_finished(:)';
+        %% Remove the dependencies on finished jobs
+        mask_finished = ismember(curr_status,'finished');
+        list_num_finished = list_num_inq(mask_finished);
+        list_num_finished = list_num_finished(:)';
 
-    for num_j = list_num_finished
-        
-        name_job = list_jobs{num_j};
-        text_log = sub_read_txt([path_logs filesep name_job '.log']);
-        text_qsub_o = sub_read_txt([path_logs filesep name_job '.oqsub']);
-        text_qsub_e = sub_read_txt([path_logs filesep name_job '.eqsub']);
+        for num_j = list_num_finished
 
-        if isempty(text_qsub_o)&isempty(text_qsub_e)
-            sub_add_var(file_logs,name_job,text_log);
-        else
-            sub_add_var(file_logs,name_job,[text_log hat_qsub_o text_qsub_o hat_qsub_e text_qsub_e]);
+            name_job = list_jobs{num_j};
+            text_log = sub_read_txt([path_logs filesep name_job '.log']);
+            text_qsub_o = sub_read_txt([path_logs filesep name_job '.oqsub']);
+            text_qsub_e = sub_read_txt([path_logs filesep name_job '.eqsub']);
+
+            if isempty(text_qsub_o)&isempty(text_qsub_e)
+                sub_add_var(file_logs,name_job,text_log);
+            else
+                sub_add_var(file_logs,name_job,[text_log hat_qsub_o text_qsub_o hat_qsub_e text_qsub_e]);
+            end
+            job_status{num_j} = 'finished';
         end
-        job_status{num_j} = 'finished';
-    end
 
-    job_status_old = job_status;            
+        job_status_old = job_status;
     else
         job_status_old = repmat({'none'},[nb_jobs 1]);
     end
-    
+
 end
 
 %% Initialize the status :
