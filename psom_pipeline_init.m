@@ -622,7 +622,7 @@ sub_save_struct_fields(file_logs,all_logs);
 
 if ~flag_ready
     if flag_verbose
-        fprintf('\nSome jobs were marked as failed because some inputs were mising.\nPress CTRL-C now if you do not wish to run the pipeline ...\n');
+        fprintf('\nSome jobs were marked as failed because some inputs were missing.\nPress CTRL-C now if you do not wish to run the pipeline ...\n');
         pause
     else
         warning('\nSome inputs of jobs of the pipeline were missing. Those jobs were marked as ''failed'', see the logs for more details.');
