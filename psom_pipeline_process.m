@@ -575,7 +575,7 @@ catch
             fprintf(hfpl,'File %s at line %i\n',errmsg.stack(num_e).file,errmsg.stack(num_e).line);
         end
     end
-    fclose(hfpl)
+
 end
 
 if exist('path_tmp','var')
