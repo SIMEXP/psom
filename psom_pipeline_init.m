@@ -580,8 +580,8 @@ for num_j = list_num_unfinished
     
     if ~flag_job_OK
         job_status{num_j} = 'failed';
-        sub_add_var(file_logs,name_job,sprintf('%s\n\n%s',datestr(now),msg_files));
-        fprintf('%s',msg_files);        
+        sub_add_var(file_logs,name_job,sprintf('%s\n\n%s',datestr(now),msg_files'));
+        fprintf('%s',msg_files');        
     end
     
 end

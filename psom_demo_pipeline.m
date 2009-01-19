@@ -74,7 +74,7 @@ pipeline.weights.opt = struct([]);
 %% Run the pipeline %%
 %%%%%%%%%%%%%%%%%%%%%%
 opt.path_logs = [gb_psom_path_demo 'logs' filesep];
-opt.mode = 'session';
+opt.mode = 'batch';
 opt.mode_pipeline_manager = 'session';
 opt.max_queued = 2;
 opt.time_cool_down = 0;
