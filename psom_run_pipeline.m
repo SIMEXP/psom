@@ -13,9 +13,9 @@ function [] = psom_run_pipeline(pipeline,opt)
 %
 % * PIPELINE
 %       (structure) a matlab structure which defines a pipeline.
-%       Each field name <JOB_NAME> will be used to name jobs in PMP and set
-%       dependencies. The fields <JOB_NAME> are themselves structure, with
-%       the following fields :
+%       Each field name <JOB_NAME> will be used to name jobs of the 
+%       pipeline. The fields <JOB_NAME> are themselves structure, with the 
+%       following fields :
 %
 %       COMMAND
 %           (string) the name of the command applied for this job.
@@ -45,7 +45,7 @@ function [] = psom_run_pipeline(pipeline,opt)
 %           impact on dependencies. OPT can for example be a structure,
 %           where each field will be used as an argument of the command.
 %
-% OPT
+% * OPT
 %       (structure) with the following fields :
 %
 %       PATH_LOGS
@@ -67,8 +67,7 @@ function [] = psom_run_pipeline(pipeline,opt)
 %               the background, you can continue to work, close matlab or
 %               even unlog from your machine on a linux system without
 %               interrupting it. The matlab path will be the same as the
-%               one that was active when the pipeline was initialized. Log
-%               files will be created for all jobs.
+%               current path. Log files will be created for all jobs.
 %
 %           'qsub'
 %               Use the qsub system (sge or pbs) to process the jobs. The
@@ -105,11 +104,63 @@ function [] = psom_run_pipeline(pipeline,opt)
 % _________________________________________________________________________
 % OUTPUTS:
 %
+% The pipeline manager is going to try to process the pipeline and create 
+% all the output files. In addition logs and parameters of the pipeline are
+% stored in the log folder :
+%
+%   PIPE.mat
+%
+%       A .MAT file with the following variables:
+%
+%       OPT
+%           The options used to initialize the pipeline
+%
+%       PIPELINE
+%           The pipeline structure
+%
+%       HISTORY
+%           A string recapituling when and who created the pipeline, (and
+%           on which machine).
+%
+%       DEPS, LIST_JOBS, FILES_IN, FILES_OUT, GRAPH_DEPS
+%           See PSOM_BUILD_DEPENDENCIES for more info.
+%
+%       PATH_WORK
+%           The matlab/octave search path
+%
+%   PIPE_history.txt
+%
+%       A text file with the history of the pipeline. Basically, it keeps
+%       track of the time of submission, completion and failure of all jobs
+%       of the pipeline. If the pipeline is executed multiple times with
+%       the same log folders, the history file is keeping track of all
+%       sessions. 
+%
+%   PIPE_jobs.mat
+%
+%       A .mat file which contains variables <NAME_JOB> where NAME_JOB is
+%       the name of any job in the pipeline, and is equal to the field
+%       PIPELINE.<NAME_JOB> for the lattest execution of this job in the 
+%       pipeline.
+%
+%   PIPE_LOGS
+%
+%       A .mat file which contains variables <NAME_JOB> where NAME_JOB is
+%       the name of any job in the pipeline. The variable <NAME_JOB> is a 
+%       string which contains the log of the job. Jobs that have not been 
+%       processed yet have an empty log.
+%
+%   PIPE_status.mat
+%
+%       A .mat file which contains variables <NAME_JOB> where NAME_JOB is
+%       the name of any job in the pipeline. The variable <NAME_JOB> is a 
+%       string which describes the current status of the job (either
+%       'submitted', 'finished', 'failed', 'none').
+%
 % _________________________________________________________________________
 % SEE ALSO:
 %
-% PSOM_PIPELINE_INIT, PSOM_PIPELINE_VISU, PSOM_DEMO_PIPELINE,
-% PSOM_PIPELINE_PROCESS
+% PSOM_DEMO_PIPELINE, PSOM_PIPELINE_VISU
 %
 % _________________________________________________________________________
 % COMMENTS:
@@ -124,11 +175,12 @@ function [] = psom_run_pipeline(pipeline,opt)
 % and the pipeline will be restarted.
 %
 % If this is not the first time a pipeline is executed, the pipeline
-% manager will check which jobs have successfully completed, and will
+% manager will check which jobs have been successfully completed, and will
 % not restart these ones. If a job description has somehow been
-% modified since a previous processing, this job and all its children will be 
-% restarted. For more details on this behavior, please read the documentation of
-% PSOM_PIPELINE_INIT
+% modified since a previous processing, this job and all its children will 
+% be restarted. For more details on this behavior, please read the 
+% documentation of PSOM_PIPELINE_INIT or run the pipeline demo in 
+% NIAK_DEMO_PIPELINE.
 %
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008.
 % Maintainer : pbellec@bic.mni.mcgill.ca
