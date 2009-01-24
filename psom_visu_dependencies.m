@@ -51,7 +51,16 @@ function [] = psom_visu_dependencies(pipeline)
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
 
-[deps,list_jobs,files_in,files_out,graph_deps] = psom_build_dependencies(pipeline);
-bg = biograph(graph_deps,list_jobs);
-dolayout(bg);
-view(bg);
+if exist('biograph')
+    
+    [deps,list_jobs,files_in,files_out,graph_deps] = psom_build_dependencies(pipeline);
+    bg = biograph(graph_deps,list_jobs);
+    dolayout(bg);
+    view(bg);
+
+else
+    
+    warning('I could not find the BIOGRAPH command. This probably means that the bioinformatics toolbox is not installed. Sorry dude, I can''t plot the graph.')
+    
+end
+
