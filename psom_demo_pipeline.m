@@ -17,7 +17,7 @@
 % _________________________________________________________________________
 % COMMENTS:
 %
-% This is a script and it will clear the workspace !!
+% This is a script that will clear the workspace !!
 % It will also create some files and one folder in ~/psom/data_demo/
 %
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008.
@@ -44,10 +44,17 @@
 % THE SOFTWARE.
 
 clear
+close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %% What is a pipeline ? %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%    
+
+msg = 'The demo is about to generate a toy pipeline and plot the dependency graph.';
+msg2 = 'Press CTRL-C to stop here or any key to continue.';
+stars = repmat('*',[1 max(length(msg),length(msg2))]);
+fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
+pause
 
 psom_gb_vars
 
@@ -71,22 +78,107 @@ pipeline.fft.files_in = {pipeline.tseries1.files_out,pipeline.tseries2.files_out
 pipeline.fft.files_out = [gb_psom_path_demo 'ftseries.mat'];
 pipeline.fft.opt = struct([]);
 
-pipeline.weights.command = 'load(files_in{1}); load(files_in{2}); res = ftseries * weights; save(files_out,''res'')';
+pipeline.weights.command = 'load(files_in.fft); load(files_in.sessions.session1); res = ftseries * weights; save(files_out,''res'')';
 pipeline.weights.files_in.fft = pipeline.fft.files_out;
 pipeline.weights.files_in.sessions.session1 = [gb_psom_path_demo 'weights.mat'];
 pipeline.weights.files_out = [gb_psom_path_demo 'results.mat'];
 pipeline.weights.opt = struct([]);
 
+psom_visu_dependencies(pipeline);
+
 %%%%%%%%%%%%%%%%%%%%%%%%
 %% Running a pipeline %%
 %%%%%%%%%%%%%%%%%%%%%%%%
 
-% The following lines are setting up the options to run the pipeline
+msg = 'The demo is about to execute the toy pipeline.';
+msg2 = 'Press CTRL-C to stop here or any key to continue.';
+stars = repmat('*',[1 max(length(msg),length(msg2))]);
+fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
+pause
 
-opt.path_logs = [gb_psom_path_demo 'logs' filesep];     % where to store the log files
-opt.mode = 'session';                                   % how to execute the pipeline    
-opt.mode_pipeline_manager = 'session';                  % how to run the pipeline manager
-opt.max_queued = 2;                                     % how much jobs can be processed simultaneously
+% Set up the options to run the pipeline
+
+opt.path_logs = [gb_psom_path_demo 'logs' filesep];  % where to store the log files
+opt.mode = 'batch';                                  % how to execute the pipeline    
+opt.mode_pipeline_manager = 'session';               % how to run the pipeline manager
+opt.time_between_checks = 0.5;                       % because the jobs of the toy pipeline are really small, it is not necessary to wait long for jobs to complete
+opt.max_queued = 1;                                  % how much jobs can be processed simultaneously
 
 % The following line is running the pipeline manager on the toy pipeline
+
+warning off
+delete([opt.path_logs 'PIPE*']); % In case the demo is re-started, files from a previous execution are flushed.
+delete([gb_psom_path_demo 'ftseries.mat']);
+delete([gb_psom_path_demo 'tseries1.mat']);
+delete([gb_psom_path_demo 'tseries2.mat']);
+delete([gb_psom_path_demo 'results.mat']);
+warning on
+
+psom_run_pipeline(pipeline,opt);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Restarting a pipeline %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Test 1 : change an option
+msg = 'The demo is about to change an option of the job ''fft'' and restart the pipeline.';
+msg2 = 'Press CTRL-C to stop here or any key to continue.';
+stars = repmat('*',[1 max(length(msg),length(msg2))]);
+fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
+pause
+
+pipeline.fft.opt = 'let''s change something...';
+psom_run_pipeline(pipeline,opt);
+
+%% Test 2 : add a new job
+msg = 'The demo is about to add new job ''message2'', plot the updated dependency graph and restart the pipeline.';
+msg2 = 'Press CTRL-C to stop here or any key to continue.';
+stars = repmat('*',[1 max(length(msg),length(msg2))]);
+fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
+pause
+
+pipeline.message2.command = 'load(files_in), fprintf(''The size of the result is %i times %i'',size(res,1),size(res,2))';
+pipeline.message2.files_in = pipeline.weights.files_out;
+psom_visu_dependencies(pipeline);
+psom_run_pipeline(pipeline,opt);
+
+%% Test 3 : introduce a bug
+msg = 'The demo is about to change the job ''fft'' to create a bug, and then restart the pipeline.';
+msg2 = 'Press CTRL-C to stop here or any key to continue.';
+stars = repmat('*',[1 max(length(msg),length(msg2))]);
+fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
+pause
+
+pipeline.fft.command = 'BUG, load(files_in{1}); ftseries = zeros([size(tseries,1) 2]); ftseries(:,1) = fft(tseries); load(files_in{2}); ftseries(:,2) = fft(tseries); save(files_out,''ftseries'')';
+psom_run_pipeline(pipeline,opt);
+
+% Visualize the log file of the failed job
+msg = 'The demo is about to display the log file of the failed job ''fft''.';
+msg2 = 'Press CTRL-C to stop here or any key to continue.';
+stars = repmat('*',[1 max(length(msg),length(msg2))]);
+fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
+pause
+
+psom_pipeline_visu(opt.path_logs,'log','fft');
+
+%% Test 4: fix the bug, restart the pipeline
+msg = 'The demo is about to fix the bug in the job ''fft'' and restart the pipeline.';
+msg2 = 'Press CTRL-C to stop here or any key to continue.';
+stars = repmat('*',[1 max(length(msg),length(msg2))]);
+fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
+pause
+
+pipeline.fft.command = 'load(files_in{1}); ftseries = zeros([size(tseries,1) 2]); ftseries(:,1) = fft(tseries); load(files_in{2}); ftseries(:,2) = fft(tseries); save(files_out,''ftseries'')';
+psom_run_pipeline(pipeline,opt);
+
+%% Test 5: change an option and delete one input of the jobs that will be
+% restarted
+msg = 'The demo is about to change an option of the job ''fft'', delete its input file from ''tseries1'' and restart the pipeline.';
+msg2 = 'Press CTRL-C to stop here or any key to continue.';
+stars = repmat('*',[1 max(length(msg),length(msg2))]);
+fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
+pause
+
+pipeline.fft.opt = 'yet another dummy change';
+delete(pipeline.tseries1.files_out);
 psom_run_pipeline(pipeline,opt);

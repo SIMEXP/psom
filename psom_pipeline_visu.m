@@ -109,8 +109,18 @@ file_pipeline = [path_logs 'PIPE.mat'];
 name_pipeline = 'PIPE';
 file_status = [path_logs filesep name_pipeline '_status.mat'];
 file_logs = [path_logs filesep name_pipeline '_logs.mat'];
-load(file_status,'job_status')
 load(file_pipeline,'list_jobs');
+all_status = load(file_status);
+for num_j = 1:length(list_jobs)
+    name_job = list_jobs{num_j};
+    if isfield(all_status,name_job)
+        job_status{num_j} = all_status.(name_job);
+    else
+        job_status{num_j} = 'none';
+    end
+end
+clear all_status
+
 
 switch action
     

@@ -317,8 +317,8 @@ try
     all_status = load(file_status);
     for num_j = 1:length(list_jobs)
         name_job = list_jobs{num_j};
-        if isfield(all_status_old,name_job)
-            job_status{num_j} = all_status_old.(name_job);
+        if isfield(all_status,name_job)
+            job_status{num_j} = all_status.(name_job);
         else
             job_status{num_j} = 'none';
         end
@@ -428,10 +428,6 @@ try
                         fprintf(hfpl,'%s - The job %s has been successfully completed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
                         graph_deps(num_j,:) = 0; % update dependencies
 
-                    case 'running'
-
-                        fprintf('%s - The job %s is now running (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
-                        fprintf(hfpl,'%s - The job %s is now running (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
                 end
 
             end % if flag changed

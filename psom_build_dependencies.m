@@ -106,8 +106,16 @@ nb_jobs = length(list_jobs);
 fprintf('       Reorganizing inputs/outputs ...\n')
 for num_j = 1:nb_jobs
     name_job = list_jobs{num_j};
-    files_in.(name_job) = unique(psom_files2cell(pipeline.(name_job).files_in));
-    files_out.(name_job) = unique(psom_files2cell(pipeline.(name_job).files_out));
+    if isfield(pipeline.(name_job),'files_in')
+        files_in.(name_job) = unique(psom_files2cell(pipeline.(name_job).files_in));
+    else
+        files_in.(name_job) = {};
+    end
+    if isfield(pipeline.(name_job),'files_out')
+        files_out.(name_job) = unique(psom_files2cell(pipeline.(name_job).files_out));
+    else
+        files_out.(name_job) = {};
+    end
 end
 [char_in,ind_in] = psom_struct_cell_string2char(files_in);
 [char_out,ind_out] = psom_struct_cell_string2char(files_out);
