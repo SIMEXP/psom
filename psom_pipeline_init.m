@@ -72,9 +72,9 @@ function file_pipeline = psom_pipeline_init(pipeline,opt)
 %           GB_PSOM_COMMAND_MATLAB/OCTAVE in the file PSOM_GB_VARS.
 %
 %       RESTART
-%           (cell of strings, deafult {}) any job whose name containes one 
+%           (cell of strings, default {}) any job whose name contains one 
 %           of the strings in RESTART will be restarted, along with all of 
-%           its children, and some of hs parents whenever needed. See the
+%           its children, and some of his parents whenever needed. See the
 %           note 3 for more details.
 %
 %       FLAG_VERBOSE

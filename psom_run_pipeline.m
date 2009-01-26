@@ -98,6 +98,10 @@ function [] = psom_run_pipeline(pipeline,opt)
 %           all.q queue. It can also be used to put restrictions on the
 %           minimum avalaible memory, etc.
 %
+%       RESTART
+%           (cell of strings, default {}) any job whose name contains one 
+%           of the strings in RESTART will be restarted
+%
 %       There are actually other minor options available, see 
 %       PSOM_PIPELINE_INIT and PSOM_PIPELINE_PROCESS for details.
 %

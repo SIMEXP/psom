@@ -130,19 +130,7 @@ pause
 pipeline.fft.opt = 'let''s change something...';
 psom_run_pipeline(pipeline,opt);
 
-%% Test 2 : add a new job
-msg = 'The demo is about to add new job ''message2'', plot the updated dependency graph and restart the pipeline.';
-msg2 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2))]);
-fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-pause
-
-pipeline.message2.command = 'load(files_in), fprintf(''The size of the result is %i times %i'',size(res,1),size(res,2))';
-pipeline.message2.files_in = pipeline.weights.files_out;
-psom_visu_dependencies(pipeline);
-psom_run_pipeline(pipeline,opt);
-
-%% Test 3 : introduce a bug
+%% Test 2 : introduce a bug
 msg = 'The demo is about to change the job ''fft'' to create a bug, and then restart the pipeline.';
 msg2 = 'Press CTRL-C to stop here or any key to continue.';
 stars = repmat('*',[1 max(length(msg),length(msg2))]);
@@ -161,7 +149,7 @@ pause
 
 psom_pipeline_visu(opt.path_logs,'log','fft');
 
-%% Test 4: fix the bug, restart the pipeline
+%% Test 3: fix the bug, restart the pipeline
 msg = 'The demo is about to fix the bug in the job ''fft'' and restart the pipeline.';
 msg2 = 'Press CTRL-C to stop here or any key to continue.';
 stars = repmat('*',[1 max(length(msg),length(msg2))]);
@@ -171,7 +159,31 @@ pause
 pipeline.fft.command = 'load(files_in{1}); ftseries = zeros([size(tseries,1) 2]); ftseries(:,1) = fft(tseries); load(files_in{2}); ftseries(:,2) = fft(tseries); save(files_out,''ftseries'')';
 psom_run_pipeline(pipeline,opt);
 
-%% Test 5: change an option and delete one input of the jobs that will be
+%% Test 4 : Force the pipeline manager to restart some jobs
+msg = 'The demo is about to explicitely restart the ''*tseries*'' and ''*message*'' jobs and then restart the pipeline.';
+msg2 = 'Press CTRL-C to stop here or any key to continue.';
+stars = repmat('*',[1 max(length(msg),length(msg2))]);
+fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
+pause
+
+opt.restart = {'tseries','message'};
+psom_run_pipeline(pipeline,opt);
+opt = rmfield(opt,'restart');
+
+%% Test 5 : add a new job
+msg = 'The demo is about to add new job ''message2'', plot the updated dependency graph and restart the pipeline.';
+msg2 = 'Press CTRL-C to stop here or any key to continue.';
+stars = repmat('*',[1 max(length(msg),length(msg2))]);
+fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
+pause
+
+pipeline.message2.command = 'load(files_in), fprintf(''The size of the result is %i times %i'',size(res,1),size(res,2))';
+pipeline.message2.files_in = pipeline.weights.files_out;
+psom_visu_dependencies(pipeline);
+psom_run_pipeline(pipeline,opt);
+
+
+%% Test 6: change an option and delete one input of the jobs that will be
 % restarted
 msg = 'The demo is about to change an option of the job ''fft'', delete its input file from ''tseries1'' and restart the pipeline.';
 msg2 = 'Press CTRL-C to stop here or any key to continue.';
