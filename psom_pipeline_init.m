@@ -112,9 +112,6 @@ function file_pipeline = psom_pipeline_init(pipeline,opt)
 %       OPT
 %           The options used to initialize the pipeline
 %
-%       PIPELINE
-%           The pipeline structure
-%
 %       HISTORY
 %           A string recapituling when and who created the pipeline, (and
 %           on which machine).
@@ -431,22 +428,23 @@ for num_j = 1:nb_jobs
     name_job = list_jobs{num_j};
     
     if isfield(pipeline_old,name_job)
-        flag_restart(num_j) = flag_restart(num_j)||~psom_cmp_var(pipeline_old.(name_job),pipeline.(name_job));
+        flag_same = psom_cmp_var(pipeline_old.(name_job),pipeline.(name_job));
+        flag_restart(num_j) = flag_restart(num_j)||~flag_same;
     else
         flag_restart(num_j) = true;
+        flag_same = false;
     end
 
-    %% If the job has been modified or did not exist, save a
-    %% description
-    if flag_restart(num_j)
-        sub_add_var(file_jobs,name_job,pipeline.(name_job));
-    end
+     % If the job has been modified or did not exist, save a description
+     if ~flag_same
+         pipeline_update.(name_job) = pipeline.(name_job);
+     end
 
     if flag_old_pipeline
         %% Check if the user did not force a restart on that job
         flag_restart(num_j) = flag_restart(num_j) || psom_find_str_cell(name_job,opt.restart);
 
-        %% If the job is restarted, also restart all its children
+        %% If the job is restarted, also restart all of its children
         if flag_restart(num_j)
             mask_child = sub_find_children(num_j,graph_deps);
             flag_restart(mask_child) = true;
@@ -454,6 +452,14 @@ for num_j = 1:nb_jobs
     end
 end
 
+% Update the description of the jobs that need to be updated
+if exist('pipeline_update','var')
+    if exist(file_jobs,'file')
+        save(file_jobs,'-append','-struct','pipeline_update');
+    else
+        save(file_jobs,'-struct','pipeline_update');
+    end
+end
 
 
 %% Restart the parents of 'restart' jobs that produce files that are
@@ -481,7 +487,19 @@ if flag_old_pipeline
 
     if exist(file_status,'file')
 
-        load(file_status);
+        all_status_old = load(file_status);
+        all_logs_old = load(file_logs);
+        
+        job_status = cell(size(list_jobs));
+        
+        for num_j = 1:length(list_jobs)
+            name_job = list_jobs{num_j};
+            if isfield(all_status_old,name_job)
+                job_status{num_j} = all_status_old.(name_job);
+            else
+                job_status{num_j} = 'none';
+            end
+        end
 
         %% Update the job status using the tags that can be found in the log
         %% folder
@@ -503,11 +521,11 @@ if flag_old_pipeline
             text_qsub_o = sub_read_txt([path_logs filesep name_job '.oqsub']);
             text_qsub_e = sub_read_txt([path_logs filesep name_job '.eqsub']);
 
-            if isempty(text_qsub_o)&isempty(text_qsub_e)
-                sub_add_var(file_logs,name_job,text_log);
-            else
-                sub_add_var(file_logs,name_job,[text_log hat_qsub_o text_qsub_o hat_qsub_e text_qsub_e]);
+            if ~isempty(text_qsub_o)&isempty(text_qsub_e)
+                text_log = [text_log hat_qsub_o text_qsub_o hat_qsub_e text_qsub_e];
             end
+            
+            all_logs.(name_job) = text_log;            
             job_status{num_j} = 'finished';
         end
 
@@ -580,7 +598,7 @@ for num_j = list_num_unfinished
     
     if ~flag_job_OK
         job_status{num_j} = 'failed';
-        sub_add_var(file_logs,name_job,sprintf('%s\n\n%s',datestr(now),msg_files'));
+        all_logs.(name_job) = sprintf('%s\n\n%s',datestr(now),msg_files');
         fprintf('%s',msg_files');        
     end
     
@@ -594,7 +612,16 @@ if flag_verbose
 end
 
 flag_failed = ismember(job_status,'failed');
-save(file_status,'job_status')
+for num_j = 1:nb_jobs
+    name_job = list_jobs{num_j};
+    all_status.(name_job) = job_status{num_j};
+end
+
+if exist(file_status,'file')
+    save(file_status,'-append','-struct','all_status');
+else
+    save(file_status,'-struct','all_status');
+end
 
 %% Initialize the log files
 
@@ -608,8 +635,9 @@ for num_j = 1:nb_jobs
     
     if flag_finished(num_j)||flag_failed(num_j)
         
-        log_txt = load(file_logs,name_job);
-        all_logs.(name_job) = log_txt.(name_job);        
+        if ~isfield('all_logs',name_job)
+            all_logs.(name_job) = all_logs_old.(name_job);
+        end
         
     else
         
@@ -618,7 +646,11 @@ for num_j = 1:nb_jobs
     end
 end
 
-sub_save_struct_fields(file_logs,all_logs);
+if exist(file_logs,'file')
+    save(file_logs,'-append','-struct','all_logs');
+else
+    save(file_logs,'-struct','all_logs');
+end
 
 if ~flag_ready
     if flag_verbose
@@ -695,30 +727,6 @@ end
 %%%%%%%%%%%%%%%%%%
 %% Subfunctions %%
 %%%%%%%%%%%%%%%%%%
-
-%% Save the fields of a structure as independent variables in a .mat file
-function sub_save_struct_fields(gb_psom_file_name,gb_psom_struct)
-
-gb_psom_list_fields = fieldnames(gb_psom_struct);
-
-for gb_psom_num_f = 1:length(gb_psom_list_fields)
-    gb_psom_field_name = gb_psom_list_fields{gb_psom_num_f};
-    eval([gb_psom_field_name ' = gb_psom_struct.(gb_psom_field_name);']);
-end
-
-clear gb_psom_num_f gb_psom_list_fields gb_psom_struct gb_psom_field_name
-
-eval(['clear gb_psom_file_name; save ' gb_psom_file_name]);
-
-%% Save a value under a certain variable name in a .mat file
-function sub_add_var(file_name,var_name,var_value)
-
-eval([var_name ' = var_value;']);
-if ~exist(file_name,'file')
-    save(file_name,var_name)
-else
-    save(file_name,'-append',var_name)
-end
 
 %% Read a text file
 function str_txt = sub_read_txt(file_name)

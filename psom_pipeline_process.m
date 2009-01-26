@@ -314,7 +314,16 @@ try
     load(file_pipeline,'list_jobs','deps','graph_deps','files_in');
 
     %% Loading the current status of the pipeline
-    load(file_status,'job_status')   
+    all_status = load(file_status);
+    for num_j = 1:length(list_jobs)
+        name_job = list_jobs{num_j};
+        if isfield(all_status_old,name_job)
+            job_status{num_j} = all_status_old.(name_job);
+        else
+            job_status{num_j} = 'none';
+        end
+    end
+	clear all_status
     list_num_jobs = 1:length(job_status);
             
     %% update dependencies
@@ -381,7 +390,8 @@ try
                 end
                                 
                 job_status{num_j} = new_status_running_jobs{num_l};
-
+                sub_add_var(file_status,name_job,job_status{num_j});
+                
                 if strcmp(job_status{num_j},'exit') % the script crashed ('exit' tag)
                     fprintf('%s - The script of job %s terminated without generating any tag, I guess we will count that one as failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
                     fprintf(hfpl,'%s - The script of job %s terminated without generating any tag, I guess we will count that one as failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);;
@@ -427,10 +437,7 @@ try
             end % if flag changed
         end % loop over running jobs
                  
-        if ~flag_nothing_happened % if something happened ...
-            
-            %% Save the job status
-            save(file_status,'job_status');            
+        if ~flag_nothing_happened % if something happened ...                   
 
             %% update the to-do list
             mask_done(mask_running) = ismember(new_status_running_jobs,{'finished','failed','exit'});
@@ -471,6 +478,7 @@ try
             mask_running(num_job) = true;
             nb_queued = nb_queued + 1;
             job_status{num_job} = 'submitted';
+            sub_add_var(file_status,name_job,job_status{num_job});
             fprintf('%s - The job %s has been submitted to the queue (%i jobs in queue).\n',datestr(clock),name_job,nb_queued)
             fprintf(hfpl,'%s - The job %s has been submitted to the queue (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
 
@@ -532,11 +540,7 @@ try
                     delete(file_shell);
                     
             end % switch mode
-        end % submit jobs
-
-        if ~flag_nothing_happened % if something happened ...           
-            save(file_status,'job_status');
-        end
+        end % submit jobs       
         
         pause(time_between_checks); % To avoid wasting resources, wait a bit before re-trying to submit jobs
 
