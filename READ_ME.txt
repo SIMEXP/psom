@@ -1,6 +1,6 @@
-=﻿Pipeline System for Octave and Matlab (PSOM), version 0.7=
+=﻿Pipeline System for Octave and Matlab (PSOM), version 0.8=
 
-PSOM is an opensource project distributed under an [http://www.opensource.org/licenses/mit-license.php MIT opensource license]. It is a tool to manage pipelines under Matlab or Octave, both within a single session or within a parallel computing environment. A pipeline is a collection of jobs, i.e. some matlab or octave code that uses files as inputs and produce files as outputs. PSOM is automatizing all the boring tasks for you: 
+PSOM is a tool to manage pipelines under Matlab or Octave, both within a single session or within a parallel computing environment. A pipeline is a collection of jobs, i.e. some matlab or octave codes that are using files as inputs and are producing files as outputs. PSOM is automatizing all the boring tasks for you: 
   * Create folders for outputs
   * Keep track of all options
   * Generate log files
@@ -13,11 +13,15 @@ PSOM is an opensource project distributed under an [http://www.opensource.org/li
 
 The pipeline system was implemented by Pierre [http://wiki.bic.mni.mcgill.ca/index.php/PierreBellec Bellec] at the !McConnell Brain Imaging Center, Montreal Neurological Institute, !McGill University, Canada, 2008. Core ideas for PSOM have been inspired by the [http://wiki.bic.mni.mcgill.ca/index.php/PoorMansPipeline Poor Man's Pipeline (PMP) project], that was coded in PERL. 
 
-To install PSOM, just extract the archive in a folder and add that folder to your matlab or octave search path. You're done ! To use PSOM, you can have a look at the code of `psom_demo_pipeline`, or read [http://code.google.com/p/psom/w/list the wiki pages].
+PSOM is an opensource project distributed under an [http://www.opensource.org/licenses/mit-license.php MIT opensource license]. It is possible to download the project on this [http://code.google.com/p/psom/downloads/list website]. To install PSOM, just extract the archive in a folder and add that folder to your matlab or octave search path. You're done ! To use PSOM, you can have a look at the code of `psom_demo_pipeline`, or read [http://code.google.com/p/psom/wiki/HowToUsePsom the tutorial].
 
 Please visit http://code.google.com/p/psom/ for updates.
+
 ----
 =News=
+
+==January 26th, 2009==
+Release 0.8. Differences with version 0.7 are minor, but the demo `psom_demo_pipeline` is now complete and the [http://code.google.com/p/psom/wiki/HowToUsePsom PSOM tutorial] is available.
 
 ==December 29th, 2008==
 There is now a logo for the PSOM project.

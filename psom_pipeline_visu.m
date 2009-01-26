@@ -26,7 +26,7 @@ function [] = psom_pipeline_visu(path_logs,action,opt_action)
 %           'log'
 %               Display the log of one job.
 %
-%           'graph_stages'
+%           'flowchart'
 %               Draw the graph of dependencies of the pipeline.
 %              
 %           
@@ -62,7 +62,7 @@ function [] = psom_pipeline_visu(path_logs,action,opt_action)
 % ACTION = 'monitor'
 %       Print (with updates) the pipeline master log.
 %
-% ACTION = 'graph_stages'
+% ACTION = 'flowchart'
 %       Represent the dependency graph between jobs.  
 %
 % _________________________________________________________________________
@@ -144,7 +144,7 @@ switch action
             fprintf('%s\n',jobs_action{num_j});
         end
         
-    case 'graph_stages'
+    case 'flowchart'
         
         %% Display the graph of dependencies of the pipeline
         
