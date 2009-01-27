@@ -12,7 +12,8 @@
 % address : 
 % http://code.google.com/p/psom/w/edit/HowToUsePsom
 %
-% You can run a block of code by selecting it and press F9.
+% You can run a specific block of code by selecting it and press F9, or by
+% putting the cursor anywhere in the block and press CTRL+ENTER.
 %
 % _________________________________________________________________________
 % COMMENTS:
@@ -59,8 +60,6 @@ pause
 psom_gb_vars
 
 pipeline.message.command = 'fprintf(''The number of samples was : %i. Well that info will be in the logs anyway but still...\n'',opt.nb_samples)';
-pipeline.message.files_in = {};
-pipeline.message.files_out = {};
 pipeline.message.opt.nb_samples = 30;
 
 pipeline.tseries1.command = 'tseries = randn([opt.nb_samples 1]); save(files_out,''tseries'')';

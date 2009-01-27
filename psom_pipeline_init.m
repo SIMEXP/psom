@@ -704,7 +704,7 @@ end % for jobs
 %% Clean up the log folders from old tag and log files
 
 if flag_verbose
-    fprintf('\nCleanning up the log folders from old tag and log files...\n')
+    fprintf('\nCleaning up old tags and logs from the logs folders ...\n')
 end
 
 delete([path_logs filesep '*.running']);
