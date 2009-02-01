@@ -21,10 +21,10 @@ gb_psom_qsub_options = '-r y';
 % Options for the shell in batch or qsub modes
 gb_psom_shell_options = ''; 
 
-% Options for the exectution mode of the pipeline 
+% Options for the execution mode of the pipeline 
 gb_psom_mode = 'batch'; 
 
-% Options for the exectution mode of the pipeline manager
+% Options for the execution mode of the pipeline manager
 gb_psom_mode_pm = 'batch'; 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
