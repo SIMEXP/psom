@@ -13,8 +13,8 @@ function [] = psom_run_pipeline(pipeline,opt)
 %
 % * PIPELINE
 %       (structure) a matlab structure which defines a pipeline.
-%       Each field name <JOB_NAME> will be used to name jobs of the 
-%       pipeline. The fields <JOB_NAME> are themselves structure, with the 
+%       Each field name <JOB_NAME> will be used to name jobs of the
+%       pipeline. The fields <JOB_NAME> are themselves structure, with the
 %       following fields :
 %
 %       COMMAND
@@ -75,7 +75,7 @@ function [] = psom_run_pipeline(pipeline,opt)
 %               pipeline runs in the background.
 %
 %       MODE_PIPELINE_MANAGER
-%           (string, default GB_PSOM_MODE_PM defined in PSOM_GB_VARS) 
+%           (string, default GB_PSOM_MODE_PM defined in PSOM_GB_VARS)
 %           same as OPT.MODE, but applies to the pipeline manager itself.
 %
 %       MAX_QUEUED
@@ -88,7 +88,7 @@ function [] = psom_run_pipeline(pipeline,opt)
 %       SHELL_OPTIONS
 %           (string, default GB_PSOM_SHELL_OPTIONS defined in PSOM_GB_VARS)
 %           some commands that will be added at the begining of the shell
-%           script submitted to batch or qsub. This can be used to set 
+%           script submitted to batch or qsub. This can be used to set
 %           important variables, or source an initialization script.
 %
 %       QSUB_OPTIONS
@@ -100,16 +100,16 @@ function [] = psom_run_pipeline(pipeline,opt)
 %           minimum avalaible memory, etc.
 %
 %       RESTART
-%           (cell of strings, default {}) any job whose name contains one 
+%           (cell of strings, default {}) any job whose name contains one
 %           of the strings in RESTART will be restarted
 %
-%       There are actually other minor options available, see 
+%       There are actually other minor options available, see
 %       PSOM_PIPELINE_INIT and PSOM_PIPELINE_PROCESS for details.
 %
 % _________________________________________________________________________
 % OUTPUTS:
 %
-% The pipeline manager is going to try to process the pipeline and create 
+% The pipeline manager is going to try to process the pipeline and create
 % all the output files. In addition logs and parameters of the pipeline are
 % stored in the log folder :
 %
@@ -139,26 +139,26 @@ function [] = psom_run_pipeline(pipeline,opt)
 %       track of the time of submission, completion and failure of all jobs
 %       of the pipeline. If the pipeline is executed multiple times with
 %       the same log folders, the history file is keeping track of all
-%       sessions. 
+%       sessions.
 %
 %   PIPE_jobs.mat
 %
 %       A .mat file which contains variables <NAME_JOB> where NAME_JOB is
 %       the name of any job in the pipeline, and is equal to the field
-%       PIPELINE.<NAME_JOB> for the lattest execution of this job in the 
+%       PIPELINE.<NAME_JOB> for the lattest execution of this job in the
 %       pipeline.
 %
 %   PIPE_LOGS
 %
 %       A .mat file which contains variables <NAME_JOB> where NAME_JOB is
-%       the name of any job in the pipeline. The variable <NAME_JOB> is a 
-%       string which contains the log of the job. Jobs that have not been 
+%       the name of any job in the pipeline. The variable <NAME_JOB> is a
+%       string which contains the log of the job. Jobs that have not been
 %       processed yet have an empty log.
 %
 %   PIPE_status.mat
 %
 %       A .mat file which contains variables <NAME_JOB> where NAME_JOB is
-%       the name of any job in the pipeline. The variable <NAME_JOB> is a 
+%       the name of any job in the pipeline. The variable <NAME_JOB> is a
 %       string which describes the current status of the job (either
 %       'submitted', 'finished', 'failed', 'none').
 %
@@ -170,8 +170,8 @@ function [] = psom_run_pipeline(pipeline,opt)
 % _________________________________________________________________________
 % COMMENTS:
 %
-% Empty file strings or strings equal to 'gb_niak_omitted' in the pipeline 
-% description are ignored in the dependency graph and checks for 
+% Empty file strings or strings equal to 'gb_niak_omitted' in the pipeline
+% description are ignored in the dependency graph and checks for
 % the existence of required files.
 %
 % If a pipeline is already running (a 'PIPE.lock' file could be found in
@@ -182,9 +182,9 @@ function [] = psom_run_pipeline(pipeline,opt)
 % If this is not the first time a pipeline is executed, the pipeline
 % manager will check which jobs have been successfully completed, and will
 % not restart these ones. If a job description has somehow been
-% modified since a previous processing, this job and all its children will 
-% be restarted. For more details on this behavior, please read the 
-% documentation of PSOM_PIPELINE_INIT or run the pipeline demo in 
+% modified since a previous processing, this job and all its children will
+% be restarted. For more details on this behavior, please read the
+% documentation of PSOM_PIPELINE_INIT or run the pipeline demo in
 % NIAK_DEMO_PIPELINE.
 %
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008.
@@ -267,7 +267,7 @@ switch opt.mode
         end
         if isempty(nb_checks_per_point)
             nb_checks_per_point = Inf;
-        end        
+        end
     otherwise
         if isempty(time_between_checks)
             time_between_checks = 10;
@@ -284,38 +284,40 @@ end
 %% Check for a 'lock' tag
 file_pipe_running = cat(2,path_logs,filesep,name_pipeline,'.lock');
 if exist(file_pipe_running,'file') % Is the pipeline running ?
-    fprintf('A lock tag has been found on the pipeline ! This means the pipeline was either running or crashed.\nI will assume it crashed and restart the pipeline.\nIf you are NOT CERTAIN that you want to restart the pipeline, press CTRL-C now !\n')
+
+    fprintf('\nA lock file %s has been found on the pipeline !\nIf the pipeline crashed, press CTRL-C now, delete manually the lock and restart the pipeline.\nOtherwise press any key to monitor the current pipeline execution.\n\n',file_pipe_running)
     pause
-    delete(file_pipe_running);
+    psom_pipeline_visu(path_logs,'monitor');
+
+else
+
+    %% Initialize the logs folder
+    opt_init.path_logs = opt.path_logs;
+    opt_init.command_matlab = opt.command_matlab;
+    opt_init.flag_verbose = opt.flag_verbose;
+    opt_init.restart = opt.restart;
+
+    psom_pipeline_init(pipeline,opt_init);
+
+    %% Run the pipeline manager
+    file_pipeline = cat(2,path_logs,filesep,name_pipeline,'.mat');
+
+    opt_proc.mode = opt.mode;
+    opt_proc.mode_pipeline_manager = opt.mode_pipeline_manager;
+    opt_proc.max_queued = opt.max_queued;
+    opt_proc.qsub_options = opt.qsub_options;
+    opt_proc.command_matlab = opt.command_matlab;
+    opt_proc.time_between_checks = opt.time_between_checks;
+    opt_proc.nb_checks_per_point = opt.nb_checks_per_point;
+
+    psom_pipeline_process(file_pipeline,opt_proc);
+
+    %% In batch and qsub modes, monitor the execution of the pipeline
+    switch opt.mode_pipeline_manager
+
+        case {'batch','qsub'}
+
+            psom_pipeline_visu(path_logs,'monitor');
+
+    end
 end
-
-%% Initialize the logs folder
-opt_init.path_logs = opt.path_logs;
-opt_init.command_matlab = opt.command_matlab;
-opt_init.flag_verbose = opt.flag_verbose;
-opt_init.restart = opt.restart;
-
-psom_pipeline_init(pipeline,opt_init);
-
-%% Run the pipeline manager
-file_pipeline = cat(2,path_logs,filesep,name_pipeline,'.mat');
-
-opt_proc.mode = opt.mode;
-opt_proc.mode_pipeline_manager = opt.mode_pipeline_manager;
-opt_proc.max_queued = opt.max_queued;
-opt_proc.qsub_options = opt.qsub_options;
-opt_proc.command_matlab = opt.command_matlab;
-opt_proc.time_between_checks = opt.time_between_checks;
-opt_proc.nb_checks_per_point = opt.nb_checks_per_point;
-
-psom_pipeline_process(file_pipeline,opt_proc);
-
-%% In batch and qsub modes, monitor the execution of the pipeline
-switch opt.mode_pipeline_manager
-    
-    case {'batch','qsub'}
-
-        psom_pipeline_visu(path_logs,'monitor');
-
-end
-
