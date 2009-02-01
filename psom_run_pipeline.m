@@ -52,7 +52,8 @@ function [] = psom_run_pipeline(pipeline,opt)
 %           (string) The folder where the .M and .MAT files will be stored.
 %
 %       MODE
-%           (string, default 'session') how to execute the jobs :
+%           (string, default GB_PSOM_MODE defined in PSOM_GB_VARS)
+%           how to execute the jobs :
 %
 %           'session'
 %               the pipeline is executed within the current session. The
@@ -74,8 +75,8 @@ function [] = psom_run_pipeline(pipeline,opt)
 %               pipeline runs in the background.
 %
 %       MODE_PIPELINE_MANAGER
-%           (string, default same as OPT.MODE) same as OPT.MODE, but
-%           applies to the pipeline manager itself.
+%           (string, default GB_PSOM_MODE_PM defined in PSOM_GB_VARS) 
+%           same as OPT.MODE, but applies to the pipeline manager itself.
 %
 %       MAX_QUEUED
 %           (integer, default 1 'batch' modes, Inf in 'session' and 'qsub'
@@ -225,12 +226,8 @@ name_pipeline = 'PIPE';
 
 gb_name_structure = 'opt';
 gb_list_fields = {'restart','shell_options','path_logs','command_matlab','flag_verbose','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point','time_cool_down'};
-gb_list_defaults = {{},'',NaN,'',true,'session','',0,'',[],[],[]};
+gb_list_defaults = {{},'',NaN,'',true,gb_psom_mode,gb_psom_mode_pm,0,'',[],[],[]};
 psom_set_defaults
-
-if isempty(opt.mode_pipeline_manager)
-    opt.mode_pipeline_manager = opt.mode;
-end
 
 if isempty(opt.command_matlab)
     if strcmp(gb_psom_language,'matlab')

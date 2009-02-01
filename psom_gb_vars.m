@@ -8,19 +8,31 @@
 %% system                                                               %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-gb_psom_command_matlab = 'matlab'; % how to invoke matlab   
+% how to invoke matlab   
+gb_psom_command_matlab = 'matlab'; 
 
-gb_psom_command_octave = 'octave'; % how to invoke octave
+% how to invoke octave
+gb_psom_command_octave = 'octave'; 
 
-gb_psom_qsub_options = '-r y'; % Options for the sge qsub system, example : '-q all.q@yeatman,all.q@zeus' will force qsub to only use the yeatman workstation;
+% Options for the sge qsub system, example : '-q all.q@yeatman,all.q@zeus'
+% will force qsub to only use the yeatman workstation;
+gb_psom_qsub_options = '-r y'; 
 
-gb_psom_shell_options = ''; % Options for the shell in batch or qsub modes
+% Options for the shell in batch or qsub modes
+gb_psom_shell_options = ''; 
+
+% Options for the exectution mode of the pipeline 
+gb_psom_mode = 'batch'; 
+
+% Options for the exectution mode of the pipeline manager
+gb_psom_mode_pm = 'batch'; 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% The following variables describe the folders and external tools PSOM is using for various tasks %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-gb_psom_tmp = cat(2,filesep,'tmp',filesep); % where to store temporary files
+% where to store temporary files
+gb_psom_tmp = cat(2,filesep,'tmp',filesep); 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% The following variables should not be changed %%
@@ -31,9 +43,11 @@ gb_psom_version = '0.6'; %
 
 %% Is the environment Octave or Matlab ?
 if exist('OCTAVE_VERSION')    
-    gb_psom_language = 'octave'; %% this is octave !
+    % this is octave !
+    gb_psom_language = 'octave'; 
 else
-    gb_psom_language = 'matlab'; %% this is not octave, so it must be matlab
+    % this is not octave, so it must be matlab
+    gb_psom_language = 'matlab'; 
 end
 
 %% Get langage version
