@@ -488,7 +488,11 @@ if flag_old_pipeline
     if exist(file_status,'file')
 
         all_status_old = load(file_status);
-        all_logs_old = load(file_logs);
+        if exist(file_logs,'file')
+            all_logs_old = load(file_logs);
+        else
+            all_logs_old = struct([]);
+        end
         
         job_status = cell(size(list_jobs));
         
