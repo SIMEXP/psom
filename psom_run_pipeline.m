@@ -315,7 +315,7 @@ switch opt.mode_pipeline_manager
     
     case {'batch','qsub'}
 
-        psom_pipeline_visu(file_pipeline,'monitor');
+        psom_pipeline_visu(path_logs,'monitor');
 
 end
 
