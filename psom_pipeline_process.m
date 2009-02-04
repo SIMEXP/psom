@@ -559,13 +559,7 @@ catch
         if exist(path_tmp,'dir')
             rmdir(path_tmp,'s'); % Clean the temporary folder
         end
-    end
-
-    if exist('file_pipe_running','var')
-        if exist(file_pipe_running,'file')
-            delete(file_pipe_running); % remove the 'running' tag
-        end
-    end
+    end   
 
     fprintf('\n\n******************\nSomething went bad ... the pipeline has FAILED !\nThe last error message occured was :\n%s\n',errmsg.message);
     fprintf(hfpl,'\n\n******************\nSomething went bad ... the pipeline has FAILED !\nThe last error message occured was :\n%s\n',errmsg.message);
@@ -575,18 +569,17 @@ catch
             fprintf(hfpl,'File %s at line %i\n',errmsg.stack(num_e).file,errmsg.stack(num_e).line);
         end
     end
+    if exist('file_pipe_running','var')
+        if exist(file_pipe_running,'file')
+            delete(file_pipe_running); % remove the 'running' tag
+        end
+    end
 
 end
 
 if exist('path_tmp','var')
     if exist(path_tmp,'dir')
         rmdir(path_tmp,'s'); % Clean the temporary folder
-    end
-end
-
-if exist('file_pipe_running','var')
-    if exist(file_pipe_running,'file')
-        delete(file_pipe_running); % remove the 'running' tag
     end
 end
 
@@ -653,6 +646,12 @@ else
 end
 
 fclose(hfpl);
+
+if exist('file_pipe_running','var')
+    if exist(file_pipe_running,'file')
+        delete(file_pipe_running); % remove the 'running' tag
+    end
+end
 
 %%%%%%%%%%%%%%%%%%
 %% subfunctions %%
