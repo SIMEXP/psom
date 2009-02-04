@@ -640,7 +640,7 @@ for num_j = 1:nb_jobs
     if flag_finished(num_j)||flag_failed(num_j)
         
         if ~isfield('all_logs',name_job)
-            if exist('all_logs_old','var')&&isfield('all_logs_old',name_job)
+            if exist('all_logs_old','var')&&isfield(all_logs_old,name_job)
                 all_logs.(name_job) = all_logs_old.(name_job);
             else
                 all_logs.(name_job) = '';
