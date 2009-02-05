@@ -39,7 +39,7 @@ gb_psom_tmp = cat(2,filesep,'tmp',filesep);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% PSOM version
-gb_psom_version = '0.6'; % 
+gb_psom_version = '0.8.2'; % 
 
 %% Is the environment Octave or Matlab ?
 if exist('OCTAVE_VERSION')    
