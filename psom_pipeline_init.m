@@ -536,8 +536,12 @@ if flag_old_pipeline
         job_status_old = job_status;
     else
         job_status_old = repmat({'none'},[nb_jobs 1]);
+        all_status_old.(list_jobs{1}) = '';
     end
 
+else
+    job_status_old = repmat({'none'},[nb_jobs 1]);
+    all_status_old.(list_jobs{1}) = '';
 end
 
 %% Initialize the status :
@@ -616,6 +620,7 @@ if flag_verbose
 end
 
 flag_failed = ismember(job_status,'failed');
+all_status = all_status_old;
 for num_j = 1:nb_jobs
     name_job = list_jobs{num_j};
     all_status.(name_job) = job_status{num_j};
