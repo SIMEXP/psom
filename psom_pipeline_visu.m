@@ -50,7 +50,8 @@ function [] = psom_pipeline_visu(path_logs,action,opt_action)
 %       running
 %
 % ACTION = 'failed'
-%       Display a list of the jobs of the pipeline that have failed.
+%       Display a list of the jobs of the pipeline that have failed. Note
+%       that jobs with an 'exit' status are counted as failures.
 %
 % ACTION = 'finished'
 %       Display a list of finished jobs of the pipeline.
@@ -138,7 +139,11 @@ switch action
 
         %% List the jobs that have a specific status
 
-        mask_jobs = ismember(job_status,action);
+        if strcmp(action,'failed')
+            mask_jobs = ismember(job_status,{action,'exit'});
+        else
+            mask_jobs = ismember(job_status,action);
+        end
         jobs_action = list_jobs(mask_jobs);
 
         if isempty(jobs_action)

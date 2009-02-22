@@ -130,7 +130,7 @@ for num_j = 1:nb_jobs
         error('I am confused : job %s has multiple tags. Sorry dude, I must quit ...',name_job);
     end          
         
-    if ~(flag_finished || flag_failed) & flag_exit
+    if ~(flag_finished || flag_failed) & (flag_exit||flag_oqsub)
                 
             curr_status{num_j} = 'exit';                    
         
