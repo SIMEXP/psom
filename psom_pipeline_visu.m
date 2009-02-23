@@ -220,8 +220,12 @@ switch action
             ind_str_end = findstr(sub_str,' sec.');
             sub_str = sub_str(1:ind_str_end-1);
             ctime = str2num(sub_str);
-            fprintf('Computation time for job %s : %1.2f s, %1.2f mn, %1.2f hours, %1.2f days.\n',list_jobs{num_j},ctime,ctime/60,ctime/3600,ctime/(24*3600));
-            tot_time = tot_time + ctime;
+            if isempty(ctime)
+                fprintf('Huho, I could not parse computation time for job %s, that''weird ! Sorry about that ... \n',list_jobs{num_j});
+            else
+                fprintf('Computation time for job %s : %1.2f s, %1.2f mn, %1.2f hours, %1.2f days.\n',list_jobs{num_j},ctime,ctime/60,ctime/3600,ctime/(24*3600));
+                tot_time = tot_time + ctime;
+            end
 
         end
         fprintf('Total computation time :  %1.2f s, %1.2f mn, %1.2f hours, %1.2f days.\n',tot_time,tot_time/60,tot_time/3600,tot_time/(24*3600));
