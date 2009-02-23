@@ -300,7 +300,7 @@ else
     opt_init.command_matlab = opt.command_matlab;
     opt_init.flag_verbose = opt.flag_verbose;
     opt_init.restart = opt.restart;
-
+    opt_init.path_search = opt.path_search;
     psom_pipeline_init(pipeline,opt_init);
 
     %% Run the pipeline manager
