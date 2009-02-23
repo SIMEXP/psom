@@ -63,6 +63,10 @@ function file_pipeline = psom_pipeline_init(pipeline,opt)
 %           pipeline processing. Renaming or deleting files from the
 %           PATH_LOGS may result in unrecoverable crash of the pipeline.
 %
+%       SEARCH_PATH
+%           (string, default current matlab search path) the matlab search
+%           path that will be used by the jobs.
+%
 %       COMMAND_MATLAB
 %           (string, default GB_PSOM_COMMAND_MATLAB or
 %           GB_PSOM_COMMAND_OCTAVE depending on the current environment)
@@ -266,8 +270,8 @@ end
 
 %% Options
 gb_name_structure = 'opt';
-gb_list_fields = {'restart','path_logs','command_matlab','flag_verbose'};
-gb_list_defaults = {{},NaN,'',true};
+gb_list_fields = {'search_path','restart','path_logs','command_matlab','flag_verbose'};
+gb_list_defaults = {path,{},NaN,'',true};
 psom_set_defaults
 name_pipeline = 'PIPE';
 
@@ -395,7 +399,7 @@ else
     history = [datestr(now) ' ' gb_psom_user ' on a ' gb_psom_OS ' system used PSOM v' gb_psom_version '>>>> Created a pipeline !\n'];
 end
 
-path_work = path;
+path_work = opt.search_path;
 save(file_pipeline,'history','deps','graph_deps','list_jobs','files_in','files_out','path_work')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
