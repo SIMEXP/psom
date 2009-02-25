@@ -275,12 +275,22 @@ switch opt.mode_pipeline_manager
         fclose(hf);
 
         switch opt.mode_pipeline_manager
+            
             case 'qsub'
+                
                 file_qsub_o = [path_logs filesep name_pipeline '.oqsub'];
                 file_qsub_e = [path_logs filesep name_pipeline '.eqsub'];
                 instr_batch = ['qsub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_pipeline(1:min(15,length(name_pipeline))) ' ' opt.qsub_options ' ' file_shell];
+                
             otherwise
-                instr_batch = ['at -f ' file_shell ' now'];
+                
+                switch gb_psom_OS
+                    case 'windows'
+                        instr_batch = ['soon delay 0 "' file_shell '"'];
+                    otherwise
+                        instr_batch = ['at -f ' file_shell ' now'];
+                end
+                
         end
         [fail,msg] = system(instr_batch);
         if fail~=0
@@ -516,7 +526,13 @@ try
 
                 case 'batch'
 
-                    instr_batch = ['at -f ' file_shell ' now'];
+                    switch gb_psom_OS
+                        case 'windows'
+                            instr_batch = ['soon delay 0 "' file_shell '"'];
+                        otherwise
+                            instr_batch = ['at -f ' file_shell ' now'];
+                    end
+                   
                     [fail,msg] = system(instr_batch);
                     if fail~=0
                         error('Something went bad with the at command. The command was : %s . The error message was : %s',instr_batch,msg)
