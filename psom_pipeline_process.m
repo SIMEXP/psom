@@ -657,8 +657,10 @@ if flag_any_fail
     fprintf('All jobs have been processed, but some jobs have failed.\nYou may want to restart the pipeline latter if you managed to fix the problems.\n');
     fprintf(hfpl,'All jobs have been processed, but some jobs have failed.\nYou may want to restart the pipeline latter if you managed to fix the problems.\n');
 else
-    fprintf('All jobs have been successfully completed.\n');
-    fprintf(hfpl,'All jobs have been successfully completed.\n');
+    if isempty(list_num_none)
+        fprintf('All jobs have been successfully completed.\n');
+        fprintf(hfpl,'All jobs have been successfully completed.\n');
+    end
 end
 
 fclose(hfpl);
