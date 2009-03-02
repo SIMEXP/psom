@@ -308,8 +308,11 @@ end
 
 file_pipeline = cat(2,path_logs,filesep,name_pipeline,'.mat');
 file_jobs = cat(2,path_logs,filesep,name_pipeline,'_jobs.mat');
+file_jobs_backup = cat(2,path_logs,filesep,name_pipeline,'_jobs_backup.mat');
 file_logs = cat(2,path_logs,filesep,name_pipeline,'_logs.mat');
+file_logs_backup = cat(2,path_logs,filesep,name_pipeline,'_logs_backup.mat');
 file_status = cat(2,path_logs,filesep,name_pipeline,'_status.mat');
+file_status_backup = cat(2,path_logs,filesep,name_pipeline,'_status_backup.mat');
 list_jobs = fieldnames(pipeline);
 nb_jobs = length(list_jobs);
 
@@ -393,8 +396,14 @@ if flag_verbose
 end
 
 if flag_old_pipeline
-    load(file_pipeline,'history');
-    history = char(history,[datestr(now) ' ' gb_psom_user ' on a ' gb_psom_OS ' system used PSOM v' gb_psom_version '>>>> The pipeline was restarted\n']);
+    
+    try
+        load(file_pipeline,'history');
+        history = char(history,[datestr(now) ' ' gb_psom_user ' on a ' gb_psom_OS ' system used PSOM v' gb_psom_version '>>>> The pipeline was restarted\n']);
+    catch 
+        history = [datestr(now) ' ' gb_psom_user ' on a ' gb_psom_OS ' system used PSOM v' gb_psom_version '>>>> Created a pipeline !\n'];
+    end
+        
 else
     history = [datestr(now) ' ' gb_psom_user ' on a ' gb_psom_OS ' system used PSOM v' gb_psom_version '>>>> Created a pipeline !\n'];
 end
@@ -415,7 +424,13 @@ flag_restart = false([1 nb_jobs]);
 
 if flag_old_pipeline
 
-    pipeline_old = load(file_jobs);
+    try 
+        pipeline_old = load(file_jobs);
+    catch
+        warning('There was something wrong when loading the old job description file %s, I''ll try loading the backup instead',file_jobs)
+        pipeline_old = load(file_jobs_backup);
+        copyfile(file_jobs_backup,file_jobs,'f');
+    end
 
 else
 
@@ -459,10 +474,11 @@ end
 % Update the description of the jobs that need to be updated
 if exist('pipeline_update','var')
     if exist(file_jobs,'file')
-        save(file_jobs,'-append','-struct','pipeline_update');
+        save(file_jobs,'-append','-struct','pipeline_update');        
     else
-        save(file_jobs,'-struct','pipeline_update');
+        save(file_jobs,'-struct','pipeline_update');        
     end
+    copyfile(file_jobs,file_jobs_backup,'f');
 end
 
 
@@ -491,9 +507,24 @@ if flag_old_pipeline
 
     if exist(file_status,'file')
 
-        all_status_old = load(file_status);
+        % Load old status
+        try
+            all_status_old = load(file_status);
+        catch
+            warning('There was something wrong when loading the old status file %s, I''ll try loading the backup instead',file_status)
+            all_status_old = load(file_status_backup);
+            copyfile(file_status_backup,file_status,'f');
+        end            
+        
+        % Load old logs
         if exist(file_logs,'file')
-            all_logs_old = load(file_logs);
+            try
+                all_logs_old = load(file_logs);
+            catch
+                warning('There was something wrong when loading the old logs file %s, I''ll try loading the backup instead',file_logs)
+                all_logs_old = load(file_logs_backup);
+                copyfile(file_logs_backup,file_logs,'f');
+            end
         else
             all_logs_old = struct([]);
         end
@@ -630,6 +661,7 @@ if exist(file_status,'file')
 else
     save(file_status,'-struct','all_status');
 end
+copyfile(file_status,file_status_backup,'f');
 
 %% Initialize the log files
 
@@ -663,6 +695,7 @@ if exist(file_logs,'file')
 else
     save(file_logs,'-struct','all_logs');
 end
+copyfile(file_logs,file_logs_backup,'f');
 
 if ~flag_ready
     if flag_verbose

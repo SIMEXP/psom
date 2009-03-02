@@ -238,7 +238,9 @@ hat_qsub_e = sprintf('\n\n*****************\nERROR QSUB\n*****************\n');
 file_pipe_running = cat(2,path_logs,filesep,name_pipeline,'.lock');
 file_pipe_log = cat(2,path_logs,filesep,name_pipeline,'_history.txt');
 file_logs = cat(2,path_logs,filesep,name_pipeline,'_logs.mat');
+file_logs_backup = cat(2,path_logs,filesep,name_pipeline,'_logs_backup.mat');
 file_status = cat(2,path_logs,filesep,name_pipeline,'_status.mat');
+file_status_backup = cat(2,path_logs,filesep,name_pipeline,'_status_backup.mat');
 file_jobs = cat(2,path_logs,filesep,name_pipeline,'_jobs.mat');
 
 %% Check for the existence of the pipeline
@@ -398,9 +400,11 @@ try
                     end
                     nb_points = 0;
                 end
-                                
+                   
+                % update status in the status file
                 job_status{num_j} = new_status_running_jobs{num_l};
                 sub_add_var(file_status,name_job,job_status{num_j});
+                sub_add_var(file_status_backup,name_job,job_status{num_j});
                 
                 if strcmp(job_status{num_j},'exit') % the script crashed ('exit' tag)
                     fprintf('%s - The script of job %s terminated without generating any tag, I guess we will count that one as failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
@@ -417,8 +421,10 @@ try
                     text_qsub_e = sub_read_txt([path_logs filesep name_job '.eqsub']);
                     if isempty(text_qsub_o)&isempty(text_qsub_e)
                         sub_add_var(file_logs,name_job,text_log);
+                        sub_add_var(file_logs_backup,name_job,text_log);
                     else
                         sub_add_var(file_logs,name_job,[text_log hat_qsub_o text_qsub_o hat_qsub_e text_qsub_e]);
+                        sub_add_var(file_logs_backup,name_job,[text_log hat_qsub_o text_qsub_o hat_qsub_e text_qsub_e]);
                     end
                     sub_clean_job(path_logs,name_job); % clean up all tags & log
                 end
@@ -455,6 +461,7 @@ try
 
             %% Finally update the list of currently running jobs
             mask_running(mask_running) = mask_running(mask_running)&~mask_done(mask_running);
+            
         end
 
         %% Time to (try to) submit jobs !!
@@ -485,6 +492,7 @@ try
             nb_queued = nb_queued + 1;
             job_status{num_job} = 'submitted';
             sub_add_var(file_status,name_job,job_status{num_job});
+            sub_add_var(file_status_backup,name_job,job_status{num_job});
             fprintf('%s - The job %s has been submitted to the queue (%i jobs in queue).\n',datestr(clock),name_job,nb_queued)
             fprintf(hfpl,'%s - The job %s has been submitted to the queue (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
 

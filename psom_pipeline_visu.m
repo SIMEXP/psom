@@ -119,9 +119,17 @@ end
 file_pipeline = [path_logs 'PIPE.mat'];
 name_pipeline = 'PIPE';
 file_status = [path_logs filesep name_pipeline '_status.mat'];
+file_status_backup = [path_logs filesep name_pipeline '_status_backup.mat'];
 file_logs = [path_logs filesep name_pipeline '_logs.mat'];
+file_logs_backup = [path_logs filesep name_pipeline '_logs_backup.mat'];
 load(file_pipeline,'list_jobs');
-all_status = load(file_status);
+try
+    all_status = load(file_status);
+catch
+    warning('There was something wrong when loading the status file %s, I''ll try loading the backup instead',file_status)
+    all_status = load(file_status_backup);
+end
+
 for num_j = 1:length(list_jobs)
     name_job = list_jobs{num_j};
     if isfield(all_status,name_job)
@@ -214,7 +222,12 @@ switch action
         
         for num_j = ind_job
 
-            log_str = load(file_logs,list_jobs{num_j});            
+            try
+                log_str = load(file_logs,list_jobs{num_j});            
+            catch
+                warning('There was something wrong when loading the log file %s, I''ll try loading the backup instead',file_logs)
+                log_str = load(file_logs_backup,list_jobs{num_j});            
+            end
             ind_str = findstr(log_str.(list_jobs{num_j}),tag_str);
             sub_str = log_str.(list_jobs{num_j})(ind_str+length(tag_str):end);
             ind_str_end = findstr(sub_str,' sec.');
@@ -255,7 +268,12 @@ switch action
 
         else
 
-            load(file_logs,opt_action);
+            try
+                load(file_logs,opt_action);
+            catch
+                warning('There was something wrong when loading the log file %s, I''ll try loading the backup instead',file_logs)
+                load(file_logs_backup,opt_action);            
+            end
             eval(['fprintf(''%s'',',opt_action,');']);
 
         end
