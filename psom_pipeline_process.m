@@ -93,6 +93,10 @@ function [] = psom_pipeline_process(file_pipeline,opt)
 %           where the pipeline processor did not find anything to do, it
 %           will issue a '.' verbose to show it is not dead.
 %
+%       FLAG_DEBUG
+%           (boolean, default false) if FLAG_DEBUG is true, the program
+%           prints additional information for debugging purposes.
+%
 % _________________________________________________________________________
 % OUTPUTS:
 %
@@ -144,8 +148,8 @@ end
 
 %% Options
 gb_name_structure = 'opt';
-gb_list_fields = {'shell_options','command_matlab','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point','time_cool_down'};
-gb_list_defaults = {'','','session','',0,'',[],[],[]};
+gb_list_fields = {'flag_debug','shell_options','command_matlab','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point','time_cool_down'};
+gb_list_defaults = {false,'','','session','',0,'',[],[],[]};
 psom_set_defaults
 
 if isempty(opt.mode_pipeline_manager)
@@ -271,6 +275,10 @@ switch opt.mode_pipeline_manager
                 instr_job = sprintf('%s --silent --eval "cd %s, load(''%s'',''path_work''), path(path_work), opt.time_cool_down = %1.3f, opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.mode_pipeline_manager = ''session''; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,path_logs,file_pipeline,opt.time_cool_down,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
         end
 
+        if flag_debug
+           fprintf('\n\nThe following shell script is used to run the pipeline manager in the background :\n%s\n\n',instr_job);
+        end
+        
         file_shell = psom_file_tmp('_proc_pipe.sh');
         hf = fopen(file_shell,'w');
         fprintf(hf,'%s',instr_job);
@@ -297,6 +305,9 @@ switch opt.mode_pipeline_manager
         [fail,msg] = system(instr_batch);
         if fail~=0
             error('Something went bad with the at command. The error message was : %s',msg)
+        end
+        if flag_debug
+            fprintf('\n\nThe call to at/qsub produced the following message :\n%s\n\n',msg);
         end
 
         delete(file_shell)

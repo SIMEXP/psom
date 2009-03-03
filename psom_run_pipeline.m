@@ -229,8 +229,8 @@ end
 name_pipeline = 'PIPE';
 
 gb_name_structure = 'opt';
-gb_list_fields = {'path_search','restart','shell_options','path_logs','command_matlab','flag_verbose','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point','time_cool_down'};
-gb_list_defaults = {path,{},'',NaN,'',true,gb_psom_mode,gb_psom_mode_pm,0,'',[],[],[]};
+gb_list_fields = {'flag_debug','path_search','restart','shell_options','path_logs','command_matlab','flag_verbose','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point','time_cool_down'};
+gb_list_defaults = {false,path,{},'',NaN,'',true,gb_psom_mode,gb_psom_mode_pm,0,'',[],[],[]};
 psom_set_defaults
 
 if isempty(opt.command_matlab)
@@ -313,6 +313,7 @@ else
     opt_proc.command_matlab = opt.command_matlab;
     opt_proc.time_between_checks = opt.time_between_checks;
     opt_proc.nb_checks_per_point = opt.nb_checks_per_point;
+    opt_proc.flag_debug = opt.flag_debug;
 
     psom_pipeline_process(file_pipeline,opt_proc);
 
