@@ -409,7 +409,8 @@ else
 end
 
 path_work = opt.path_search;
-save(file_pipeline,'history','deps','graph_deps','list_jobs','files_in','files_out','path_work')
+path_session = path;
+save(file_pipeline,'history','deps','graph_deps','list_jobs','files_in','files_out','path_work','path_session')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Stage 2: initialize the jobs' description %%
