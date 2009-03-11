@@ -303,7 +303,10 @@ hf = fopen(file_read,'r');
 str_read = fread(hf, Inf, 'uint8=>char')';
 fprintf('%s',str_read);
 
-while exist(file_running,'file')
+flag_running = true;
+
+while flag_running
+    flag_running = exist(file_running,'file');
     str_read = fread(hf, Inf, 'uint8=>char')';
     fprintf('%s',str_read);
     pause(time_pause)
