@@ -1,4 +1,4 @@
-function [files_in,files_out,list_jobs] = psom_pipeline2job(pipeline)
+function [files_out,files_in,list_jobs] = psom_pipeline2job(pipeline)
 %
 % _________________________________________________________________________
 % SUMMARY PSOM_PIPELINE2JOB
@@ -30,17 +30,18 @@ function [files_in,files_out,list_jobs] = psom_pipeline2job(pipeline)
 % _________________________________________________________________________
 % OUTPUTS
 %
+% FILES_OUT
+%       (structure) the field names are identical to PIPELINE
+%
+%       <JOB_NAME> 
+%           (cell of strings) the list of output files for the job
+%
 % FILES_IN
 %       (structure) the field names are identical to PIPELINE
 %
 %       <JOB_NAME> 
 %           (cell of strings) the list of input files for the job
 %
-% FILES_OUT
-%       (structure) the field names are identical to PIPELINE
-%
-%       <JOB_NAME> 
-%           (cell of strings) the list of output files for the job
 %
 % LIST_JOBS
 %       (cell of strings)
@@ -89,18 +90,22 @@ nb_jobs = length(list_jobs);
 
 for num_j = 1:nb_jobs
     name_job = list_jobs{num_j};
-    if isfield(pipeline.(name_job),'files_in')
-        files_in.(name_job) = unique(psom_files2cell(pipeline.(name_job).files_in));
-    else
-        files_in.(name_job) = {};
+    if nargout > 1
+        if isfield(pipeline.(name_job),'files_in')
+            files_in.(name_job) = psom_files2cell(pipeline.(name_job).files_in);
+        else
+            files_in.(name_job) = {};
+        end
     end
     if isfield(pipeline.(name_job),'files_out')
-        files_out.(name_job) = unique(psom_files2cell(pipeline.(name_job).files_out));
+        files_out.(name_job) = psom_files2cell(pipeline.(name_job).files_out);
     else
         files_out.(name_job) = {};
     end
 end
 
-files_in = unique(psom_files2cell(files_in));
 files_out = unique(psom_files2cell(files_out));
-files_in = files_in(~ismember(files_in,files_out));
+if nargout > 2
+    files_in = unique(psom_files2cell(files_in));
+    files_in = files_in(~ismember(files_in,files_out));
+end
