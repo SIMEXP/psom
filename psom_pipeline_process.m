@@ -701,10 +701,26 @@ end
 %% subfunctions %%
 %%%%%%%%%%%%%%%%%%
 
+%% Find the children of a job
 function mask_child = sub_find_children(num_j,graph_deps)
 
-% GRAPH_DEPS(J,K) == 1 if and only if JOB K depends on JOB J. GRAPH_DEPS =
-% 0 otherwise. This (ugly but reasonably fast) recursive code will work
+% INPUTS : 
+% 
+% GRAPH_DEPS
+%   (matrix) GRAPH_DEPS(J,K) == 1 if and only if JOB K depends on JOB J. 
+%   GRAPH_DEPS = 0 otherwise. 
+%       
+% NUM_J
+%   (integer) the number of a job.
+%
+% OUTPUTS:
+%
+% MASK_CHILD
+%   (vector) MASK_CHILD(NUM_K) = 1 if job NUM_K is a child of NUM_J, and 0 
+%   otherwise.
+%
+% COMMENTS:
+% This (ugly but reasonably fast) recursive code will work
 % only if the directed graph defined by GRAPH_DEPS is acyclic.
 
 mask_child = graph_deps(num_j,:)>0;
@@ -716,6 +732,8 @@ if ~isempty(list_num_child)
     end
 end
 
+%% Update (or add) a variable in an existing '.mat' file
+
 function sub_add_var(file_name,var_name,var_value)
 
 eval([var_name ' = var_value;']);
@@ -725,6 +743,7 @@ else
     save(file_name,'-append',var_name)
 end
 
+%% Read a text file
 function str_txt = sub_read_txt(file_name)
 
 if exist(file_name,'file')
@@ -734,6 +753,8 @@ if exist(file_name,'file')
 else
     str_txt = '';
 end
+
+%% Clean up the tags and logs associated with a job
 
 function [] = sub_clean_job(path_logs,name_job)
 

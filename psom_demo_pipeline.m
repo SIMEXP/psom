@@ -158,18 +158,7 @@ pause
 pipeline.fft.command = 'load(files_in{1}); ftseries = zeros([size(tseries,1) 2]); ftseries(:,1) = fft(tseries); load(files_in{2}); ftseries(:,2) = fft(tseries); save(files_out,''ftseries'')';
 psom_run_pipeline(pipeline,opt);
 
-%% Test 3 : Restart jobs
-msg = 'The demo is about to explicitely restart the ''*tseries*'' and ''*message*'' jobs and then restart the pipeline.';
-msg2 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2))]);
-fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-pause
-
-opt.restart = {'tseries','message'};
-psom_run_pipeline(pipeline,opt);
-opt = rmfield(opt,'restart');
-
-%% Test 4 : Add a new job
+%% Test 3 : Add a new job
 msg = 'The demo is about to add new job ''message2'', plot the updated dependency graph and restart the pipeline.';
 msg2 = 'Press CTRL-C to stop here or any key to continue.';
 stars = repmat('*',[1 max(length(msg),length(msg2))]);
@@ -182,7 +171,7 @@ psom_visu_dependencies(pipeline);
 psom_run_pipeline(pipeline,opt);
 
 
-%% Test 5: Change the options after deleting files
+%% Test 4 : Change the options after deleting files
 msg = 'The demo is about to change an option of the job ''fft'', delete its input file from ''tseries1'' and restart the pipeline.';
 msg2 = 'Press CTRL-C to stop here or any key to continue.';
 stars = repmat('*',[1 max(length(msg),length(msg2))]);
@@ -192,6 +181,17 @@ pause
 pipeline.fft.opt = 'yet another dummy change';
 delete(pipeline.tseries1.files_out);
 psom_run_pipeline(pipeline,opt);
+
+%% Test 5 : Restart jobs
+msg = 'The demo is about to explicitely restart the ''*tseries*'' and ''*message*'' jobs and then restart the pipeline.';
+msg2 = 'Press CTRL-C to stop here or any key to continue.';
+stars = repmat('*',[1 max(length(msg),length(msg2))]);
+fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
+pause
+
+opt.restart = {'tseries','message'};
+psom_run_pipeline(pipeline,opt);
+opt = rmfield(opt,'restart');
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 %% Monitor a pipeline %%
