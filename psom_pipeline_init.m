@@ -793,7 +793,7 @@ end
 %% Save the fields of a structure as independent variables in a .mat file
 function sub_save_struct_fields(file_name,var_struct,flag_append)
 
-if nargin < 3
+if ~exist('flag_append','var')
     flag_append = false;
 end
 
