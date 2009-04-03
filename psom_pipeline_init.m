@@ -399,13 +399,13 @@ if flag_old_pipeline
     
     try
         load(file_pipeline,'history');
-        history = char(history,[datestr(now) ' ' gb_psom_user ' on a ' gb_psom_OS ' system used PSOM v' gb_psom_version '>>>> The pipeline was restarted\n']);
+        history = char(history,[datestr(now) ' ' gb_psom_user ' on a ' gb_psom_OS ' system used PSOM v' gb_psom_version '>>>> The pipeline was restarted']);
     catch 
-        history = [datestr(now) ' ' gb_psom_user ' on a ' gb_psom_OS ' system used PSOM v' gb_psom_version '>>>> Created a pipeline !\n'];
+        history = [datestr(now) ' ' gb_psom_user ' on a ' gb_psom_OS ' system used PSOM v' gb_psom_version '>>>> Created a pipeline !'];
     end
         
 else
-    history = [datestr(now) ' ' gb_psom_user ' on a ' gb_psom_OS ' system used PSOM v' gb_psom_version '>>>> Created a pipeline !\n'];
+    history = [datestr(now) ' ' gb_psom_user ' on a ' gb_psom_OS ' system used PSOM v' gb_psom_version '>>>> Created a pipeline !'];
 end
 
 path_work = opt.path_search;
