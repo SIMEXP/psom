@@ -170,11 +170,18 @@ switch action
     case 'flowchart'
 
         %% Display the graph of dependencies of the pipeline
+        if exist('biograph')
 
-        load(file_pipeline,'graph_deps','list_jobs');
-        bg = biograph(graph_deps,list_jobs);
-        dolayout(bg);
-        view(bg);
+            load(file_pipeline,'graph_deps','list_jobs');
+            bg = biograph(graph_deps,list_jobs);
+            dolayout(bg);
+            view(bg);
+            
+        else
+
+            warning('I could not find the BIOGRAPH command. This probably means that the Matlab bioinformatics toolbox is not installed. Sorry dude, I can''t plot the graph.')
+
+        end
 
     case 'monitor'
 
@@ -199,7 +206,15 @@ switch action
 
         end
 
+        if strcmp(gb_psom_language,'octave')
+            old_pager = page_output_immediately(true);
+        end
+            
         sub_tail(file_monitor,file_pipe_running);
+        
+        if strcmp(gb_psom_language,'octave')
+            page_output_immediately(old_pager);
+        end
 
     case 'time'
 

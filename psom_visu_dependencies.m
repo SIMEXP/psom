@@ -60,7 +60,7 @@ if exist('biograph')
 
 else
     
-    warning('I could not find the BIOGRAPH command. This probably means that the bioinformatics toolbox is not installed. Sorry dude, I can''t plot the graph.')
+    warning('I could not find the BIOGRAPH command. This probably means that the Matlab bioinformatics toolbox is not installed. Sorry dude, I can''t plot the graph.')
     
 end
 

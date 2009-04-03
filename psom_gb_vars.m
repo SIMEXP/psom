@@ -63,6 +63,9 @@ if isempty(str_gb_vars)
     error('PSOM is not in the path ! (could not find PSOM_GB_VARS)')
 end
 gb_psom_path_psom = fileparts(str_gb_vars);
+if strcmp(gb_psom_path_psom,'.')
+    gb_psom_path_psom = pwd;
+end
 gb_psom_path_psom = [gb_psom_path_psom filesep];
 
 %% In which path is the PSOM demo ?

@@ -666,9 +666,17 @@ for num_j = 1:nb_jobs
 end
 
 if exist(file_status,'file')
-    save(file_status,'-append','-struct','all_status');
+    if strcmp(gb_psom_language,'octave')
+        sub_save_struct_fields(file_status,all_status,true);
+    else
+        save(file_status,'-append','-struct','all_status');
+    end
 else
-    save(file_status,'-struct','all_status');
+    if strcmp(gb_psom_language,'octave')
+        sub_save_struct_fields(file_status,all_status);
+    else
+        save(file_status,'-struct','all_status');
+    end
 end
 copyfile(file_status,file_status_backup,'f');
 
@@ -700,9 +708,17 @@ for num_j = 1:nb_jobs
 end
 
 if exist(file_logs,'file')
-    save(file_logs,'-append','-struct','all_logs');
+    if strcmp(gb_psom_language,'octave')
+        sub_save_struct_fields(file_logs,all_logs,true);
+    else
+        save(file_logs,'-append','-struct','all_logs');
+    end
 else
-    save(file_logs,'-struct','all_logs');
+    if strcmp(gb_psom_language,'octave')
+        sub_save_struct_fields(file_logs,all_logs);
+    else
+        save(file_logs,'-struct','all_logs');
+    end
 end
 copyfile(file_logs,file_logs_backup,'f');
 
@@ -793,7 +809,7 @@ end
 %% Save the fields of a structure as independent variables in a .mat file
 function sub_save_struct_fields(file_name,var_struct,flag_append)
 
-if ~exist('flag_append','var')
+if nargin < 3
     flag_append = false;
 end
 
@@ -804,12 +820,12 @@ for gb_psom_num_f = 1:length(gb_psom_list_fields)
     eval([gb_psom_field_name ' = var_struct.(gb_psom_field_name);']);
 end
 
-clear gb_psom_num_f gb_psom_list_fields var_struct gb_psom_field_name flag_append
+clear gb_psom_num_f gb_psom_list_fields var_struct gb_psom_field_name argn
 
 if flag_append
-    eval(['clear file_name; save -append ' file_name]);
+    eval(['clear file_name flag_append; save -append ' file_name ' [a-zA-Z]*']);
 else
-    eval(['clear file_name; save ' file_name]);
+    eval(['clear file_name flag_append; save ' file_name ' [a-zA-Z]*']);
 end
 
 %% Read a text file

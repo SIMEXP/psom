@@ -315,8 +315,19 @@ else
     opt_proc.nb_checks_per_point = opt.nb_checks_per_point;
     opt_proc.flag_debug = opt.flag_debug;
 
+    %% In Octave and pipeline manager session mode, switch the output mode of the
+    %% pager to allow the user to follow the history of the pipeline
+    if strcmp(opt.mode_pipeline_manager,'session')&&strcmp(gb_psom_language,'octave')
+        old_pager = page_output_immediately(true);
+    end
+
     psom_pipeline_process(file_pipeline,opt_proc);
 
+    %% Restore environement variables
+    if strcmp(opt.mode_pipeline_manager,'session')&&strcmp(gb_psom_language,'octave')
+        page_output_immediately(old_pager);
+    end
+    
     %% In batch and qsub modes, monitor the execution of the pipeline
     switch opt.mode_pipeline_manager
 

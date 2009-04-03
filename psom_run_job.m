@@ -75,11 +75,8 @@ gb_list_fields = {'files_in','files_out','command','opt'};
 gb_list_defaults = {{},{},NaN,{}};
 psom_set_defaults
 
-str_default = evalc('psom_set_defaults');
-fprintf('%s',str_default);
-
-str_log = evalc('command, files_in, files_out, opt,');
-fprintf('%s',str_log);
+psom_set_defaults
+command, files_in, files_out, opt
 
 try
     %% The job starts now !
@@ -133,11 +130,11 @@ try
     end
         
     if flag_failed
-        msg1 = sprintf('The job has FAILED');
+        msg1 = sprintf('%s : The job has FAILED',datestr(clock));
         instr_failed = ['touch ',file_failed];
         system(instr_failed);
     else
-        msg1 = sprintf('The job was successfully completed');
+        msg1 = sprintf('%s : The job was successfully completed',datestr(clock));
         instr_finished = ['touch ',file_finished];
         system(instr_finished);
     end

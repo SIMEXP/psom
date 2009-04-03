@@ -183,6 +183,7 @@ if max_queued == 0
     end % switch action
 end % default of max_queued
 
+%% Test the the requested mode of execution of jobs exists
 if ~ismember(opt.mode,{'session','batch','qsub'})
     error('%s is an unknown mode of pipeline execution. Sorry dude, I must quit ...',opt.mode);
 end
@@ -383,9 +384,10 @@ try
     nb_points = 0;
     path_tmp = [path_logs filesep 'tmp']; % Create a temporary folder for shell scripts
     if exist(path_tmp,'dir')
-        rmdir(path_tmp,'s');
+        delete([path_tmp '*']);
+    else
+        mkdir(path_tmp);
     end
-    mkdir(path_tmp);
 
     %% The pipeline manager really starts here
     while (max(mask_todo)>0) || (max(mask_running)>0)
@@ -526,9 +528,9 @@ try
                         end
                     case 'octave'
                         if ~isempty(opt.shell_options)
-                            instr_job = sprintf('%s\n%s --eval "cd %s, load(''%s'',''path_work''), path(path_work), psom_run_job(''%s''),exit">%s\n',opt.shell_options,opt.shell_options,opt.command_matlab,path_logs,file_pipeline,file_job,file_log);
+                            instr_job = sprintf('%s\n%s -q --eval "cd %s, load(''%s'',''path_work''), path(path_work), psom_run_job(''%s''),exit">%s\n',opt.shell_options,opt.command_matlab,path_logs,file_pipeline,file_job,file_log);
                         else
-                            instr_job = sprintf('%s --eval "cd %s, load(''%s'',''path_work''), path(path_work), psom_run_job(''%s''),exit">%s\n',opt.shell_options,opt.command_matlab,path_logs,file_pipeline,file_job,file_log);
+                            instr_job = sprintf('%s -q --eval "cd %s, load(''%s'',''path_work''), path(path_work), psom_run_job(''%s''),exit">%s\n',opt.command_matlab,path_logs,file_pipeline,file_job,file_log);
                         end
                 end
 
@@ -559,24 +561,37 @@ try
                             instr_batch = ['at -f ' file_shell ' now'];
                     end
                    
-                    [fail,msg] = system(instr_batch);
-                    if fail~=0
-                        error('Something went bad with the at command. The command was : %s . The error message was : %s',instr_batch,msg)
+                    if flag_debug
+                        [fail,msg] = system(instr_batch);
+                        if fail~=0
+                            error('Something went bad with the at command. The command was : %s . The error message was : %s',instr_batch,msg)
+                        end
+                    else
+                        [fail,msg] = system([instr_batch '&']);
+                        if fail~=0
+                            error('Something went bad with the at command. The command was : %s . The error message was : %s',instr_batch,msg)
+                        end
+                        delete(file_shell);
                     end
-                    delete(file_shell);
-
+                    
                 case 'qsub'
 
                     file_qsub_o = [path_logs filesep name_job '.oqsub'];
                     file_qsub_e = [path_logs filesep name_job '.eqsub'];
 
                     instr_qsub = ['qsub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_job(1:min(15,length(name_job))) ' ' opt.qsub_options ' ' file_shell];
-                    [fail,msg] = system(instr_qsub);
-                    if fail~=0
-                        error('Something went bad with the qsub command. The command was : %s . The error message was : %s',instr_qsub,msg)
+                    if flag_debug
+                        [fail,msg] = system(instr_qsub);
+                        if fail~=0
+                            error('Something went bad with the qsub command. The command was : %s . The error message was : %s',instr_qsub,msg)
+                        end
+                    else
+                        [fail,msg] = system([instr_qsub '&']);
+                        if fail~=0
+                            error('Something went bad with the qsub command. The command was : %s . The error message was : %s',instr_qsub,msg)
+                        end
+                        delete(file_shell);
                     end
-                    delete(file_shell);
-                    
             end % switch mode
         end % submit jobs       
         
@@ -599,7 +614,12 @@ catch
     
     if exist('path_tmp','var')
         if exist(path_tmp,'dir')
-            rmdir(path_tmp,'s'); % Clean the temporary folder
+            if strcmp(gb_psom_language,'octave')
+                instr_rm = ['rm -rf ' path_tmp];
+                [succ,msg] = system(instr_rm);
+            else
+                rmdir(path_tmp,'s'); % Clean the temporary folder
+            end
         end
     end   
 
@@ -616,12 +636,17 @@ catch
             delete(file_pipe_running); % remove the 'running' tag
         end
     end
-
+    
 end
 
 if exist('path_tmp','var')
     if exist(path_tmp,'dir')
-        rmdir(path_tmp,'s'); % Clean the temporary folder
+        if strcmp(gb_psom_language,'octave')
+            instr_rm = ['rm -rf ' path_tmp];
+            [succ,msg] = system(instr_rm);
+        else
+            rmdir(path_tmp,'s'); % Clean the temporary folder
+        end
     end
 end
 
@@ -740,7 +765,7 @@ eval([var_name ' = var_value;']);
 if ~exist(file_name,'file')
     save(file_name,var_name)
 else
-    save(file_name,'-append',var_name)
+    save('-append',file_name,var_name)
 end
 
 %% Read a text file
