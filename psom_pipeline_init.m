@@ -762,7 +762,15 @@ delete([path_logs filesep '*.oqsub']);
 delete([path_logs filesep '*.eqsub']);
 
 if exist([path_logs 'tmp'],'dir')
-    rmdir([path_logs 'tmp'],'s');
+    if strcmp(gb_psom_language,'octave')
+        instr_rm = ['rm -rf ' path_logs 'tmp'];
+        [succ,msg] = system(instr_rm);
+    else
+        [succ,msg] = rmdir([path_logs 'tmp'],'s');        
+    end
+    if ~succ
+        warning('Could not remove the temporary folder %s. Check for permissions.',[path_logs 'tmp']);
+    end
 end
 
 %% Done !
