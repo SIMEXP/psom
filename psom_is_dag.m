@@ -66,7 +66,7 @@ while ~isempty(adj) && flag_dag
     
     mask_term = max(adj,[],1) == 0; % find terminal nodes    
     
-    if  max(mask_term)==0
+    if  max(double(mask_term))==0 % The doubel conversion is there for compatibility with Octave 3.0.4
         %% There is no terminal node, but the matrix is not empty,
         %% there must be a cycle
         flag_dag = false;
