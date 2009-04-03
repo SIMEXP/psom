@@ -104,13 +104,11 @@ opt.max_queued = 2;                                  % how much jobs can be proc
 
 % In case the demo is re-started, files from a previous execution are
 % flushed.
-warning off
 delete([opt.path_logs 'PIPE*']); 
 delete([gb_psom_path_demo 'ftseries.mat']);
 delete([gb_psom_path_demo 'tseries1.mat']);
 delete([gb_psom_path_demo 'tseries2.mat']);
 delete([gb_psom_path_demo 'results.mat']);
-warning on
 
 % The following line is running the pipeline manager on the toy pipeline
 psom_run_pipeline(pipeline,opt);

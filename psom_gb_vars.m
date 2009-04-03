@@ -77,6 +77,8 @@ if max(ismember(comp,tag_unix))>0
     gb_psom_OS = 'unix';
 elseif max(ismember(comp,tag_windaub))>0
     gb_psom_OS = 'windows';
+elseif ~isempty(findstr('linux',comp))
+    gb_psom_OS = 'unix';
 else
     warning('System %s unknown!\n',comp);
     gb_psom_OS = 'unkown';
