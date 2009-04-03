@@ -475,9 +475,17 @@ end
 % Update the description of the jobs that need to be updated
 if exist('pipeline_update','var')
     if exist(file_jobs,'file')
-        save(file_jobs,'-append','-struct','pipeline_update');        
+        if strcmp(gb_psom_language,'octave')
+            sub_save_struct_fields(file_jobs,pipeline_update,true);
+        else
+            save('-append',file_jobs,'-struct','pipeline_update');
+        end
     else
-        save(file_jobs,'-struct','pipeline_update');        
+        if strcmp(gb_psom_language,'octave')
+            sub_save_struct_fields(file_jobs,pipeline_update);
+        else
+            save(file_jobs,'-struct','pipeline_update');
+        end
     end
     copyfile(file_jobs,file_jobs_backup,'f');
 end
@@ -770,7 +778,7 @@ if exist([path_logs 'tmp'],'dir')
     end
     if ~succ
         warning('Could not remove the temporary folder %s. Check for permissions.',[path_logs 'tmp']);
-    end
+    end            
 end
 
 %% Done !
@@ -781,6 +789,28 @@ end
 %%%%%%%%%%%%%%%%%%
 %% Subfunctions %%
 %%%%%%%%%%%%%%%%%%
+
+%% Save the fields of a structure as independent variables in a .mat file
+function sub_save_struct_fields(file_name,var_struct,flag_append)
+
+if nargin < 3
+    flag_append = false;
+end
+
+gb_psom_list_fields = fieldnames(var_struct);
+
+for gb_psom_num_f = 1:length(gb_psom_list_fields)
+    gb_psom_field_name = gb_psom_list_fields{gb_psom_num_f};
+    eval([gb_psom_field_name ' = var_struct.(gb_psom_field_name);']);
+end
+
+clear gb_psom_num_f gb_psom_list_fields var_struct gb_psom_field_name flag_append
+
+if flag_append
+    eval(['clear file_name; save -append ' file_name]);
+else
+    eval(['clear file_name; save ' file_name]);
+end
 
 %% Read a text file
 function str_txt = sub_read_txt(file_name)
