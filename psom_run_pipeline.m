@@ -252,11 +252,21 @@ end
 if max_queued == 0
     switch opt.mode
         case {'batch'}
-            opt.max_queued = 1;
-            max_queued = 1;
+            if isempty(gb_psom_max_queued)
+                opt.max_queued = 1;
+                max_queued = 1;
+            else
+                opt.max_queued = gb_psom_max_queued;
+                max_queued = gb_psom_max_queued;
+            end
         case {'session','qsub'}
-            opt.max_queued = Inf;
-            max_queued = Inf;
+            if isempty(gb_psom_max_queued)
+                opt.max_queued = Inf;
+                max_queued = Inf;
+            else
+                opt.max_queued = gb_psom_max_queued;
+                max_queued = gb_psom_max_queued;
+            end
     end % switch action
 end % default of max_queued
 

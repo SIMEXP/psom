@@ -27,6 +27,9 @@ gb_psom_mode = 'batch';
 % Options for the execution mode of the pipeline manager
 gb_psom_mode_pm = 'batch'; 
 
+% Options for the maximal number of jobs
+gb_psom_max_queued = 1;
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% The following variables describe the folders and external tools PSOM is using for various tasks %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
