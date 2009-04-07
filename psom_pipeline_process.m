@@ -563,10 +563,10 @@ try
                    
                     if flag_debug
                         [fail,msg] = system(instr_batch);
-                        fprintf('The batch command was : %s',instr_batch);
-                        fprintf(hfpl,'The batch command was : %s',instr_batch);
+                        fprintf('The batch command was : %s\n The feedback was : %s\n',instr_batch,msg);
+                        fprintf(hfpl,'The batch command was : %s\n The feedback was : %s\n',instr_batch,msg);
                         if fail~=0
-                            error('Something went bad with the at command. The error message was : %s',msg)
+                            error('Something went bad with the at command.')
                         end
                     else
                         [fail,msg] = system([instr_batch '&']);
@@ -584,10 +584,10 @@ try
                     instr_qsub = ['qsub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_job(1:min(15,length(name_job))) ' ' opt.qsub_options ' ' file_shell];
                     if flag_debug
                         [fail,msg] = system(instr_qsub);
-                        fprintf('The qsub command was : %s',instr_qsub);
-                        fprintf(hfpl,'The qsub command was : %s',instr_qsub);
+                        fprintf('The qsub command was : %s.\n The feedback was : %s\n',instr_qsub,msg);
+                        fprintf(hfpl,'The qsub command was : %s.\n The feedback was : %s\n',instr_qsub,msg);
                         if fail~=0
-                            error('Something went bad with the qsub command. The error message was : %s',msg)
+                            error('Something went bad with the qsub command.')
                         end
                     else
                         [fail,msg] = system([instr_qsub '&']);
