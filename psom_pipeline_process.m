@@ -563,6 +563,8 @@ try
                    
                     if flag_debug
                         [fail,msg] = system(instr_batch);
+                        fprintf('The batch command was : %s',instr_batch);
+                        fprintf(hfpl,'The batch command was : %s',instr_batch);
                         if fail~=0
                             error('Something went bad with the at command. The command was : %s . The error message was : %s',instr_batch,msg)
                         end
@@ -582,6 +584,8 @@ try
                     instr_qsub = ['qsub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_job(1:min(15,length(name_job))) ' ' opt.qsub_options ' ' file_shell];
                     if flag_debug
                         [fail,msg] = system(instr_qsub);
+                        fprintf('The qsub command was : %s',instr_qsub);
+                        fprintf(hfpl,'The qsub command was : %s',instr_qsub);
                         if fail~=0
                             error('Something went bad with the qsub command. The command was : %s . The error message was : %s',instr_qsub,msg)
                         end
@@ -612,7 +616,7 @@ catch
 
     errmsg = lasterror;
     
-    if exist('path_tmp','var')
+    if exist('path_tmp','var')&&~flag_debug
         if exist(path_tmp,'dir')
             if strcmp(gb_psom_language,'octave')
                 instr_rm = ['rm -rf ' path_tmp];
@@ -639,7 +643,7 @@ catch
     
 end
 
-if exist('path_tmp','var')
+if exist('path_tmp','var')&&~flag_debug
     if exist(path_tmp,'dir')
         if strcmp(gb_psom_language,'octave')
             instr_rm = ['rm -rf ' path_tmp];
