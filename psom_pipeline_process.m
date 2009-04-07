@@ -267,17 +267,17 @@ switch opt.mode_pipeline_manager
                 fprintf('I am sending the pipeline manager in the background using the ''qsub'' command.\n')
                 switch gb_psom_language
                     case 'matlab'
-                        instr_job = sprintf('%s -nosplash -nojvm -r "cd %s, load(''%s'',''path_work''), path(path_session), opt.time_cool_down = %1.3f, opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.mode_pipeline_manager = ''session''; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,path_logs,file_pipeline,opt.time_cool_down,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
+                        instr_job = sprintf('%s -nosplash -nojvm -r "cd %s, load(''%s'',''path_work''), path(path_session), opt.time_cool_down = %1.3f, opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.mode_pipeline_manager = ''session''; opt.max_queued = %i; opt.qsub_options = ''%s'', opt.flag_debug = %i, psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,path_logs,file_pipeline,opt.time_cool_down,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,double(flag_debug),file_pipeline);
                     case 'octave'
-                        instr_job = sprintf('%s --silent --eval "cd %s, load(''%s'',''path_work''), path(path_session), opt.time_cool_down = %1.3f, opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.mode_pipeline_manager = ''session''; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,path_logs,file_pipeline,opt.time_cool_down,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
+                        instr_job = sprintf('%s --silent --eval "cd %s, load(''%s'',''path_work''), path(path_session), opt.time_cool_down = %1.3f, opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.mode_pipeline_manager = ''session''; opt.max_queued = %i; opt.qsub_options = ''%s'', opt.flag_debug = %i, psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,path_logs,file_pipeline,opt.time_cool_down,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,double(flag_debug),file_pipeline);
                 end
             otherwise
                 fprintf('I am sending the pipeline manager in the background using the ''at'' command.\n')
                 switch gb_psom_language
                     case 'matlab'
-                        instr_job = sprintf('%s -nosplash -nojvm -r "cd %s, load(''%s'',''path_session''), path(path_session), opt.time_cool_down = %1.3f, opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.mode_pipeline_manager = ''session''; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,path_logs,file_pipeline,opt.time_cool_down,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
+                        instr_job = sprintf('%s -nosplash -nojvm -r "cd %s, load(''%s'',''path_session''), path(path_session), opt.time_cool_down = %1.3f, opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.mode_pipeline_manager = ''session''; opt.max_queued = %i; opt.qsub_options = ''%s'', opt.flag_debug = %i, psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,path_logs,file_pipeline,opt.time_cool_down,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,double(flag_debug),file_pipeline);
                     case 'octave'
-                        instr_job = sprintf('%s --silent --eval "cd %s, load(''%s'',''path_session''), path(path_session), opt.time_cool_down = %1.3f, opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.mode_pipeline_manager = ''session''; opt.max_queued = %i; opt.qsub_options = ''%s'', psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,path_logs,file_pipeline,opt.time_cool_down,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,file_pipeline);
+                        instr_job = sprintf('%s --silent --eval "cd %s, load(''%s'',''path_session''), path(path_session), opt.time_cool_down = %1.3f, opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.mode_pipeline_manager = ''session''; opt.max_queued = %i; opt.qsub_options = ''%s'', opt.flag_debug = %i, psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,path_logs,file_pipeline,opt.time_cool_down,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,double(flag_debug),file_pipeline);
                 end
         end
 
@@ -566,7 +566,7 @@ try
                         fprintf('The batch command was : %s',instr_batch);
                         fprintf(hfpl,'The batch command was : %s',instr_batch);
                         if fail~=0
-                            error('Something went bad with the at command. The command was : %s . The error message was : %s',instr_batch,msg)
+                            error('Something went bad with the at command. The error message was : %s',msg)
                         end
                     else
                         [fail,msg] = system([instr_batch '&']);
@@ -587,7 +587,7 @@ try
                         fprintf('The qsub command was : %s',instr_qsub);
                         fprintf(hfpl,'The qsub command was : %s',instr_qsub);
                         if fail~=0
-                            error('Something went bad with the qsub command. The command was : %s . The error message was : %s',instr_qsub,msg)
+                            error('Something went bad with the qsub command. The error message was : %s',msg)
                         end
                     else
                         [fail,msg] = system([instr_qsub '&']);
