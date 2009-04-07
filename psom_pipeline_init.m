@@ -462,6 +462,7 @@ for num_j = 1:nb_jobs
                 flag_same = psom_cmp_var(pipeline_old.(name_job).opt,pipeline.(name_job).opt);
             else
                 flag_same = false;
+            end
         end
         flag_restart(num_j) = flag_restart(num_j)||~flag_same;
     else
