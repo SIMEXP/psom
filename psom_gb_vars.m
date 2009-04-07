@@ -28,7 +28,7 @@ gb_psom_mode = 'batch';
 gb_psom_mode_pm = 'batch'; 
 
 % Options for the maximal number of jobs
-gb_psom_max_queued = 1;
+gb_psom_max_queued = [];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% The following variables describe the folders and external tools PSOM is using for various tasks %%
