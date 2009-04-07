@@ -81,6 +81,13 @@ function file_pipeline = psom_pipeline_init(pipeline,opt)
 %           its children, and some of his parents whenever needed. See the
 %           note 3 for more details.
 %
+%       FLAG_FILES
+%           (boolean, default true) If FLAG_FILES is true, comparison
+%           between jobs will include the list of inputs/outputs. Otherwise
+%           only the OPT field of each job will be examined. This might be
+%           useful when restarting a pipeline after having changed its
+%           folder location.
+%
 %       FLAG_VERBOSE
 %           (boolean, default true) if the flag is true, then the function 
 %           prints some infos during the processing.
@@ -270,8 +277,8 @@ end
 
 %% Options
 gb_name_structure = 'opt';
-gb_list_fields = {'path_search','restart','path_logs','command_matlab','flag_verbose'};
-gb_list_defaults = {path,{},NaN,'',true};
+gb_list_fields = {'flag_files','path_search','restart','path_logs','command_matlab','flag_verbose'};
+gb_list_defaults = {false,path,{},NaN,'',true};
 psom_set_defaults
 name_pipeline = 'PIPE';
 
@@ -448,7 +455,14 @@ for num_j = 1:nb_jobs
     name_job = list_jobs{num_j};
     
     if isfield(pipeline_old,name_job)
-        flag_same = psom_cmp_var(pipeline_old.(name_job),pipeline.(name_job));
+        if opt.flag_files
+            flag_same = psom_cmp_var(pipeline_old.(name_job),pipeline.(name_job));
+        else
+            if isfield(pipeline_old.(name_job),'opt')&&isfield(pipeline.(name_job),'opt')
+                flag_same = psom_cmp_var(pipeline_old.(name_job).opt,pipeline.(name_job).opt);
+            else
+                flag_same = false;
+        end
         flag_restart(num_j) = flag_restart(num_j)||~flag_same;
     else
         flag_restart(num_j) = true;
