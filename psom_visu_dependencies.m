@@ -6,7 +6,7 @@ function [] = psom_visu_dependencies(pipeline)
 % Visualize the graph of dependencies of a pipeline
 %
 % SYNTAX:
-% [] = PSOM_VISU_DEPENDENCIES(PATH_LOGS,ACTION,OPT)
+% [] = PSOM_VISU_DEPENDENCIES(PIPELINE)
 %
 % _________________________________________________________________________
 % INPUTS:
@@ -60,7 +60,7 @@ if exist('biograph')
 
 else
     
-    warning('I could not find the BIOGRAPH command. This probably means that the Matlab bioinformatics toolbox is not installed. Sorry dude, I can''t plot the graph.')
+    warning('I could not find the BIOGRAPH command. This probably means that the Matlab bioinformatics toolbox is not installed. Sorry dude, I can''t plot the graph. The command PSOM_WRITE_DEPENDENCIES may be an alternative.')
     
 end
 
