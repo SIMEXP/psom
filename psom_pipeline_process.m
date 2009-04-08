@@ -103,8 +103,8 @@ function [] = psom_pipeline_process(file_pipeline,opt)
 %           the reactivity of the pipeline manager. This is necessary when
 %           the pipeline manager is handling tens of jobs. This approach
 %           may unfortunately sometimes fail on system with a very slow
-%           file system. For reason, the "fast" mode is disabled by
-%           deafult. You can configure the default of the flag by
+%           file system. For that reason, the "fast" mode is disabled by
+%           default. You can configure the default of the flag by
 %           editing the variable GB_PSOM_FLAG_FAST in PSOM_GB_VARS.
 %
 % _________________________________________________________________________
@@ -159,7 +159,7 @@ end
 %% Options
 gb_name_structure = 'opt';
 gb_list_fields = {'flag_fast','flag_debug','shell_options','command_matlab','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point','time_cool_down'};
-gb_list_defaults = {false,false,'','','session','',0,'',[],[],[]};
+gb_list_defaults = {gb_psom_flag_fast,false,'','','session','',0,'',[],[],[]};
 psom_set_defaults
 
 if isempty(opt.mode_pipeline_manager)
