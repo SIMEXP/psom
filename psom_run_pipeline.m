@@ -229,8 +229,8 @@ end
 name_pipeline = 'PIPE';
 
 gb_name_structure = 'opt';
-gb_list_fields = {'flag_update','flag_debug','path_search','restart','shell_options','path_logs','command_matlab','flag_verbose','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point','time_cool_down'};
-gb_list_defaults = {true,false,path,{},'',NaN,'',true,gb_psom_mode,gb_psom_mode_pm,0,'',[],[],[]};
+gb_list_fields = {'flag_fast','flag_update','flag_debug','path_search','restart','shell_options','path_logs','command_matlab','flag_verbose','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point','time_cool_down'};
+gb_list_defaults = {false,true,false,path,{},'',NaN,'',true,gb_psom_mode,gb_psom_mode_pm,0,'',[],[],[]};
 psom_set_defaults
 
 if isempty(opt.command_matlab)
@@ -325,7 +325,8 @@ else
     opt_proc.time_between_checks = opt.time_between_checks;
     opt_proc.nb_checks_per_point = opt.nb_checks_per_point;
     opt_proc.flag_debug = opt.flag_debug;
-
+    opt_proc.flag_fast = flag_fast;
+    
     %% In Octave and pipeline manager session mode, switch the output mode of the
     %% pager to allow the user to follow the history of the pipeline
     if strcmp(opt.mode_pipeline_manager,'session')&&strcmp(gb_psom_language,'octave')

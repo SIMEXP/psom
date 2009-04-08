@@ -97,6 +97,16 @@ function [] = psom_pipeline_process(file_pipeline,opt)
 %           (boolean, default false) if FLAG_DEBUG is true, the program
 %           prints additional information for debugging purposes.
 %
+%       FLAG_FAST
+%           (boolean, default false) if FLAG_FAST is true, the submission
+%           of jobs is made in the background, which improves significantly
+%           the reactivity of the pipeline manager. This is necessary when
+%           the pipeline manager is handling tens of jobs. This approach
+%           may unfortunately sometimes fail on system with a very slow
+%           file system. For reason, the "fast" mode is disabled by
+%           deafult. You can configure the default of the flag by
+%           editing the variable GB_PSOM_FLAG_FAST in PSOM_GB_VARS.
+%
 % _________________________________________________________________________
 % OUTPUTS:
 %
@@ -148,8 +158,8 @@ end
 
 %% Options
 gb_name_structure = 'opt';
-gb_list_fields = {'flag_debug','shell_options','command_matlab','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point','time_cool_down'};
-gb_list_defaults = {false,'','','session','',0,'',[],[],[]};
+gb_list_fields = {'flag_fast','flag_debug','shell_options','command_matlab','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point','time_cool_down'};
+gb_list_defaults = {false,false,'','','session','',0,'',[],[],[]};
 psom_set_defaults
 
 if isempty(opt.mode_pipeline_manager)
@@ -569,7 +579,11 @@ try
                             error('Something went bad with the at command.')
                         end
                     else
-                        [fail,msg] = system([instr_batch]);
+                        if flag_fast
+                            [fail,msg] = system([instr_batch '&']);
+                        else
+                            [fail,msg] = system([instr_batch]);
+                        end
                         if fail~=0
                             error('Something went bad with the at command. The command was : %s . The error message was : %s',instr_batch,msg)
                         end
@@ -590,7 +604,11 @@ try
                             error('Something went bad with the qsub command.')
                         end
                     else
-                        [fail,msg] = system([instr_qsub]);
+                        if flag_fast
+                            [fail,msg] = system([instr_qsub]);
+                        else
+                            [fail,msg] = system([instr_qsub '&']);
+                        end
                         if fail~=0
                             error('Something went bad with the qsub command. The command was : %s . The error message was : %s',instr_qsub,msg)
                         end
