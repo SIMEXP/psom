@@ -569,7 +569,7 @@ try
                             error('Something went bad with the at command.')
                         end
                     else
-                        [fail,msg] = system([instr_batch '&']);
+                        [fail,msg] = system([instr_batch]);
                         if fail~=0
                             error('Something went bad with the at command. The command was : %s . The error message was : %s',instr_batch,msg)
                         end
@@ -590,7 +590,7 @@ try
                             error('Something went bad with the qsub command.')
                         end
                     else
-                        [fail,msg] = system([instr_qsub '&']);
+                        [fail,msg] = system([instr_qsub]);
                         if fail~=0
                             error('Something went bad with the qsub command. The command was : %s . The error message was : %s',instr_qsub,msg)
                         end
