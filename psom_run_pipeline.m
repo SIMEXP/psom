@@ -312,8 +312,14 @@ else
     opt_init.restart = opt.restart;
     opt_init.path_search = opt.path_search;
     opt_init.flag_update = opt.flag_update;
+    opt_init.flag_debug = opt.flag_debug;
     psom_pipeline_init(pipeline,opt_init);
 
+    if opt.flag_debug
+        fprintf('The pipeline manager is about to start up now. Press CTRL-C to abort.');
+        pause
+    end
+    
     %% Run the pipeline manager
     file_pipeline = cat(2,path_logs,filesep,name_pipeline,'.mat');
 

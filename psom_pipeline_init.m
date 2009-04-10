@@ -275,8 +275,8 @@ end
 
 %% Options
 gb_name_structure = 'opt';
-gb_list_fields = {'flag_update','path_search','restart','path_logs','command_matlab','flag_verbose'};
-gb_list_defaults = {true,path,{},NaN,'',true};
+gb_list_fields = {'flag_debug','flag_update','path_search','restart','path_logs','command_matlab','flag_verbose'};
+gb_list_defaults = {false,true,path,{},NaN,'',true};
 psom_set_defaults
 name_pipeline = 'PIPE';
 
@@ -422,20 +422,34 @@ save(file_pipeline,'history','deps','graph_deps','list_jobs','files_in','files_o
 %%          and set up the restart flags     %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if flag_verbose
-    fprintf('\nCreating the individual ''jobs'' file %s ...\n',file_jobs);
-end
-
-flag_restart = false([1 nb_jobs]);
-
 if flag_old_pipeline
 
-    try 
+    if flag_verbose
+        fprintf('\nLoading previous pipelines ...\n');
+    end
+
+    try
         pipeline_old = load(file_jobs);
     catch
         warning('There was something wrong when loading the old job description file %s, I''ll try loading the backup instead',file_jobs)
         pipeline_old = load(file_jobs_backup);
         copyfile(file_jobs_backup,file_jobs,'f');
+    end
+
+    if exist(file_status,'file')
+        % Load old status
+        try
+            all_status_old = load(file_status);
+        catch
+            warning('There was something wrong when loading the old status file %s, I''ll try loading the backup instead',file_status)
+            all_status_old = load(file_status_backup);
+            copyfile(file_status_backup,file_status,'f');
+        end
+    else
+        for num_j = 1:nb_jobs
+            name_job = list_jobs{num_j};
+            all_status_old.(name_job) = 'none';
+        end
     end
 
 else
@@ -447,24 +461,36 @@ end
 %% Loop over the jobs and save the individual descriptions. Use that
 %% opportunity to set up the 'restart' flags
 
-for num_j = 1:nb_jobs
+flag_restart = false([1 nb_jobs]);
 
-    %% If an old pipeline exists, check if the job has been modified
-    name_job = list_jobs{num_j};
+if flag_old_pipeline
     
-    if isfield(pipeline_old,name_job)
-        if opt.flag_update
-            flag_same = psom_cmp_var(pipeline_old.(name_job),pipeline.(name_job));
-        else
-            flag_same = false;    
-        end
-        flag_restart(num_j) = flag_restart(num_j)||~flag_same;
-    else
-        flag_restart(num_j) = true;
-        flag_same = false;
+    if flag_verbose
+        fprintf('\nSet up restart tags on jobs ...\n');
     end
 
-    if flag_old_pipeline
+    for num_j = 1:nb_jobs
+
+        name_job = list_jobs{num_j};
+
+        if isfield(all_status_old,name_job)
+            if strcmp(all_status_old.(name_job),'failed')
+                flag_restart(num_j) = true;
+            end
+        end
+
+        %% If an old pipeline exists, check if the job has been modified
+        if isfield(pipeline_old,name_job)
+            if opt.flag_update
+                flag_same = psom_cmp_var(pipeline_old.(name_job),pipeline.(name_job));
+            else
+                flag_same = false;
+            end
+            flag_restart(num_j) = flag_restart(num_j)||~flag_same;
+        else
+            flag_restart(num_j) = true;
+        end
+
         %% Check if the user did not force a restart on that job
         flag_restart(num_j) = flag_restart(num_j) || psom_find_str_cell(name_job,opt.restart);
 
@@ -476,7 +502,12 @@ for num_j = 1:nb_jobs
     end
 end
 
-% Update the description of the jobs 
+% Creating the jobs file
+
+if flag_verbose
+    fprintf('\nCreating the individual ''jobs'' file %s ...\n',file_jobs);
+end
+
 if exist(file_jobs,'file')
     if strcmp(gb_psom_language,'octave')
         sub_save_struct_fields(file_jobs,pipeline,true);
@@ -491,8 +522,6 @@ else
     end
 end
 copyfile(file_jobs,file_jobs_backup,'f');
-
-
 
 %% Restart the parents of 'restart' jobs that produce files that are
 %% used by 'restart' jobs
@@ -517,73 +546,59 @@ end
 
 if flag_old_pipeline
 
-    if exist(file_status,'file')
-
-        % Load old status
+    % Load old logs
+    if exist(file_logs,'file')
         try
-            all_status_old = load(file_status);
+            all_logs_old = load(file_logs);
         catch
-            warning('There was something wrong when loading the old status file %s, I''ll try loading the backup instead',file_status)
-            all_status_old = load(file_status_backup);
-            copyfile(file_status_backup,file_status,'f');
-        end            
-        
-        % Load old logs
-        if exist(file_logs,'file')
-            try
-                all_logs_old = load(file_logs);
-            catch
-                warning('There was something wrong when loading the old logs file %s, I''ll try loading the backup instead',file_logs)
-                all_logs_old = load(file_logs_backup);
-                copyfile(file_logs_backup,file_logs,'f');
-            end
-        else
-            all_logs_old = struct([]);
+            warning('There was something wrong when loading the old logs file %s, I''ll try loading the backup instead',file_logs)
+            all_logs_old = load(file_logs_backup);
+            copyfile(file_logs_backup,file_logs,'f');
         end
-        
-        job_status = cell(size(list_jobs));
-        
-        for num_j = 1:length(list_jobs)
-            name_job = list_jobs{num_j};
-            if isfield(all_status_old,name_job)
-                job_status{num_j} = all_status_old.(name_job);
-            else
-                job_status{num_j} = 'none';
-            end
-        end
-
-        %% Update the job status using the tags that can be found in the log
-        %% folder
-        mask_inq = ismember(job_status,{'submitted','running'});
-        list_num_inq = find(mask_inq);
-        list_num_inq = list_num_inq(:)';
-        list_jobs_inq = list_jobs(mask_inq);
-        curr_status = psom_job_status(path_logs,list_jobs_inq,'session');
-
-        %% Remove the dependencies on finished jobs
-        mask_finished = ismember(curr_status,'finished');
-        list_num_finished = list_num_inq(mask_finished);
-        list_num_finished = list_num_finished(:)';
-
-        for num_j = list_num_finished
-
-            name_job = list_jobs{num_j};
-            text_log = sub_read_txt([path_logs filesep name_job '.log']);
-            text_qsub_o = sub_read_txt([path_logs filesep name_job '.oqsub']);
-            text_qsub_e = sub_read_txt([path_logs filesep name_job '.eqsub']);
-
-            if ~isempty(text_qsub_o)&isempty(text_qsub_e)
-                text_log = [text_log hat_qsub_o text_qsub_o hat_qsub_e text_qsub_e];
-            end
-            
-            all_logs.(name_job) = text_log;            
-            job_status{num_j} = 'finished';
-        end
-
-        job_status_old = job_status;
     else
-        job_status_old = repmat({'none'},[nb_jobs 1]);
+        all_logs_old = struct([]);
     end
+
+    job_status = cell(size(list_jobs));
+
+    for num_j = 1:length(list_jobs)
+        name_job = list_jobs{num_j};
+        if isfield(all_status_old,name_job)
+            job_status{num_j} = all_status_old.(name_job);
+        else
+            job_status{num_j} = 'none';
+        end
+    end
+
+    %% Update the job status using the tags that can be found in the log
+    %% folder
+    mask_inq = ismember(job_status,{'submitted','running'});
+    list_num_inq = find(mask_inq);
+    list_num_inq = list_num_inq(:)';
+    list_jobs_inq = list_jobs(mask_inq);
+    curr_status = psom_job_status(path_logs,list_jobs_inq,'session');
+
+    %% Remove the dependencies on finished jobs
+    mask_finished = ismember(curr_status,'finished');
+    list_num_finished = list_num_inq(mask_finished);
+    list_num_finished = list_num_finished(:)';
+
+    for num_j = list_num_finished
+
+        name_job = list_jobs{num_j};
+        text_log = sub_read_txt([path_logs filesep name_job '.log']);
+        text_qsub_o = sub_read_txt([path_logs filesep name_job '.oqsub']);
+        text_qsub_e = sub_read_txt([path_logs filesep name_job '.eqsub']);
+
+        if ~isempty(text_qsub_o)&isempty(text_qsub_e)
+            text_log = [text_log hat_qsub_o text_qsub_o hat_qsub_e text_qsub_e];
+        end
+
+        all_logs.(name_job) = text_log;
+        job_status{num_j} = 'finished';
+    end
+
+    job_status_old = job_status;
 
 end
 
