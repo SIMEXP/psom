@@ -451,101 +451,7 @@ if flag_old_pipeline
             all_status_old.(name_job) = 'none';
         end
     end
-
-else
-
-    pipeline_old = struct([]);
-
-end
-
-%% Loop over the jobs and save the individual descriptions. Use that
-%% opportunity to set up the 'restart' flags
-
-flag_restart = false([1 nb_jobs]);
-
-if flag_old_pipeline
     
-    if flag_verbose
-        fprintf('\nSet up restart tags on jobs ...\n');
-    end
-
-    for num_j = 1:nb_jobs
-
-        name_job = list_jobs{num_j};
-
-        if isfield(all_status_old,name_job)
-            if strcmp(all_status_old.(name_job),'failed')
-                flag_restart(num_j) = true;
-            end
-        end
-
-        %% If an old pipeline exists, check if the job has been modified
-        if isfield(pipeline_old,name_job)
-            if opt.flag_update
-                flag_same = psom_cmp_var(pipeline_old.(name_job),pipeline.(name_job));
-            else
-                flag_same = false;
-            end
-            flag_restart(num_j) = flag_restart(num_j)||~flag_same;
-        else
-            flag_restart(num_j) = true;
-        end
-
-        %% Check if the user did not force a restart on that job
-        flag_restart(num_j) = flag_restart(num_j) || psom_find_str_cell(name_job,opt.restart);
-
-        %% If the job is restarted, also restart all of its children
-        if flag_restart(num_j)
-            mask_child = sub_find_children(num_j,graph_deps);
-            flag_restart(mask_child) = true;
-        end
-    end
-end
-
-% Creating the jobs file
-
-if flag_verbose
-    fprintf('\nCreating the individual ''jobs'' file %s ...\n',file_jobs);
-end
-
-if exist(file_jobs,'file')
-    if strcmp(gb_psom_language,'octave')
-        sub_save_struct_fields(file_jobs,pipeline,true);
-    else
-        save('-append',file_jobs,'-struct','pipeline');
-    end
-else
-    if strcmp(gb_psom_language,'octave')
-        sub_save_struct_fields(file_jobs,pipeline);
-    else
-        save(file_jobs,'-struct','pipeline');
-    end
-end
-copyfile(file_jobs,file_jobs_backup,'f');
-
-%% Restart the parents of 'restart' jobs that produce files that are
-%% used by 'restart' jobs
-if flag_old_pipeline
-    flag_restart = flag_restart | sub_restart_parents(flag_restart,pipeline,list_jobs,deps,graph_deps);
-end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Stage 3: Creating logs and status %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-if flag_verbose
-    fprintf('\nCreating the ''logs'' and ''status'' files ...\n');
-end
-
-%% If an old pipeline exists, update the status of the jobs based on the
-%% tag files that can be found
-
-if flag_verbose
-    fprintf('    Checking for left-overs tag files...\n');
-end
-
-if flag_old_pipeline
-
     % Load old logs
     if exist(file_logs,'file')
         try
@@ -557,6 +463,21 @@ if flag_old_pipeline
         end
     else
         all_logs_old = struct([]);
+    end
+
+else
+
+    pipeline_old = struct([]);
+
+end
+
+%% If an old pipeline exists, update the status of the jobs based on the
+%% tag files that can be found
+
+if flag_old_pipeline
+    
+    if flag_verbose
+        fprintf('    Checking for left-overs tag files...\n');
     end
 
     job_status = cell(size(list_jobs));
@@ -602,6 +523,85 @@ if flag_old_pipeline
 
 end
 
+%% Loop over the jobs and save the individual descriptions. Use that
+%% opportunity to set up the 'restart' flags
+
+flag_restart = false([1 nb_jobs]);
+
+if flag_old_pipeline
+    
+    if flag_verbose
+        fprintf('\nSet up restart tags on jobs ...\n');
+    end
+
+    for num_j = 1:nb_jobs
+
+        name_job = list_jobs{num_j};
+        
+        if strcmp(job_status_old{num_j},'failed')
+            flag_restart(num_j) = true;
+        end
+
+        %% If an old pipeline exists, check if the job has been modified
+        if isfield(pipeline_old,name_job)
+            if opt.flag_update
+                flag_same = psom_cmp_var(pipeline_old.(name_job),pipeline.(name_job));
+            else
+                flag_same = false;
+            end
+            flag_restart(num_j) = flag_restart(num_j)||~flag_same;
+        else
+            flag_restart(num_j) = true;
+        end
+
+        %% Check if the user did not force a restart on that job
+        flag_restart(num_j) = flag_restart(num_j) || psom_find_str_cell(name_job,opt.restart);
+
+        %% If the job is restarted, also restart all of its children
+        if flag_restart(num_j)
+            mask_child = sub_find_children(num_j,graph_deps);
+            flag_restart(mask_child) = true;
+        end
+    end
+    
+    % Restart the parents of 'restart' jobs that produce files that are
+    % used by 'restart' jobs
+    if flag_old_pipeline
+        flag_restart = flag_restart | sub_restart_parents(flag_restart,pipeline,list_jobs,deps,graph_deps);
+    end
+
+end
+
+%% Creating the jobs file
+
+if flag_verbose
+    fprintf('\nCreating the individual ''jobs'' file %s ...\n',file_jobs);
+end
+
+if exist(file_jobs,'file')
+    if strcmp(gb_psom_language,'octave')
+        sub_save_struct_fields(file_jobs,pipeline,true);
+    else
+        save('-append',file_jobs,'-struct','pipeline');
+    end
+else
+    if strcmp(gb_psom_language,'octave')
+        sub_save_struct_fields(file_jobs,pipeline);
+    else
+        save(file_jobs,'-struct','pipeline');
+    end
+end
+copyfile(file_jobs,file_jobs_backup,'f');
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Stage 3: Creating logs and status %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if flag_verbose
+    fprintf('\nCreating the ''logs'' and ''status'' files ...\n');
+end
+
 %% Initialize the status :
 %% Everything goes to 'none', except jobs that have a 'finished' status and
 %% no restart tag
@@ -625,6 +625,78 @@ else
     flag_finished = false([nb_jobs 1]);
     
 end
+
+%% Save the jobs' status
+
+if flag_verbose
+    fprintf('    Creating the ''status'' file %s ...\n',file_status);
+end
+
+flag_failed = ismember(job_status,'failed');
+for num_j = 1:nb_jobs
+    name_job = list_jobs{num_j};
+    all_status.(name_job) = job_status{num_j};
+end
+
+if exist(file_status,'file')
+    if strcmp(gb_psom_language,'octave')
+        sub_save_struct_fields(file_status,all_status,true);
+    else
+        save(file_status,'-append','-struct','all_status');
+    end
+else
+    if strcmp(gb_psom_language,'octave')
+        sub_save_struct_fields(file_status,all_status);
+    else
+        save(file_status,'-struct','all_status');
+    end
+end
+copyfile(file_status,file_status_backup,'f');
+
+%% Save the log files
+if flag_verbose
+    fprintf('    Creating the ''logs'' file %s ...\n',file_logs);
+end
+
+for num_j = 1:nb_jobs
+    
+    name_job = list_jobs{num_j};
+    
+    if flag_finished(num_j)||flag_failed(num_j)
+        
+        if ~isfield('all_logs',name_job)
+            if exist('all_logs_old','var')&&isfield(all_logs_old,name_job)
+                all_logs.(name_job) = all_logs_old.(name_job);
+            else
+                all_logs.(name_job) = '';
+            end
+        end
+        
+    else
+        
+        all_logs.(name_job) = '';
+        
+    end
+end
+
+if exist(file_logs,'file')
+    if strcmp(gb_psom_language,'octave')
+        sub_save_struct_fields(file_logs,all_logs,true);
+    else
+        save(file_logs,'-append','-struct','all_logs');
+    end
+else
+    if strcmp(gb_psom_language,'octave')
+        sub_save_struct_fields(file_logs,all_logs);
+    else
+        save(file_logs,'-struct','all_logs');
+    end
+end
+copyfile(file_logs,file_logs_backup,'f');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Stage 4: Check for input files, generate output folders and clean old outputs %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Check if all the files necessary to complete each job of the pipeline 
 %% can be found
@@ -670,76 +742,6 @@ for num_j = list_num_unfinished
     
 end
 
-
-%% Save the jobs' status
-
-if flag_verbose
-    fprintf('    Creating the ''status'' file %s ...\n',file_status);
-end
-
-flag_failed = ismember(job_status,'failed');
-for num_j = 1:nb_jobs
-    name_job = list_jobs{num_j};
-    all_status.(name_job) = job_status{num_j};
-end
-
-if exist(file_status,'file')
-    if strcmp(gb_psom_language,'octave')
-        sub_save_struct_fields(file_status,all_status,true);
-    else
-        save(file_status,'-append','-struct','all_status');
-    end
-else
-    if strcmp(gb_psom_language,'octave')
-        sub_save_struct_fields(file_status,all_status);
-    else
-        save(file_status,'-struct','all_status');
-    end
-end
-copyfile(file_status,file_status_backup,'f');
-
-%% Initialize the log files
-
-if flag_verbose
-    fprintf('    Creating the ''logs'' file %s ...\n',file_logs);
-end
-
-for num_j = 1:nb_jobs
-    
-    name_job = list_jobs{num_j};
-    
-    if flag_finished(num_j)||flag_failed(num_j)
-        
-        if ~isfield('all_logs',name_job)
-            if exist('all_logs_old','var')&&isfield(all_logs_old,name_job)
-                all_logs.(name_job) = all_logs_old.(name_job);
-            else
-                all_logs.(name_job) = '';
-            end
-        end
-        
-    else
-        
-        all_logs.(name_job) = '';
-        
-    end
-end
-
-if exist(file_logs,'file')
-    if strcmp(gb_psom_language,'octave')
-        sub_save_struct_fields(file_logs,all_logs,true);
-    else
-        save(file_logs,'-append','-struct','all_logs');
-    end
-else
-    if strcmp(gb_psom_language,'octave')
-        sub_save_struct_fields(file_logs,all_logs);
-    else
-        save(file_logs,'-struct','all_logs');
-    end
-end
-copyfile(file_logs,file_logs_backup,'f');
-
 if ~flag_ready
     if flag_verbose
         fprintf('\nSome jobs were marked as failed because some inputs were missing.\nPress CTRL-C now if you do not wish to run the pipeline ...\n');
@@ -748,10 +750,6 @@ if ~flag_ready
         warning('\nSome inputs of jobs of the pipeline were missing. Those jobs were marked as ''failed'', see the logs for more details.');
     end
 end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Stage 4: Generating output folders and cleaning old files %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Creating log folders and removing old outputs
 
