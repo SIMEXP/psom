@@ -65,7 +65,8 @@ function file_pipeline = psom_pipeline_init(pipeline,opt)
 %
 %       PATH_SEARCH
 %           (string, default current matlab search path) the matlab search
-%           path that will be used by the jobs.
+%           path that will be used by the jobs. Use an empty string if you
+%           do not want PSOM to change the Matlab search path on start up.
 %
 %       COMMAND_MATLAB
 %           (string, default GB_PSOM_COMMAND_MATLAB or
