@@ -166,7 +166,7 @@ end
 %% Options
 gb_name_structure = 'opt';
 gb_list_fields = {'init_matlab','flag_fast','flag_debug','shell_options','command_matlab','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point','time_cool_down'};
-gb_list_defaults = {gb_psom_flag_fast,false,'','','session','',0,'',[],[],[]};
+gb_list_defaults = {gb_psom_init_matlab,gb_psom_flag_fast,false,'','','session','',0,'',[],[],[]};
 psom_set_defaults
 
 if isempty(opt.mode_pipeline_manager)
