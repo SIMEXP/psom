@@ -33,6 +33,9 @@ gb_psom_max_queued = [];
 % Flag for submission of jobs in the background
 gb_psom_flag_fast = false;
 
+% Initialization of matlab
+gb_psom_init_matlab = '';
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% The following variables describe the folders and external tools PSOM is using for various tasks %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
