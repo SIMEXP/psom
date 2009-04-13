@@ -301,9 +301,10 @@ switch opt.mode_pipeline_manager
         
 
         if flag_debug
-           fprintf('\n\nThe following shell script is used to run the pipeline manager in the background :\n%s\n\n',instr_job);
+            fprintf('\n\nThe following shell script is used to run the pipeline manager in the background :\n%s\n\n',instr_job);
+            fprintf('The pipeline manager is about to start up now. Press CTRL-C to abort.');
+            pause
         end
-        
         file_shell = psom_file_tmp('_proc_pipe.sh');
         hf = fopen(file_shell,'w');
         fprintf(hf,'%s',instr_job);
