@@ -329,6 +329,10 @@ else
     opt_proc.flag_fast = flag_fast;
     opt_proc.init_matlab = opt.init_matlab;
     
+    if flag_debug
+        opt_proc
+    end
+    
     %% In Octave and pipeline manager session mode, switch the output mode of the
     %% pager to allow the user to follow the history of the pipeline
     if strcmp(opt.mode_pipeline_manager,'session')&&strcmp(gb_psom_language,'octave')

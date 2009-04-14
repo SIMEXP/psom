@@ -97,8 +97,8 @@ pause
 
 % Set up the options to run the pipeline
 opt.path_logs = [gb_psom_path_demo 'logs' filesep];  % where to store the log files
-opt.mode = 'batch'                                 % how to execute the pipeline    
-opt.mode_pipeline_manager = 'batch';               % how to run the pipeline manager
+opt.mode = 'batch';                                 % how to execute the pipeline    
+opt.mode_pipeline_manager = 'session';               % how to run the pipeline manager
 opt.time_between_checks = 0.5;                       % because the jobs of the toy pipeline are really small, it is not necessary to wait long for jobs to complete
 opt.max_queued = 2;                                  % how much jobs can be processed simultaneously
 
