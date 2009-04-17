@@ -548,7 +548,7 @@ if flag_old_pipeline
             if opt.flag_update
                 flag_same = psom_cmp_var(pipeline_old.(name_job),pipeline.(name_job));
             else
-                flag_same = false;
+                flag_same = true;
             end
             flag_restart(num_j) = flag_restart(num_j)||~flag_same;
         else
