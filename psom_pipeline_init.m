@@ -395,29 +395,6 @@ if ~exist(path_logs,'dir')
     end
 end
 
-%% Save the dependencies of the pipeline
-
-if flag_verbose
-    fprintf('    Saving the pipeline structure in %s...\n',file_pipeline);
-end
-
-if flag_old_pipeline
-    
-    try
-        load(file_pipeline,'history');
-        history = char(history,[datestr(now) ' ' gb_psom_user ' on a ' gb_psom_OS ' system used PSOM v' gb_psom_version '>>>> The pipeline was restarted']);
-    catch 
-        history = [datestr(now) ' ' gb_psom_user ' on a ' gb_psom_OS ' system used PSOM v' gb_psom_version '>>>> Created a pipeline !'];
-    end
-        
-else
-    history = [datestr(now) ' ' gb_psom_user ' on a ' gb_psom_OS ' system used PSOM v' gb_psom_version '>>>> Created a pipeline !'];
-end
-
-path_work = opt.path_search;
-path_session = path;
-save(file_pipeline,'history','deps','graph_deps','list_jobs','files_in','files_out','path_work','path_session')
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Stage 2: initialize the jobs' description %%
 %%          and set up the restart flags     %%
@@ -562,13 +539,14 @@ if flag_old_pipeline
     nb_modifs = 1;    
     while nb_modifs >0
         %% If the job is restarted, also restart all of its children
-        flag_restart2 = sub_find_children(flag_restart,graph_deps);
+        flag_restart2 = flag_restart | sub_find_children(flag_restart,graph_deps);
 
         % Restart the parents of 'restart' jobs that produce files that are
         % used by 'restart' jobs
         flag_restart2 = flag_restart2 | sub_restart_parents(flag_restart2,pipeline,list_jobs,deps,graph_deps);
 
         nb_modifs = max(flag_restart2&~flag_restart);
+        flag_restart = flag_restart2;
     end
 
 end
@@ -595,9 +573,9 @@ end
 copyfile(file_jobs,file_jobs_backup,'f');
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Stage 3: Creating logs and status %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Stage 3: Saving everything in the logs %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if flag_verbose
     fprintf('\nCreating the ''logs'' and ''status'' files ...\n');
@@ -626,6 +604,29 @@ else
     flag_finished = false([nb_jobs 1]);
     
 end
+
+%% Save the dependencies of the pipeline
+
+if flag_verbose
+    fprintf('    Saving the pipeline structure in %s...\n',file_pipeline);
+end
+
+if flag_old_pipeline
+    
+    try
+        load(file_pipeline,'history');
+        history = char(history,[datestr(now) ' ' gb_psom_user ' on a ' gb_psom_OS ' system used PSOM v' gb_psom_version '>>>> The pipeline was restarted']);
+    catch 
+        history = [datestr(now) ' ' gb_psom_user ' on a ' gb_psom_OS ' system used PSOM v' gb_psom_version '>>>> Created a pipeline !'];
+    end
+        
+else
+    history = [datestr(now) ' ' gb_psom_user ' on a ' gb_psom_OS ' system used PSOM v' gb_psom_version '>>>> Created a pipeline !'];
+end
+
+path_work = opt.path_search;
+path_session = path;
+save(file_pipeline,'history','deps','graph_deps','list_jobs','files_in','files_out','path_work','path_session')
 
 %% Save the jobs' status
 
@@ -864,13 +865,13 @@ function mask_child = sub_find_children(mask,graph_deps)
 
 if max(mask)>0
     mask_child = max(graph_deps(mask,:),[],1);
-    mask_child = mask_child & ~mask;
+    mask_child_strict = mask_child & ~mask;
 else
     mask_child = false(size(mask));
 end
 
 if max(mask_child)>0
-    mask_child = mask_child | sub_find_children(mask_child,graph_deps);
+    mask_child = mask_child | sub_find_children(mask_child_strict,graph_deps);
 end
 
 %% Recursively test if the inputs of some jobs are missing, and set restart
