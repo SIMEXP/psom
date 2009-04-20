@@ -884,7 +884,6 @@ end
 %% flags on the jobs that can produce those inputs.
 function flag_parent = sub_restart_parents(flag_restart,pipeline,list_jobs,deps,graph_deps)
 
-flag_restart = flag_restart(:);
 list_restart = find(flag_restart);
 
 flag_parent = false(size(flag_restart));
@@ -894,7 +893,7 @@ for num_j = list_restart % loop over jobs that need to be restarted
     name_job = list_jobs{num_j};
     
     % Pick up parents that won't be restarted
-    list_num_parent = find(graph_deps(:,num_j)&~flag_restart&~flag_parent); 
+    list_num_parent = find(graph_deps(:,num_j)&~flag_restart(:)&~flag_parent(:)); 
     
     for num_l = list_num_parent'
         
