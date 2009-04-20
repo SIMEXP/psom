@@ -539,10 +539,16 @@ if flag_old_pipeline
     nb_modifs = 1;    
     while nb_modifs >0
         %% If the job is restarted, also restart all of its children
+        if flag_debug
+            fprintf('Restarting the children of the jobs that are already scheduled for restarting.\n')
+        end
         flag_restart2 = flag_restart | sub_find_children(flag_restart,graph_deps);
 
         % Restart the parents of 'restart' jobs that produce files that are
         % used by 'restart' jobs
+        if flag_debug
+            fprintf('Restarting the parents of the jobs that are already scheduled for restarting and produce a missing file.\n')
+        end
         flag_restart2 = flag_restart2 | sub_restart_parents(flag_restart2,pipeline,list_jobs,deps,graph_deps);
 
         nb_modifs = max(flag_restart2&~flag_restart);
@@ -878,15 +884,17 @@ end
 %% flags on the jobs that can produce those inputs.
 function flag_parent = sub_restart_parents(flag_restart,pipeline,list_jobs,deps,graph_deps)
 
+flag_restart = flag_restart(:);
 list_restart = find(flag_restart);
 
 flag_parent = false(size(flag_restart));
 
-for num_j = list_restart
+for num_j = list_restart % loop over jobs that need to be restarted
     
     name_job = list_jobs{num_j};
-    list_parent = fieldnames(deps.(name_job));
-    list_num_parent = find(graph_deps(:,num_j));
+    
+    % Pick up parents that won't be restarted
+    list_num_parent = find(graph_deps(:,num_j)&~flag_restart&~flag_parent); 
     
     for num_l = list_num_parent'
         
@@ -894,7 +902,7 @@ for num_j = list_restart
         flag_OK = true;
         
         for num_f = 1:length(deps.(name_job).(name_job2))
-            flag_OK = flag_OK & exist(deps.(name_job).(name_job2){num_f});
+            flag_OK = flag_OK & exist(deps.(name_job).(name_job2){num_f},'file');
         end
         
         if ~flag_OK
@@ -904,5 +912,5 @@ for num_j = list_restart
 end
 
 if max(flag_parent)>0
-    flag_parent = flag_parent | sub_restart_parents(flag_parent,pipeline,list_jobs,deps,graph_deps);
+    flag_parent = flag_parent | sub_restart_parents(flag_parent|flag_restart,pipeline,list_jobs,deps,graph_deps);
 end
