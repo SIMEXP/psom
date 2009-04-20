@@ -557,18 +557,18 @@ if flag_old_pipeline
 
         %% Check if the user did not force a restart on that job
         flag_restart(num_j) = flag_restart(num_j) || psom_find_str_cell(name_job,opt.restart);
-
-        %% If the job is restarted, also restart all of its children
-        if flag_restart(num_j)
-            mask_child = sub_find_children(num_j,graph_deps);
-            flag_restart(mask_child) = true;
-        end
     end
-    
-    % Restart the parents of 'restart' jobs that produce files that are
-    % used by 'restart' jobs
-    if flag_old_pipeline
-        flag_restart = flag_restart | sub_restart_parents(flag_restart,pipeline,list_jobs,deps,graph_deps);
+
+    nb_modifs = 1;    
+    while nb_modifs >0
+        %% If the job is restarted, also restart all of its children
+        flag_restart2 = sub_find_children(flag_restart,graph_deps);
+
+        % Restart the parents of 'restart' jobs that produce files that are
+        % used by 'restart' jobs
+        flag_restart2 = flag_restart2 | sub_restart_parents(flag_restart2,pipeline,list_jobs,deps,graph_deps);
+
+        nb_modifs = max(flag_restart2&~flag_restart);
     end
 
 end
@@ -857,19 +857,20 @@ else
 end
 
 %% Recursively find all the jobs that depend on one job
-function mask_child = sub_find_children(num_j,graph_deps)
+function mask_child = sub_find_children(mask,graph_deps)
 % GRAPH_DEPS(J,K) == 1 if and only if JOB K depends on JOB J. GRAPH_DEPS =
 % 0 otherwise. This (ugly but reasonably fast) recursive code will work
 % only if the directed graph defined by GRAPH_DEPS is acyclic.
 
-mask_child = graph_deps(num_j,:)>0;
+if max(mask)>0
+    mask_child = max(graph_deps(mask,:),[],1);
+    mask_child = mask_child & ~mask;
+else
+    mask_child = false(size(mask));
+end
 
-list_num_child = find(mask_child);
-
-if ~isempty(list_num_child)
-    for num_c = list_num_child        
-        mask_child = mask_child | sub_find_children(num_c,graph_deps);
-    end
+if max(mask_child)>0
+    mask_child = mask_child | sub_find_children(mask_child,graph_deps);
 end
 
 %% Recursively test if the inputs of some jobs are missing, and set restart
