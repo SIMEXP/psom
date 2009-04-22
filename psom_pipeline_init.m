@@ -408,7 +408,7 @@ if flag_old_pipeline
         pipeline_old = load(file_jobs_backup);
         copyfile(file_jobs_backup,file_jobs,'f');
     end
-
+    
     %% Old status
     if flag_verbose
         fprintf('    Loading old status ...\n');
@@ -443,7 +443,7 @@ if flag_old_pipeline
     else
         all_logs_old = struct([]);
     end
-
+    
 else
 
     pipeline_old = struct([]);
@@ -633,16 +633,16 @@ if ~exist(path_logs,'dir')
 end
 
 %% Save the jobs
-
 if flag_verbose
     fprintf('    Saving the individual ''jobs'' file %s ...\n',file_jobs);
 end
 
 if exist(file_jobs,'file')
+    pipeline_all = niak_merge_pipeline(pipeline_old,pipeline);
     if strcmp(gb_psom_language,'octave')
-        sub_save_struct_fields(file_jobs,pipeline,true);
-    else
-        save('-append',file_jobs,'-struct','pipeline');
+        sub_save_struct_fields(file_jobs,pipeline_all);
+    else        
+        save(file_jobs,'-struct','pipeline_all');
     end
 else
     if strcmp(gb_psom_language,'octave')
@@ -659,8 +659,7 @@ if flag_verbose
     fprintf('    Saving the pipeline dependencies in %s...\n',file_pipeline);
 end
 
-if flag_old_pipeline
-    
+if flag_old_pipeline    
     try
         load(file_pipeline,'history');
         history = char(history,[datestr(now) ' ' gb_psom_user ' on a ' gb_psom_OS ' system used PSOM v' gb_psom_version '>>>> The pipeline was restarted']);
@@ -689,10 +688,11 @@ for num_j = 1:nb_jobs
 end
 
 if exist(file_status,'file')
+    all_status = psom_merge_pipeline(all_status_old,all_status);
     if strcmp(gb_psom_language,'octave')
-        sub_save_struct_fields(file_status,all_status,true);
+        sub_save_struct_fields(file_status,all_status);
     else
-        save(file_status,'-append','-struct','all_status');
+        save(file_status,'-struct','all_status');
     end
 else
     if strcmp(gb_psom_language,'octave')
@@ -708,10 +708,8 @@ if flag_verbose
     fprintf('    Saving the ''logs'' file %s ...\n',file_logs);
 end
 
-for num_j = 1:nb_jobs
-    
-    name_job = list_jobs{num_j};
-    
+for num_j = 1:nb_jobs    
+    name_job = list_jobs{num_j};    
     if flag_finished(num_j)||flag_failed(num_j)
         
         if ~isfield('all_logs',name_job)
@@ -720,20 +718,18 @@ for num_j = 1:nb_jobs
             else
                 all_logs.(name_job) = '';
             end
-        end
-        
-    else
-        
-        all_logs.(name_job) = '';
-        
+        end        
+    else        
+        all_logs.(name_job) = '';        
     end
 end
 
 if exist(file_logs,'file')
+    all_logs = psom_merge_pipeline(all_logs_old,all_logs);
     if strcmp(gb_psom_language,'octave')
-        sub_save_struct_fields(file_logs,all_logs,true);
+        sub_save_struct_fields(file_logs,all_logs);
     else
-        save(file_logs,'-append','-struct','all_logs');
+        save(file_logs,'-struct','all_logs');
     end
 else
     if strcmp(gb_psom_language,'octave')
@@ -800,7 +796,7 @@ if ~flag_ready
         fprintf('\nSome jobs were marked as failed because some inputs were missing.\nPress CTRL-C now if you do not wish to run the pipeline ...\n');
         pause
     else
-        warning('\nSome inputs of jobs of the pipeline were missing. Those jobs were marked as ''failed'', see the logs for more details.');
+        warning('\nSome inputs of jobs of the pipeline were missing. Those jobs were marked as ''failed'', see the logs for more details.\n');
     end
 end
 
@@ -954,7 +950,8 @@ for num_j = list_restart % loop over jobs that need to be restarted
                     fprintf('        %s\n',deps.(name_job).(name_job2){num_f});
                 else
                     fprintf('        %s\n',deps.(name_job).(name_job2){num_f});
-                end                
+                end
+                
             end
             flag_OK = flag_OK & flag_file;
         end
