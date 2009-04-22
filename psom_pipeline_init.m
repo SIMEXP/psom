@@ -638,7 +638,7 @@ if flag_verbose
 end
 
 if exist(file_jobs,'file')
-    pipeline_all = niak_merge_pipeline(pipeline_old,pipeline);
+    pipeline_all = psom_merge_pipeline(pipeline_old,pipeline);
     if strcmp(gb_psom_language,'octave')
         sub_save_struct_fields(file_jobs,pipeline_all);
     else        
