@@ -946,7 +946,17 @@ for num_j = list_restart % loop over jobs that need to be restarted
         flag_OK = true;
         
         for num_f = 1:length(deps.(name_job).(name_job2))
-            flag_OK = flag_OK & exist(deps.(name_job).(name_job2){num_f},'file');
+            flag_file = exist(deps.(name_job).(name_job2){num_f},'file');            
+            
+            if ~flag_file
+                if flag_OK
+                    fprintf('    The following file(s) produced by the job %s are missing to process job %s.\n',name_job2,name_job);
+                    fprintf('        %s\n',deps.(name_job).(name_job2){num_f});
+                else
+                    fprintf('        %s\n',deps.(name_job).(name_job2){num_f});
+                end                
+            end
+            flag_OK = flag_OK & flag_file;
         end
         
         if ~flag_OK
