@@ -614,7 +614,7 @@ if flag_verbose
 end
 
 if flag_old_pipeline
-    fprintf('Any old description of the pipeline is going to be flushed (except for the log files of finished jobs). Press CTRL-C now to cancel.\n');   
+    fprintf('Any old description of the pipeline is going to be flushed (except for the log files of finished jobs). Press CTRL-C now to cancel or press any key to continue.\n');   
     pause
 end
 
@@ -793,7 +793,7 @@ end
 
 if ~flag_ready
     if flag_verbose
-        fprintf('\nSome jobs were marked as failed because some inputs were missing.\nPress CTRL-C now if you do not wish to run the pipeline ...\n');
+        fprintf('\nSome jobs were marked as failed because some inputs were missing.\nPress CTRL-C now if you do not wish to run the pipeline or any key to continue...\n');
         pause
     else
         warning('\nSome inputs of jobs of the pipeline were missing. Those jobs were marked as ''failed'', see the logs for more details.\n');
