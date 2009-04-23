@@ -613,9 +613,9 @@ try
                         end
                     else
                         if flag_fast
-                            [fail,msg] = system([instr_qsub]);
+                            [fail,msg] = system([instr_qsub '&']);                            
                         else
-                            [fail,msg] = system([instr_qsub '&']);
+                            [fail,msg] = system([instr_qsub]);
                         end
                         if fail~=0
                             error('Something went bad with the qsub command. The command was : %s . The error message was : %s',instr_qsub,msg)
