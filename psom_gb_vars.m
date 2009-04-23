@@ -30,9 +30,6 @@ gb_psom_mode_pm = 'batch';
 % Options for the maximal number of jobs
 gb_psom_max_queued = [];
 
-% Flag for submission of jobs in the background
-gb_psom_flag_fast = false;
-
 % Initialization of matlab
 gb_psom_init_matlab = '';
 

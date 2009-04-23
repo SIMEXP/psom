@@ -229,8 +229,8 @@ end
 name_pipeline = 'PIPE';
 
 gb_name_structure = 'opt';
-gb_list_fields = {'init_matlab','flag_fast','flag_update','flag_debug','path_search','restart','shell_options','path_logs','command_matlab','flag_verbose','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point','time_cool_down'};
-gb_list_defaults = {gb_psom_init_matlab,gb_psom_flag_fast,true,false,path,{},'',NaN,'',true,gb_psom_mode,gb_psom_mode_pm,0,'',[],[],[]};
+gb_list_fields = {'init_matlab','flag_update','flag_debug','path_search','restart','shell_options','path_logs','command_matlab','flag_verbose','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point','time_cool_down'};
+gb_list_defaults = {gb_psom_init_matlab,true,false,path,{},'',NaN,'',true,gb_psom_mode,gb_psom_mode_pm,0,'',[],[],[]};
 psom_set_defaults
 
 if isempty(opt.command_matlab)
@@ -326,7 +326,6 @@ else
     opt_proc.time_between_checks = opt.time_between_checks;
     opt_proc.nb_checks_per_point = opt.nb_checks_per_point;
     opt_proc.flag_debug = opt.flag_debug;
-    opt_proc.flag_fast = flag_fast;
     opt_proc.init_matlab = opt.init_matlab;
     
     if flag_debug
