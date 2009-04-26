@@ -1,4 +1,4 @@
-function [] = psom_run_pipeline(pipeline,opt)
+sfunction [] = psom_run_pipeline(pipeline,opt)
 %
 % _________________________________________________________________________
 % SUMMARY OF PSOM_RUN_PIPELINE
@@ -230,7 +230,7 @@ name_pipeline = 'PIPE';
 
 gb_name_structure = 'opt';
 gb_list_fields = {'init_matlab','flag_update','flag_debug','path_search','restart','shell_options','path_logs','command_matlab','flag_verbose','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point','time_cool_down'};
-gb_list_defaults = {gb_psom_init_matlab,true,false,path,{},'',NaN,'',true,gb_psom_mode,gb_psom_mode_pm,0,'',[],[],[]};
+gb_list_defaults = {gb_psom_init_matlab,true,false,path,{},gb_psom_shell_options,NaN,'',true,gb_psom_mode,gb_psom_mode_pm,0,gb_psom_qsub_options,[],[],[]};
 psom_set_defaults
 
 if isempty(opt.command_matlab)
@@ -239,14 +239,6 @@ if isempty(opt.command_matlab)
     else
         opt.command_matlab = gb_psom_command_octave;
     end
-end
-
-if isempty(opt.qsub_options)
-    opt.qsub_options = gb_psom_qsub_options;
-end
-
-if isempty(opt.shell_options)
-    opt.shell_options = gb_psom_shell_options;
 end
 
 if max_queued == 0
@@ -322,6 +314,7 @@ else
     opt_proc.mode_pipeline_manager = opt.mode_pipeline_manager;
     opt_proc.max_queued = opt.max_queued;
     opt_proc.qsub_options = opt.qsub_options;
+    opt_proc.shell_options = shell_options;
     opt_proc.command_matlab = opt.command_matlab;
     opt_proc.time_between_checks = opt.time_between_checks;
     opt_proc.nb_checks_per_point = opt.nb_checks_per_point;

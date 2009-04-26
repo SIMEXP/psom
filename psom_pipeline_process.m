@@ -156,7 +156,7 @@ end
 %% Options
 gb_name_structure = 'opt';
 gb_list_fields = {'init_matlab','flag_debug','shell_options','command_matlab','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point','time_cool_down'};
-gb_list_defaults = {gb_psom_init_matlab,false,'','','session','',0,'',[],[],[]};
+gb_list_defaults = {gb_psom_init_matlab,false,gb_psom_shell_options,'','session','',0,gb_psom_qsub_options,[],[],[]};
 psom_set_defaults
 
 if isempty(opt.mode_pipeline_manager)
@@ -169,14 +169,6 @@ if isempty(opt.command_matlab)
     else
         opt.command_matlab = gb_psom_command_octave;
     end
-end
-
-if isempty(opt.qsub_options)
-    opt.qsub_options = gb_psom_qsub_options;
-end
-
-if isempty(opt.shell_options)
-    opt.shell_options = gb_psom_shell_options;
 end
 
 if max_queued == 0
