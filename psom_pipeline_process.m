@@ -22,30 +22,27 @@ function [] = psom_pipeline_process(file_pipeline,opt)
 %           (string, default 'session') how to execute the jobs :
 %
 %           'session'
-%               the pipeline is executed within the current session. The
-%               current matlab search path will be used instead of the one
-%               that was active when the pipeline was initialized. In that
-%               mode, the log files of individual jobs are appendend to the
-%               log file of the pipeline.
+%               the pipeline is executed within the current session. 
 %
 %           'batch'
-%               Start the pipeline manager and each job in independent
-%               matlab sessions. Note that more than one session can be
-%               started at the same time to take advantage of
-%               muli-processors machine. Moreover, the pipeline will run in
-%               the background, you can continue to work, close matlab or
-%               even unlog from your machine on a linux system without
-%               interrupting it. The matlab path will be the same as the
-%               one that was active when the pipeline was initialized. Log
-%               files will be created for all jobs.
+%               Start each job in an independent matlab session. Note that 
+%               more than one session can be started at the same time to 
+%               take advantage of muli-processors machine. The pipeline 
+%               will run in the background, you can continue to work, close 
+%               matlab or even unlog from your machine on a linux system 
+%               without interrupting it.
 %
 %           'qsub'
 %               Use the qsub system (sge or pbs) to process the jobs. The
-%               pipeline runs in the background.
+%               pipeline runs on all accessible resources.
+%
+%           'msub' 
+%               Use the msub system (MOAB) to process the jobs. The
+%               pipeline runs on all accessible resources.
 %
 %       MODE_PIPELINE_MANAGER
 %           (string, default same as OPT.MODE) same as OPT.MODE, but
-%           applies to the pipeline manager itself.
+%           applies to the pipeline manager itself rather than the jobs.
 %
 %       MAX_QUEUED
 %           (integer, default 1 'batch' modes, Inf in 'session' and 'qsub'
@@ -63,10 +60,10 @@ function [] = psom_pipeline_process(file_pipeline,opt)
 %       QSUB_OPTIONS
 %           (string, GB_PSOM_QSUB_OPTIONS defined in PSOM_GB_VARS)
 %           This field can be used to pass any argument when submitting a
-%           job with qsub. For example, '-q all.q@yeatman,all.q@zeus' will
-%           force qsub to only use the yeatman and zeus workstations in the
-%           all.q queue. It can also be used to put restrictions on the
-%           minimum avalaible memory, etc.
+%           job with qsub/msub. For example, '-q all.q@yeatman,all.q@zeus' 
+%           will force qsub/msub to only use the yeatman and zeus 
+%           workstations in the all.q queue. It can also be used to put 
+%           restrictions on the minimum avalaible memory, etc.
 %
 %       COMMAND_MATLAB
 %           (string, default GB_PSOM_COMMAND_MATLAB or
@@ -176,14 +173,14 @@ if max_queued == 0
         case {'batch'}
             opt.max_queued = 1;
             max_queued = 1;
-        case {'session','qsub'}
+        case {'session','qsub','msub'}
             opt.max_queued = Inf;
             max_queued = Inf;
     end % switch action
 end % default of max_queued
 
 %% Test the the requested mode of execution of jobs exists
-if ~ismember(opt.mode,{'session','batch','qsub'})
+if ~ismember(opt.mode,{'session','batch','qsub','msub'})
     error('%s is an unknown mode of pipeline execution. Sorry dude, I must quit ...',opt.mode);
 end
 
@@ -214,7 +211,7 @@ switch opt.mode
             opt.time_cool_down = 0;
             time_cool_down = 0;
         end
-    case 'qsub'
+    case {'qsub','msub'}
         if isempty(time_between_checks)
             opt.time_between_checks = 10;
             time_between_checks = 10;
@@ -259,11 +256,17 @@ save(file_pipe_running,'str_now');
 %% If specified, start the pipeline in the background
 switch opt.mode_pipeline_manager
 
-    case {'batch','qsub'}
+    case {'batch','qsub','msub'}
         
         switch opt.mode_pipeline_manager
-            case 'qsub'
-                fprintf('I am sending the pipeline manager in the background using the ''qsub'' command.\n')
+            case {'qsub','msub'}
+                switch opt.mode_pipeline_manager
+                    case 'qsub'
+                        fprintf('I am sending the pipeline manager in the background using the ''qsub'' command.\n')
+                    case 'msub'
+                        fprintf('I am sending the pipeline manager in the background using the ''msub'' command.\n')
+                end
+                    
                 switch gb_psom_language
                     case 'matlab'
                         instr_job = sprintf('%s -nosplash -nojvm -r "cd %s, load(''%s'',''path_work''), path(path_work), opt.time_cool_down = %1.3f, opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.mode_pipeline_manager = ''session''; opt.max_queued = %i; opt.qsub_options = ''%s'', opt.flag_debug = %i, psom_pipeline_process(''%s'',opt),"\n',opt.command_matlab,path_logs,file_pipeline,opt.time_cool_down,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,double(flag_debug),file_pipeline);
@@ -299,7 +302,13 @@ switch opt.mode_pipeline_manager
                 file_qsub_o = [path_logs filesep name_pipeline '.oqsub'];
                 file_qsub_e = [path_logs filesep name_pipeline '.eqsub'];
                 instr_batch = ['qsub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_pipeline(1:min(15,length(name_pipeline))) ' ' opt.qsub_options ' ' file_shell];
+
+            case 'msub'
                 
+                file_qsub_o = [path_logs filesep name_pipeline '.oqsub'];
+                file_qsub_e = [path_logs filesep name_pipeline '.eqsub'];
+                instr_batch = ['msub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_pipeline(1:min(15,length(name_pipeline))) ' ' opt.qsub_options ' ' file_shell];
+
             otherwise
                 
                 switch gb_psom_OS
@@ -315,7 +324,7 @@ switch opt.mode_pipeline_manager
             error('Something went bad with the at command. The error message was : %s',msg)
         end
         if flag_debug
-            fprintf('\n\nThe call to at/qsub produced the following message :\n%s\n\n',msg);
+            fprintf('\n\nThe call to at/qsub/msub produced the following message :\n%s\n\n',msg);
         end
 
         delete(file_shell)
@@ -594,6 +603,27 @@ try
                         
                         if fail~=0
                             error('Something went bad with the qsub command. The command was : %s . The error message was : %s',instr_qsub,msg)
+                        end
+                    end
+                case 'msub'
+
+                    file_qsub_o = [path_logs filesep name_job '.oqsub'];
+                    file_qsub_e = [path_logs filesep name_job '.eqsub'];
+
+                    instr_qsub = ['msub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_job(1:min(15,length(name_job))) ' ' opt.qsub_options ' ' file_shell];
+                    if flag_debug
+                        [fail,msg] = system(instr_qsub);
+                        fprintf('The msub command was : %s.\n The feedback was : %s\n',instr_qsub,msg);
+                        fprintf(hfpl,'The msub command was : %s.\n The feedback was : %s\n',instr_qsub,msg);
+                        if fail~=0
+                            error('Something went bad with the msub command.')
+                        end
+                    else
+
+                        [fail,msg] = system([instr_qsub '&']);
+                        
+                        if fail~=0
+                            error('Something went bad with the msub command. The command was : %s . The error message was : %s',instr_qsub,msg)
                         end
                     end
             end % switch mode
