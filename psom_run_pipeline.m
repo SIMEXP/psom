@@ -251,7 +251,7 @@ if max_queued == 0
                 opt.max_queued = gb_psom_max_queued;
                 max_queued = gb_psom_max_queued;
             end
-        case {'session','qsub'}
+        case {'session','qsub','msub'}
             if isempty(gb_psom_max_queued)
                 opt.max_queued = Inf;
                 max_queued = Inf;
@@ -262,7 +262,7 @@ if max_queued == 0
     end % switch action
 end % default of max_queued
 
-if ~ismember(opt.mode,{'session','batch','qsub'})
+if ~ismember(opt.mode,{'session','batch','qsub','msub'})
     error('%s is an unknown mode of pipeline execution. Sorry dude, I must quit ...',opt.mode);
 end
 
