@@ -1,4 +1,4 @@
-sfunction [] = psom_run_pipeline(pipeline,opt)
+function [] = psom_run_pipeline(pipeline,opt)
 %
 % _________________________________________________________________________
 % SUMMARY OF PSOM_RUN_PIPELINE
