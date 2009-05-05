@@ -575,7 +575,7 @@ if flag_old_pipeline
             end
         end
 
-        nb_modifs = max(flag_restart3&~flag_restart);
+        nb_modifs = max(double(flag_restart3&~flag_restart));
         flag_restart = flag_restart3;
     end
 
@@ -910,7 +910,7 @@ function mask_child = sub_find_children(mask,graph_deps)
 % 0 otherwise. This (ugly but reasonably fast) recursive code will work
 % only if the directed graph defined by GRAPH_DEPS is acyclic.
 
-if max(mask)>0
+if max(double(mask))>0
     mask_child = max(graph_deps(mask,:),[],1);
     mask_child_strict = mask_child & ~mask;
 else
