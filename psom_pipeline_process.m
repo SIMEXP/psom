@@ -338,7 +338,11 @@ try
     
     %% If the pipeline manager is executed in the session, open the log
     %% file   
-    hfpl = fopen(file_pipe_log,'a');
+    if strcmp(gb_psom_language,'matlab');
+        hfpl = fopen(file_pipe_log,'a');
+    else
+        hfpl = file_pipe_log;
+    end
 
     %% Print general info about the pipeline
     msg_line1 = sprintf('The pipeline %s is now being processed.',name_pipeline);    
@@ -348,7 +352,7 @@ try
     msg = sprintf('%s\n%s\n%s',msg_line1,msg_line2,msg_line3);
     stars = repmat('*',[1 size_msg]);
     fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
-    fprintf(hfpl,'\n%s\n%s\n%s\n',stars,msg,stars);
+    sub_add_line_log(hfpl,sprintf('\n%s\n%s\n%s\n',stars,msg,stars));
 
     %% Load the pipeline
     load(file_pipeline,'list_jobs','deps','graph_deps','files_in');
@@ -425,7 +429,7 @@ try
                     nb_checks = 0;
                     if nb_points>0
                         fprintf('\n');
-                        fprintf(hfpl,'\n');
+                        sub_add_line_log(hfpl,sprintf('\n'));
                     end
                     nb_points = 0;
                 end
@@ -437,7 +441,7 @@ try
                 
                 if strcmp(job_status{num_j},'exit') % the script crashed ('exit' tag)
                     fprintf('%s - The script of job %s terminated without generating any tag, I guess we will count that one as failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
-                    fprintf(hfpl,'%s - The script of job %s terminated without generating any tag, I guess we will count that one as failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);;
+                    sub_add_line_log(hfpl,sprintf('%s - The script of job %s terminated without generating any tag, I guess we will count that one as failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued));;
                     job_status{num_j} = 'failed';
                 end
 
@@ -463,14 +467,14 @@ try
                     case 'failed' % the job has failed, darn it !
 
                         fprintf('%s - The job %s has failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
-                        fprintf(hfpl,'%s - The job %s has failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
+                        sub_add_line_log(hfpl,sprintf('%s - The job %s has failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued));
                         list_num_child = find(sub_find_children(num_j,graph_deps));
                         mask_todo(list_num_child) = false; % Remove the children of the failed job from the to-do list
 
                     case 'finished'
 
                         fprintf('%s - The job %s has been successfully completed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
-                        fprintf(hfpl,'%s - The job %s has been successfully completed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
+                        sub_add_line_log(hfpl,sprintf('%s - The job %s has been successfully completed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued));
                         graph_deps(num_j,:) = 0; % update dependencies
 
                 end
@@ -505,7 +509,7 @@ try
                 nb_checks = 0;
                 if nb_points>0
                     fprintf('\n');
-                    fprintf(hfpl,'\n');
+                    sub_add_line_log(hfpl,sprintf('\n'));
                 end
                 nb_points = 0;
             end
@@ -523,7 +527,7 @@ try
             sub_add_var(file_status,name_job,job_status{num_job});
             sub_add_var(file_status_backup,name_job,job_status{num_job});
             fprintf('%s - The job %s has been submitted to the queue (%i jobs in queue).\n',datestr(clock),name_job,nb_queued)
-            fprintf(hfpl,'%s - The job %s has been submitted to the queue (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
+            sub_add_line_log(hfpl,sprintf('%s - The job %s has been submitted to the queue (%i jobs in queue).\n',datestr(clock),name_job,nb_queued));
 
             %% Create a temporary shell scripts for 'batch' or 'qsub' modes
             if ~strcmp(opt.mode,'session')
@@ -583,7 +587,7 @@ try
                     if flag_debug
                         [fail,msg] = system(instr_batch);
                         fprintf('The batch command was : %s\n The feedback was : %s\n',instr_batch,msg);
-                        fprintf(hfpl,'The batch command was : %s\n The feedback was : %s\n',instr_batch,msg);
+                        sub_add_line_log(hfpl,sprintf('The batch command was : %s\n The feedback was : %s\n',instr_batch,msg));
                         if fail~=0
                             error('Something went bad with the at command.')
                         end
@@ -603,7 +607,7 @@ try
                     if flag_debug
                         [fail,msg] = system(instr_qsub);
                         fprintf('The qsub command was : %s.\n The feedback was : %s\n',instr_qsub,msg);
-                        fprintf(hfpl,'The qsub command was : %s.\n The feedback was : %s\n',instr_qsub,msg);
+                        sub_add_line_log(hfpl,sprintf('The qsub command was : %s.\n The feedback was : %s\n',instr_qsub,msg));
                         if fail~=0
                             error('Something went bad with the qsub command.')
                         end
@@ -624,7 +628,7 @@ try
                     if flag_debug
                         [fail,msg] = system(instr_qsub);
                         fprintf('The msub command was : %s.\n The feedback was : %s\n',instr_qsub,msg);
-                        fprintf(hfpl,'The msub command was : %s.\n The feedback was : %s\n',instr_qsub,msg);
+                        sub_add_line_log(hfpl,sprintf('The msub command was : %s.\n The feedback was : %s\n',instr_qsub,msg));
                         if fail~=0
                             error('Something went bad with the msub command.')
                         end
@@ -644,7 +648,7 @@ try
         if nb_checks >= nb_checks_per_point
             nb_checks = 0;
             fprintf('.');
-            fprintf(hfpl,'.');
+            sub_add_line_log(hfpl,sprintf('.'));
             nb_points = nb_points+1;
         else
             nb_checks = nb_checks+1;
@@ -668,11 +672,11 @@ catch
     end   
 
     fprintf('\n\n******************\nSomething went bad ... the pipeline has FAILED !\nThe last error message occured was :\n%s\n',errmsg.message);
-    fprintf(hfpl,'\n\n******************\nSomething went bad ... the pipeline has FAILED !\nThe last error message occured was :\n%s\n',errmsg.message);
+    sub_add_line_log(hfpl,sprintf('\n\n******************\nSomething went bad ... the pipeline has FAILED !\nThe last error message occured was :\n%s\n',errmsg.message));
     if isfield(errmsg,'stack')
         for num_e = 1:length(errmsg.stack)
             fprintf('File %s at line %i\n',errmsg.stack(num_e).file,errmsg.stack(num_e).line);
-            fprintf(hfpl,'File %s at line %i\n',errmsg.stack(num_e).file,errmsg.stack(num_e).line);
+            sub_add_line_log(hfpl,sprintf('File %s at line %i\n',errmsg.stack(num_e).file,errmsg.stack(num_e).line));
         end
     end
     if exist('file_pipe_running','var')
@@ -681,9 +685,15 @@ catch
         end
     end
     
+    %% Close the log file
+    if strcmp(gb_psom_language,'matlab')
+        fclose(hfpl);
+    end
+end
+    
 end
 
-if exist('path_tmp','var')&&~flag_debug
+if exist('path_tmp','var') && ~flag_debug
     if exist(path_tmp,'dir')
         if strcmp(gb_psom_language,'octave')
             instr_rm = ['rm -rf ' path_tmp];
@@ -701,7 +711,7 @@ size_msg = max([size(msg_line1,2),size(msg_line2,2)]);
 msg = sprintf('%s\n%s',msg_line1,msg_line2);
 stars = repmat('*',[1 size_msg]);
 fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
-fprintf(hfpl,'\n%s\n%s\n%s\n',stars,msg,stars);
+sub_add_line_log(hfpl,sprintf('\n%s\n%s\n%s\n',stars,msg,stars));
 
 %% Print a list of failed jobs
 list_num_failed = find(ismember(job_status,'failed'));
@@ -713,52 +723,55 @@ flag_any_fail = ~isempty(list_num_failed);
 if flag_any_fail
     if length(list_num_failed) == 1
         fprintf('The execution of the following job has failed :\n\n    ');
-        fprintf(hfpl,'The execution of the following job has failed :\n\n    ');
+        sub_add_line_log(hfpl,sprintf('The execution of the following job has failed :\n\n    '));
     else
         fprintf('The execution of the following jobs have failed :\n\n    ');
-        fprintf(hfpl,'The execution of the following jobs have failed :\n\n    ');
+        sub_add_line_log(hfpl,sprintf('The execution of the following jobs have failed :\n\n    '));
     end
     for num_j = list_num_failed
         name_job = list_jobs{num_j};
         fprintf('%s ; ',name_job);
-        fprintf(hfpl,'%s ; ',name_job);
+        sub_add_line_log(hfpl,sprintf('%s ; ',name_job));
     end
     fprintf('\n\n');
-    fprintf(hfpl,'\n\n');
+    sub_add_line_log(hfpl,sprintf('\n\n'));
     fprintf('More infos can be found in the individual log files. Use the following command to display these logs :\n\n    psom_pipeline_visu(''%s'',''log'',JOB_NAME)\n\n',path_logs);
-    fprintf(hfpl,'More infos can be found in the individual log files. Use the following command to display these logs :\n\n    psom_pipeline_visu(''%s'',''log'',JOB_NAME)\n\n',path_logs);    
+    sub_add_line_log(hfpl,sprintf('More infos can be found in the individual log files. Use the following command to display these logs :\n\n    psom_pipeline_visu(''%s'',''log'',JOB_NAME)\n\n',path_logs));    
 end
 
 %% Print a list of jobs that could not be processed
 if ~isempty(list_num_none)
     if length(list_num_none) == 1
         fprintf('The following job has not been processed due to a dependence on a failed job:\n\n    ');
-        fprintf(hfpl,'The following job has not been processed due to a dependence on a failed job:\n\n    ');
+        sub_add_line_log(hfpl,sprintf('The following job has not been processed due to a dependence on a failed job:\n\n    '));
     else
         fprintf('The following jobs have not been processed due to a dependence on a failed job:\n\n    ');
-        fprintf(hfpl,'The following jobs have not been processed due to a dependence on a failed job:\n\n    ');
+        sub_add_line_log(hfpl,sprintf('The following jobs have not been processed due to a dependence on a failed job:\n\n    '));
     end
     for num_j = list_num_none
         name_job = list_jobs{num_j};
         fprintf('%s ; ',name_job);
-        fprintf(hfpl,'%s ; ',name_job);
+        sub_add_line_log(hfpl,sprintf('%s ; ',name_job));
     end
     fprintf('\n\n');
-    fprintf(hfpl,'\n\n');
+    sub_add_line_log(hfpl,sprintf('\n\n'));
 end
 
 %% Give a final one-line summary of the processing
 if flag_any_fail
     fprintf('All jobs have been processed, but some jobs have failed.\nYou may want to restart the pipeline latter if you managed to fix the problems.\n');
-    fprintf(hfpl,'All jobs have been processed, but some jobs have failed.\nYou may want to restart the pipeline latter if you managed to fix the problems.\n');
+    sub_add_line_log(hfpl,sprintf('All jobs have been processed, but some jobs have failed.\nYou may want to restart the pipeline latter if you managed to fix the problems.\n'));
 else
     if isempty(list_num_none)
         fprintf('All jobs have been successfully completed.\n');
-        fprintf(hfpl,'All jobs have been successfully completed.\n');
+        sub_add_line_log(hfpl,sprintf('All jobs have been successfully completed.\n'));
     end
 end
 
-fclose(hfpl);
+%% Close the log file
+if strcmp(gb_psom_language,'matlab')
+    fclose(hfpl);
+end
 
 if exist('file_pipe_running','var')
     if exist(file_pipe_running,'file')
@@ -840,4 +853,14 @@ for num_f = 1:length(files)
     if exist(files{num_f},'file')
         delete(files{num_f});
     end
+end
+
+function [] = sub_add_line_log(file_write,str_write);
+
+if ischar(file_write)
+    hf = fopen(file_write,'a');
+    fprintf(hf,str_write);
+    fclose(hf);
+else
+    fprintf(file_write,str_write);
 end
