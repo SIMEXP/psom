@@ -80,7 +80,7 @@ end
 msg = 'The demo is about to remove the content of the following folder and save the demo results there:';
 msg2 = local_path_demo;
 msg3 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2),length(msg3))]);
+stars = repmat('*',[1 max([length(msg),length(msg2),length(msg3)])]);
 fprintf('\n%s\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,msg3,stars);
 pause
 
