@@ -84,7 +84,9 @@ stars = repmat('*',[1 max([length(msg),length(msg2),length(msg3)])]);
 fprintf('\n%s\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,msg3,stars);
 pause
 
-rmdir(local_path_demo,'s');
+if exist(local_path_demo,'file')
+    rmdir(local_path_demo,'s');
+end
 
 file_weights = [local_path_demo filesep 'weights.mat'];
 weights = rand([2 50]);
