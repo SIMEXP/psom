@@ -1,3 +1,4 @@
+function [] = psom_demo_pipeline(path_demo,opt)
 %
 % _________________________________________________________________________
 % SUMMARY OF PSOM_DEMO_PIPELINE
@@ -6,7 +7,27 @@
 % and Matlab (PSOM).
 %
 % SYNTAX:
-% Just type in PSOM_DEMO_PIPELINE. 
+% PSOM_DEMO_PIPELINE(PATH_DEMO,OPT)
+%
+% _________________________________________________________________________
+% INPUTS:
+%
+% PATH_DEMO
+%       (string, default local_path_demo defined in the file 
+%       PSOM_GB_VARS) 
+%       the full path to the PSOM demo folder. The dataset can be found in 
+%       multiple file formats at the following address : 
+%       http://www.bic.mni.mcgill.ca/users/pbellec/demo_niak/
+% OPT
+%       (structure, optional) the option structure passed on to 
+%       PSOM_RUN_PIPELINE. If not specified, the default values will be
+%       used.
+%
+% _________________________________________________________________________
+% OUTPUTS:
+% 
+% _________________________________________________________________________
+% COMMENTS:
 %
 % The blocks of code follow the tutorial that can be found at the following 
 % address : 
@@ -44,8 +65,30 @@
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
 
-clear
-close all
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Prepare the demo folder %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+psom_gb_vars
+
+if nargin<1||isempty(path_demo)
+    local_path_demo = gb_psom_path_demo;    
+else
+    local_path_demo = path_demo;
+end
+
+msg = 'The demo is about to remove the content of the following folder and save the demo results there:';
+msg2 = local_path_demo;
+msg3 = 'Press CTRL-C to stop here or any key to continue.';
+stars = repmat('*',[1 max(length(msg),length(msg2),length(msg3))]);
+fprintf('\n%s\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,msg3,stars);
+pause
+
+rmdir(local_path_demo,'s');
+
+file_weights = [local_path_demo filesep 'weights.mat'];
+weights = rand([2 50]);
+save(file_weights,weights);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %% What is a pipeline ? %%
@@ -57,30 +100,28 @@ stars = repmat('*',[1 max(length(msg),length(msg2))]);
 fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
 pause
 
-psom_gb_vars
-
 pipeline.message.command = 'fprintf(''The number of samples was : %i. Well that info will be in the logs anyway but still...\n'',opt.nb_samples)';
 pipeline.message.opt.nb_samples = 30;
 
 pipeline.tseries1.command = 'tseries = randn([opt.nb_samples 1]); save(files_out,''tseries'')';
 pipeline.tseries1.files_in = {};
-pipeline.tseries1.files_out = [gb_psom_path_demo 'tseries1.mat'];
+pipeline.tseries1.files_out = [local_path_demo 'tseries1.mat'];
 pipeline.tseries1.opt.nb_samples = pipeline.message.opt.nb_samples;
 
 pipeline.tseries2.command = 'tseries = randn([opt.nb_samples 1]); save(files_out,''tseries'')';
 pipeline.tseries2.files_in = {};
-pipeline.tseries2.files_out = [gb_psom_path_demo 'tseries2.mat'];
+pipeline.tseries2.files_out = [local_path_demo 'tseries2.mat'];
 pipeline.tseries2.opt.nb_samples = pipeline.message.opt.nb_samples;
 
 pipeline.fft.command = 'load(files_in{1}); ftseries = zeros([size(tseries,1) 2]); ftseries(:,1) = fft(tseries); load(files_in{2}); ftseries(:,2) = fft(tseries); save(files_out,''ftseries'')';
 pipeline.fft.files_in = {pipeline.tseries1.files_out,pipeline.tseries2.files_out};
-pipeline.fft.files_out = [gb_psom_path_demo 'ftseries.mat'];
+pipeline.fft.files_out = [local_path_demo 'ftseries.mat'];
 pipeline.fft.opt = struct([]);
 
 pipeline.weights.command = 'load(files_in.fft); load(files_in.sessions.session1); res = ftseries * weights; save(files_out,''res'')';
 pipeline.weights.files_in.fft = pipeline.fft.files_out;
-pipeline.weights.files_in.sessions.session1 = [gb_psom_path_demo 'weights.mat'];
-pipeline.weights.files_out = [gb_psom_path_demo 'results.mat'];
+pipeline.weights.files_in.sessions.session1 = [local_path_demo 'weights.mat'];
+pipeline.weights.files_out = [local_path_demo 'results.mat'];
 pipeline.weights.opt = struct([]);
 
 psom_visu_dependencies(pipeline);
@@ -96,19 +137,7 @@ fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
 pause
 
 % Set up the options to run the pipeline
-opt.path_logs = [gb_psom_path_demo 'logs' filesep];  % where to store the log files
-opt.mode = 'batch';                                  % how to execute the pipeline    
-opt.mode_pipeline_manager = 'session';               % how to run the pipeline manager
-opt.time_between_checks = 0.5;                       % because the jobs of the toy pipeline are really small, it is not necessary to wait long for jobs to complete
-opt.max_queued = 2;                                  % how much jobs can be processed simultaneously
-
-% In case the demo is re-started, files from a previous execution are
-% flushed.
-delete([opt.path_logs 'PIPE*']); 
-delete([gb_psom_path_demo 'ftseries.mat']);
-delete([gb_psom_path_demo 'tseries1.mat']);
-delete([gb_psom_path_demo 'tseries2.mat']);
-delete([gb_psom_path_demo 'results.mat']);
+opt.path_logs = [local_path_demo 'logs' filesep];  % where to store the log files
 
 % The following line is running the pipeline manager on the toy pipeline
 psom_run_pipeline(pipeline,opt);
