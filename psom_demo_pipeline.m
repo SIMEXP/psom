@@ -88,7 +88,7 @@ rmdir(local_path_demo,'s');
 
 file_weights = [local_path_demo filesep 'weights.mat'];
 weights = rand([2 50]);
-save(file_weights,weights);
+save(file_weights,'weights');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %% What is a pipeline ? %%
