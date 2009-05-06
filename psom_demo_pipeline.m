@@ -88,6 +88,7 @@ rmdir(local_path_demo,'s');
 
 file_weights = [local_path_demo filesep 'weights.mat'];
 weights = rand([2 50]);
+psom_mkdir(local_path_demo);
 save(file_weights,'weights');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
