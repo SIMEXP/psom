@@ -766,6 +766,10 @@ else
     end
 end
 
+if ismember(opt.mode_pipeline_manager,{'qsub','batch'})&& strcmp(gb_psom_language,'octave')   
+    sub_add_line_log(hfpl,sprintf('Press CTRL-C to go back to Octave.\n'));
+end
+
 %% Close the log file
 if strcmp(gb_psom_language,'matlab')
     fclose(hfpl);
