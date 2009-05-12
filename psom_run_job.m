@@ -8,7 +8,7 @@ function [status,msg] = psom_run_job(file_job)
 % (running, failed or finished). It also verboses some information.
 %
 % SYNTAX:
-% [STATUS,MSG] = PSOM_RUN_JOB(FILE_JOB,FILE_LOG)
+% [STATUS,MSG] = PSOM_RUN_JOB(FILE_JOB)
 %
 % _________________________________________________________________________
 % COMMENTS:

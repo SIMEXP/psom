@@ -86,6 +86,14 @@ function file_pipeline = psom_pipeline_init(pipeline,opt)
 %           (boolean, default true) If FLAG_UPDATE is true, a comparison
 %           between previous pipelines and the current pipeline will be
 %           performed to restart updated jobs. 
+%       
+%       FLAG_PAUSE
+%           (boolean, default true) If FLAG_PAUSE is true, the pipeline
+%           initialization may pause in some situations, i.e. before
+%           writting an update of a pipeline (and incidentally flush old
+%           outputs) and before starting a pipeline if some necessary input 
+%           files are missing. This lets the user an opportunity to cancel
+%           the pipeline execution before anything is written on the disk.
 %
 %       FLAG_VERBOSE
 %           (boolean, default true) if the flag is true, then the function 
@@ -283,8 +291,8 @@ end
 
 %% Options
 gb_name_structure = 'opt';
-gb_list_fields = {'flag_debug','flag_update','path_search','restart','path_logs','command_matlab','flag_verbose'};
-gb_list_defaults = {false,true,path,{},NaN,'',true};
+gb_list_fields = {'flag_pause','flag_update','path_search','restart','path_logs','command_matlab','flag_verbose'};
+gb_list_defaults = {true,true,path,{},NaN,'',true};
 psom_set_defaults
 name_pipeline = 'PIPE';
 
@@ -301,13 +309,15 @@ hat_qsub_o = sprintf('\n\n*****************\nOUTPUT QSUB\n*****************\n');
 hat_qsub_e = sprintf('\n\n*****************\nERROR QSUB\n*****************\n');
 
 %% Print a small banner for the initialization
-msg_line1 = sprintf('The pipeline description is now being prepared for execution.');
-msg_line2 = sprintf('The following folder will be used to store logs and status :');
-msg_line3 = sprintf('%s',path_logs);
-size_msg = max([size(msg_line1,2),size(msg_line2,2),size(msg_line3,2)]);
-msg = sprintf('%s\n%s\n%s',msg_line1,msg_line2,msg_line3);
-stars = repmat('*',[1 size_msg]);
-fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
+if flag_verbose
+    msg_line1 = sprintf('The pipeline description is now being prepared for execution.');
+    msg_line2 = sprintf('The following folder will be used to store logs and status :');
+    msg_line3 = sprintf('%s',path_logs);
+    size_msg = max([size(msg_line1,2),size(msg_line2,2),size(msg_line3,2)]);
+    msg = sprintf('%s\n%s\n%s',msg_line1,msg_line2,msg_line3);
+    stars = repmat('*',[1 size_msg]);
+    fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
+end
 
 %% Generate file names 
 file_pipeline = cat(2,path_logs,filesep,name_pipeline,'.mat');
@@ -334,7 +344,7 @@ if flag_verbose
     fprintf('    Generating dependencies ...\n');
 end
 
-[deps,list_jobs,files_in,files_out,graph_deps] = psom_build_dependencies(pipeline);
+[deps,list_jobs,files_in,files_out,graph_deps] = psom_build_dependencies(pipeline,opt.flag_verbose);
 
 %% Check if some outputs were not generated twice
 if flag_verbose
@@ -520,31 +530,37 @@ if flag_old_pipeline
         
         if strcmp(job_status_old{num_j},'failed')
             flag_restart(num_j) = true;            
-            fprintf('    The job %s had failed, it will be restarted.\n',name_job)            
+            if flag_verbose
+                fprintf('    The job %s had failed, it will be restarted.\n',name_job)            
+            end
         else
             %% If an old pipeline exists, check if the job has been modified
             if isfield(pipeline_old,name_job)
                 if opt.flag_update
                     flag_same = psom_cmp_var(pipeline_old.(name_job),pipeline.(name_job));
-                    if ~flag_same
+                    if ~flag_same&&flag_verbose                        
                         fprintf('    The job %s has changed, it will be restarted.\n',name_job);
                     end
                 else
                     flag_same = true;
-                    if (num_j == 1)
+                    if (num_j == 1)&&flag_verbose
                         fprintf('    The OPT.FLAG_UPDATE is off, jobs are not going to be checked for updates.\n');
                     end
                 end
                 flag_restart(num_j) = flag_restart(num_j)||~flag_same;
             else
                 flag_restart(num_j) = true;
-                fprintf('    The job %s is new, it will be executed.\n',name_job)
+                if flag_verbose
+                    fprintf('    The job %s is new, it will be executed.\n',name_job)
+                end
             end
 
             %% Check if the user did not force a restart on that job
             flag_force = psom_find_str_cell(name_job,opt.restart);
             if flag_force
-                fprintf('    User has manually forced to restart job %s.\n',name_job)
+                if flag_verbose
+                    fprintf('    User has manually forced to restart job %s.\n',name_job)
+                end
                 flag_restart(num_j) = true;
             end
         end
@@ -557,21 +573,29 @@ if flag_old_pipeline
 
         list_add = find(flag_restart2&~flag_restart);
         if ~isempty(list_add)
-            fprintf('    The following job(s) will be restarted because they are children of restarted jobs :\n')
-            for num_a = 1:length(list_add)
-                fprintf('        %s\n',list_jobs{list_add(num_a)});
+            if flag_verbose
+                fprintf('    The following job(s) will be restarted because they are children of restarted jobs :\n')
+            end
+            for num_a = 1:length(list_add)                
+                if flag_verbose
+                    fprintf('        %s\n',list_jobs{list_add(num_a)});
+                end
             end
         end
 
         % Restart the parents of 'restart' jobs that produce files that are
         % used by 'restart' jobs
-        flag_restart3 = flag_restart2 | sub_restart_parents(flag_restart2,pipeline,list_jobs,deps,graph_deps);
+        flag_restart3 = flag_restart2 | sub_restart_parents(flag_restart2,pipeline,list_jobs,deps,graph_deps,flag_verbose);
 
         list_add = find(flag_restart3&~flag_restart2);
         if ~isempty(list_add)
-            fprintf('    The following job(s) will be restarted because they are producing missing files needed to run some of the restarted jobs :\n')
+            if flag_verbose
+                fprintf('    The following job(s) will be restarted because they are producing missing files needed to run some of the restarted jobs :\n')
+            end
             for num_a = 1:length(list_add)
-                fprintf('        %s\n',list_jobs{list_add(num_a)});
+                if flag_verbose
+                    fprintf('        %s\n',list_jobs{list_add(num_a)});
+                end
             end
         end
 
@@ -613,7 +637,7 @@ if flag_verbose
     fprintf('\nSaving the pipeline description in the logs folder ...\n');
 end
 
-if flag_old_pipeline
+if flag_old_pipeline&&flag_pause
     fprintf('Any old description of the pipeline is going to be flushed (except for the log files of finished jobs). Press CTRL-C now to cancel or press any key to continue.\n');   
     pause
 end
@@ -792,9 +816,11 @@ for num_j = list_num_unfinished
 end
 
 if ~flag_ready
-    if flag_verbose
+    if flag_pause
         fprintf('\nSome jobs were marked as failed because some inputs were missing.\nPress CTRL-C now if you do not wish to run the pipeline or any key to continue...\n');
-        pause
+        if flag_pause
+            pause
+        end
     else
         warning('\nSome inputs of jobs of the pipeline were missing. Those jobs were marked as ''failed'', see the logs for more details.\n');
     end
@@ -923,7 +949,7 @@ end
 
 %% Recursively test if the inputs of some jobs are missing, and set restart
 %% flags on the jobs that can produce those inputs.
-function flag_parent = sub_restart_parents(flag_restart,pipeline,list_jobs,deps,graph_deps)
+function flag_parent = sub_restart_parents(flag_restart,pipeline,list_jobs,deps,graph_deps,flag_verbose)
 
 list_restart = find(flag_restart);
 
@@ -945,13 +971,14 @@ for num_j = list_restart % loop over jobs that need to be restarted
             flag_file = exist(deps.(name_job).(name_job2){num_f},'file');            
             
             if ~flag_file
-                if flag_OK
-                    fprintf('    The following file(s) produced by the job %s are missing to process job %s.\n',name_job2,name_job);
-                    fprintf('        %s\n',deps.(name_job).(name_job2){num_f});
-                else
-                    fprintf('        %s\n',deps.(name_job).(name_job2){num_f});
-                end
-                
+                if flag_verbose
+                    if flag_OK
+                        fprintf('    The following file(s) produced by the job %s are missing to process job %s.\n',name_job2,name_job);
+                        fprintf('        %s\n',deps.(name_job).(name_job2){num_f});
+                    else
+                        fprintf('        %s\n',deps.(name_job).(name_job2){num_f});
+                    end
+                end                   
             end
             flag_OK = flag_OK & flag_file;
         end

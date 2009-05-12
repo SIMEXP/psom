@@ -1,4 +1,4 @@
-function [deps,list_jobs,files_in,files_out,graph_deps] = psom_build_dependencies(pipeline)
+function [deps,list_jobs,files_in,files_out,graph_deps] = psom_build_dependencies(pipeline,flag_verbose)
 %
 % _________________________________________________________________________
 % SUMMARY PSOM_BUILD_DEPENDENCIES
@@ -25,6 +25,10 @@ function [deps,list_jobs,files_in,files_out,graph_deps] = psom_build_dependencie
 %                   (string, cell of strings or structure whos terminal 
 %                   fields are strings or cell of strings)
 %                   a list of the output files of the job
+%
+% FLAG_VERBOSE
+%       (boolean, default true) if the flag is true, then the function 
+%       prints some infos during the processing.
 %
 % _________________________________________________________________________
 % OUTPUTS
@@ -97,13 +101,18 @@ function [deps,list_jobs,files_in,files_out,graph_deps] = psom_build_dependencie
 
 %% SYNTAX
 if ~exist('pipeline','var')
-    error('SYNTAX: DEPS = PSOM_BUILD_DEPENDENCIES(PIPELINE). Type ''help psom_build_dependencies'' for more info.')
+    error('SYNTAX: DEPS = PSOM_BUILD_DEPENDENCIES(PIPELINE[,FLAG_VERBOSE]). Type ''help psom_build_dependencies'' for more info.')
 end
 
+if nargin < 2
+    flag_verbose = true;
+end
 list_jobs = fieldnames(pipeline);
 nb_jobs = length(list_jobs);
 
-fprintf('       Reorganizing inputs/outputs ...\n')
+if flag_verbose
+    fprintf('       Reorganizing inputs/outputs ...\n')
+end
 for num_j = 1:nb_jobs
     name_job = list_jobs{num_j};
     if isfield(pipeline.(name_job),'files_in')
@@ -129,14 +138,18 @@ num_out = char_all(mask_out);
 clear char_all mask_out val_tmp ind_tmp
 
 graph_deps = sparse(nb_jobs,nb_jobs);
-fprintf('       Analyzing job inputs/outputs, percentage completed : ')
-curr_perc = -1;
+if flag_verbose
+    fprintf('       Analyzing job inputs/outputs, percentage completed : ')
+    curr_perc = -1;
+end
 
 for num_j = 1:nb_jobs
-    new_perc = 5*floor(20*num_j/nb_jobs);
-    if curr_perc~=new_perc
-        fprintf(' %1.0f',new_perc);
-        curr_perc = new_perc;
+    if flag_verbose
+        new_perc = 5*floor(20*num_j/nb_jobs);
+        if curr_perc~=new_perc
+            fprintf(' %1.0f',new_perc);
+            curr_perc = new_perc;
+        end
     end
     name_job1 = list_jobs{num_j};
     mask_dep = ismember(num_out,num_in(ind_in==num_j));
@@ -152,5 +165,7 @@ for num_j = 1:nb_jobs
         deps.(name_job1) = struct([]);
     end
 end
-fprintf('\n')
+if flag_verbose
+    fprintf('\n')
+end
             

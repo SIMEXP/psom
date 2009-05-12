@@ -74,6 +74,10 @@ function [] = psom_run_pipeline(pipeline,opt)
 %               Use the qsub system (sge or pbs) to process the jobs. The
 %               pipeline runs in the background.
 %
+%           'msub'
+%               Use the msub system (MOAB) to process the jobs. The
+%               pipeline runs on all accessible resources.
+%
 %       MODE_PIPELINE_MANAGER
 %           (string, default GB_PSOM_MODE_PM defined in PSOM_GB_VARS)
 %           same as OPT.MODE, but applies to the pipeline manager itself.
@@ -229,8 +233,8 @@ end
 name_pipeline = 'PIPE';
 
 gb_name_structure = 'opt';
-gb_list_fields = {'init_matlab','flag_update','flag_debug','path_search','restart','shell_options','path_logs','command_matlab','flag_verbose','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point','time_cool_down'};
-gb_list_defaults = {gb_psom_init_matlab,true,false,path,{},gb_psom_shell_options,NaN,'',true,gb_psom_mode,gb_psom_mode_pm,0,gb_psom_qsub_options,[],[],[]};
+gb_list_fields = {'flag_pause','init_matlab','flag_update','flag_debug','path_search','restart','shell_options','path_logs','command_matlab','flag_verbose','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point','time_cool_down'};
+gb_list_defaults = {true,gb_psom_init_matlab,true,false,path,{},gb_psom_shell_options,NaN,'',true,gb_psom_mode,gb_psom_mode_pm,0,gb_psom_qsub_options,[],[],[]};
 psom_set_defaults
 
 if isempty(opt.command_matlab)
@@ -303,8 +307,8 @@ else
     opt_init.flag_verbose = opt.flag_verbose;
     opt_init.restart = opt.restart;
     opt_init.path_search = opt.path_search;
-    opt_init.flag_update = opt.flag_update;
-    opt_init.flag_debug = opt.flag_debug;
+    opt_init.flag_update = opt.flag_update;    
+    opt_init.flag_pause = opt.flag_pause;
     psom_pipeline_init(pipeline,opt_init);   
     
     %% Run the pipeline manager
@@ -319,6 +323,7 @@ else
     opt_proc.time_between_checks = opt.time_between_checks;
     opt_proc.nb_checks_per_point = opt.nb_checks_per_point;
     opt_proc.flag_debug = opt.flag_debug;
+    opt_proc.flag_verbose = opt.flag_verbose;
     opt_proc.init_matlab = opt.init_matlab;
     
     if flag_debug
@@ -339,11 +344,13 @@ else
     end
     
     %% In batch and qsub modes, monitor the execution of the pipeline
-    switch opt.mode_pipeline_manager
-
-        case {'batch','qsub'}
-
-            psom_pipeline_visu(path_logs,'monitor');
-
+    if flag_verbose
+        switch opt.mode_pipeline_manager
+            
+            case {'batch','qsub','msub'}
+                
+                psom_pipeline_visu(path_logs,'monitor');
+                
+        end
     end
 end

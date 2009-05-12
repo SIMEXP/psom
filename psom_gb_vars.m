@@ -16,7 +16,7 @@ gb_psom_command_octave = 'octave';
 
 % Options for the sge qsub system, example : '-q all.q@yeatman,all.q@zeus'
 % will force qsub to only use the yeatman workstation;
-gb_psom_qsub_options = '-r y'; 
+gb_psom_qsub_options = ''; 
 
 % Options for the shell in batch or qsub modes
 gb_psom_shell_options = ''; 
