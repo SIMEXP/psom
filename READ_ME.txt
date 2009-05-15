@@ -29,6 +29,7 @@ Release 0.8.3:
   * A new execution mode : `msub`. The options of msub are passed through `opt.qsub_options`. 
   * Verbose of all pipeline updates when restarting the pipeline manager. The pipeline execution now makes a pause and asks for the user's approval before anything is actually processed.
   * A 'time' option in `psom_pipeline_visu` to display the computation time of all jobs.
+  * A new function `psom_write_dependencies` to write dependency graphs in pdf format using the opensource graphviz package.  
   * Several minor bug fix.
 
 ==February 1st, 2009==
