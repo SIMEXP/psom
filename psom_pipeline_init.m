@@ -990,5 +990,5 @@ for num_j = list_restart % loop over jobs that need to be restarted
 end
 
 if max(flag_parent)>0
-    flag_parent = flag_parent | sub_restart_parents(flag_parent|flag_restart,pipeline,list_jobs,deps,graph_deps);
+    flag_parent = flag_parent | sub_restart_parents(flag_parent|flag_restart,pipeline,list_jobs,deps,graph_deps,flag_verbose);
 end
