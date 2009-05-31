@@ -399,8 +399,10 @@ try
     list_num_failed = find(mask_failed);
     list_num_failed = list_num_failed(:)';
     for num_j = list_num_failed
-        list_num_child = find(sub_find_children(num_j,graph_deps));
-        mask_todo(list_num_child) = false; % Remove the children of the failed job from the to-do list
+        mask_child = false([length(mask_todo) 1]);
+        mask_child(num_j) = true;
+        mask_child = sub_find_children(mask_child,graph_deps);
+        mask_todo(mask_child) = false; % Remove the children of the failed job from the to-do list
     end
     
     mask_running = false(size(mask_done));
@@ -488,8 +490,10 @@ try
                             fprintf('%s - The job %s has failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
                         end
                         sub_add_line_log(hfpl,sprintf('%s - The job %s has failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued));
-                        list_num_child = find(sub_find_children(num_j,graph_deps));
-                        mask_todo(list_num_child) = false; % Remove the children of the failed job from the to-do list
+                        mask_child = false([length(mask_todo) 1]);
+                        mask_child(num_j) = true;
+                        mask_child = sub_find_children(mask_child,graph_deps);
+                        mask_todo(mask_child) = false; % Remove the children of the failed job from the to-do list
                         
                     case 'finished'
                         
@@ -719,6 +723,7 @@ catch
     if strcmp(gb_psom_language,'matlab')
         fclose(hfpl);
     end
+    return
 end
 
 if exist('path_tmp','var') && ~flag_debug
@@ -839,34 +844,22 @@ end
 %%%%%%%%%%%%%%%%%%
 
 %% Find the children of a job
-function mask_child = sub_find_children(num_j,graph_deps)
-
-% INPUTS :
-%
-% GRAPH_DEPS
-%   (matrix) GRAPH_DEPS(J,K) == 1 if and only if JOB K depends on JOB J.
-%   GRAPH_DEPS = 0 otherwise.
-%
-% NUM_J
-%   (integer) the number of a job.
-%
-% OUTPUTS:
-%
-% MASK_CHILD
-%   (vector) MASK_CHILD(NUM_K) = 1 if job NUM_K is a child of NUM_J, and 0
-%   otherwise.
-%
-% COMMENTS:
-% This (ugly but reasonably fast) recursive code will work
+function mask_child = sub_find_children(mask,graph_deps)
+% GRAPH_DEPS(J,K) == 1 if and only if JOB K depends on JOB J. GRAPH_DEPS =
+% 0 otherwise. This (ugly but reasonably fast) recursive code will work
 % only if the directed graph defined by GRAPH_DEPS is acyclic.
+% MASK_CHILD(NUM_J) == 1 if the job NUM_J is a children of one of the job
+% in the boolean mask MASK and the job is in MASK_TODO.
+% This last restriction is used to speed up computation.
+if max(double(mask))>0
+    mask_child = max(graph_deps(mask,:),[],1);    
+    mask_child_strict = mask_child & ~mask;
+else
+    mask_child = false(size(mask));
+end
 
-mask_child = graph_deps(num_j,:)>0;
-list_num_child = find(mask_child);
-
-if ~isempty(list_num_child)
-    for num_c = list_num_child
-        mask_child = mask_child | sub_find_children(num_c,graph_deps);
-    end
+if max(mask_child)>0
+    mask_child = mask_child | sub_find_children(mask_child_strict,graph_deps);
 end
 
 %% Update (or add) a variable in an existing '.mat' file
