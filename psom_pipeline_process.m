@@ -399,7 +399,7 @@ try
     list_num_failed = find(mask_failed);
     list_num_failed = list_num_failed(:)';
     for num_j = list_num_failed
-        mask_child = false([length(mask_todo) 1]);
+        mask_child = false([1 length(mask_todo)]);
         mask_child(num_j) = true;
         mask_child = sub_find_children(mask_child,graph_deps);
         mask_todo(mask_child) = false; % Remove the children of the failed job from the to-do list
@@ -490,7 +490,7 @@ try
                             fprintf('%s - The job %s has failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
                         end
                         sub_add_line_log(hfpl,sprintf('%s - The job %s has failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued));
-                        mask_child = false([length(mask_todo) 1]);
+                        mask_child = false([1 length(mask_todo)]);
                         mask_child(num_j) = true;
                         mask_child = sub_find_children(mask_child,graph_deps);
                         mask_todo(mask_child) = false; % Remove the children of the failed job from the to-do list
