@@ -528,7 +528,7 @@ if flag_old_pipeline
 
         name_job = list_jobs{num_j};
         
-        if strcmp(job_status_old{num_j},'failed')
+        if strcmp(job_status_old{num_j},'failed')|strcmp(job_status_old{num_j},'exit')
             flag_restart(num_j) = true;            
             if flag_verbose
                 fprintf('    The job %s had failed, it will be restarted.\n',name_job)            
