@@ -851,6 +851,7 @@ function mask_child = sub_find_children(mask,graph_deps)
 % MASK_CHILD(NUM_J) == 1 if the job NUM_J is a children of one of the job
 % in the boolean mask MASK and the job is in MASK_TODO.
 % This last restriction is used to speed up computation.
+
 if max(double(mask))>0
     mask_child = max(graph_deps(mask,:),[],1)>0;    
     mask_child_strict = mask_child & ~mask;
@@ -858,7 +859,7 @@ else
     mask_child = false(size(mask));
 end
 
-if max(mask_child)>0
+if ~isempty(find(mask_child,1))
     mask_child = mask_child | sub_find_children(mask_child_strict,graph_deps);
 end
 

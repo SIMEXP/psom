@@ -457,114 +457,112 @@ if flag_old_pipeline
 else
 
     pipeline_old = struct([]);
+    all_status_old = struct([]);
+    all_logs_old = struct([]);
 
 end
 
 %% If an old pipeline exists, update the status of the jobs based on the
 %% tag files that can be found
 
-if flag_old_pipeline
-    
-    if flag_verbose
-        fprintf('    Checking for left-overs tag files...\n');
-    end
 
-    job_status = cell(size(list_jobs));
-
-    for num_j = 1:length(list_jobs)
-        name_job = list_jobs{num_j};
-        if isfield(all_status_old,name_job)
-            job_status{num_j} = all_status_old.(name_job);
-        else
-            job_status{num_j} = 'none';
-        end
-    end
-
-    %% Update the job status using the tags that can be found in the log
-    %% folder
-    mask_inq = ismember(job_status,{'submitted','running'});
-    list_num_inq = find(mask_inq);
-    list_num_inq = list_num_inq(:)';
-    list_jobs_inq = list_jobs(mask_inq);
-    curr_status = psom_job_status(path_logs,list_jobs_inq,'session');
-
-    %% Remove the dependencies on finished jobs
-    mask_finished = ismember(curr_status,'finished');
-    list_num_finished = list_num_inq(mask_finished);
-    list_num_finished = list_num_finished(:)';
-
-    for num_j = list_num_finished
-
-        name_job = list_jobs{num_j};
-        text_log = sub_read_txt([path_logs filesep name_job '.log']);
-        text_qsub_o = sub_read_txt([path_logs filesep name_job '.oqsub']);
-        text_qsub_e = sub_read_txt([path_logs filesep name_job '.eqsub']);
-
-        if ~isempty(text_qsub_o)&isempty(text_qsub_e)
-            text_log = [text_log hat_qsub_o text_qsub_o hat_qsub_e text_qsub_e];
-        end
-
-        all_logs.(name_job) = text_log;
-        job_status{num_j} = 'finished';
-    end
-
-    job_status_old = job_status;
-
+if flag_verbose
+    fprintf('    Cleaning up job status ...\n');
 end
+
+job_status = cell(size(list_jobs));
+
+for num_j = 1:length(list_jobs)
+    name_job = list_jobs{num_j};
+    if isfield(all_status_old,name_job)
+        job_status{num_j} = all_status_old.(name_job);
+    else
+        job_status{num_j} = 'none';
+    end
+end
+
+%% Update the job status using the tags that can be found in the log
+%% folder
+mask_inq = ismember(job_status,{'submitted','running'});
+list_num_inq = find(mask_inq);
+list_num_inq = list_num_inq(:)';
+list_jobs_inq = list_jobs(mask_inq);
+curr_status = psom_job_status(path_logs,list_jobs_inq,'session');
+
+%% Remove the dependencies on finished jobs
+mask_finished = ismember(curr_status,'finished');
+list_num_finished = list_num_inq(mask_finished);
+list_num_finished = list_num_finished(:)';
+
+for num_j = list_num_finished
+    
+    name_job = list_jobs{num_j};
+    text_log = sub_read_txt([path_logs filesep name_job '.log']);
+    text_qsub_o = sub_read_txt([path_logs filesep name_job '.oqsub']);
+    text_qsub_e = sub_read_txt([path_logs filesep name_job '.eqsub']);
+    
+    if ~isempty(text_qsub_o)&isempty(text_qsub_e)
+        text_log = [text_log hat_qsub_o text_qsub_o hat_qsub_e text_qsub_e];
+    end
+    
+    all_logs.(name_job) = text_log;
+    job_status{num_j} = 'finished';
+end
+
+job_status_old = job_status;
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Stage 3 : Set up the 'restart' flags %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-flag_restart = false([1 nb_jobs]);
+flag_restart = ismember(job_status_old,'none')';
 
-if flag_old_pipeline
+if flag_verbose
+    fprintf('\nSetting up the to-do list ...\n');
+end
+
+for num_j = 1:nb_jobs
     
-    if flag_verbose
-        fprintf('\nSet up restart tags on jobs ...\n');
-    end
-
-    for num_j = 1:nb_jobs
-
-        name_job = list_jobs{num_j};
-        
-        if strcmp(job_status_old{num_j},'failed')|strcmp(job_status_old{num_j},'exit')
-            flag_restart(num_j) = true;            
-            if flag_verbose
-                fprintf('    The job %s had failed, it will be restarted.\n',name_job)            
-            end
-        else
-            %% If an old pipeline exists, check if the job has been modified
-            if isfield(pipeline_old,name_job)
-                if opt.flag_update
-                    flag_same = psom_cmp_var(pipeline_old.(name_job),pipeline.(name_job));
-                    if ~flag_same&&flag_verbose                        
-                        fprintf('    The job %s has changed, it will be restarted.\n',name_job);
-                    end
-                else
-                    flag_same = true;
-                    if (num_j == 1)&&flag_verbose
-                        fprintf('    The OPT.FLAG_UPDATE is off, jobs are not going to be checked for updates.\n');
-                    end
+    name_job = list_jobs{num_j};
+    
+    if strcmp(job_status_old{num_j},'failed')|strcmp(job_status_old{num_j},'exit')
+        flag_restart(num_j) = true;
+        if flag_verbose
+            fprintf('    The job %s had failed, it will be restarted.\n',name_job)
+        end
+    else
+        %% If an old pipeline exists, check if the job has been modified
+        if isfield(pipeline_old,name_job)
+            if opt.flag_update
+                flag_same = psom_cmp_var(pipeline_old.(name_job),pipeline.(name_job));
+                if ~flag_same&&flag_verbose
+                    fprintf('    The job %s has changed, it will be restarted.\n',name_job);
                 end
-                flag_restart(num_j) = flag_restart(num_j)||~flag_same;
             else
-                flag_restart(num_j) = true;
-                if flag_verbose
-                    fprintf('    The job %s is new, it will be executed.\n',name_job)
+                flag_same = true;
+                if (num_j == 1)&&flag_verbose
+                    fprintf('    The OPT.FLAG_UPDATE is off, jobs are not going to be checked for updates.\n');
                 end
             end
-
-            %% Check if the user did not force a restart on that job
-            flag_force = psom_find_str_cell(name_job,opt.restart);
-            if flag_force
-                if flag_verbose
-                    fprintf('    User has manually forced to restart job %s.\n',name_job)
-                end
-                flag_restart(num_j) = true;
+            flag_restart(num_j) = flag_restart(num_j)||~flag_same;
+        else
+            flag_restart(num_j) = true;
+            if flag_verbose
+                fprintf('    The job %s is new, it will be executed.\n',name_job)
             end
         end
+        
+        %% Check if the user did not force a restart on that job
+        flag_force = psom_find_str_cell(name_job,opt.restart);
+        if flag_force
+            if flag_verbose
+                fprintf('    User has manually forced to restart job %s.\n',name_job)
+            end
+            flag_restart(num_j) = true;
+        end
     end
+    
 
     nb_modifs = 1;    
     while nb_modifs >0
@@ -637,7 +635,7 @@ if flag_verbose
     fprintf('\nSaving the pipeline description in the logs folder ...\n');
 end
 
-if flag_old_pipeline&&flag_pause
+if flag_pause
     fprintf('Any old description of the pipeline is going to be flushed (except for the log files of finished jobs). Press CTRL-C now to cancel or press any key to continue.\n');   
     pause
 end
