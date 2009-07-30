@@ -516,7 +516,7 @@ job_status_old = job_status;
 %% Stage 3 : Set up the 'restart' flags %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-flag_restart = ismember(job_status_old,'none')';
+flag_restart = (ismember(job_status_old,'none')|ismember(job_status_old,'failed'))';
 
 if flag_verbose
     fprintf('\nSetting up the to-do list ...\n');
