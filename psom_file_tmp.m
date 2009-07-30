@@ -48,15 +48,11 @@ function file_name = psom_file_tmp(ext)
 % THE SOFTWARE.
 
 flag_gb_psom_fast_gb = 1; %% the initialization of global variables will be as fast as possible
-
 psom_gb_vars
-c_clock = clock;
-rand('state',100000*c_clock(end));
 flag_tmp = 1;
 
 while flag_tmp == 1;
-    file_name = cat(2,gb_psom_tmp,'psom_tmp_',num2str(floor(1000000000*rand(1))),ext);
+    file_name = sprintf('%spsom_tmp_%i%s',gb_psom_tmp,floor(1000000000*rand(1)),ext);
     flag_tmp = exist(file_name)>0;
 end
-
-system(cat(2,'echo > ',file_name));
+save(file_name,'flag_tmp')
