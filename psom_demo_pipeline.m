@@ -21,7 +21,24 @@ function [] = psom_demo_pipeline(path_demo,opt)
 % OPT
 %       (structure, optional) the option structure passed on to 
 %       PSOM_RUN_PIPELINE. If not specified, the default values will be
-%       used.
+%       used. Note that the default for the demo are different from
+%       NIAK_RUN_PIPELINE. Specifically :
+%
+%       MODE
+%           default 'batch'
+%
+%       MODE_PIPELINE_MANAGER
+%           default 'session'
+%
+%       MAX_QUEUED
+%           default 2
+%
+%       TIME_BETWEEN_CHECKS
+%           default 0.5
+%
+%       This default configuration was selected for fast execution of the
+%       demo. Note that these defaults cannot be changed through editing 
+%       PSOM_GB_VARS.
 %
 % _________________________________________________________________________
 % OUTPUTS:
@@ -65,9 +82,9 @@ function [] = psom_demo_pipeline(path_demo,opt)
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Prepare the demo folder %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Setting up the default execution mode %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 psom_gb_vars
 
@@ -76,6 +93,29 @@ if nargin<1||isempty(path_demo)
 else
     local_path_demo = path_demo;
 end
+
+% Set up the options to run the pipeline
+opt.path_logs = [local_path_demo 'logs' filesep];  % where to store the log files
+
+if ~isfield(opt,'mode')
+    opt.mode = 'batch';
+end
+
+if ~isfield(opt,'mode_pipeline_manager')
+    opt.mode_pipeline_manager = 'session';
+end
+
+if ~isfield(opt,'max_queued')
+    opt.max_queued = 2;
+end
+
+if ~isfield(opt,'time_between_checks')
+    opt.time_between_checks = 0.5;
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Prepare the demo folder %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 msg = 'The demo is about to remove the content of the following folder and save the demo results there:';
 msg2 = local_path_demo;
@@ -138,9 +178,6 @@ msg2 = 'Press CTRL-C to stop here or any key to continue.';
 stars = repmat('*',[1 max(length(msg),length(msg2))]);
 fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
 pause
-
-% Set up the options to run the pipeline
-opt.path_logs = [local_path_demo 'logs' filesep];  % where to store the log files
 
 % The following line is running the pipeline manager on the toy pipeline
 psom_run_pipeline(pipeline,opt);

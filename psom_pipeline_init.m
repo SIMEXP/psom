@@ -525,9 +525,10 @@ end
 for num_j = 1:nb_jobs
     
     name_job = list_jobs{num_j};
+    flag_restart_job = flag_restart(num_j);
     
     if strcmp(job_status_old{num_j},'failed')|strcmp(job_status_old{num_j},'exit')
-        flag_restart(num_j) = true;
+        flag_restart_job = true;
         if flag_verbose
             fprintf('    The job %s had failed, it will be restarted.\n',name_job)
         end
@@ -545,9 +546,13 @@ for num_j = 1:nb_jobs
                     fprintf('    The OPT.FLAG_UPDATE is off, jobs are not going to be checked for updates.\n');
                 end
             end
-            flag_restart(num_j) = flag_restart(num_j)||~flag_same;
+            if flag_same & strcmp(job_status_old{num_j},'none')
+                fprintf('    The job %s has not yet been processed, it will be executed.\n',name_job);
+                flag_restart_job = true;
+            end
+            flag_restart_job = flag_restart_job||~flag_same;
         else
-            flag_restart(num_j) = true;
+            flag_restart_job = true;
             if flag_verbose
                 fprintf('    The job %s is new, it will be executed.\n',name_job)
             end
@@ -559,48 +564,61 @@ for num_j = 1:nb_jobs
             if flag_verbose
                 fprintf('    User has manually forced to restart job %s.\n',name_job)
             end
-            flag_restart(num_j) = true;
+            flag_restart_job = true;
         end
     end
     
-
-    nb_modifs = 1;    
-    while nb_modifs >0
-        %% If the job is restarted, also restart all of its children
-        flag_restart2 = flag_restart | sub_find_children(flag_restart,graph_deps);
-
-        list_add = find(flag_restart2&~flag_restart);
-        if ~isempty(list_add)
-            if flag_verbose
-                fprintf('    The following job(s) will be restarted because they are children of restarted jobs :\n')
-            end
-            for num_a = 1:length(list_add)                
+    %% If the job is restarted, iteratively restart all its children and
+    %% parents that produce necessary and missing input files
+    if flag_restart_job
+        
+        mask_new_restart = false(size(flag_restart));
+        mask_new_restart(num_j) = true;        
+        flag_restart(num_j) = true;
+        
+        while any(mask_new_restart)
+            
+            %% restart the children of the restarted jobs that were not
+            %% already planned to be restarted
+            mask_new_restart2 = sub_find_children(mask_new_restart,graph_deps);
+            mask_new_restart2 = mask_new_restart2 & ~flag_restart;           
+            
+            list_add = find(mask_new_restart2&~mask_new_restart);
+            if ~isempty(list_add)
                 if flag_verbose
-                    fprintf('        %s\n',list_jobs{list_add(num_a)});
+                    fprintf('    The following job(s) will be restarted because they are children of restarted jobs :\n')
+                end
+                for num_a = 1:length(list_add)
+                    if flag_verbose
+                        fprintf('        %s\n',list_jobs{list_add(num_a)});
+                    end
                 end
             end
-        end
-
-        % Restart the parents of 'restart' jobs that produce files that are
-        % used by 'restart' jobs
-        flag_restart3 = flag_restart2 | sub_restart_parents(flag_restart2,pipeline,list_jobs,deps,graph_deps,flag_verbose);
-
-        list_add = find(flag_restart3&~flag_restart2);
-        if ~isempty(list_add)
-            if flag_verbose
-                fprintf('    The following job(s) will be restarted because they are producing missing files needed to run some of the restarted jobs :\n')
-            end
-            for num_a = 1:length(list_add)
+            
+            %% restart the parents of the restarted jobs 
+            mask_new_restart3 = sub_restart_parents(mask_new_restart,flag_restart,pipeline,list_jobs,deps,graph_deps,flag_verbose);
+            mask_new_restart3 = mask_new_restart3 & ~flag_restart;
+            
+            list_add2 = find(mask_new_restart3&~mask_new_restart);
+            if ~isempty(list_add2)
                 if flag_verbose
-                    fprintf('        %s\n',list_jobs{list_add(num_a)});
+                    fprintf('    The following job(s) will be restarted because they are producing missing files needed to run some of the restarted jobs :\n')
+                end
+                for num_a = 1:length(list_add2)
+                    if flag_verbose
+                        fprintf('        %s\n',list_jobs{list_add2(num_a)});
+                    end
                 end
             end
+            
+            %% Iterate the process on the children and parents that were newly assigned
+            %% a restart flag            
+            flag_restart(mask_new_restart2) = true;
+            flag_restart(mask_new_restart3) = true;
+            mask_new_restart = (mask_new_restart3 | mask_new_restart2)&~mask_new_restart;
+            
         end
-
-        nb_modifs = max(double(flag_restart3&~flag_restart));
-        flag_restart = flag_restart3;
     end
-
 end
 
 %% Initialize the status :
@@ -928,37 +946,32 @@ else
     str_txt = '';
 end
 
-%% Recursively find all the jobs that depend on one job
+%% find all the jobs that depend on one job 
 function mask_child = sub_find_children(mask,graph_deps)
 % GRAPH_DEPS(J,K) == 1 if and only if JOB K depends on JOB J. GRAPH_DEPS =
 % 0 otherwise. This (ugly but reasonably fast) recursive code will work
 % only if the directed graph defined by GRAPH_DEPS is acyclic.
 
 if max(double(mask))>0
-    mask_child = max(graph_deps(mask,:),[],1);
-    mask_child_strict = mask_child & ~mask;
+    mask_child = max(graph_deps(mask,:),[],1);    
 else
     mask_child = false(size(mask));
 end
 
-if max(mask_child)>0
-    mask_child = mask_child | sub_find_children(mask_child_strict,graph_deps);
-end
-
-%% Recursively test if the inputs of some jobs are missing, and set restart
+%% Test if the inputs of some jobs are missing, and set restart
 %% flags on the jobs that can produce those inputs.
-function flag_parent = sub_restart_parents(flag_restart,pipeline,list_jobs,deps,graph_deps,flag_verbose)
+function flag_parent = sub_restart_parents(flag_restart_new,flag_restart,pipeline,list_jobs,deps,graph_deps,flag_verbose)
 
-list_restart = find(flag_restart);
+list_restart = find(flag_restart_new);
 
-flag_parent = false(size(flag_restart));
+flag_parent = false(size(flag_restart_new));
 
 for num_j = list_restart % loop over jobs that need to be restarted
     
     name_job = list_jobs{num_j};
     
-    % Pick up parents that won't be restarted
-    list_num_parent = find(graph_deps(:,num_j)&~flag_restart(:)&~flag_parent(:)); 
+    % Pick up parents that are not already scheduled to be restarted
+    list_num_parent = find(graph_deps(:,num_j)&~flag_restart_new(:)&~flag_restart(:));     
     
     for num_l = list_num_parent'
         
@@ -966,7 +979,7 @@ for num_j = list_restart % loop over jobs that need to be restarted
         flag_OK = true;
         
         for num_f = 1:length(deps.(name_job).(name_job2))
-            flag_file = exist(deps.(name_job).(name_job2){num_f},'file');            
+            flag_file = exist(deps.(name_job).(name_job2){num_f},'file');
             
             if ~flag_file
                 if flag_verbose
@@ -976,7 +989,7 @@ for num_j = list_restart % loop over jobs that need to be restarted
                     else
                         fprintf('        %s\n',deps.(name_job).(name_job2){num_f});
                     end
-                end                   
+                end
             end
             flag_OK = flag_OK & flag_file;
         end
@@ -985,8 +998,5 @@ for num_j = list_restart % loop over jobs that need to be restarted
             flag_parent(num_l) = true;
         end
     end
-end
-
-if max(flag_parent)>0
-    flag_parent = flag_parent | sub_restart_parents(flag_parent|flag_restart,pipeline,list_jobs,deps,graph_deps,flag_verbose);
+    
 end

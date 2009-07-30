@@ -859,7 +859,7 @@ else
     mask_child = false(size(mask));
 end
 
-if ~isempty(find(mask_child,1))
+if any(mask_child)
     mask_child = mask_child | sub_find_children(mask_child_strict,graph_deps);
 end
 
