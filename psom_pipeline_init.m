@@ -516,7 +516,7 @@ job_status_old = job_status;
 %% Stage 3 : Set up the 'restart' flags %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-flag_restart = (ismember(job_status_old,'none')|ismember(job_status_old,'failed'))';
+flag_restart = (ismember(job_status_old,'none')|ismember(job_status_old,'failed')|ismember(job_status_old,'submitted'))';
 
 if flag_verbose
     fprintf('\nSetting up the to-do list ...\n');
@@ -548,6 +548,9 @@ for num_j = 1:nb_jobs
             end
             if flag_same & strcmp(job_status_old{num_j},'none')
                 fprintf('    The job %s has not yet been processed, it will be executed.\n',name_job);
+                flag_restart_job = true;
+            elseif flag_same & strcmp(job_status_old{num_j},'submitted')
+                fprintf('    The job %s was not submitted successfully, it will be restarted.\n',name_job);
                 flag_restart_job = true;
             end
             flag_restart_job = flag_restart_job||~flag_same;
