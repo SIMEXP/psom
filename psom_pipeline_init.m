@@ -870,7 +870,7 @@ for num_j = 1:length(list_jobs)
 
         end
         
-        if exist(list_files{num_f}) & ~flag_finished(num_j)
+        if ~flag_finished(num_j) && exist(list_files{num_f},'file')
             
             delete(list_files{num_f});
             

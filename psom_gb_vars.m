@@ -48,7 +48,7 @@ gb_psom_tmp = cat(2,filesep,'tmp',filesep);
 gb_psom_version = '0.8.3'; % PSOM release number
 
 %% Is the environment Octave or Matlab ?
-if exist('OCTAVE_VERSION')    
+if exist('OCTAVE_VERSION','builtin')    
     % this is octave !
     gb_psom_language = 'octave'; 
 else
