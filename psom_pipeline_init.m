@@ -95,6 +95,14 @@ function file_pipeline = psom_pipeline_init(pipeline,opt)
 %           files are missing. This lets the user an opportunity to cancel
 %           the pipeline execution before anything is written on the disk.
 %
+%       FLAG_CLEAN
+%           (boolean, default true) if FLAG_CLEAN is true, before a job is
+%           restarted all files named as the outputs will be deleted. This
+%           is to avoid any confusion as of when a particular output has
+%           been created, in case overwritting would not be successfull.
+%           This behavior may not be desirable when a particular job is
+%           actually able to recover from where it was interrupted.
+%
 %       FLAG_VERBOSE
 %           (boolean, default true) if the flag is true, then the function 
 %           prints some infos during the processing.
@@ -291,8 +299,8 @@ end
 
 %% Options
 gb_name_structure = 'opt';
-gb_list_fields = {'flag_pause','flag_update','path_search','restart','path_logs','command_matlab','flag_verbose'};
-gb_list_defaults = {true,true,path,{},NaN,'',true};
+gb_list_fields = {'flag_clean','flag_pause','flag_update','path_search','restart','path_logs','command_matlab','flag_verbose'};
+gb_list_defaults = {true,true,true,path,{},NaN,'',true};
 psom_set_defaults
 name_pipeline = 'PIPE';
 
@@ -870,7 +878,7 @@ for num_j = 1:length(list_jobs)
 
         end
         
-        if ~flag_finished(num_j) && exist(list_files{num_f},'file')
+        if flag_clean&&~flag_finished(num_j) && exist(list_files{num_f},'file')
             
             delete(list_files{num_f});
             

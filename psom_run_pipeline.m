@@ -233,8 +233,8 @@ end
 name_pipeline = 'PIPE';
 
 gb_name_structure = 'opt';
-gb_list_fields = {'flag_pause','init_matlab','flag_update','flag_debug','path_search','restart','shell_options','path_logs','command_matlab','flag_verbose','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point','time_cool_down'};
-gb_list_defaults = {true,gb_psom_init_matlab,true,false,path,{},gb_psom_shell_options,NaN,'',true,gb_psom_mode,gb_psom_mode_pm,0,gb_psom_qsub_options,[],[],[]};
+gb_list_fields = {'flag_clean','flag_pause','init_matlab','flag_update','flag_debug','path_search','restart','shell_options','path_logs','command_matlab','flag_verbose','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point','time_cool_down'};
+gb_list_defaults = {true,true,gb_psom_init_matlab,true,false,path,{},gb_psom_shell_options,NaN,'',true,gb_psom_mode,gb_psom_mode_pm,0,gb_psom_qsub_options,[],[],[]};
 psom_set_defaults
 
 if isempty(opt.command_matlab)
@@ -309,6 +309,7 @@ else
     opt_init.path_search = opt.path_search;
     opt_init.flag_update = opt.flag_update;    
     opt_init.flag_pause = opt.flag_pause;
+    opt_init.flag_clean = opt.flag_clean;
     psom_pipeline_init(pipeline,opt_init);   
     
     %% Run the pipeline manager
