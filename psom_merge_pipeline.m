@@ -7,7 +7,7 @@ function struct12 = psom_merge_structs(struct1,struct2)
 % entry).
 %
 % SYNTAX:
-%   PIPE12 = NIAK_MERGE_STRUCTS(PIPE1,PIPE2)
+%   PIPE12 = PSOM_MERGE_PIPELINE(PIPE1,PIPE2)
 %
 % _________________________________________________________________________
 % INPUTS:
