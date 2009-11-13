@@ -227,7 +227,7 @@ switch action
         if isempty(opt_action)
             ind_job = 1:length(list_jobs);
         else
-            ind_job =  find(niak_find_str_cell(list_jobs,opt_action));
+            ind_job =  find(psom_find_str_cell(list_jobs,opt_action));
             ind_job = ind_job(:)';
         end
 
