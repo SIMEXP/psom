@@ -159,13 +159,13 @@ pipeline.tseries2.opt.nb_samples = pipeline.message.opt.nb_samples;
 pipeline.fft.command = 'load(files_in{1}); ftseries = zeros([size(tseries,1) 2]); ftseries(:,1) = fft(tseries); load(files_in{2}); ftseries(:,2) = fft(tseries); save(files_out,''ftseries'')';
 pipeline.fft.files_in = {pipeline.tseries1.files_out,pipeline.tseries2.files_out};
 pipeline.fft.files_out = [local_path_demo 'ftseries.mat'];
-pipeline.fft.opt = struct([]);
+pipeline.fft.opt = struct();
 
 pipeline.weights.command = 'load(files_in.fft); load(files_in.sessions.session1); res = ftseries * weights; save(files_out,''res'')';
 pipeline.weights.files_in.fft = pipeline.fft.files_out;
 pipeline.weights.files_in.sessions.session1 = [local_path_demo 'weights.mat'];
 pipeline.weights.files_out = [local_path_demo 'results.mat'];
-pipeline.weights.opt = struct([]);
+pipeline.weights.opt = struct();
 
 psom_visu_dependencies(pipeline);
 
