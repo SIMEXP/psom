@@ -1,4 +1,4 @@
-function struct12 = psom_merge_structs(struct1,struct2)
+function struct12 = psom_merge_pipeline(struct1,struct2)
 %
 % _________________________________________________________________________
 % SUMMARY PSOM_MERGE_PIPELINE
@@ -61,6 +61,6 @@ struct12 = struct1;
 
 for num_f = 1:length(list_fields)
     
-    struct12 = setfield(struct12,list_fields{num_f},getfield(struct2,list_fields{num_f}));
+    struct12.(list_fields{num_f}) = struct2.(list_fields{num_f});
     
 end
