@@ -117,12 +117,15 @@ end
 
 %% Get status
 file_pipeline = [path_logs 'PIPE.mat'];
+file_jobs = [path_logs 'PIPE_jobs.mat'];
 name_pipeline = 'PIPE';
 file_status = [path_logs filesep name_pipeline '_status.mat'];
 file_status_backup = [path_logs filesep name_pipeline '_status_backup.mat'];
 file_logs = [path_logs filesep name_pipeline '_logs.mat'];
 file_logs_backup = [path_logs filesep name_pipeline '_logs_backup.mat'];
-load(file_pipeline,'list_jobs');
+pipeline = load(file_jobs);
+list_jobs = fieldnames(pipeline);
+
 try
     all_status = load(file_status);
 catch
@@ -222,7 +225,7 @@ switch action
 
     case 'time'
 
-        %% Prints the log of one job
+        %% Prints the computation time for a list of jobs
 
         if isempty(opt_action)
             ind_job = 1:length(list_jobs);
