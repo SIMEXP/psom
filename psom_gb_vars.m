@@ -15,7 +15,8 @@ gb_psom_command_matlab = 'matlab';
 gb_psom_command_octave = 'octave'; 
 
 % Options for the sge qsub system, example : '-q all.q@yeatman,all.q@zeus'
-% will force qsub to only use the yeatman workstation;
+% will force qsub to only use the yeatman and zeus workstations through the
+% queue called all.q
 gb_psom_qsub_options = ''; 
 
 % Options for the shell in batch or qsub modes

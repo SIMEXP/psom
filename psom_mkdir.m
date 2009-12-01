@@ -77,7 +77,15 @@ function [success,message,messageid] = psom_mkdir(path_name)
 
 list_path = psom_string2words(path_name,{filesep});
 
-path_curr = filesep;
+if ismember(computer,{'PCWIN','windows'})
+    % This is windows, include the volume name in the root directory
+    path_curr = list_path{1};
+    path_curr = [path_curr filesep];
+    list_path = list_path(2:end);
+else
+    % this is a reasonable OS, the root is /
+    path_curr = filesep;
+end
 
 success = 1;
 message = '';

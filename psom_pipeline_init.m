@@ -665,7 +665,7 @@ if flag_verbose
 end
 
 if flag_pause
-    fprintf('Any old description of the pipeline is going to be flushed (except for the log files of finished jobs). Press CTRL-C now to cancel or press any key to continue.\n');   
+    fprintf('Any old description of the pipeline is going to be flushed (except for the log files of finished jobs).\nPress CTRL-C now to cancel or press any key to continue.\n');   
     pause
 end
 
