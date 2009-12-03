@@ -79,16 +79,10 @@ gb_psom_path_psom = [gb_psom_path_psom filesep];
 gb_psom_path_demo = cat(2,gb_psom_path_psom,'data_demo',filesep);
 
 %% What is the operating system ?
-comp = computer;
-tag_unix = {'SOL2','GLNX86','GLNXA64','unix','linux'};
-tag_windaub = {'PCWIN','windows'};
-
-if max(ismember(comp,tag_unix))>0
+if isunix
     gb_psom_OS = 'unix';
-elseif max(ismember(comp,tag_windaub))>0
+elseif ispc
     gb_psom_OS = 'windows';
-elseif ~isempty(findstr('linux',comp))
-    gb_psom_OS = 'unix';
 else
     warning('System %s unknown!\n',comp);
     gb_psom_OS = 'unkown';
