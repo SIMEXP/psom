@@ -304,7 +304,7 @@ switch opt.mode_pipeline_manager
                         if ispc                                                        
                             instr_job = sprintf('%s -automation -nojvm -r "path_curr = pwd, cd %s, load(''%s'',''path_session''), path(path_session), opt.time_cool_down = %1.3f, opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.mode_pipeline_manager = ''session''; opt.max_queued = %i; opt.qsub_options = ''%s'', opt.flag_debug = %i, psom_pipeline_process(''%s'',opt), cd(path_curr), exit"\nexit\n',opt.command_matlab,path_logs,file_pipeline,opt.time_cool_down,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,double(flag_debug),file_pipeline);
                         else
-                            instr_job = sprintf('%s -nosplash -nojvm -minimize -r "cd %s, load(''%s'',''path_session''), path(path_session), opt.time_cool_down = %1.3f, opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.mode_pipeline_manager = ''session''; opt.max_queued = %i; opt.qsub_options = ''%s'', opt.flag_debug = %i, psom_pipeline_process(''%s'',opt),exit"\n',opt.command_matlab,path_logs,file_pipeline,opt.time_cool_down,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,double(flag_debug),file_pipeline);
+                            instr_job = sprintf('%s -nosplash -nojvm -r "cd %s, load(''%s'',''path_session''), path(path_session), opt.time_cool_down = %1.3f, opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.mode_pipeline_manager = ''session''; opt.max_queued = %i; opt.qsub_options = ''%s'', opt.flag_debug = %i, psom_pipeline_process(''%s'',opt),exit"\n',opt.command_matlab,path_logs,file_pipeline,opt.time_cool_down,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,double(flag_debug),file_pipeline);
                         end
                     case 'octave'
                         instr_job = sprintf('%s --silent --eval "cd %s, load(''%s'',''path_session''), path(path_session), opt.time_cool_down = %1.3f, opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.mode_pipeline_manager = ''session''; opt.max_queued = %i; opt.qsub_options = ''%s'', opt.flag_debug = %i, psom_pipeline_process(''%s'',opt),exit"\nexit',opt.command_matlab,path_logs,file_pipeline,opt.time_cool_down,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,double(flag_debug),file_pipeline);
@@ -582,8 +582,7 @@ try
             sub_add_line_log(hfpl,sprintf('%s - The job %s has been submitted to the queue (%i jobs in queue).\n',datestr(clock),name_job,nb_queued));
             
             %% Create a temporary shell scripts for 'batch' or 'qsub' modes
-            if ~strcmp(opt.mode,'session')
-                
+            if ~strcmp(opt.mode,'session')                
                 switch gb_psom_language
                     case 'matlab'
                         if ~isempty(opt.shell_options)
@@ -593,7 +592,11 @@ try
                                 instr_job = sprintf('%s\n%s -nosplash -nojvm -r "%s, load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, psom_run_job(''%s''),exit">%s\n',opt.shell_options,opt.command_matlab,opt.init_matlab,file_pipeline,file_job,file_log);
                             end
                         else
-                            instr_job = sprintf('%s -nosplash -minimize -nojvm -r "%s, load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, psom_run_job(''%s''),exit">%s\n',opt.command_matlab,opt.init_matlab,file_pipeline,file_job,file_log);
+                            if ispc
+                                instr_job = sprintf('%s -nosplash -automation -nojvm -r "%s, load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, psom_run_job(''%s''),exit">%s\n',opt.command_matlab,opt.init_matlab,file_pipeline,file_job,file_log);
+                            else
+                                instr_job = sprintf('%s -nosplash -nojvm -r "%s, load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, psom_run_job(''%s''),exit">%s\n',opt.command_matlab,opt.init_matlab,file_pipeline,file_job,file_log);
+                            end
                         end
                     case 'octave'
                         if ~isempty(opt.shell_options)
@@ -729,20 +732,7 @@ try
     
 catch
     
-    errmsg = lasterror;
-    
-%     if exist('path_tmp','var')&&~flag_debug
-%         if exist(path_tmp,'dir')
-%             if strcmp(gb_psom_language,'octave')
-%                 instr_rm = ['rm -rf ' path_tmp];
-%                 [succ,msg] = system(instr_rm);
-%             else
-%                 rmdir(path_tmp,'s'); % Clean the temporary folder
-%             end
-%         end
-%     end
-%     
-    
+    errmsg = lasterror;        
     fprintf('\n\n******************\nSomething went bad ... the pipeline has FAILED !\nThe last error message occured was :\n%s\n',errmsg.message);
     
     sub_add_line_log(hfpl,sprintf('\n\n******************\nSomething went bad ... the pipeline has FAILED !\nThe last error message occured was :\n%s\n',errmsg.message));
@@ -764,17 +754,6 @@ catch
     end
     return
 end
-
-% if exist('path_tmp','var') && ~flag_debug
-%     if exist(path_tmp,'dir')
-%         if strcmp(gb_psom_language,'octave')
-%             instr_rm = ['rm -rf ' path_tmp];
-%             [succ,msg] = system(instr_rm);
-%         else
-%             rmdir(path_tmp,'s'); % Clean the temporary folder
-%         end
-%     end
-% end
 
 %% Print general info about the pipeline
 
