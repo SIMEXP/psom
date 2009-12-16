@@ -1,25 +1,49 @@
-=﻿Pipeline System for Octave and Matlab (PSOM), version 0.8.3=
+=﻿Pipeline System for Octave and Matlab (PSOM), version 0.8.4=
 
-PSOM is a tool to manage pipelines in Matlab or Octave, both within a single session or within a parallel computing environment. A pipeline is a collection of jobs, i.e. some matlab or octave codes that are using files as inputs and are producing files as outputs. PSOM is automatizing all the boring tasks for you: 
-  * Create folders for outputs
-  * Keep track of all options
-  * Generate log files
-  * Job failure will not crash the pipeline. The pipeline manager identifies the jobs that have failed to produce their expected outputs, and will be able to restart these failed jobs latter.
-  * If the pipeline is restarted while some jobs have been modified, the pipeline manager will restart only the jobs that these changes will impact.
-  * Determine which jobs can run in parallel by examining the dependencies between inputs and outputs of jobs. The same code can run a pipeline locally or in parallel on multiple PCs, three execution modes being available:
-    * in a single matlab/octave session, on a single machine
-    * in multiple matlab/octave sessions through batch, on a single machine with multiple CPUs.
-    * in multiple matlab/octave sessions trough qsub/msub (pbs, sge, torque and MOAB are supported), on multiple computers.
-The project is currently in a beta-testing stage and has been tested under Linux. A windows-compatible version is on its way, but there are currently known bugs. 
+ pipeline is a collection of matlab or octave codes with a well identified set of options that are using files as inputs and are producing files as outputs. PSOM is a framework to implement, run and re-run pipelines in Matlab or Octave :
+  * Describe the pipeline using a straightforward structure representation.
+  * Automatically generate log files and keep track of the pipeline description.
+  * Handle job failures : successful completion of jobs is checked and failed jobs can be restarted.
+  * Handle updates of the pipeline : change options or add jobs and let PSOM figure out what to reprocess !
+  * Automatically run jobs in parallel whenever possible using multiple CPUs or within a distributed computing environment.
 
-PSOM was implemented by Pierre [http://wiki.bic.mni.mcgill.ca/index.php/PierreBellec Bellec] in the lab of [http://www.bic.mni.mcgill.ca/~alan/ Alan Evans] at the !McConnell Brain Imaging Center, Montreal Neurological Institute, !McGill University, Canada, 2008. Core ideas for PSOM have been inspired by the [http://wiki.bic.mni.mcgill.ca/index.php/PoorMansPipeline Poor Man's Pipeline (PMP) project] developed by Jason Lerch, which was itself based on [http://www.bic.mni.mcgill.ca/~jason/rppl/rppl.html RPPL] by Alberto Jimenez and Alex Zijdenbos. 
+PSOM is an opensource project distributed under an [http://www.opensource.org/licenses/mit-license.php MIT opensource license]. It is currently in a beta-testing stage and has been tested under Linux (in Matlab and Octave). A windows-compatible matlab version is on its way, but there are currently known bugs. To install PSOM, just extract the [http://code.google.com/p/psom/downloads/list archive] in a folder and add that folder to your matlab or octave search path. You're done ! You may have to adapt the [http://code.google.com/p/psom/wiki/ConfigurationPsom configuration] to your local production environment. To use PSOM, you can have a look at the code of `psom_demo_pipeline`, or read [http://code.google.com/p/psom/wiki/HowToUsePsom the tutorial].
 
-PSOM is an opensource project distributed under an [http://www.opensource.org/licenses/mit-license.php MIT opensource license]. It is possible to download the project on this [http://code.google.com/p/psom/downloads/list website]. To install PSOM, just extract the archive in a folder and add that folder to your matlab or octave search path. You're done ! To use PSOM, you can have a look at the code of `psom_demo_pipeline`, or read [http://code.google.com/p/psom/wiki/HowToUsePsom the tutorial].
+PSOM was implemented by Pierre [http://wiki.bic.mni.mcgill.ca/index.php/PierreBellec Bellec] in the lab of [http://www.bic.mni.mcgill.ca/~alan/ Alan Evans] at the !McConnell Brain Imaging Center, Montreal Neurological Institute, !McGill University, Canada, 2008. Core ideas have been inspired by the [http://wiki.bic.mni.mcgill.ca/index.php/PoorMansPipeline Poor Man's Pipeline (PMP) project] developed by Jason Lerch, which was itself based on [http://www.bic.mni.mcgill.ca/~jason/rppl/rppl.html RPPL] by Alberto Jimenez and Alex Zijdenbos. 
 
 Please visit http://code.google.com/p/psom/ for updates.
 
 ----
+LICENSE
+
+Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008.
+Maintainer : pbellec@bic.mni.mcgill.ca
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+----
 =News=
+==December 12th, 2009==
+Release 0.8.4 : support of PSOM in Matlab for windows, in `session` and `batch` modes. This is an unstable version, any feedback will be greatly appreciated.
+
+==October 8th, 2009==
+There is now a [http://code.google.com/p/psom/wiki/ConfigurationPsom tutorial] which describes in details how to configure PSOM.
 
 ==May 15th, 2009==
 Release 0.8.3:
