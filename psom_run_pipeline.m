@@ -310,6 +310,11 @@ else
     opt_init.flag_update = opt.flag_update;    
     opt_init.flag_pause = opt.flag_pause;
     opt_init.flag_clean = opt.flag_clean;
+    
+    if flag_debug
+        opt_init
+    end
+
     psom_pipeline_init(pipeline,opt_init);   
     
     %% Run the pipeline manager

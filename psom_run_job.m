@@ -113,11 +113,11 @@ try
     list_files = psom_files2cell(files_out);
 
     for num_f = 1:length(list_files)
-        if ~exist(list_files{num_f})
-            fprintf('The output file %s has not been generated!\n',list_files{num_f});
+        if ~exist(list_files{num_f},'file')&~exist(list_files{num_f},'dir')
+            fprintf('The output file or directory %s has not been generated!\n',list_files{num_f});
             flag_failed = true;
         else
-            fprintf('The output file %s was successfully generated!\n',list_files{num_f});
+            fprintf('The output file or directory %s was successfully generated!\n',list_files{num_f});
         end
     end
 

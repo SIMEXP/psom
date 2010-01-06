@@ -821,12 +821,12 @@ for num_j = list_num_unfinished
     
     for num_f = 1:length(list_files_necessary)
         
-        if ~exist(list_files_necessary{num_f},'file')&~isempty(list_files_necessary{num_f})&~strcmp(list_files_necessary{num_f},'gb_niak_omitted')
+        if ~exist(list_files_necessary{num_f},'file')&~exist(list_files_necessary{num_f},'dir')&~isempty(list_files_necessary{num_f})&~strcmp(list_files_necessary{num_f},'gb_niak_omitted')
 
             if flag_job_OK
-                msg_files = sprintf('        Job %s : the file %s is unfortunately missing.\n',name_job,list_files_necessary{num_f});
+                msg_files = sprintf('        Job %s, the following file(s) are missing : %s',name_job,list_files_necessary{num_f});
             else
-                msg_files = char(msg_files,sprintf('        Job %s : the file %s is unfortunately missing.\n',name_job,list_files_necessary{num_f}));
+                msg_files = char(msg_files,sprintf(' , %s',list_files_necessary{num_f}));
             end
             flag_ready = false;
             flag_job_OK = false;
@@ -834,22 +834,20 @@ for num_j = list_num_unfinished
         end
     end
     
-    if ~flag_job_OK
-        job_status{num_j} = 'failed';
-        all_logs.(name_job) = sprintf('%s\n\n%s',datestr(now),msg_files');
-        fprintf('%s',msg_files');        
+    if ~flag_job_OK        
+        fprintf('%s\n',msg_files');        
     end
     
 end
 
 if ~flag_ready
     if flag_pause
-        fprintf('\nSome jobs were marked as failed because some inputs were missing.\nPress CTRL-C now if you do not wish to run the pipeline or any key to continue...\n');
+        fprintf('\nThe input files of some jobs were found missing.\nPress CTRL-C now if you do not wish to run the pipeline or any key to continue anyway...\n');
         if flag_pause
             pause
         end
     else
-        warning('\nSome inputs of jobs of the pipeline were missing. Those jobs were marked as ''failed'', see the logs for more details.\n');
+        warning('\nThe input files of some jobs were found missing.\n');
     end
 end
 
