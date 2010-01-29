@@ -346,6 +346,17 @@ if flag_verbose
     fprintf('Examining the dependencies of the pipeline ...\n');
 end
 
+%% Check that all jobs have a "command" field
+if flag_verbose
+    fprintf('    Checking that all jobs are associated with a command ...\n');
+end
+
+for num_j = 1:nb_jobs
+    if ~isfield(pipeline.(list_jobs{num_j}),'command')
+        error('The job %s has no ''command'' field. Sorry dude, I cannot process that pipeline.\n',list_jobs{num_j});
+    end
+end
+
 %% Generate dependencies
 
 if flag_verbose
@@ -842,10 +853,8 @@ end
 
 if ~flag_ready
     if flag_pause
-        fprintf('\nThe input files of some jobs were found missing.\nPress CTRL-C now if you do not wish to run the pipeline or any key to continue anyway...\n');
-        if flag_pause
-            pause
-        end
+        fprintf('\nThe input files of some jobs were found missing.\nPress CTRL-C now if you do not wish to run the pipeline or any key to continue anyway...\n');        
+        pause        
     else
         warning('\nThe input files of some jobs were found missing.\n');
     end
