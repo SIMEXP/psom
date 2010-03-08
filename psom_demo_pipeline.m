@@ -15,9 +15,10 @@ function [] = psom_demo_pipeline(path_demo,opt)
 % PATH_DEMO
 %       (string, default local_path_demo defined in the file 
 %       PSOM_GB_VARS) 
-%       the full path to the PSOM demo folder. The dataset can be found in 
-%       multiple file formats at the following address : 
-%       http://www.bic.mni.mcgill.ca/users/pbellec/demo_niak/
+%       the full path to the PSOM demo folder. IMPORTANT WARNING : PSOM 
+%       will empty totally this folder and then build example files and 
+%       logs in it.
+%
 % OPT
 %       (structure, optional) the option structure passed on to 
 %       PSOM_RUN_PIPELINE. If not specified, the default values will be
