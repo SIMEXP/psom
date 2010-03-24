@@ -441,7 +441,7 @@ try
     nb_points = 0;
     
     %% The pipeline manager really starts here
-    while (max(mask_todo)>0) || (max(mask_running)>0)
+    while ((max(mask_todo)>0) || (max(mask_running)>0)) && exist(file_pipeline_running,'file')
         
         flag_nothing_happened = true;
         
@@ -757,15 +757,24 @@ end
 
 %% Print general info about the pipeline
 
-msg_line1 = sprintf('The processing of the pipeline was completed.');
-msg_line2 = sprintf('%s',datestr(now));
+msg_line1 = sprintf('The processing of the pipeline is terminated.');
+msg_line2 = sprintf('See report below for job completion status.');
+msg_line3 = sprintf('%s',datestr(now));
 size_msg = max([size(msg_line1,2),size(msg_line2,2)]);
-msg = sprintf('%s\n%s',msg_line1,msg_line2);
+msg = sprintf('%s\n%s\n%s',msg_line1,msg_line2,msg_line3);
 stars = repmat('*',[1 size_msg]);
 if flag_verbose
     fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
 end
 sub_add_line_log(hfpl,sprintf('\n%s\n%s\n%s\n',stars,msg,stars));
+
+%% Report if the lock file was manually removed
+if exist('file_pipe_running','var')
+    if ~exist(file_pipe_running,'file')
+        fprintf('The pipeline manager was interrupted because the .lock file was manually deleted.\n');
+    end
+    sub_add_line_log(hfpl,sprintf('The pipeline manager was interrupted because the .lock file was manually deleted.\n'));
+end
 
 %% Print a list of failed jobs
 list_num_failed = find(ismember(job_status,'failed'));
