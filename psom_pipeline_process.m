@@ -771,9 +771,9 @@ sub_add_line_log(hfpl,sprintf('\n%s\n%s\n%s\n',stars,msg,stars));
 %% Report if the lock file was manually removed
 if exist('file_pipe_running','var')
     if ~exist(file_pipe_running,'file')
-        fprintf('The pipeline manager was interrupted because the .lock file was manually deleted.\n');
+        fprintf('\nThe pipeline manager was interrupted because the .lock file was manually deleted.\n\n');
     end
-    sub_add_line_log(hfpl,sprintf('The pipeline manager was interrupted because the .lock file was manually deleted.\n'));
+    sub_add_line_log(hfpl,sprintf('\nThe pipeline manager was interrupted because the .lock file was manually deleted.\n\n'));
 end
 
 %% Print a list of failed jobs
@@ -819,9 +819,9 @@ if ~isempty(list_num_none)
         sub_add_line_log(hfpl,sprintf('The following job has not been processed due to a dependence on a failed job:\n\n    '));
     else
         if flag_verbose
-            fprintf('The following jobs have not been processed due to a dependence on a failed job:\n\n    ');
+            fprintf('The following jobs have not been processed due to a dependence on a failed job or the interruption of the pipeline manager :\n\n    ');
         end
-        sub_add_line_log(hfpl,sprintf('The following jobs have not been processed due to a dependence on a failed job:\n\n    '));
+        sub_add_line_log(hfpl,sprintf('The following jobs have not been processed due to a dependence on a failed job or the interruption of the pipeline manager :\n\n    '));
     end
     for num_j = list_num_none
         name_job = list_jobs{num_j};
