@@ -441,7 +441,7 @@ try
     nb_points = 0;
     
     %% The pipeline manager really starts here
-    while ((max(mask_todo)>0) || (max(mask_running)>0)) && exist(file_pipeline_running,'file')
+    while ((max(mask_todo)>0) || (max(mask_running)>0)) && exist(file_pipe_running,'file')
         
         flag_nothing_happened = true;
         
