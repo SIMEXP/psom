@@ -70,7 +70,13 @@ else
                 flag_equal = false;
                 return
             else
-                flag_equal = ~max(var1(:) ~= var2(:));
+                var1 = var1(:);
+                var2 = var2(:);
+                mask_nan = isnan(var1);
+                flag_equal = false(size(var1));
+                flag_equal(mask_nan) = isnan(var2(mask_nan));
+                flag_equal(~mask_nan) = var1(~mask_nan) == var2(~mask_nan);
+                flag_equal = min(flag_equal);                
             end
 
         case 'cell'
