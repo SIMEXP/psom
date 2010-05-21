@@ -17,7 +17,12 @@ function [status,msg] = psom_run_job(file_job,opt)
 %
 % This function is not meant to be used by itself. It is called by
 % PSOM_PIPELINE_PROCESS and PSOM_RUN_PIPELINE
-%
+% 
+% NOTE 2:
+% When running a job, this function will create a global variable named
+% "gb_psom_name_job". This can be accessed by the command executed by the
+% job. This may be useful for example to build unique temporary file names.
+% 
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008.
 % Maintainer : pbellec@bic.mni.mcgill.ca
 % See licensing information in the code.
@@ -41,6 +46,8 @@ function [status,msg] = psom_run_job(file_job,opt)
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
 
+global gb_psom_name_job
+
 psom_gb_vars
 
 %% Options
@@ -63,6 +70,7 @@ end
 
 %% Generate file names
 [path_f,name_job,ext_f] = fileparts(file_job);
+gb_psom_name_job = name_job;
 
 if ~strcmp(ext_f,'.mat')
     error('The job file %s should be a .mat file !',file_job);
