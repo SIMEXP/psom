@@ -1,9 +1,5 @@
 function [flag_fail,err_msg] = psom_write_dependencies(file_name,pipeline,opt)
-%
-% _________________________________________________________________________
-% SUMMARY PSOM_WRITE_GRAPH
-%
-% Write the dependency graph of a pipeline in the graphviz .dot format
+% Write the dependency graph of a pipeline in in a pdf file.
 %
 % SYNTAX
 % [FLAG_FAIL,ERR_MSG] = PSOM_WRITE_GRAPH(FILE_NAME,GRAPH,LABEL_NODES)

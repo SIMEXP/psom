@@ -144,24 +144,29 @@ stars = repmat('*',[1 max(length(msg),length(msg2))]);
 fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
 pause
 
+% Job "message"
 pipeline.message.command = 'fprintf(''The number of samples was : %i. Well that info will be in the logs anyway but still...\n'',opt.nb_samples)';
 pipeline.message.opt.nb_samples = 30;
 
+% Job "tseries1"
 pipeline.tseries1.command = 'tseries = randn([opt.nb_samples 1]); save(files_out,''tseries'')';
 pipeline.tseries1.files_in = {};
 pipeline.tseries1.files_out = [local_path_demo 'tseries1.mat'];
 pipeline.tseries1.opt.nb_samples = pipeline.message.opt.nb_samples;
 
+% Job "tseries2"
 pipeline.tseries2.command = 'tseries = randn([opt.nb_samples 1]); save(files_out,''tseries'')';
 pipeline.tseries2.files_in = {};
 pipeline.tseries2.files_out = [local_path_demo 'tseries2.mat'];
 pipeline.tseries2.opt.nb_samples = pipeline.message.opt.nb_samples;
 
+% Job "fft"
 pipeline.fft.command = 'load(files_in{1}); ftseries = zeros([size(tseries,1) 2]); ftseries(:,1) = fft(tseries); load(files_in{2}); ftseries(:,2) = fft(tseries); save(files_out,''ftseries'')';
 pipeline.fft.files_in = {pipeline.tseries1.files_out,pipeline.tseries2.files_out};
 pipeline.fft.files_out = [local_path_demo 'ftseries.mat'];
 pipeline.fft.opt = struct();
 
+% Job "weights"
 pipeline.weights.command = 'load(files_in.fft); load(files_in.sessions.session1); res = ftseries * weights; save(files_out,''res'')';
 pipeline.weights.files_in.fft = pipeline.fft.files_out;
 pipeline.weights.files_in.sessions.session1 = [local_path_demo 'weights.mat'];
