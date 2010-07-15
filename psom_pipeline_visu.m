@@ -213,11 +213,7 @@ switch action
             old_pager = page_output_immediately(true);
         end
         
-        if strcmp(gb_psom_language,'matlab')
-            sub_tail(file_monitor,file_pipe_running);
-        else
-            system(['tail -f ' file_monitor]);
-        end
+        sub_tail(file_monitor,file_pipe_running);                
         
         if strcmp(gb_psom_language,'octave')
             page_output_immediately(old_pager);
