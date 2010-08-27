@@ -115,6 +115,11 @@ if ~exist('path_logs','var') || ~exist('action','var')
     error('SYNTAX: [] = PSOM_PIPELINE_VISU(PATH_LOGS,ACTION,OPT). Type ''help psom_pipeline_visu'' for more info.')
 end
 
+%% Add the folder separator if it was omitted at the end of PATH_LOGS
+if ~strcmp(path_logs(end),filesep)
+	path_logs = [path_logs filesep];
+end
+	
 %% Get status
 file_pipeline = [path_logs 'PIPE.mat'];
 file_jobs = [path_logs 'PIPE_jobs.mat'];

@@ -4,12 +4,12 @@
 %% you want, this might be the place to fix that.
 
 %% Use the local configuration file if any
-if ~exist('gb_psom_gb_vars_local')&&gb_psom_gb_vars_local&&exist('psom_gb_vars_local.m','file')
-   gb_psom_gb_vars_local = true;
-   psom_gb_vars_local
-   return
+if ~exist('gb_psom_gb_vars_local','var')&&exist('psom_gb_vars_local.m','file')		
+	gb_psom_gb_vars_local = true;
+	psom_gb_vars_local
+	return	
 end
-
+		
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% The following variables need to be changed to configure the pipeline %%
 %% system                                                               %%
