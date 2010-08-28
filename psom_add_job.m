@@ -3,7 +3,7 @@ function pipeline2 = psom_add_job(pipeline,name_job,name_brick,files_in,files_ou
 %
 % SYNTAX :
 % PIPELINE =
-% PSOM_ADD_JOB(PIPELINE,NAME_JOB,NAME_BRICK,FILES_IN,FILES_OUT,OPT)
+% PSOM_ADD_JOB(PIPELINE,NAME_JOB,NAME_BRICK,FILES_IN,FILES_OUT,OPT,FLAG_DEFAULT)
 %
 % _________________________________________________________________________
 % INPUTS :

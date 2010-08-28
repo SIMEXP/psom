@@ -30,7 +30,9 @@ function [] = psom_pipeline_process(file_pipeline,opt)
 %               take advantage of muli-processors machine. The pipeline
 %               will run in the background, you can continue to work, close
 %               matlab or even unlog from your machine on a linux system
-%               without interrupting it.
+%               without interrupting it. The command used to send the jobs
+%               in the background is "at" on linux/mac, and "start" on
+%               windows.
 %
 %           'qsub'
 %               Use the qsub system (sge or pbs) to process the jobs. The
@@ -232,6 +234,19 @@ switch opt.mode
         end
 end
 
+switch gb_psom_language
+    case 'matlab'
+        if ispc
+            opt_matlab = '-automation -nodesktop -r';
+        else
+            opt_matlab = '-nosplash -nodesktop -r';
+        end
+        start_matlab = opt.command_matlab;
+    case 'octave'
+        opt_matlab = '--silent --eval';
+        start_matlab = opt.command_octave;
+end
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% The pipeline processing starts now  %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -244,6 +259,7 @@ hat_qsub_e = sprintf('\n\n*****************\nERROR QSUB\n*****************\n');
 [path_logs,name_pipeline,ext_pl] = fileparts(file_pipeline);
 file_pipe_running = cat(2,path_logs,filesep,name_pipeline,'.lock');
 file_pipe_log = cat(2,path_logs,filesep,name_pipeline,'_history.txt');
+file_manager_opt = cat(2,path_logs,filesep,name_pipeline,'_manager_opt.mat');
 file_logs = cat(2,path_logs,filesep,name_pipeline,'_logs.mat');
 file_logs_backup = cat(2,path_logs,filesep,name_pipeline,'_logs_backup.mat');
 file_status = cat(2,path_logs,filesep,name_pipeline,'_status.mat');
@@ -267,109 +283,86 @@ end
 str_now = datestr(clock);
 save(file_pipe_running,'str_now');
 
-%% If specified, start the pipeline in the background
-switch opt.mode_pipeline_manager
+%% If specified, start the pipeline manager in the background
+if ismember(opt.mode_pipeline_manager,{'batch','qsub','msub'})
     
-    case {'batch','qsub','msub'}
-        
-        switch opt.mode_pipeline_manager
-            case {'qsub','msub'}
-                switch opt.mode_pipeline_manager
-                    case 'qsub'
-                        if flag_verbose
-                            fprintf('I am sending the pipeline manager in the background using the ''qsub'' command.\n')
-                        end
-                    case 'msub'
-                        if flag_verbose
-                            fprintf('I am sending the pipeline manager in the background using the ''msub'' command.\n')
-                        end
-                end
-                
-                switch gb_psom_language
-                    case 'matlab'
-                        instr_job = sprintf('%s -nosplash -nojvm -r "cd %s, load(''%s'',''path_work''), path(path_work), opt.time_cool_down = %1.3f, opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.mode_pipeline_manager = ''session''; opt.max_queued = %i; opt.qsub_options = ''%s'', opt.shell_options = ''%s'', opt.flag_debug = %i, psom_pipeline_process(''%s'',opt),exit"\n',opt.command_matlab,path_logs,file_pipeline,opt.time_cool_down,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,opt.shell_options,double(flag_debug),file_pipeline);
-                    case 'octave'
-                        instr_job = sprintf('%s --silent --eval "cd %s, load(''%s'',''path_work''), path(path_work), opt.time_cool_down = %1.3f, opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.mode_pipeline_manager = ''session''; opt.max_queued = %i; opt.qsub_options = ''%s'', opt.shell_options = ''%s'', opt.flag_debug = %i, psom_pipeline_process(''%s'',opt),exit"\n',opt.command_matlab,path_logs,file_pipeline,opt.time_cool_down,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,opt.shell_options,double(flag_debug),file_pipeline);
-                end
-            otherwise
-                if flag_verbose
-                    if ispc
-                        fprintf('I am sending the pipeline manager in the background using the ''start'' command.\n')
-                    else
-                        fprintf('I am sending the pipeline manager in the background using the ''at'' command.\n')
-                    end
-                end
-                switch gb_psom_language
-                    case 'matlab'
-                        if ispc                                                        
-                            instr_job = sprintf('%s -automation -nojvm -r "path_curr = pwd, cd %s, load(''%s'',''path_session''), path(path_session), opt.time_cool_down = %1.3f, opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.mode_pipeline_manager = ''session''; opt.max_queued = %i; opt.qsub_options = ''%s'', opt.shell_options = ''%s'', opt.flag_debug = %i, psom_pipeline_process(''%s'',opt), cd(path_curr), exit"\nexit\n',opt.command_matlab,path_logs,file_pipeline,opt.time_cool_down,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,opt.shell_options,double(flag_debug),file_pipeline);
-                        else
-                            instr_job = sprintf('%s -nosplash -nojvm -r "cd %s, load(''%s'',''path_session''), path(path_session), opt.time_cool_down = %1.3f, opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.mode_pipeline_manager = ''session''; opt.max_queued = %i; opt.qsub_options = ''%s'', opt.shell_options = ''%s'', opt.flag_debug = %i, psom_pipeline_process(''%s'',opt),exit"\n',opt.command_matlab,path_logs,file_pipeline,opt.time_cool_down,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,opt.shell_options,double(flag_debug),file_pipeline);
-                        end
-                    case 'octave'
-                        instr_job = sprintf('%s --silent --eval "cd %s, load(''%s'',''path_session''), path(path_session), opt.time_cool_down = %1.3f, opt.nb_checks_per_point = %i; opt.time_between_checks = %1.3f; opt.command_matlab = ''%s''; opt.mode = ''%s''; opt.mode_pipeline_manager = ''session''; opt.max_queued = %i; opt.qsub_options = ''%s'', opt.shell_options = ''%s'', opt.flag_debug = %i, psom_pipeline_process(''%s'',opt),exit"\nexit',opt.command_matlab,path_logs,file_pipeline,opt.time_cool_down,opt.nb_checks_per_point,opt.time_between_checks,opt.command_matlab,opt.mode,opt.max_queued,opt.qsub_options,opt.shell_options,double(flag_debug),file_pipeline);
-                end
-        end                
-        
-        if flag_debug
-            if ispc
-                % for windows
-                fprintf('\n\nThe following batch script is used to run the pipeline manager in the background :\n%s\n\n',instr_job);
-            else
-                fprintf('\n\nThe following shell script is used to run the pipeline manager in the background :\n%s\n\n',instr_job);
-            end
-            fprintf('The pipeline manager is about to start up now. Press CTRL-C to abort.');
-            pause
-        end
-        if ispc
-            file_shell = [path_tmp filesep 'pipeline_manager.bat'];
-        else
-            file_shell = [path_tmp filesep 'pipeline_manager.sh'];
-        end
-        hf = fopen(file_shell,'w');
-        fprintf(hf,'%s',instr_job);
-        fclose(hf);
-        
-        switch opt.mode_pipeline_manager
+    % save the options of the pipeline manager
+    opt.mode_pipeline_manager = 'session';
+    save(file_manager_opt,'opt');
+    
+    if ispc && strcmp(opt.mode_pipeline_manager,'batch')
+        mode_pipeline_manager = 'start';
+    else
+        mode_pipeline_manager = 'at';
+    end
+    
+    if flag_verbose
+        fprintf('I am sending the pipeline manager in the background using the ''%s'' command.\n',mode_pipeline_manager)
+    end
             
-            case 'qsub'
-                
-                file_qsub_o = [path_logs filesep name_pipeline '.oqsub'];
-                file_qsub_e = [path_logs filesep name_pipeline '.eqsub'];
-                instr_batch = ['qsub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_pipeline(1:min(15,length(name_pipeline))) ' ' opt.qsub_options ' ' file_shell];
-                
-            case 'msub'
-                
-                file_qsub_o = [path_logs filesep name_pipeline '.oqsub'];
-                file_qsub_e = [path_logs filesep name_pipeline '.eqsub'];
-                instr_batch = ['msub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_pipeline(1:min(15,length(name_pipeline))) ' ' opt.qsub_options ' ' file_shell];
-                
-            otherwise
-                
-                switch gb_psom_OS
-                    case 'windows'
-                        instr_batch = sprintf('start /min %s',file_shell);
-                    otherwise
-                        instr_batch = ['at -f ' file_shell ' now'];
-                end
-                
-        end
+    instr_job = sprintf('%s %s "load(''%s'',''path_work''), path(path_work), load(''%s''), psom_pipeline_process(''%s'',opt),exit"\n',start_matlab,opt_matlab,file_pipeline,file_manager_opt,file_pipeline);
         
-        [fail,msg] = system(instr_batch);
-        if fail~=0
-            if ispc
-                % This is windows
-                error('Something went bad when running the pipeline batch. The error message was : %s',msg)
-            else
-                error('Something went bad with the at command. The error message was : %s',msg)
+    if flag_debug
+        if ispc
+            % for windows
+            fprintf('\n\nThe following batch script is used to run the pipeline manager in the background :\n%s\n\n',instr_job);
+        else
+            fprintf('\n\nThe following shell script is used to run the pipeline manager in the background :\n%s\n\n',instr_job);
+        end
+        fprintf('The pipeline manager is about to start up now. Press CTRL-C to abort.');
+        pause
+    end
+    
+    if ispc
+        file_shell = [path_tmp filesep 'pipeline_manager.bat'];
+    else
+        file_shell = [path_tmp filesep 'pipeline_manager.sh'];
+    end
+    
+    hf = fopen(file_shell,'w');
+    fprintf(hf,'%s',instr_job);
+    fclose(hf);
+    
+    switch opt.mode_pipeline_manager
+        
+        case 'qsub'
+            
+            file_qsub_o = [path_logs filesep name_pipeline '.oqsub'];
+            file_qsub_e = [path_logs filesep name_pipeline '.eqsub'];
+            instr_batch = ['qsub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_pipeline(1:min(15,length(name_pipeline))) ' ' opt.qsub_options ' ' file_shell];
+            
+        case 'msub'
+            
+            file_qsub_o = [path_logs filesep name_pipeline '.oqsub'];
+            file_qsub_e = [path_logs filesep name_pipeline '.eqsub'];
+            instr_batch = ['msub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_pipeline(1:min(15,length(name_pipeline))) ' ' opt.qsub_options ' ' file_shell];
+            
+        otherwise
+            
+            switch gb_psom_OS
+                case 'windows'
+                    instr_batch = sprintf('start /min %s',file_shell);
+                otherwise
+                    instr_batch = ['at -f ' file_shell ' now'];
             end
+            
+    end
+    
+    [fail,msg] = system(instr_batch);
+    if fail~=0
+        if ispc
+            % This is windows
+            error('Something went bad when running the pipeline batch. The error message was : %s',msg)
+        else
+            error('Something went bad with the at command. The error message was : %s',msg)
         end
-        if flag_debug
-            fprintf('\n\nThe call to at/qsub/msub produced the following message :\n%s\n\n',msg);
-        end
-                
-        return
-        
+    end
+    if flag_debug
+        fprintf('\n\nThe call to at/qsub/msub produced the following message :\n%s\n\n',msg);
+    end
+    
+    return
+    
 end
 
 % a try/catch block is used to clean temporary file if the user is
@@ -582,38 +575,11 @@ try
             sub_add_line_log(hfpl,sprintf('%s - The job %s has been submitted to the queue (%i jobs in queue).\n',datestr(clock),name_job,nb_queued));
             
             %% Create a temporary shell scripts for 'batch' or 'qsub' modes
-            if ~strcmp(opt.mode,'session')                
-                switch gb_psom_language
-                    case 'matlab'
-                        if ~isempty(opt.shell_options)
-                            if ispc
-                                instr_job = sprintf('%s\n%s -automation -nojvm -r "%s, load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, psom_run_job(''%s''),exit">%s\n',opt.shell_options,opt.command_matlab,opt.init_matlab,file_pipeline,file_job,file_log);
-                            else
-                                instr_job = sprintf('%s\n%s -nosplash -nojvm -r "%s, load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, psom_run_job(''%s''),exit">%s\n',opt.shell_options,opt.command_matlab,opt.init_matlab,file_pipeline,file_job,file_log);
-                            end
-                        else
-                            if ispc
-                                instr_job = sprintf('%s -nosplash -automation -nojvm -r "%s, load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, psom_run_job(''%s''),exit">%s\n',opt.command_matlab,opt.init_matlab,file_pipeline,file_job,file_log);
-                            else
-                                instr_job = sprintf('%s -nosplash -nojvm -r "%s, load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, psom_run_job(''%s''),exit">%s\n',opt.command_matlab,opt.init_matlab,file_pipeline,file_job,file_log);
-                            end
-                        end
-                    case 'octave'
-                        if ~isempty(opt.shell_options)
-                            
-                            if ~isempty(opt.init_matlab)
-                                instr_job = sprintf('%s\n%s -q --eval "%s, load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, psom_run_job(''%s''),exit">%s\n',opt.shell_options,opt.command_matlab,opt.init_matlab,file_pipeline,file_job,file_log);
-                            else
-                                instr_job = sprintf('%s\n%s -q --eval "load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, psom_run_job(''%s''),exit">%s\n',opt.shell_options,opt.command_matlab,file_pipeline,file_job,file_log);
-                            end
-                            
-                        else
-                            if ~isempty(opt.init_matlab)
-                                instr_job = sprintf('%s -q --eval "%s, load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, psom_run_job(''%s''),exit">%s\n',opt.command_matlab,opt.init_matlab,file_pipeline,file_job,file_log);
-                            else
-                                instr_job = sprintf('%s -q --eval "load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, psom_run_job(''%s''),exit">%s\n',opt.command_matlab,file_pipeline,file_job,file_log);
-                            end
-                        end
+            if ~strcmp(opt.mode,'session')
+                instr_job = sprintf('%s %s "%s, load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, psom_run_job(''%s''),exit">%s\n',start_matlab,opt_matlab,opt.init_matlab,file_pipeline,file_job,file_log);
+                                                
+                if ~isempty(opt.shell_options)
+                    instr_job = sprintf('%s\n%s',opt.shell_options,instr_job);
                 end
                 
                 if ispc
@@ -622,6 +588,7 @@ try
                 else
                     file_shell = [path_tmp filesep name_job '.sh'];
                 end
+                
                 file_exit = [path_logs filesep name_job '.exit'];
                 hf = fopen(file_shell,'w');
                 if ispc
@@ -891,7 +858,6 @@ if any(mask_child)
 end
 
 %% Update (or add) a variable in an existing '.mat' file
-
 function sub_add_var(file_name,var_name,var_value)
 
 eval([var_name ' = var_value;']);
@@ -913,7 +879,6 @@ else
 end
 
 %% Clean up the tags and logs associated with a job
-
 function [] = sub_clean_job(path_logs,name_job)
 
 files{1} = [path_logs filesep name_job '.log'];

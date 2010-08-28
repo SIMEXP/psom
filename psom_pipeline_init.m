@@ -734,8 +734,7 @@ else
 end
 
 path_work = opt.path_search;
-path_session = path;
-save(file_pipeline,'history','deps','graph_deps','list_jobs','files_in','files_out','path_work','path_session')
+save(file_pipeline,'history','deps','graph_deps','list_jobs','files_in','files_out','path_work')
 
 %% Save the status
 
