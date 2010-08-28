@@ -240,11 +240,9 @@ switch gb_psom_language
             opt_matlab = '-automation -nodesktop -r';
         else
             opt_matlab = '-nosplash -nodesktop -r';
-        end
-        start_matlab = opt.command_matlab;
+        end        
     case 'octave'
-        opt_matlab = '--silent --eval';
-        start_matlab = opt.command_octave;
+        opt_matlab = '--silent --eval';       
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -300,7 +298,7 @@ if ismember(opt.mode_pipeline_manager,{'batch','qsub','msub'})
         fprintf('I am sending the pipeline manager in the background using the ''%s'' command.\n',mode_pipeline_manager)
     end
             
-    instr_job = sprintf('%s %s "load(''%s'',''path_work''), path(path_work), load(''%s''), psom_pipeline_process(''%s'',opt),exit"\n',start_matlab,opt_matlab,file_pipeline,file_manager_opt,file_pipeline);
+    instr_job = sprintf('%s %s "load(''%s'',''path_work''), path(path_work), load(''%s''), psom_pipeline_process(''%s'',opt),exit"\n',command_matlab,opt_matlab,file_pipeline,file_manager_opt,file_pipeline);
         
     if flag_debug
         if ispc
@@ -576,7 +574,7 @@ try
             
             %% Create a temporary shell scripts for 'batch' or 'qsub' modes
             if ~strcmp(opt.mode,'session')
-                instr_job = sprintf('%s %s "%s, load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, psom_run_job(''%s''),exit">%s\n',start_matlab,opt_matlab,opt.init_matlab,file_pipeline,file_job,file_log);
+                instr_job = sprintf('%s %s "%s, load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, psom_run_job(''%s''),exit">%s\n',command_matlab,opt_matlab,opt.init_matlab,file_pipeline,file_job,file_log);
                                                 
                 if ~isempty(opt.shell_options)
                     instr_job = sprintf('%s\n%s',opt.shell_options,instr_job);
