@@ -17,17 +17,17 @@ function [deps,list_jobs,files_in,files_out,graph_deps] = psom_build_dependencie
 %       <JOB_NAME> a structure with the following fields:
 %
 %               FILES_IN
-%                   (string, cell of strings or structure whos terminal 
+%                   (string, cell of strings or structure whos terminal
 %                   fields are strings or cell of strings)
 %                   a list of the input files of the job
 %
 %               FILES_OUT
-%                   (string, cell of strings or structure whos terminal 
+%                   (string, cell of strings or structure whos terminal
 %                   fields are strings or cell of strings)
 %                   a list of the output files of the job
 %
 % FLAG_VERBOSE
-%       (boolean, default true) if the flag is true, then the function 
+%       (boolean, default true) if the flag is true, then the function
 %       prints some infos during the processing.
 %
 % _________________________________________________________________________
@@ -36,7 +36,7 @@ function [deps,list_jobs,files_in,files_out,graph_deps] = psom_build_dependencie
 % DEPS
 %       (structure) the field names are identical to PIPELINE
 %
-%       <JOB_NAME> a structure with the following fields : 
+%       <JOB_NAME> a structure with the following fields :
 %
 %           <JOB_NAME2>
 %               (cell of strings)
@@ -48,17 +48,17 @@ function [deps,list_jobs,files_in,files_out,graph_deps] = psom_build_dependencie
 % LIST_JOBS
 %       (cell of strings)
 %       The list of all job names
-% 
+%
 % FILES_IN
 %       (structure) the field names are identical to PIPELINE
 %
-%       <JOB_NAME> 
+%       <JOB_NAME>
 %           (cell of strings) the list of input files for the job
 %
 % FILES_OUT
 %       (structure) the field names are identical to PIPELINE
 %
-%       <JOB_NAME> 
+%       <JOB_NAME>
 %           (cell of strings) the list of output files for the job
 %
 % GRAPH_DEPS
@@ -115,15 +115,27 @@ if flag_verbose
 end
 for num_j = 1:nb_jobs
     name_job = list_jobs{num_j};
-    if isfield(pipeline.(name_job),'files_in')
-        files_in.(name_job) = unique(psom_files2cell(pipeline.(name_job).files_in));
-    else
-        files_in.(name_job) = {};
+    try
+        if isfield(pipeline.(name_job),'files_in')
+            files_in.(name_job) = unique(psom_files2cell(pipeline.(name_job).files_in));
+        else
+            files_in.(name_job) = {};
+        end
+    catch
+        fprintf('There was a problem with the input files of job %s\n',name_job)
+        errmsg = lasterror;
+        rethrow(errmsg);
     end
-    if isfield(pipeline.(name_job),'files_out')
-        files_out.(name_job) = unique(psom_files2cell(pipeline.(name_job).files_out));
-    else
-        files_out.(name_job) = {};
+    try
+        if isfield(pipeline.(name_job),'files_out')
+            files_out.(name_job) = unique(psom_files2cell(pipeline.(name_job).files_out));
+        else
+            files_out.(name_job) = {};
+        end
+    catch
+        fprintf('There was a problem with the output files of the job %s\n',name_job)
+        errmsg = lasterror;
+        rethrow(errmsg);
     end
 end
 [char_in,ind_in] = psom_struct_cell_string2char(files_in);
