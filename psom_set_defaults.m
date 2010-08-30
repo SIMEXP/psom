@@ -61,9 +61,9 @@
 % THE SOFTWARE.
 
 %% Test if the structure exist, otherwise initialize an empty one
-try
+if exist(gb_name_structure,'var')
     eval(cat(2,'gb_psom_struct = ',gb_name_structure,';'));    
-catch
+else
     gb_psom_struct = struct([]);
 end
    
