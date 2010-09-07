@@ -574,7 +574,13 @@ try
             
             %% Create a temporary shell scripts for 'batch' or 'qsub' modes
             if ~strcmp(opt.mode,'session')
-                instr_job = sprintf('%s %s "%s, load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, psom_run_job(''%s''),exit">%s\n',command_matlab,opt_matlab,opt.init_matlab,file_pipeline,file_job,file_log);
+                if ~isempty(opt.init_matlab)
+                    if ~ismember(opt.init_matlab(end),{',',';'})
+                        opt.init_matlab = [opt.init_matlab ','];
+                    end
+                end
+                        
+                instr_job = sprintf('%s %s "%s load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, psom_run_job(''%s''),exit">%s\n',command_matlab,opt_matlab,opt.init_matlab,file_pipeline,file_job,file_log);
                                                 
                 if ~isempty(opt.shell_options)
                     instr_job = sprintf('%s\n%s',opt.shell_options,instr_job);
