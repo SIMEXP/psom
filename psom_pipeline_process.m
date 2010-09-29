@@ -112,7 +112,6 @@ function [] = psom_pipeline_process(file_pipeline,opt)
 %
 % _________________________________________________________________________
 % SEE ALSO:
-%
 % PSOM_PIPELINE_INIT, PSOM_PIPELINE_VISU, PSOM_DEMO_PIPELINE,
 % PSOM_RUN_PIPELINE.
 %
@@ -298,7 +297,7 @@ if ismember(opt.mode_pipeline_manager,{'batch','qsub','msub'})
         fprintf('I am sending the pipeline manager in the background using the ''%s'' command.\n',mode_pipeline_manager)
     end
             
-    instr_job = sprintf('%s %s "load(''%s'',''path_work''), path(path_work), load(''%s''), psom_pipeline_process(''%s'',opt),exit"\n',command_matlab,opt_matlab,file_pipeline,file_manager_opt,file_pipeline);
+    instr_job = sprintf('%s %s "%s, load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, load(''%s''), psom_pipeline_process(''%s'',opt),exit"\n',command_matlab,opt_matlab,opt.init_matlab,file_pipeline,file_manager_opt,file_pipeline);
         
     if flag_debug
         if ispc
