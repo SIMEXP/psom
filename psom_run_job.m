@@ -1,11 +1,7 @@
 function [status,msg] = psom_run_job(file_job,opt)
-%
-% _________________________________________________________________________
-% SUMMARY PSOM_RUN_JOB
-%
-% Load some variables in a matlab file and run the corresponding job. The
-% function is generating empty files to flag the status of the processing
-% (running, failed or finished). It also verboses some information.
+% Load some variables in a matlab file and run the corresponding job. 
+% The function is generating empty files to flag the status of the 
+% processing (running, failed or finished). 
 %
 % SYNTAX:
 % [STATUS,MSG] = PSOM_RUN_JOB(FILE_JOB)

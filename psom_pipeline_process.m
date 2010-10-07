@@ -297,7 +297,11 @@ if ismember(opt.mode_pipeline_manager,{'batch','qsub','msub'})
         fprintf('I am sending the pipeline manager in the background using the ''%s'' command.\n',mode_pipeline_manager)
     end
             
-    instr_job = sprintf('%s %s "%s, load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, load(''%s''), psom_pipeline_process(''%s'',opt),exit"\n',command_matlab,opt_matlab,opt.init_matlab,file_pipeline,file_manager_opt,file_pipeline);
+    if ~isempty(opt.init_matlab)
+        instr_job = sprintf('%s %s "%s load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, load(''%s''), psom_pipeline_process(''%s'',opt),exit"\n',command_matlab,opt_matlab,opt.init_matlab,file_pipeline,file_manager_opt,file_pipeline);
+    else
+        instr_job = sprintf('%s %s "load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, load(''%s''), psom_pipeline_process(''%s'',opt),exit"\n',command_matlab,opt_matlab,file_pipeline,file_manager_opt,file_pipeline);
+    end
         
     if flag_debug
         if ispc
@@ -579,7 +583,11 @@ try
                     end
                 end
                         
-                instr_job = sprintf('%s %s "%s load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, psom_run_job(''%s''),exit">%s\n',command_matlab,opt_matlab,opt.init_matlab,file_pipeline,file_job,file_log);
+                if ~isempty(opt.init_matlab)
+                    instr_job = sprintf('%s %s "%s load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, psom_run_job(''%s''),exit">%s\n',command_matlab,opt_matlab,opt.init_matlab,file_pipeline,file_job,file_log);
+                else
+                    instr_job = sprintf('%s %s "load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, psom_run_job(''%s''),exit">%s\n',command_matlab,opt_matlab,file_pipeline,file_job,file_log);
+                end
                                                 
                 if ~isempty(opt.shell_options)
                     instr_job = sprintf('%s\n%s',opt.shell_options,instr_job);

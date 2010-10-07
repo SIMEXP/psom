@@ -1,8 +1,4 @@
 function [] = psom_run_pipeline(pipeline,opt)
-%
-% _________________________________________________________________________
-% SUMMARY OF PSOM_RUN_PIPELINE
-%
 % Run a pipeline using the Pipeline System for Octave and Matlab (PSOM).
 %
 % SYNTAX:
@@ -11,7 +7,7 @@ function [] = psom_run_pipeline(pipeline,opt)
 % _________________________________________________________________________
 % INPUTS:
 %
-% * PIPELINE
+% PIPELINE
 %       (structure) a matlab structure which defines a pipeline.
 %       Each field name <JOB_NAME> will be used to name jobs of the
 %       pipeline. The fields <JOB_NAME> are themselves structure, with the
@@ -45,7 +41,7 @@ function [] = psom_run_pipeline(pipeline,opt)
 %           impact on dependencies. OPT can for example be a structure,
 %           where each field will be used as an argument of the command.
 %
-% * OPT
+% OPT
 %       (structure) with the following fields :
 %
 %       PATH_LOGS
@@ -172,8 +168,8 @@ function [] = psom_run_pipeline(pipeline,opt)
 %
 % _________________________________________________________________________
 % SEE ALSO:
-%
-% PSOM_DEMO_PIPELINE, PSOM_PIPELINE_VISU
+% PSOM_DEMO_PIPELINE, PSOM_PIPELINE_VISU, PSOM_PIPELINE_PROCESS,
+% PSOM_PIPELINE_INIT
 %
 % _________________________________________________________________________
 % COMMENTS:

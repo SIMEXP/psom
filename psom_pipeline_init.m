@@ -1,9 +1,5 @@
 function file_pipeline = psom_pipeline_init(pipeline,opt)
-%
-% _________________________________________________________________________
-% SUMMARY PSOM_PIPELINE_INIT
-%
-% Prepare the log folders of a pipeline before execution. 
+% Prepare the log folders of a pipeline before execution by PSOM.
 %
 % When the pipeline is executed for the first time, that means 
 % initialize the dependency graph, store individual job description 
@@ -116,7 +112,6 @@ function file_pipeline = psom_pipeline_init(pipeline,opt)
 %
 % _________________________________________________________________________
 % SEE ALSO:
-%
 % PSOM_PIPELINE_PROCESS, PSOM_PIPELINE_VISU, PSOM_DEMO_PIPELINE,
 % PSOM_RUN_PIPELINE
 %
