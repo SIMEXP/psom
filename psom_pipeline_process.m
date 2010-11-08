@@ -324,27 +324,19 @@ if ismember(opt.mode_pipeline_manager,{'batch','qsub','msub'})
     fprintf(hf,'%s',instr_job);
     fclose(hf);
     
-    switch opt.mode_pipeline_manager
-        
-        case 'qsub'
-            
-            file_qsub_o = [path_logs filesep name_pipeline '.oqsub'];
-            file_qsub_e = [path_logs filesep name_pipeline '.eqsub'];
-            instr_batch = ['qsub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_pipeline(1:min(15,length(name_pipeline))) ' ' opt.qsub_options ' ' file_shell];
-            
-        case 'msub'
-            
-            file_qsub_o = [path_logs filesep name_pipeline '.oqsub'];
-            file_qsub_e = [path_logs filesep name_pipeline '.eqsub'];
-            instr_batch = ['msub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_pipeline(1:min(15,length(name_pipeline))) ' ' opt.qsub_options ' ' file_shell];
-            
-        otherwise
-            
+    file_qsub_o = [path_logs filesep name_pipeline '.oqsub'];
+    file_qsub_e = [path_logs filesep name_pipeline '.eqsub'];
+    switch opt.mode_pipeline_manager  
+        case 'qsub'            
+            instr_batch = ['qsub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_pipeline(1:min(15,length(name_pipeline))) ' ' opt.qsub_options ' ' file_shell];            
+        case 'msub'            
+            instr_batch = ['msub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_pipeline(1:min(15,length(name_pipeline))) ' ' opt.qsub_options ' ' file_shell];            
+        otherwise            
             switch gb_psom_OS
                 case 'windows'
                     instr_batch = sprintf('start /min %s',file_shell);
                 otherwise
-                    instr_batch = ['nohup sh ' file_shell '> /dev/null &'];
+                    instr_batch = ['nohup sh ' file_shell ' > ' file_qsub_o ' 2> ' file_qsub_e '< /dev/null &'];
             end
             
     end
@@ -613,7 +605,9 @@ try
             end
             
             %% run the job
-            
+            file_qsub_o = [path_logs filesep name_job '.oqsub'];
+            file_qsub_e = [path_logs filesep name_job '.eqsub'];
+                    
             switch opt.mode
                 
                 case 'session'
@@ -627,7 +621,7 @@ try
                     if ispc
                         instr_batch = ['start /min ' file_shell];
                     else
-                        instr_batch = ['nohup sh ' file_shell ' &'];
+                        instr_batch = ['nohup sh ' file_shell ' > ' file_qsub_o ' 2> ' file_qsub_e '< /dev/null &'];
                     end
                     
                     if flag_debug
@@ -649,10 +643,7 @@ try
                     end
                     
                 case 'qsub'
-                    
-                    file_qsub_o = [path_logs filesep name_job '.oqsub'];
-                    file_qsub_e = [path_logs filesep name_job '.eqsub'];
-                    
+                                        
                     instr_qsub = ['qsub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_job(1:min(15,length(name_job))) ' ' opt.qsub_options ' ' file_shell];
                     if flag_debug
                         [fail,msg] = system(instr_qsub);
