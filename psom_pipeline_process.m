@@ -31,7 +31,7 @@ function [] = psom_pipeline_process(file_pipeline,opt)
 %               will run in the background, you can continue to work, close
 %               matlab or even unlog from your machine on a linux system
 %               without interrupting it. The command used to send the jobs
-%               in the background is "at" on linux/mac, and "start" on
+%               in the background is "nohup" on linux/mac, and "start" on
 %               windows.
 %
 %           'qsub'
@@ -344,7 +344,7 @@ if ismember(opt.mode_pipeline_manager,{'batch','qsub','msub'})
                 case 'windows'
                     instr_batch = sprintf('start /min %s',file_shell);
                 otherwise
-                    instr_batch = ['at -f ' file_shell ' now'];
+                    instr_batch = ['nohup sh ' file_shell '> /dev/null'];
             end
             
     end
@@ -627,13 +627,13 @@ try
                     if ispc
                         instr_batch = ['start /min ' file_shell];
                     else
-                        instr_batch = ['at -f ' file_shell ' now'];
+                        instr_batch = ['nohup sh ' file_shell];
                     end
                     
                     if flag_debug
                         [fail,msg] = system(instr_batch);
                         fprintf('The batch command was : %s\n The feedback was : %s\n',instr_batch,msg);
-                        sub_add_line_log(hfpl,sprintf('The batch command was : %s\n The feedback was : %s\n',instr_batch,msg));
+                        sub_add_line_log(hfpl,sprintf('The nohup command was : %s\n The feedback was : %s\n',instr_batch,msg));
                         if fail~=0
                             error('Something went bad with the at command.')
                         end
@@ -643,7 +643,7 @@ try
                             if ispc
                                 error('Something went bad with the ''start'' command. The command was : %s . The error message was : %s',instr_batch,msg)
                             else
-                                error('Something went bad with the ''at'' command. The command was : %s . The error message was : %s',instr_batch,msg)
+                                error('Something went bad with the ''nohup'' command. The command was : %s . The error message was : %s',instr_batch,msg)
                             end
                         end
                     end
