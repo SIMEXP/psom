@@ -344,7 +344,7 @@ if ismember(opt.mode_pipeline_manager,{'batch','qsub','msub'})
                 case 'windows'
                     instr_batch = sprintf('start /min %s',file_shell);
                 otherwise
-                    instr_batch = ['nohup sh ' file_shell '> /dev/null'];
+                    instr_batch = ['nohup sh ' file_shell '> /dev/null &'];
             end
             
     end
@@ -627,7 +627,7 @@ try
                     if ispc
                         instr_batch = ['start /min ' file_shell];
                     else
-                        instr_batch = ['nohup sh ' file_shell];
+                        instr_batch = ['nohup sh ' file_shell ' &'];
                     end
                     
                     if flag_debug
