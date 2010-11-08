@@ -621,7 +621,7 @@ try
                     if ispc
                         instr_batch = ['start /min ' file_shell];
                     else
-                        instr_batch = ['nohup sh ' file_shell ' > ' file_qsub_o ' 2> ' file_qsub_e '< /dev/null &'];
+                        instr_batch = ['nohup sh ' file_shell ' > ' file_qsub_o ' 2> ' file_qsub_e ' < /dev/null &'];
                     end
                     
                     if flag_debug
