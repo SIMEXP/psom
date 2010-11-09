@@ -305,6 +305,10 @@ if ismember(opt.mode_pipeline_manager,{'batch','qsub','msub'})
         instr_job = sprintf('%s %s "load(''%s'',''path_work''), if ~strcmp(path_work,''gb_psom_omitted''), path(path_work), end, load(''%s''), psom_pipeline_process(''%s'',opt),exit"\n',command_matlab,opt_matlab,file_pipeline,file_manager_opt,file_pipeline);
     end
         
+    if ~isempty(opt.shell_options)
+        instr_job = sprintf('%s\n%s',opt.shell_options,instr_job);
+    end
+    
     if flag_debug
         if ispc
             % for windows
@@ -623,24 +627,13 @@ try
                         instr_batch = ['at -f ' file_shell ' now'];
                     end
                     
-                    if flag_debug
-                        [fail,msg] = system(instr_batch);
-                        fprintf('The batch command was : %s\n The feedback was : %s\n',instr_batch,msg);
-                        sub_add_line_log(hfpl,sprintf('The batch command was : %s\n The feedback was : %s\n',instr_batch,msg));
-                        if fail~=0
-                            error('Something went bad with the at command.')
-                        end
-                    else
-                        [fail,msg] = system(instr_batch);
-                        if fail~=0
-                            if ispc
-                                error('Something went bad with the ''start'' command. The command was : %s . The error message was : %s',instr_batch,msg)
-                            else
-                                error('Something went bad with the ''at'' command. The command was : %s . The error message was : %s',instr_batch,msg)
-                            end
-                        end
+                    [fail,msg] = system(instr_batch);
+                    fprintf('The batch command was : %s\n The feedback was : %s\n',instr_batch,msg);
+                    sub_add_line_log(hfpl,sprintf('The batch command was : %s\n The feedback was : %s\n',instr_batch,msg));
+                    if fail~=0
+                        error('Something went bad with the batch command.')
                     end
-                    
+                                       
                 case 'qsub'
                     
                     file_qsub_o = [path_logs filesep name_job '.oqsub'];
