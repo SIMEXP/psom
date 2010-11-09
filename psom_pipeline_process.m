@@ -157,8 +157,8 @@ end
 
 %% Options
 gb_name_structure = 'opt';
-gb_list_fields = {'flag_verbose','init_matlab','flag_debug','shell_options','command_matlab','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point','time_cool_down'};
-gb_list_defaults = {true,gb_psom_init_matlab,false,gb_psom_shell_options,'','session','',0,gb_psom_qsub_options,[],[],[]};
+gb_list_fields    = {'flag_verbose' , 'init_matlab'       , 'flag_debug' , 'shell_options'       , 'command_matlab' , 'mode'    , 'mode_pipeline_manager' , 'max_queued' , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
+gb_list_defaults  = {true           , gb_psom_init_matlab , false        , gb_psom_shell_options , ''               , 'session' , ''                      , 0            , gb_psom_qsub_options , []                    , []                    , []               };
 psom_set_defaults
 
 flag_verbose = flag_verbose || flag_debug;
@@ -287,10 +287,12 @@ if ismember(opt.mode_pipeline_manager,{'batch','qsub','msub'})
     opt.mode_pipeline_manager = 'session';
     save(file_manager_opt,'opt');
     
-    if ispc && strcmp(opt.mode_pipeline_manager,'batch')
-        mode_pipeline_manager = 'start';
-    else
-        mode_pipeline_manager = 'at';
+    if strcmp(opt.mode_pipeline_manager,'batch')
+        if ispc 
+            mode_pipeline_manager = 'start';
+        else
+            mode_pipeline_manager = 'at';
+        end
     end
     
     if flag_verbose
@@ -345,9 +347,9 @@ if ismember(opt.mode_pipeline_manager,{'batch','qsub','msub'})
     if fail~=0
         if ispc
             % This is windows
-            error('Something went bad when running the pipeline batch. The error message was : %s',msg)
+            error('Something went bad when sending the pipeline in the background. The command was : %s. The error message was : %s',instr_batch,msg)
         else
-            error('Something went bad with the at command. The error message was : %s',msg)
+            error('Something went bad when sending the pipeline in the background. The command was : %s. The error message was : %s',instr_batch,msg)
         end
     end
     if flag_debug
