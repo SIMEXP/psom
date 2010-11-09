@@ -298,9 +298,9 @@ if ismember(opt.mode_pipeline_manager,{'batch','qsub','msub'})
     end
             
     if ~isempty(opt.init_matlab)
-        instr_job = sprintf('%s %s "%s load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, load(''%s''), psom_pipeline_process(''%s'',opt),exit"\n',command_matlab,opt_matlab,opt.init_matlab,file_pipeline,file_manager_opt,file_pipeline);
+        instr_job = sprintf('%s %s "%s load(''%s'',''path_work''), if ~strcmp(path_work,''gb_psom_omitted''), path(path_work), end, load(''%s''), psom_pipeline_process(''%s'',opt),exit"\n',command_matlab,opt_matlab,opt.init_matlab,file_pipeline,file_manager_opt,file_pipeline);
     else
-        instr_job = sprintf('%s %s "load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, load(''%s''), psom_pipeline_process(''%s'',opt),exit"\n',command_matlab,opt_matlab,file_pipeline,file_manager_opt,file_pipeline);
+        instr_job = sprintf('%s %s "load(''%s'',''path_work''), if ~strcmp(path_work,''gb_psom_omitted''), path(path_work), end, load(''%s''), psom_pipeline_process(''%s'',opt),exit"\n',command_matlab,opt_matlab,file_pipeline,file_manager_opt,file_pipeline);
     end
         
     if flag_debug
@@ -576,9 +576,9 @@ try
                 end
                         
                 if ~isempty(opt.init_matlab)
-                    instr_job = sprintf('%s %s "%s load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, psom_run_job(''%s''),exit">%s\n',command_matlab,opt_matlab,opt.init_matlab,file_pipeline,file_job,file_log);
+                    instr_job = sprintf('%s %s "%s load(''%s'',''path_work''), if ~strcmp(path_work,''gb_psom_omitted''), path(path_work), end, psom_run_job(''%s''),exit">%s\n',command_matlab,opt_matlab,opt.init_matlab,file_pipeline,file_job,file_log);
                 else
-                    instr_job = sprintf('%s %s "load(''%s'',''path_work''), if ~isempty(path_work), path(path_work), end, psom_run_job(''%s''),exit">%s\n',command_matlab,opt_matlab,file_pipeline,file_job,file_log);
+                    instr_job = sprintf('%s %s "load(''%s'',''path_work''), if ~strcmp(path_work,''gb_psom_omitted''), path(path_work), end, psom_run_job(''%s''),exit">%s\n',command_matlab,opt_matlab,file_pipeline,file_job,file_log);
                 end
                                                 
                 if ~isempty(opt.shell_options)

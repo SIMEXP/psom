@@ -41,6 +41,12 @@ gb_psom_max_queued = [];
 % Initialization of matlab
 gb_psom_init_matlab = '';
 
+% Matlab search path. An empty value will correspond to the search path of
+% the session used to invoke PSOM_RUN_PIPELINE. A value 'gb_psom_omitted'
+% will result in no search path initiated (the default Octave path is
+% used). 
+gb_psom_path_search = '';
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% The following variables describe the folders and external tools PSOM is using for various tasks %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

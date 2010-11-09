@@ -61,8 +61,12 @@ function file_pipeline = psom_pipeline_init(pipeline,opt)
 %
 %       PATH_SEARCH
 %           (string, default current matlab search path) the matlab search
-%           path that will be used by the jobs. Use an empty string if you
-%           do not want PSOM to change the Matlab search path on start up.
+%           path that will be used by the jobs. if PATH_SEARCH is empty,
+%           the default is used. If PATH_SEARCH equals 'gb_psom_omitted',
+%           then PSOM will not attempt to set the search path, i.e. the
+%           search path for every job will be the current search path in
+%           'session' mode, and the default Octave/Matlab search path in
+%           the other modes.
 %
 %       COMMAND_MATLAB
 %           (string, default GB_PSOM_COMMAND_MATLAB or
@@ -294,10 +298,15 @@ end
 
 %% Options
 gb_name_structure = 'opt';
-gb_list_fields = {'flag_clean','flag_pause','flag_update','path_search','restart','path_logs','command_matlab','flag_verbose'};
-gb_list_defaults = {true,true,true,path,{},NaN,'',true};
+gb_list_fields    = {'flag_clean' , 'flag_pause' , 'flag_update' , 'path_search'       , 'restart' , 'path_logs' , 'command_matlab' , 'flag_verbose' };
+gb_list_defaults  = {true         , true         , true          , gb_psom_path_search , {}        , NaN         , ''               , true           };
 psom_set_defaults
 name_pipeline = 'PIPE';
+
+if isempty(path_search)
+    path_search = path;
+    opt.path_search = path_search;
+end
 
 if isempty(opt.command_matlab)
     if strcmp(gb_psom_language,'matlab')

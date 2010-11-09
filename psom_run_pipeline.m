@@ -101,7 +101,12 @@ function [] = psom_run_pipeline(pipeline,opt)
 %
 %       PATH_SEARCH
 %           (string, default current matlab search path) the matlab search
-%           path that will be used by the jobs.
+%           path that will be used by the jobs. if PATH_SEARCH is empty,
+%           the default is used. If PATH_SEARCH equals 'gb_psom_omitted',
+%           then PSOM will not attempt to set the search path, i.e. the
+%           search path for every job will be the current search path in
+%           'session' mode, and the default Octave/Matlab search path in
+%           the other modes.
 %
 %       RESTART
 %           (cell of strings, default {}) any job whose name contains one
@@ -229,9 +234,14 @@ end
 name_pipeline = 'PIPE';
 
 gb_name_structure = 'opt';
-gb_list_fields = {'flag_clean','flag_pause','init_matlab','flag_update','flag_debug','path_search','restart','shell_options','path_logs','command_matlab','flag_verbose','mode','mode_pipeline_manager','max_queued','qsub_options','time_between_checks','nb_checks_per_point','time_cool_down'};
-gb_list_defaults = {true,true,gb_psom_init_matlab,true,false,path,{},gb_psom_shell_options,NaN,'',true,gb_psom_mode,gb_psom_mode_pm,0,gb_psom_qsub_options,[],[],[]};
+gb_list_fields    = {'flag_clean' , 'flag_pause' , 'init_matlab'       , 'flag_update' , 'flag_debug' , 'path_search'       , 'restart' , 'shell_options'       , 'path_logs' , 'command_matlab' , 'flag_verbose' , 'mode'       , 'mode_pipeline_manager' , 'max_queued' , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
+gb_list_defaults  = {true         , true         , gb_psom_init_matlab , true          , false        , gb_psom_path_search , {}        , gb_psom_shell_options , NaN         , ''               , true           , gb_psom_mode , gb_psom_mode_pm         , 0            , gb_psom_qsub_options , []                    , []                    , []               };
 psom_set_defaults
+
+if isempty(path_search)
+    path_search = path;
+    opt.path_search = path_search;
+end
 
 if isempty(opt.command_matlab)
     if strcmp(gb_psom_language,'matlab')
@@ -298,14 +308,14 @@ if exist(file_pipe_running,'file') % Is the pipeline running ?
 else
 
     %% Initialize the logs folder
-    opt_init.path_logs = opt.path_logs;
+    opt_init.path_logs      = opt.path_logs;
     opt_init.command_matlab = opt.command_matlab;
-    opt_init.flag_verbose = opt.flag_verbose;
-    opt_init.restart = opt.restart;
-    opt_init.path_search = opt.path_search;
-    opt_init.flag_update = opt.flag_update;    
-    opt_init.flag_pause = opt.flag_pause;
-    opt_init.flag_clean = opt.flag_clean;
+    opt_init.flag_verbose   = opt.flag_verbose;
+    opt_init.restart        = opt.restart;
+    opt_init.path_search    = opt.path_search;
+    opt_init.flag_update    = opt.flag_update;    
+    opt_init.flag_pause     = opt.flag_pause;
+    opt_init.flag_clean     = opt.flag_clean;
     
     if flag_debug
         opt_init
