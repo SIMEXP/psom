@@ -328,7 +328,7 @@ if ismember(opt.mode_pipeline_manager,{'batch','qsub','msub'})
     
     file_qsub_o = [path_logs filesep name_pipeline '.oqsub'];
     file_qsub_e = [path_logs filesep name_pipeline '.eqsub'];
-    switch opt.mode_pipeline_manager  
+    switch mode_pipeline_manager  
         case 'qsub'            
             instr_batch = ['qsub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_pipeline(1:min(15,length(name_pipeline))) ' ' opt.qsub_options ' ' file_shell];            
         case 'msub'            
