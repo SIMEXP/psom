@@ -863,40 +863,42 @@ if ~flag_ready
     end
 end
 
-%% Creating log folders and removing old outputs
+%% Creating log folders 
 
 if flag_verbose
-    fprintf('    Creating log folders and removing old outputs ...\n')
+    fprintf('    Creating output folders ...\n')
 end
 
-for num_j = 1:length(list_jobs)
+path_all = psom_files2cell(files_out);
+path_all = cellfun (@fileparts,path_all,'UniformOutput',false);
+path_all = unique(path_all);
 
+for num_p = 1:length(path_all)
+    path_f = path_all{num_p};
+    if ~exist(path_f,'dir')
+        [succ,messg,messgid] = psom_mkdir(path_f);
+        if succ == 0
+            warning(messgid,messg);
+        end
+    end
+end
+
+%% Removing old outputs
+if flag_verbose
+    fprintf('    Removing old outputs ...\n')
+end
+
+for num_j = 1:length(list_jobs)    
     job_name = list_jobs{num_j};
-    list_files = unique(files_out.(job_name));
-
-    for num_f = 1:length(list_files)
-
-        path_f = fileparts(list_files{num_f});
-
-        if ~exist(path_f,'dir')
-
-            [succ,messg,messgid] = psom_mkdir(path_f);
-
-            if succ == 0
-                warning(messgid,messg);
-            end
-
-        end
-        
-        if flag_clean&&~flag_finished(num_j) && exist(list_files{num_f},'file')
-            
-            delete(list_files{num_f});
-            
-        end
-
-    end % for files
-
-end % for jobs
+    list_files = unique(files_out.(job_name));    
+    if flag_clean&&~flag_finished(num_j)
+        for num_f = 1:length(list_files)           
+            if exist(list_files{num_f},'file')                
+                delete(list_files{num_f});                
+            end            
+        end 
+    end 
+end
 
 
 %% Clean up the log folders from old tag and log files

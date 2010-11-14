@@ -47,12 +47,14 @@ function file_name = psom_file_tmp(ext)
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
 
+global gb_psom_name_job
 flag_gb_psom_fast_gb = 1; %% the initialization of global variables will be as fast as possible
 psom_gb_vars
 flag_tmp = 1;
 
-while flag_tmp == 1;
-    file_name = sprintf('%spsom_tmp_%i%s',gb_psom_tmp,floor(1000000000*rand(1)),ext);
-    flag_tmp = exist(file_name)>0;
+if ~isempty(gb_psom_name_job)
+    file_name = sprintf('%spsom_tmp_%s_%i%s',gb_niak_tmp,gb_psom_name_job,floor(1000000000*rand(1)),ext);
+else
+    file_name = sprintf('%spsom_tmp_%i%s',gb_niak_tmp,floor(1000000000*rand(1)),ext);
 end
 save(file_name,'flag_tmp')
