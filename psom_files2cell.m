@@ -112,6 +112,6 @@ end
 function str2 = sub_suppress_doublon(str)
 
 str2 = str;
-while ~isempty(findstr([filesep filesep],str2))
+while ~isempty(strfind(str2,[filesep filesep]))
     str2 = strrep(str2,[filesep filesep],filesep);
 end
