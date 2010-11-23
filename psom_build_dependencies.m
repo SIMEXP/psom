@@ -145,8 +145,13 @@ char_all = char(char_in,char_out);
 mask_out = false([size(char_all,1) 1]);
 mask_out(size(char_in,1)+1:size(char_all,1)) = true;
 [val_tmp,ind_tmp,char_all] = unique(char_all,'rows');
-num_in = char_all(~mask_out);
-num_out = char_all(mask_out);
+if ~isempty(char_all)
+    num_in  = char_all(~mask_out);
+    num_out = char_all(mask_out);
+else
+    num_in  = '';
+    num_out = '';
+end
 clear char_all mask_out val_tmp ind_tmp
 
 graph_deps = sparse(nb_jobs,nb_jobs);
