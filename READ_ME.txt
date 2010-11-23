@@ -1,17 +1,15 @@
-=﻿Pipeline System for Octave and Matlab (PSOM), version 0.8.5=
+=﻿Pipeline System for Octave and Matlab (PSOM), version 0.8.6=
 
-A pipeline is a collection of matlab or octave codes with a well identified set of options that are using files as inputs and are producing files as outputs. PSOM is a framework to implement, run and re-run pipelines in Matlab or Octave :
+A pipeline is a collection of jobs, i.e. matlab or octave codes with a well identified set of options that are using files as inputs and are producing files as outputs. PSOM is a framework to implement, run and re-run pipelines in Matlab or Octave :
   * Describe the pipeline using a straightforward structure representation.
+  * Automatically run jobs in parallel whenever possible using multiple CPUs or within a distributed computing environment.
   * Automatically generate log files and keep track of the pipeline description.
   * Handle job failures : successful completion of jobs is checked and failed jobs can be restarted.
   * Handle updates of the pipeline : change options or add jobs and let PSOM figure out what to reprocess !
-  * Automatically run jobs in parallel whenever possible using multiple CPUs or within a distributed computing environment.
 
 PSOM is an opensource project distributed under an [http://www.opensource.org/licenses/mit-license.php MIT opensource license]. It is currently in a beta-testing stage and has been tested under Linux (in Matlab and Octave) and windows (in Matlab). To install PSOM, just extract the [http://code.google.com/p/psom/downloads/list archive] in a folder and add that folder to your matlab or octave search path. You're done ! You may have to adapt the [http://code.google.com/p/psom/wiki/ConfigurationPsom configuration] to your local production environment. To use PSOM, you can have a look at the code of `psom_demo_pipeline`, or read [http://code.google.com/p/psom/wiki/HowToUsePsom the tutorial].
 
-PSOM was implemented by Pierre [http://wiki.bic.mni.mcgill.ca/index.php/PierreBellec Bellec] in the lab of [http://www.bic.mni.mcgill.ca/~alan/ Alan Evans] at the !McConnell Brain Imaging Center, Montreal Neurological Institute, !McGill University, Canada, 2008-10. Core ideas have been inspired by the [http://wiki.bic.mni.mcgill.ca/index.php/PoorMansPipeline Poor Man's Pipeline (PMP) project] developed by Jason Lerch, which was itself based on [http://www.bic.mni.mcgill.ca/~jason/rppl/rppl.html RPPL] by Alberto Jimenez and Alex Zijdenbos. 
-
-Please visit http://code.google.com/p/psom/ for updates.
+PSOM was implemented by Pierre [http://simexp-lab.org/brainwiki/doku.php?id=pierrebellec Bellec] in the lab of [http://www.bic.mni.mcgill.ca/~alan/ Alan Evans] at the !McConnell Brain Imaging Center, Montreal Neurological Institute, !McGill University, Canada, 2008-10. Core ideas have been inspired by the [http://wiki.bic.mni.mcgill.ca/index.php/PoorMansPipeline Poor Man's Pipeline (PMP) project] developed by Jason Lerch, which was itself based on [http://www.bic.mni.mcgill.ca/~jason/rppl/rppl.html RPPL] by Alberto Jimenez and Alex Zijdenbos. 
 
 ----
 LICENSE
@@ -39,6 +37,11 @@ THE SOFTWARE.
 
 ----
 =News=
+*November 23rd, 2010* : Release 0.8.6. Main new features :
+  * The search path can now be configured with '' to use the current search path, 'gb_psom_omitted' to make no attempt to change the search path (the start-up search path will apply), or any string to explicitly set up the search path. This can be set up through GB_PSOM_PATH_SEARCH in the file PSOM_GB_VARS.M
+  * It is now possible to create a file psom_gb_vars_local.m anywhere in matlab/octave search path, and this file will override the default configurations found in psom_gb_vars.m
+A more detailed list of changes can be found in the [ReleaseNotes release notes].
+
 *May 19th, 2010* : Release 0.8.5. Main new features : 
   * Removing the lock file in the log folder will now kill the pipeline in any mode. 
   * The random number generator is now initialized based on the clock for each job, while before it was using the default state (in matlab this state is identical for evey session). 
