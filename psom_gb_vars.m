@@ -119,3 +119,16 @@ case 'unix'
 otherwise
 	gb_psom_localhost = 'unknown';
 end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Any following line will be executed at the begining of every PSOM command and every job %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Uncomment the following line to load the image processing package in Octave
+% pkg load image
+
+% Verbose "on-the-fly" in Octave
+% page_output_immediately(true); 
+
+% Use .mat files compatible with Matlab in Octave
+% default_save_options('-7');    
