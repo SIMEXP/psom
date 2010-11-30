@@ -88,7 +88,7 @@ function file_pipeline = psom_pipeline_init(pipeline,opt)
 %           performed to restart updated jobs. 
 %       
 %       FLAG_PAUSE
-%           (boolean, default true) If FLAG_PAUSE is true, the pipeline
+%           (boolean, default false) If FLAG_PAUSE is true, the pipeline
 %           initialization may pause in some situations, i.e. before
 %           writting an update of a pipeline (and incidentally flush old
 %           outputs) and before starting a pipeline if some necessary input 
@@ -299,7 +299,7 @@ end
 %% Options
 gb_name_structure = 'opt';
 gb_list_fields    = {'flag_clean' , 'flag_pause' , 'flag_update' , 'path_search'       , 'restart' , 'path_logs' , 'command_matlab' , 'flag_verbose' };
-gb_list_defaults  = {true         , true         , true          , gb_psom_path_search , {}        , NaN         , ''               , true           };
+gb_list_defaults  = {true         , false        , true          , gb_psom_path_search , {}        , NaN         , ''               , true           };
 psom_set_defaults
 name_pipeline = 'PIPE';
 
