@@ -628,8 +628,10 @@ try
                     end
                     
                     [fail,msg] = system(instr_batch);
-                    fprintf('The batch command was : %s\n The feedback was : %s\n',instr_batch,msg);
-                    sub_add_line_log(hfpl,sprintf('The batch command was : %s\n The feedback was : %s\n',instr_batch,msg));
+                    if flag_debug||(fail~=0)
+                        fprintf('The batch command was : %s\n The feedback was : %s\n',instr_batch,msg);
+                        sub_add_line_log(hfpl,sprintf('The batch command was : %s\n The feedback was : %s\n',instr_batch,msg));
+                    end
                     if fail~=0
                         error('Something went bad with the batch command.')
                     end
