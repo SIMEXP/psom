@@ -1,9 +1,8 @@
 function pipeline2 = psom_add_clean(pipeline,name_job,files_clean)
-% Add a job to a pipeline, assuming a brick command.
+% Add a cleaning job to a pipeline.
 %
 % SYNTAX :
-% PIPELINE =
-% PSOM_ADD_JOB(PIPELINE,NAME_JOB,NAME_BRICK,FILES_IN,FILES_OUT,OPT,FLAG_DEFAULT)
+% PIPELINE2 = PSOM_ADD_CLEAN(PIPELINE,NAME_JOB,FILES_CLEAN)
 %
 % _________________________________________________________________________
 % INPUTS :
@@ -14,32 +13,25 @@ function pipeline2 = psom_add_clean(pipeline,name_job,files_clean)
 %   NAME_JOB
 %       (string) the name of the job to add.
 %
-%   NAME_BRICK
-%       (string) the name of the brick that will executed as a command.
-%
-%   FILES_IN
-%       () the input files of the job.
-%
-%   FILES_OUT
-%       () the output files of the job.
-%
-%   OPT
-%       () the option of the job.
-%
-%   FLAG_DEFAULT
-%       (boolean, default true) if the flag is true, a test call will be
-%       made to the brick to set the default of files_in/files_out/opt.
+%   FILES_CLEAN
+%       () the name of the files to clean up.
 %
 % _________________________________________________________________________
 % OUTPUTS:
 %
 %   PIPELINE2
-%       (structure) same as pipeline, with an extra job in it.
+%       (structure) same as pipeline, with an extra cleaning job in it.
+%
+% _________________________________________________________________________
+% SEE ALSO: 
+% PSOM_CLEAN
 %
 % _________________________________________________________________________
 % COMMENTS : 
 %
 % PIPELINE can be empty, in which case a structure will be created.
+%
+% The cleaning of the files is implemented using PSOM_CLEAN
 %
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008.
 % Maintainer : pbellec@bic.mni.mcgill.ca
@@ -64,22 +56,17 @@ function pipeline2 = psom_add_clean(pipeline,name_job,files_clean)
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
 
-if ~exist('flag_default','var')
-    flag_default = true;
+if ~exist('files_clean','var')||~exist('name_job','var')
+    error('Please specify NAME_JOB and FILES_CLEAN');
 end
 
-%% Set defaults
-if flag_default
-    opt.flag_test = true;
-    eval(sprintf('[files_in,files_out,opt] = %s(files_in,files_out,opt);',name_brick));
-    opt.flag_test = false;
+if ~ischar(name_job)
+    error('NAME_JOB should be a string');
 end
 
 %% Adding the job to the pipeline
 if ~isempty(pipeline)
     pipeline2 = pipeline;
 end
-pipeline2.(name_job).command   = sprintf('%s(files_in,files_out,opt);',name_brick);
-pipeline2.(name_job).files_in  = files_in;
-pipeline2.(name_job).files_out = files_out;
-pipeline2.(name_job).opt       = opt;
+pipeline2.(name_job).command     = sprintf('psom_clean(files_clean)');
+pipeline2.(name_job).files_clean = psom_files2cell(files_clean);
