@@ -26,6 +26,11 @@ function [deps,list_jobs,files_in,files_out,graph_deps] = psom_build_dependencie
 %                   fields are strings or cell of strings)
 %                   a list of the output files of the job
 %
+%               FILES_CLEAN
+%                   (string, cell of strings or structure whos terminal
+%                   fields are strings or cell of strings)
+%                   a list of the files deleted by the job.
+%
 % FLAG_VERBOSE
 %       (boolean, default true) if the flag is true, then the function
 %       prints some infos during the processing.
@@ -43,7 +48,8 @@ function [deps,list_jobs,files_in,files_out,graph_deps] = psom_build_dependencie
 %               The presence of this field means that the job <JOB_NAME> is
 %               using an output of <JOB_NAME2> as one of his inputs. The
 %               exact list of inputs of <JOB_NAME> that comes from
-%               <JOB_NAME2> is actually listed in the cell.*
+%               <JOB_NAME2> is actually listed in the cell. This structure
+%               only lists dependencies related to FILES_IN/FILES_OUT.
 %
 % LIST_JOBS
 %       (cell of strings)
@@ -65,6 +71,12 @@ function [deps,list_jobs,files_in,files_out,graph_deps] = psom_build_dependencie
 %       (sparse matrix)
 %       GRAPH_DEPS(I,J) == 1 if and only if the job LIST_JOBS{J} depends on
 %       the job LIST_JOBS{I}
+%
+% FILES_CLEAN
+%       (structure) the field names are identical to PIPELINE
+%
+%       <JOB_NAME>
+%           (cell of strings) the list of files deleted by JOB_NAME.
 %
 % _________________________________________________________________________
 % SEE ALSO
@@ -137,10 +149,21 @@ for num_j = 1:nb_jobs
         errmsg = lasterror;
         rethrow(errmsg);
     end
+    try
+        if isfield(pipeline.(name_job),'files_clean')
+            files_out.(name_job) = unique(psom_files2cell(pipeline.(name_job).files_clean));
+        else
+            files_out.(name_job) = {};
+        end
+    catch
+        fprintf('There was a problem with the clean files of the job %s\n',name_job)
+        errmsg = lasterror;
+        rethrow(errmsg);
+    end
 end
-[char_in,ind_in] = psom_struct_cell_string2char(files_in);
-[char_out,ind_out] = psom_struct_cell_string2char(files_out);
-
+[char_in,ind_in]       = psom_struct_cell_string2char(files_in);
+[char_out,ind_out]     = psom_struct_cell_string2char(files_out);
+[char_clean,ind_clean] = psom_struct_cell_string2char(files_out);
 char_all = char(char_in,char_out);
 mask_out = false([size(char_all,1) 1]);
 mask_out(size(char_in,1)+1:size(char_all,1)) = true;

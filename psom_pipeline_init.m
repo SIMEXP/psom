@@ -128,9 +128,13 @@ function file_pipeline = psom_pipeline_init(pipeline,opt)
 % * STAGE 1:
 %
 %   The dependency graph of the pipeline is defined as follows: job A 
-%   depends on  job B if at least one of the input files of job A belongs 
-%   to the list of output files of job B. See PSOM_BUILD_DEPENDENCIES and
-%   PSOM_VISU_DEPENDENCIES for details.
+%   depends on job B if at least one of the two following conditions is 
+%   satisfied : 
+%       1. the input files of job A belongs to the list of output files of 
+%       job B. 
+%       2. the job B will clean (i.e. delete) some files that job A uses as 
+%       inputs.
+%   See PSOM_BUILD_DEPENDENCIES and PSOM_VISU_DEPENDENCIES for details.
 %
 %   Some viability checks are performed on the pipeline :
 %

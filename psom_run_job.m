@@ -72,9 +72,9 @@ if ~strcmp(ext_f,'.mat')
     error('The job file %s should be a .mat file !',file_job);
 end
 
-file_jobs = [path_f filesep 'PIPE_jobs.mat'];
-file_running = [path_f filesep name_job '.running'];
-file_failed = [path_f filesep name_job '.failed'];
+file_jobs     = [path_f filesep 'PIPE_jobs.mat'];
+file_running  = [path_f filesep name_job '.running'];
+file_failed   = [path_f filesep name_job '.failed'];
 file_finished = [path_f filesep name_job '.finished'];
 
 if exist(file_running,'file')|exist(file_failed,'file')|exist(file_finished,'file')
@@ -93,12 +93,12 @@ fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
 job = sub_load_job(file_jobs,name_job);
 
 gb_name_structure = 'job';
-gb_list_fields = {'files_in','files_out','command','opt'};
-gb_list_defaults = {{},{},NaN,{}};
+gb_list_fields    = {'files_in' , 'files_out' , 'files_clean' , 'command','opt' };
+gb_list_defaults  = {{}         , {}          , {}            , NaN      , {}   };
 psom_set_defaults
 
 psom_set_defaults
-command, files_in, files_out, opt
+command, files_in, files_out, files_clean, opt
 
 try
     %% The job starts now !
