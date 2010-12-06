@@ -220,9 +220,6 @@ for num_j = 1:nb_jobs
             end
         end
     end
-    try
-        deps.motion_target_subject1_session1_run1
-    end
 end
 if flag_verbose
     fprintf('- %1.2f sec\n',toc)
