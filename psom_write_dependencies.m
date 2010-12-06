@@ -2,24 +2,29 @@ function [flag_fail,err_msg] = psom_write_dependencies(file_name,pipeline,opt)
 % Write the dependency graph of a pipeline in in a pdf file.
 %
 % SYNTAX
-% [FLAG_FAIL,ERR_MSG] = PSOM_WRITE_GRAPH(FILE_NAME,GRAPH,LABEL_NODES)
+% [FLAG_FAIL,ERR_MSG] = PSOM_WRITE_GRAPH(FILE_NAME,PIPELINE,OPT)
 %
 % _________________________________________________________________________
 % INPUTS:
 %
 % FILE_NAME
-%       (string) the file name to save the graph of dependencies.
+%   (string) the file name to save the graph of dependencies.
 %
 % PIPELINE
-%       (structure) a pipeline structure, see PSOM_RUN_PIPELINE.
+%   (structure) a pipeline structure, see PSOM_RUN_PIPELINE.
 %
 % OPT
-%       (structure) with the following fields :
+%   (structure) with the following fields :
 %
-%       FORMAT
-%           (string, default 'pdf') The format for output. See a list of
-%           available outputs here : 
-%           http://www.graphviz.org/doc/info/output.html
+%   TYPE_FILTER
+%       (string, default 'dot') available options : 
+%       'dot', 'neato', 'twopi', 'circo', 'fdp'
+%       Type "man dot" in a terminal for more infos.
+%
+%   FORMAT
+%       (string, default 'pdf') The format for output. See a list of
+%       available outputs here : 
+%       http://www.graphviz.org/doc/info/output.html
 %
 % _________________________________________________________________________
 % OUTPUTS:
@@ -75,11 +80,11 @@ end
 
 %% Options
 gb_name_structure = 'opt';
-gb_list_fields = {'format'};
-gb_list_defaults = {'pdf'};
+gb_list_fields    = {'type_filter' , 'format'};
+gb_list_defaults  = {'dot'         , 'pdf'};
 psom_set_defaults
 
-[deps,list_jobs,files_in,files_out,graph_deps] = psom_build_dependencies(pipeline);
+[graph_deps,list_jobs] = psom_build_dependencies(pipeline);
 
 file_tmp = niak_file_tmp('.dot');
 
@@ -87,7 +92,10 @@ opt_graph.label_nodes = list_jobs;
 
 psom_write_graph(file_tmp,graph_deps,opt_graph);
 
-instr_dot = ['dot ' file_tmp ' -o' file_name ' -T' opt.format];
+instr_dot = [type_filter ' ' file_tmp ' -o' file_name ' -T' opt.format];
 [flag_fail,err_msg] = system(instr_dot);
 
+if flag_fail
+  error(err_msg)
+end
 delete(file_tmp);

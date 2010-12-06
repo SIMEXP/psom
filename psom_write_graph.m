@@ -80,12 +80,11 @@ end
 
 %% Options
 gb_name_structure = 'opt';
-gb_list_fields = {'label_nodes'};
-gb_list_defaults = {{}};
+gb_list_fields    = {'label_nodes'};
+gb_list_defaults  = {{}};
 psom_set_defaults
 
 nb_nodes = size(graph,1);
-
 
 if isempty(label_nodes)
     for num_n = 1:nb_nodes

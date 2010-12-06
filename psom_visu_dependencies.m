@@ -1,4 +1,4 @@
-function [] = psom_visu_dependencies(pipeline)
+function [] = psom_visu_dependencies(pipeline,opt)
 %
 % _________________________________________________________________________
 % SUMMARY OF PSOM_VISU_DEPENDENCIES
@@ -6,24 +6,35 @@ function [] = psom_visu_dependencies(pipeline)
 % Visualize the graph of dependencies of a pipeline
 %
 % SYNTAX:
-% [] = PSOM_VISU_DEPENDENCIES(PIPELINE)
+% [FILE_TMP] = PSOM_VISU_DEPENDENCIES(PIPELINE)
 %
 % _________________________________________________________________________
 % INPUTS:
 %
 % PIPELINE
-%       (structure) a pipeline structure, see PSOM_RUN_PIPELINE
+%   (structure) a pipeline structure, see PSOM_RUN_PIPELINE
+%
+%
+% OPT
+%   (structure) with the following fields : 
+%
+%   TYPE_FILTER
+%       (string, default 'dot') available options : 
+%       'dot', 'neato', 'twopi', 'circo', 'fdp'
+%       Type "man dot" in a terminal for more infos.
 %
 % _________________________________________________________________________
 % OUTPUTS:
 % 
-% None. The function draws a graph where the nodes are jobs and the arrows
-% dependencies based on the list of input/output files.
+% FILE_TMP
+%   (spring) if GRAPHVIZ is used to generate the graph, this function is going 
+%   to produce a temporary file (the pdf with the graph). This file needs to 
+%   be cleaned out manually.
 %
 % _________________________________________________________________________
 % SEE ALSO:
-%
-% PSOM_BUILD_DEPENDENCIES, PSOM_RUN_PIPELINE
+% PSOM_BUILD_DEPENDENCIES, PSOM_RUN_PIPELINE, PSOM_WRITE_DEPENDENCIES, 
+% PSOM_WRITE_DEPENDENCIES
 %
 % _________________________________________________________________________
 % COMMENTS:
@@ -31,7 +42,7 @@ function [] = psom_visu_dependencies(pipeline)
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008.
 % Maintainer : pbellec@bic.mni.mcgill.ca
 % See licensing information in the code.
-% Keywords : medical imaging, pipeline, fMRI, PMP
+% Keywords : pipeline, PSOM
 
 % Permission is hereby granted, free of charge, to any person obtaining a copy
 % of this software and associated documentation files (the "Software"), to deal
@@ -51,16 +62,32 @@ function [] = psom_visu_dependencies(pipeline)
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
 
+psom_gb_vars
+
+%% Options
+gb_name_structure = 'opt';
+gb_list_fields    = {'type_filter' };
+gb_list_defaults  = {'dot'         };
+psom_set_defaults
+
 if exist('biograph')
     
     [graph_deps,list_jobs,files_in,files_out,files_clean,deps] = psom_build_dependencies(pipeline);
     bg = biograph(graph_deps,list_jobs);
     dolayout(bg);
     view(bg);
+    file_tmp = '';
+
+elseif exist('dot','file')
+    
+    file_tmp = psom_file_tmp('_graph.pdf');
+    psom_write_dependencies(file_tmp,pipeline,opt);
+    system([gb_psom_pdf_viewer ' ' file_tmp '&']);    
 
 else
     
-    warning('I could not find the BIOGRAPH command. This probably means that the Matlab bioinformatics toolbox is not installed. Sorry dude, I can''t plot the graph. The command PSOM_WRITE_DEPENDENCIES may be an alternative.')
-    
+    warning('I could not find the BIOGRAPH command or the DOT command. This probably means that the Matlab bioinformatics toolbox is not installed and that you did not install the GRAPHVIZ package on your system. Sorry dude, I can''t plot the graph.')
+    file_tmp = '';
+
 end
 

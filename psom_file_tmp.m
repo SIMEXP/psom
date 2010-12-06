@@ -53,8 +53,8 @@ psom_gb_vars
 flag_tmp = 1;
 
 if ~isempty(gb_psom_name_job)
-    file_name = sprintf('%spsom_tmp_%s_%i%s',gb_niak_tmp,gb_psom_name_job,floor(1000000000*rand(1)),ext);
+    file_name = sprintf('%spsom_tmp_%s_%i%s',gb_psom_tmp,gb_psom_name_job,floor(1000000000*rand(1)),ext);
 else
-    file_name = sprintf('%spsom_tmp_%i%s',gb_niak_tmp,floor(1000000000*rand(1)),ext);
+    file_name = sprintf('%spsom_tmp_%i%s',gb_psom_tmp,floor(1000000000*rand(1)),ext);
 end
 save(file_name,'flag_tmp')

@@ -47,12 +47,11 @@ gb_psom_init_matlab = '';
 % used). 
 gb_psom_path_search = '';
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% The following variables describe the folders and external tools PSOM is using for various tasks %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % where to store temporary files
 gb_psom_tmp = cat(2,filesep,'tmp',filesep); 
+
+% How to open pdf files
+gb_psom_pdf_viewer = 'evince';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% The following variables should not be changed %%
