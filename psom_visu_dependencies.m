@@ -53,7 +53,7 @@ function [] = psom_visu_dependencies(pipeline)
 
 if exist('biograph')
     
-    [deps,list_jobs,files_in,files_out,graph_deps] = psom_build_dependencies(pipeline);
+    [graph_deps,list_jobs,files_in,files_out,files_clean,deps] = psom_build_dependencies(pipeline);
     bg = biograph(graph_deps,list_jobs);
     dolayout(bg);
     view(bg);

@@ -1,9 +1,9 @@
 function [] = psom_demo_clean(path_demo,opt)
-% This is a script to demonstrate how to use the pipeline system for Octave
-% and Matlab (PSOM) with bricks that clean some files.
+% This is a script to demonstrate how to use the "clean" capabilities of 
+% PSOM in a pipeline.
 %
 % SYNTAX:
-% PSOM_DEMO_PIPELINE(PATH_DEMO,OPT)
+% PSOM_DEMO_CLEAN(PATH_DEMO,OPT)
 %
 % _________________________________________________________________________
 % INPUTS:
@@ -43,23 +43,17 @@ function [] = psom_demo_clean(path_demo,opt)
 % _________________________________________________________________________
 % COMMENTS:
 %
-% The blocks of code follow the tutorial that can be found at the following 
-% address : 
-% http://code.google.com/p/psom/w/edit/HowToUsePsom
-%
-% You can run a specific block of code by selecting it and press F9, or by
-% putting the cursor anywhere in the block and press CTRL+ENTER.
-%
 % _________________________________________________________________________
 % COMMENTS:
 %
-% This is a script that will clear the workspace !!
-% It will also create some files and one folder in ~/psom/data_demo/
+% This demo will create some files and one folder in PATH_DEMO
 %
-% Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008.
-% Maintainer : pbellec@bic.mni.mcgill.ca
+% Copyright (c) Pierre Bellec, Centre de recherche de l'institut de
+% gériatrie de Montréal, Département d'informatique et de recherche
+% opérationnelle, Université de Montréal, Canada, 2010.
+% Maintainer : pbellec@criugm.qc.ca
 % See licensing information in the code.
-% Keywords : medical imaging, pipeline, fMRI
+% Keywords : pipeline, PSOM, demo
 
 % Permission is hereby granted, free of charge, to any person obtaining a copy
 % of this software and associated documentation files (the "Software"), to deal
@@ -169,6 +163,8 @@ pipeline.weights.files_in.sessions.session1 = [local_path_demo 'weights.mat'];
 pipeline.weights.files_out = [local_path_demo 'results.mat'];
 pipeline.weights.opt = struct();
 
+% Job "clean"
+pipeline = psom_add_clean(pipeline,'clean_tseries1',pipeline.tseries1.files_out);
 psom_visu_dependencies(pipeline);
 
 %%%%%%%%%%%%%%%%%%%%
@@ -184,130 +180,16 @@ pause
 % The following line is running the pipeline manager on the toy pipeline
 psom_run_pipeline(pipeline,opt);
 
-%%%%%%%%%%%%%%%%%%%%%%%%
-%% Restart a pipeline %%
-%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%
+%% RE-run a pipeline %%
+%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Test 1 : change the options
-msg = 'The demo is about to change an option of the job ''fft'' and restart the pipeline.';
+msg = 'The demo is about to re-execute the toy pipeline forcing the restart of fft.';
 msg2 = 'Press CTRL-C to stop here or any key to continue.';
 stars = repmat('*',[1 max(length(msg),length(msg2))]);
 fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
 pause
 
-pipeline.fft.opt = 'let''s change something...';
+% The following line is running the pipeline manager on the toy pipeline
+opt.restart = {'fft'};
 psom_run_pipeline(pipeline,opt);
-
-%% Test 2 : failed jobs
-msg = 'The demo is about to change the job ''fft'' to create a bug, and then restart the pipeline.';
-msg2 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2))]);
-fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-pause
-
-pipeline.fft.command = 'BUG';
-psom_run_pipeline(pipeline,opt);
-
-% Visualize the log file of the failed job
-msg = 'The demo is about to display the log file of the failed job ''fft''.';
-msg2 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2))]);
-fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-pause
-
-psom_pipeline_visu(opt.path_logs,'log','fft');
-
-% fix the bug, restart the pipeline
-msg = 'The demo is about to fix the bug in the job ''fft'' and restart the pipeline.';
-msg2 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2))]);
-fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-pause
-
-pipeline.fft.command = 'load(files_in{1}); ftseries = zeros([size(tseries,1) 2]); ftseries(:,1) = fft(tseries); load(files_in{2}); ftseries(:,2) = fft(tseries); save(files_out,''ftseries'')';
-psom_run_pipeline(pipeline,opt);
-
-%% Test 3 : Add a new job
-msg = 'The demo is about to add new job ''message2'', plot the updated dependency graph and restart the pipeline.';
-msg2 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2))]);
-fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-pause
-
-pipeline.message2.command = 'load(files_in), fprintf(''The size of the result is %i times %i'',size(res,1),size(res,2))';
-pipeline.message2.files_in = pipeline.weights.files_out;
-psom_visu_dependencies(pipeline);
-psom_run_pipeline(pipeline,opt);
-
-
-%% Test 4 : Change the options after deleting files
-msg = 'The demo is about to change an option of the job ''fft'', delete its input file from ''tseries1'' and restart the pipeline.';
-msg2 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2))]);
-fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-pause
-
-pipeline.fft.opt = 'yet another dummy change';
-delete(pipeline.tseries1.files_out);
-psom_run_pipeline(pipeline,opt);
-
-%% Test 5 : Restart jobs
-msg = 'The demo is about to explicitely restart the ''*tseries*'' and ''*message*'' jobs and then restart the pipeline.';
-msg2 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2))]);
-fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-pause
-
-opt.restart = {'tseries','message'};
-psom_run_pipeline(pipeline,opt);
-opt = rmfield(opt,'restart');
-
-%%%%%%%%%%%%%%%%%%%%%%%%
-%% Monitor a pipeline %%
-%%%%%%%%%%%%%%%%%%%%%%%%
-
-%% Display flowchart
-msg = 'The demo is about to display the flowchart of the pipeline';
-msg2 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2))]);
-fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-pause
-
-psom_pipeline_visu(opt.path_logs,'flowchart')
-
-%% List the jobs
-msg = 'The demo is about to display a list of the finished jobs';
-msg2 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2))]);
-fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-pause
-
-psom_pipeline_visu(opt.path_logs,'finished')
-
-%% Display log
-msg = 'The demo is about to display the log of the ''message'' job';
-msg2 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2))]);
-fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-pause
-
-psom_pipeline_visu(opt.path_logs,'log','message')
-
-%% Display Computation time
-msg = 'The demo is about to display the computation time for all jobs of the pipeline';
-msg2 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2))]);
-fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-pause
-
-psom_pipeline_visu(opt.path_logs,'time','')
-
-%% Monitor history
-msg = 'The demo is about to monitor the history of the pipeline';
-msg2 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2))]);
-fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-pause
-
-psom_pipeline_visu(opt.path_logs,'monitor')
-

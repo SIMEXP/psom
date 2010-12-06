@@ -389,7 +389,7 @@ try
     sub_add_line_log(hfpl,sprintf('\n%s\n%s\n%s\n',stars,msg,stars));
     
     %% Load the pipeline
-    load(file_pipeline,'list_jobs','deps','graph_deps','files_in');
+    load(file_pipeline,'list_jobs','graph_deps','files_in');
     
     %% Loading the current status of the pipeline
     all_status = load(file_status);

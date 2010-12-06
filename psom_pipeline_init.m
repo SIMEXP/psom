@@ -371,7 +371,7 @@ if flag_verbose
     fprintf('    Generating dependencies ...\n');
 end
 
-[deps,list_jobs,files_in,files_out,graph_deps] = psom_build_dependencies(pipeline,opt.flag_verbose);
+[graph_deps,list_jobs,files_in,files_out,files_clean,deps] = psom_build_dependencies(pipeline,opt.flag_verbose);
 
 %% Check if some outputs were not generated twice
 if flag_verbose
@@ -833,7 +833,11 @@ for num_j = list_num_unfinished
     name_job = list_jobs{num_j};
     list_files_needed = files_in.(name_job);
     list_files_tobe = psom_files2cell(deps.(name_job));
-    list_files_necessary = list_files_needed(~ismember(list_files_needed,list_files_tobe));
+    if ~isempty(list_files_needed)
+        list_files_necessary = list_files_needed(~ismember(list_files_needed,list_files_tobe));
+    else
+        list_files_necessary = {};
+    end
 
     flag_job_OK = true;
     

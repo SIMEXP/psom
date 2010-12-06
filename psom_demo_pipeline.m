@@ -57,13 +57,12 @@ function [] = psom_demo_pipeline(path_demo,opt)
 % _________________________________________________________________________
 % COMMENTS:
 %
-% This is a script that will clear the workspace !!
-% It will also create some files and one folder in ~/psom/data_demo/
+% This demo will create some files and one folder in PATH_DEMO
 %
-% Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008.
+% Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008-2010.
 % Maintainer : pbellec@bic.mni.mcgill.ca
 % See licensing information in the code.
-% Keywords : medical imaging, pipeline, fMRI
+% Keywords : pipeline, PSOM, demo
 
 % Permission is hereby granted, free of charge, to any person obtaining a copy
 % of this software and associated documentation files (the "Software"), to deal

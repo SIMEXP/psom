@@ -57,29 +57,16 @@ cell_files = cell(0);
 
 if isstruct(files)     % That's a structure
     
-    files = files(:);
-    
-    if length(files)>1
-        
-        for num_e = 1:length(files)
-            cell_tmp = psom_files2cell(files(num_e));
-            cell_files(end+1:end+length(cell_tmp)) = cell_tmp;
-        end
-        
-    else
-        
-        list_field = fieldnames(files);
-
-        for num_f = 1:length(list_field) %% Loop over the fields
-
-            list_files_in = files.(list_field{num_f});
-            cell_tmp = psom_files2cell(list_files_in); %% Ugly recursive call to fix that
-            cell_files(end+1:end+length(cell_tmp)) = cell_tmp;
-            num_cell = num_cell + length(cell_tmp);
-
-        end
+    cell_files = struct2cell(files);
+    clear files
+    cell_files = cell_files(:);
+    for num_e = 1:length(cell_files);        
+        cell_files{num_e} = psom_files2cell(cell_files{num_e});
     end
-
+    cell_files = [cell_files{:}];
+    if isempty(cell_files)
+        cell_files = {};
+    end
 elseif iscellstr(files) %% That's a cell
     
     files = files(:);
@@ -87,7 +74,7 @@ elseif iscellstr(files) %% That's a cell
     for num_i = 1:length(files)
 
         if ~strcmp(files{num_i},'gb_niak_omitted')&~isempty(files{num_i})
-            cell_files{num_cell} = sub_suppress_doublon(files{num_i});
+            cell_files{num_cell} = regexprep(files{num_i},[filesep '+'],filesep);            
             num_cell = num_cell + 1;
         end
 
@@ -96,8 +83,8 @@ elseif iscellstr(files) %% That's a cell
 elseif ischar(files) % That's a string
 
     for num_f = 1:size(files,1)
-        if ~strcmp(deblank(files(num_f,:)),'gb_niak_omitted')&~isempty(deblank(files(num_f,:)))
-            cell_files{num_cell} = sub_suppress_doublon(files(num_f,:));
+        if ~strcmp(files(num_f,:),'gb_niak_omitted')&~isempty(files(num_f,:))
+            cell_files{num_cell} = regexprep(files(num_f,:),[filesep '+'],filesep);            
         end
     end
     
@@ -107,11 +94,4 @@ else
         error('FILES should be a string or a cell of strings, or a structure with arbitrary depths whos terminal fields are strings or cell of strings');
     end
     
-end
-
-function str2 = sub_suppress_doublon(str)
-
-str2 = str;
-while ~isempty(strfind(str2,[filesep filesep]))
-    str2 = strrep(str2,[filesep filesep],filesep);
 end
