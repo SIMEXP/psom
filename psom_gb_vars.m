@@ -36,7 +36,7 @@ gb_psom_mode = 'batch';
 gb_psom_mode_pm = 'batch'; 
 
 % Options for the maximal number of jobs
-gb_psom_max_queued = [];
+gb_psom_max_queued = 2;
 
 % Initialization of matlab
 gb_psom_init_matlab = '';
@@ -58,7 +58,7 @@ gb_psom_pdf_viewer = 'evince';
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% PSOM version
-gb_psom_version = '0.8.6'; % PSOM release number
+gb_psom_version = '0.8.7'; % PSOM release number
 
 %% Is the environment Octave or Matlab ?
 if exist('OCTAVE_VERSION','builtin')    
@@ -123,11 +123,20 @@ end
 %% Any following line will be executed at the begining of every PSOM command and every job %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Uncomment the following line to load the image processing package in Octave
+%% Uncomment the following line to load the image processing package in Octave
+
 % pkg load image
 
-% Verbose "on-the-fly" in Octave
-% page_output_immediately(true); 
+%% Don't use more to verbose "on-the-fly" in Octave
 
-% Use .mat files compatible with Matlab in Octave
+% more off
+
+%% Use .mat files compatible with Matlab in Octave
+
 % default_save_options('-7');    
+
+%% This is a bit of a dangerous option, but it makes things run faster in Octave. 
+%% You'll have to exit octave and start again if you want any change in the functions to be 
+%% taken into account.
+
+% ignore_function_time_stamp ('all')  

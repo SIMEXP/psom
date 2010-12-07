@@ -1,4 +1,4 @@
-=﻿Pipeline System for Octave and Matlab (PSOM), version 0.8.6=
+=﻿Pipeline System for Octave and Matlab (PSOM), version 0.8.7=
 
 A pipeline is a collection of jobs, i.e. matlab or octave codes with a well identified set of options that are using files as inputs and are producing files as outputs. PSOM is a framework to implement, run and re-run pipelines in Matlab or Octave :
   * Describe the pipeline using a straightforward structure representation.
@@ -37,6 +37,7 @@ THE SOFTWARE.
 
 ----
 =News=
+*December 7th, 2010* : Release 0.8.7. The main new feature is the support of a field FILES_CLEAN in the description of a job. If a job A uses a file as input that job B deletes (cleans), then B will be started only after the execution of A was completed. There is also a new command PSOM_ADD_CLEAN to easily add "cleaning" jobs to a pipeline. This feature is not yet documented on the wiki.
 *November 23rd, 2010* : Release 0.8.6. Main new features :
   * The search path can now be configured with '' to use the current search path, 'gb_psom_omitted' to make no attempt to change the search path (the start-up search path will apply), or any string to explicitly set up the search path. This can be set up through GB_PSOM_PATH_SEARCH in the file PSOM_GB_VARS.M
   * It is now possible to create a file psom_gb_vars_local.m anywhere in matlab/octave search path, and this file will override the default configurations found in psom_gb_vars.m

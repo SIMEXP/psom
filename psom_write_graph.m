@@ -95,8 +95,8 @@ end
 %% Hard-coded parameters
 
 % Color of nodes
-%list_colors = {'"#58a4ff"','"#ffffd0"','"#98ff58"','"#ff9f58f"','"#d0fffa"','#ffd0e7'};
-list_colors = {'"#ffffd0"'};
+list_colors = {'"#58a4ff"','"#ffffd0"','"#98ff58"','"#ff9f58f"','"#d0fffa"','#ffd0e7'};
+%list_colors = {'"#ffffd0"'};
 
 % Shape of nodes
 %list_shapes = {'box','circle','diamond','ellipse','triangle','egg'};
@@ -109,8 +109,11 @@ fprintf(hf,'digraph database {\n');
 for num_n = 1:nb_nodes
 
     lab_node = label_nodes{num_n};
-
-    fprintf(hf,'NameNode%i[label="%s",fillcolor=%s,shape=%s,style = filled]\n',num_n,lab_node,list_colors{1},list_shapes{1});
+    if (length(lab_node)>5)&&strcmp(lab_node(1:6),'clean_')
+      fprintf(hf,'NameNode%i[label="%s",fillcolor=%s,shape=%s,style = filled]\n',num_n,lab_node,list_colors{1},list_shapes{1});
+    else
+      fprintf(hf,'NameNode%i[label="%s",fillcolor=%s,shape=%s,style = filled]\n',num_n,lab_node,list_colors{2},list_shapes{1});
+    end
     
 end
 
