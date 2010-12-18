@@ -61,6 +61,10 @@ function opt_up = psom_struct_defaults(opt,list_fields,list_defaults)
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
 
+if ~isstruct(opt)
+    error('OPT should be a structure');
+end
+
 %% Build a default structure
 opt_up = cell2struct(list_defaults,list_fields,2);
 
