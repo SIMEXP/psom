@@ -895,19 +895,18 @@ end
 if flag_verbose
     fprintf('    Removing old outputs ...\n')
 end
-
+state_warning = warning;
+warning('off','all');
 for num_j = 1:length(list_jobs)    
     job_name = list_jobs{num_j};
     list_files = unique(files_out.(job_name));    
     if flag_clean&&~flag_finished(num_j)
-        for num_f = 1:length(list_files)           
-            if exist(list_files{num_f},'file')                
-                delete(list_files{num_f});                
-            end            
+        for num_f = 1:length(list_files)                             
+            try, delete(list_files{num_f}); end,            
         end 
     end 
 end
-
+warning(state_warning(1).state,'all');
 
 %% Clean up the log folders from old tag and log files
 
