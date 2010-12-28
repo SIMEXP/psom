@@ -61,7 +61,7 @@ function [success,message,message_id] = psom_mkdir(path_name)
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
 
-[success,message,message_id] = mkdir(path_name)
+[success,message,message_id] = mkdir(path_name);
 
 if ~exist('OCTAVE_VERSION','builtin')    
     %% This is matlab    
