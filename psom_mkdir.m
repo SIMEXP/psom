@@ -1,15 +1,8 @@
-function [success,message,messageid] = psom_mkdir(path_name)
-%
-% _________________________________________________________________________
-% SUMMARY PSOM_MKDIR
-%
-% Create a new directory. The difference between the regular matlab MKDIR
-% command and PSOM_MKDIR is that PSOM_MKDIR will create all folders and
-% subfolders, while MKDIR will only let you create a subdirectory in an
-% existing directory. 
+function [success,message,message_id] = psom_mkdir(path_name)
+% Create a new directory. Several levels of subdirectories can be created.
 %
 % SYNTAX:
-% [SUCCESS,MESSAGE,MESSAGEID] = PSOM_MKDIR(PATH_NAME)
+% [SUCCESS,MESSAGE,MESSAGE_ID] = PSOM_MKDIR(PATH_NAME)
 %
 % _________________________________________________________________________
 % INPUTS:
@@ -30,7 +23,7 @@ function [success,message,messageid] = psom_mkdir(path_name)
 %           empty string : PSOM_MKDIR executed successfully.
 %           message : an error or warning message, as applicable.
 %
-% MESSAGEID   
+% MESSAGE_ID   
 %       (string) defining the error or warning identifier.
 %           empty string : PSOM_MKDIR executed successfully.
 %           message id: the MATLAB error or warning message
@@ -38,8 +31,6 @@ function [success,message,messageid] = psom_mkdir(path_name)
 %           
 % _________________________________________________________________________
 % SEE ALSO:
-%
-% ERROR, LASTERR, WARNING, LASTWARN
 %
 % _________________________________________________________________________
 % COMMENTS:
@@ -70,44 +61,34 @@ function [success,message,messageid] = psom_mkdir(path_name)
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
 
-list_path = psom_string2words(path_name,{filesep});
+[success,message,message_id] = mkdir(path_name)
 
-if ispc
-    % This is windows, include the volume name in the root directory
-    path_curr = list_path{1};
-    path_curr = [path_curr filesep];
-    list_path = list_path(2:end);
-else
-    % this is a reasonable OS, the root is /
-    path_curr = filesep;
-end
-
-success = 1;
-message = '';
-messageid = '';
-
-if exist(path_name)
+if ~exist('OCTAVE_VERSION','builtin')    
+    %% This is matlab    
     return
 end
 
-for num_p = 1:length(list_path)
+%% This is Octave
+if (success==1)&&(~isempty(message))
+    %% Recursive creation of directories does not work in Octave yet.
+    list_path = psom_string2words(path_name,{filesep});
     
-    if ~exist(cat(2,path_curr,list_path{num_p}),'dir')
-        
-        if isempty(path_curr)
-            [success,message] = mkdir(list_path{num_p});
-        else
-             if exist('OCTAVE_VERSION','builtin')
-                [success,message] = mkdir(cat(2,path_curr,filesep,list_path{num_p}));
-            else
-                [success,message] = mkdir(path_curr,list_path{num_p});
-            end
-        end
-        
+    if ispc
+        % This is windows, include the volume name in the root directory
+        path_curr = list_path{1};
+        path_curr = [path_curr filesep];
+        list_path = list_path(2:end);
+    else
+        % this is a reasonable OS, the root is /
+        path_curr = filesep;
     end
     
-    path_curr = cat(2,path_curr,list_path{num_p},filesep);
+    success = 1;
+    message = '';
+    message_id = '';
     
+    for num_p = 1:length(list_path)
+        path_curr = [path_curr list_path{num_p} filesep];
+        [success,message,message_id] = mkdir(path_curr);
+    end
 end
-        
-        

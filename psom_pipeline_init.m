@@ -871,7 +871,7 @@ if ~flag_ready
     end
 end
 
-%% Creating log folders 
+%% Creating output folders 
 
 if flag_verbose
     fprintf('    Creating output folders ...\n')
@@ -883,12 +883,10 @@ path_all = unique(path_all);
 
 for num_p = 1:length(path_all)
     path_f = path_all{num_p};
-    if ~exist(path_f,'dir')
-        [succ,messg,messgid] = psom_mkdir(path_f);
-        if succ == 0
-            warning(messgid,messg);
-        end
-    end
+    [succ,messg,messgid] = psom_mkdir(path_f);
+    if succ == 0
+        warning(messgid,messg);
+    end    
 end
 
 %% Removing old outputs
