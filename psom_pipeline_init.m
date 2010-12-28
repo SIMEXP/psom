@@ -900,7 +900,7 @@ for num_j = 1:length(list_jobs)
     list_files = unique(files_out.(job_name));
     if flag_clean&&~flag_finished(num_j)
         for num_f = 1:length(list_files)
-            [status,output] = system(['rm -f' list_files{num_f}]);
+            [status,output] = system(['rm -f ' list_files{num_f}]);
         end
     end
 end
