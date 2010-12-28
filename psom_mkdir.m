@@ -69,8 +69,8 @@ if ~exist('OCTAVE_VERSION','builtin')
 end
 
 %% This is Octave
-if (success==1)&&(~isempty(message))
-    %% Recursive creation of directories does not work in Octave yet.
+if success==0
+    %% Recursive creation of directories does not work in Octave yet, try it    
     list_path = psom_string2words(path_name,{filesep});
     
     if ispc
