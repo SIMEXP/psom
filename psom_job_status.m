@@ -1,15 +1,11 @@
 function curr_status = psom_job_status(path_logs,list_jobs,mode_pipe)
-%
-% _________________________________________________________________________
-% SUMMARY PSOM_JOB_STATUS
-%
 % Get the current status of a list of jobs.
 %
 % SYNTAX :
 % CURR_STATUS = PSOM_JOB_STATUS(PATH_LOGS,LIST_JOBS,MODE_PIPE)
 %
 % _________________________________________________________________________
-% INPUTS :
+% INPUTS:
 %
 % PATH_LOGS
 %       (string) the folder where the logs of a pipeline are stored.
@@ -22,7 +18,7 @@ function curr_status = psom_job_status(path_logs,list_jobs,mode_pipe)
 %       Possible values : 'session', 'batch', 'qsub'.
 %
 % _________________________________________________________________________
-% OUTPUTS :
+% OUTPUTS:
 %
 % CURR_STATUS
 %       (cell of string) CURR_STATUS{K} is the current status of
@@ -49,7 +45,7 @@ function curr_status = psom_job_status(path_logs,list_jobs,mode_pipe)
 %                   the job name does not exist in the pipeline.
 %
 % _________________________________________________________________________
-% COMMENTS : 
+% COMMENTS: 
 %
 % The conditions for achieving a 'finished' status vary from one execution
 % mode to another : 
@@ -95,15 +91,6 @@ if ~exist('path_logs','var') || ~exist('list_jobs','var') || ~exist('mode_pipe',
     error('SYNTAX: CURR_STATUS = PSOM_JOB_STATUS(PATH_LOGS,LIST_JOBS,MODE). Type ''help psom_job_status'' for more info.')
 end
 
-%% Read the list of all files in the log folder, and reorganize them into a
-%% cell of strings
-struct_files_log = dir(path_logs);
-list_logs = cell([length(struct_files_log) 1]);
-for num_l = 1:length(list_logs)
-    list_logs{num_l} = struct_files_log(num_l).name;
-end
-clear struct_files_log
-
 %% Loop over all job names, and check for the existence of tag files
 nb_jobs = length(list_jobs);
 curr_status = cell([nb_jobs 1]);
@@ -111,20 +98,18 @@ curr_status = cell([nb_jobs 1]);
 for num_j = 1:nb_jobs        
     
     name_job = list_jobs{num_j};
-    mask_job = psom_find_str_cell(list_logs,name_job);
-    list_job = list_logs(mask_job);
         
-    file_running = [name_job '.running'];
-    file_failed = [name_job '.failed'];
-    file_finished = [name_job '.finished'];
-    file_exit = [name_job '.exit'];
-    file_oqsub = [name_job '.oqsub'];
+    file_running  = [path_logs name_job '.running'];
+    file_failed   = [path_logs name_job '.failed'];
+    file_finished = [path_logs name_job '.finished'];
+    file_exit     = [path_logs name_job '.exit'];
+    file_oqsub    = [path_logs name_job '.oqsub'];
         
-    flag_running = ismember(file_running,list_job);
-    flag_failed = ismember(file_failed,list_job);
-    flag_finished = ismember(file_finished,list_job);
-    flag_exit = ismember(file_exit,list_job);
-    flag_oqsub = ismember(file_oqsub,list_job);    
+    flag_running  = psom_exist(file_running);
+    flag_failed   = psom_exist(file_failed);
+    flag_finished = psom_exist(file_finished);
+    flag_exit     = psom_exist(file_exit);
+    flag_oqsub    = psom_exist(file_oqsub);    
     
     if (flag_running+flag_finished+flag_failed)>1
         error('I am confused : job %s has multiple tags. Sorry dude, I must quit ...',name_job);

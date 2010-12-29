@@ -1,8 +1,4 @@
 function str_b = psom_rm_blank(str,list_blanks)
-%
-% _________________________________________________________________________
-% SUMMARY NIAK_RM_BLANK
-%
 % Remove leading and trailing blanks from str, and suppress blanks
 % following a blank.
 %

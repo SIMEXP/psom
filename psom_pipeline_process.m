@@ -860,21 +860,17 @@ end
 function sub_add_var(file_name,var_name,var_value)
 
 eval([var_name ' = var_value;']);
-if ~exist(file_name,'file')
-    save(file_name,var_name)
-else
-    save('-append',file_name,var_name)
-end
+save('-append',file_name,var_name)
 
 %% Read a text file
 function str_txt = sub_read_txt(file_name)
 
-if exist(file_name,'file')
-    hf = fopen(file_name,'r');
-    str_txt = fread(hf,Inf,'uint8=>char')';
-    fclose(hf);
-else
+hf = fopen(file_name,'r');
+if hf == -1
     str_txt = '';
+else
+    str_txt = fread(hf,Inf,'uint8=>char')';
+    fclose(hf);    
 end
 
 %% Clean up the tags and logs associated with a job
@@ -890,7 +886,7 @@ files{7} = [path_logs filesep name_job '.oqsub'];
 files{8} = [path_logs filesep 'tmp' filesep name_job '.sh'];
 
 for num_f = 1:length(files)
-    if exist(files{num_f},'file')
+    if psom_exist(files{num_f});
         delete(files{num_f});
     end
 end
