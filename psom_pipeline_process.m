@@ -262,6 +262,8 @@ file_logs_backup = cat(2,path_logs,filesep,name_pipeline,'_logs_backup.mat');
 file_status = cat(2,path_logs,filesep,name_pipeline,'_status.mat');
 file_status_backup = cat(2,path_logs,filesep,name_pipeline,'_status_backup.mat');
 file_jobs = cat(2,path_logs,filesep,name_pipeline,'_jobs.mat');
+logs = load(file_logs);
+status = load(file_status);
 
 %% If necessary, create a temporary subfolder in the "logs" folder
 path_tmp = [path_logs filesep 'tmp'];
@@ -366,7 +368,7 @@ end
 
 % a try/catch block is used to clean temporary file if the user is
 % interrupting the pipeline of if an error occurs
-try
+try    
     
     %% If the pipeline manager is executed in the session, open the log
     %% file
@@ -389,33 +391,28 @@ try
     sub_add_line_log(hfpl,sprintf('\n%s\n%s\n%s\n',stars,msg,stars));
     
     %% Load the pipeline
-    load(file_pipeline,'list_jobs','graph_deps','files_in');
-    
-    %% Loading the current status of the pipeline
-    all_status = load(file_status);
-    for num_j = 1:length(list_jobs)
-        name_job = list_jobs{num_j};
-        if isfield(all_status,name_job)
-            job_status{num_j} = all_status.(name_job);
-        else
-            job_status{num_j} = 'none';
-        end
-    end
-    clear all_status
-    list_num_jobs = 1:length(job_status);
+    load(file_pipeline,'list_jobs','graph_deps','files_in');                
     
     %% update dependencies
-    mask_finished = ismember(job_status,'finished');
+    mask_finished = false([length(list_jobs) 1]);
+    for num_j = 1:length(list_jobs)
+        mask_finished(num_j) = strcmp(status.(list_jobs{num_j}),'finished');
+    end
     graph_deps(mask_finished,:) = 0;
     mask_deps = max(graph_deps,[],1)>0;
     mask_deps = mask_deps(:);
     
     %% Initialize the to-do list
-    mask_todo = ismember(job_status,{'none'});
-    mask_todo = mask_todo(:);
+    mask_todo = false([length(list_jobs) 1]);
+    for num_j = 1:length(list_jobs)
+        mask_todo(num_j) = strcmp(status.(list_jobs{num_j}),'none');
+    end    
     mask_done = ~mask_todo;
     
-    mask_failed = ismember(job_status,{'failed'});
+    mask_failed = false([length(list_jobs) 1]);
+    for num_j = 1:length(list_jobs)
+        mask_failed(num_j) = strcmp(status.(list_jobs{num_j}),'failed');
+    end    
     list_num_failed = find(mask_failed);
     list_num_failed = list_num_failed(:)';
     for num_j = list_num_failed
@@ -434,7 +431,11 @@ try
     
     %% The pipeline manager really starts here
     while ((max(mask_todo)>0) || (max(mask_running)>0)) && exist(file_pipe_running,'file')
-        
+        %% Update logs & status
+        save(file_logs,'-struct','logs');
+        save(file_logs_backup,'-struct','logs');
+        save(file_status,'-struct','status');
+        save(file_status_backup,'-struct','status');        
         flag_nothing_happened = true;
         
         %% Update the status of running jobs
@@ -449,7 +450,7 @@ try
         for num_j = list_num_running
             num_l = num_l+1;
             name_job = list_jobs{num_j};
-            flag_changed = ~strcmp(job_status{num_j},new_status_running_jobs{num_l});
+            flag_changed = ~strcmp(status.(name_job),new_status_running_jobs{num_l});
             
             if flag_changed
                 
@@ -466,39 +467,35 @@ try
                     nb_points = 0;
                 end
                 
-                % update status in the status file
-                job_status{num_j} = new_status_running_jobs{num_l};
-                sub_add_var(file_status,name_job,job_status{num_j});
-                sub_add_var(file_status_backup,name_job,job_status{num_j});
+                % update status in the status file                
+                status.(name_job) = new_status_running_jobs{num_l};
                 
-                if strcmp(job_status{num_j},'exit') % the script crashed ('exit' tag)
+                if strcmp(status.(name_job),'exit') % the script crashed ('exit' tag)
                     if flag_verbose
                         fprintf('%s - The script of job %s terminated without generating any tag, I guess we will count that one as failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
                     end
                     sub_add_line_log(hfpl,sprintf('%s - The script of job %s terminated without generating any tag, I guess we will count that one as failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued));;
-                    job_status{num_j} = 'failed';
+                    status.(name_job) = 'failed';
                 end
                 
-                if strcmp(job_status{num_j},'failed')||strcmp(job_status{num_j},'finished')
+                if strcmp(status.(name_job),'failed')||strcmp(status.(name_job),'finished')
                     %% for finished or failed jobs, transfer the individual
                     %% test log files to the matlab global logs structure
                     nb_queued = nb_queued - 1;
                     text_log = sub_read_txt([path_logs filesep name_job '.log']);
                     text_qsub_o = sub_read_txt([path_logs filesep name_job '.oqsub']);
-                    text_qsub_e = sub_read_txt([path_logs filesep name_job '.eqsub']);
+                    text_qsub_e = sub_read_txt([path_logs filesep name_job '.eqsub']);                    
                     if isempty(text_qsub_o)&isempty(text_qsub_e)
-                        sub_add_var(file_logs,name_job,text_log);
-                        sub_add_var(file_logs_backup,name_job,text_log);
+                        logs.(name_job) = text_log;                        
                     else
-                        sub_add_var(file_logs,name_job,[text_log hat_qsub_o text_qsub_o hat_qsub_e text_qsub_e]);
-                        sub_add_var(file_logs_backup,name_job,[text_log hat_qsub_o text_qsub_o hat_qsub_e text_qsub_e]);
+                        logs.(name_job) = [text_log hat_qsub_o text_qsub_o hat_qsub_e text_qsub_e];
                     end
                     sub_clean_job(path_logs,name_job); % clean up all tags & log
                 end
                 
-                switch job_status{num_j}
+                switch status.(name_job)
                     
-                    case 'failed' % the job has failed, darn it !
+                    case 'failed' % the job has failed, too bad !
                         
                         if flag_verbose
                             fprintf('%s - The job %s has failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
@@ -565,9 +562,7 @@ try
             mask_todo(num_job) = false;
             mask_running(num_job) = true;
             nb_queued = nb_queued + 1;
-            job_status{num_job} = 'submitted';
-            sub_add_var(file_status,name_job,job_status{num_job});
-            sub_add_var(file_status_backup,name_job,job_status{num_job});
+            status.(name_job) = 'submitted';
             if flag_verbose
                 fprintf('%s - The job %s has been submitted to the queue (%i jobs in queue).\n',datestr(clock),name_job,nb_queued)
             end
@@ -721,8 +716,13 @@ catch
     return
 end
 
-%% Print general info about the pipeline
+%% Update the final status
+save(file_logs,'-struct','logs');
+save(file_logs_backup,'-struct','logs');
+save(file_status,'-struct','status');
+save(file_status_backup,'-struct','status');
 
+%% Print general info about the pipeline
 msg_line1 = sprintf('The processing of the pipeline is terminated.');
 msg_line2 = sprintf('See report below for job completion status.');
 msg_line3 = sprintf('%s',datestr(now));
@@ -743,9 +743,17 @@ if exist('file_pipe_running','var')
 end
 
 %% Print a list of failed jobs
-list_num_failed = find(ismember(job_status,'failed'));
+mask_failed = false([length(list_jobs) 1]);
+for num_j = 1:length(list_jobs)
+    mask_failed(num_j) = strcmp(status.(list_jobs{num_j}),'failed');
+end
+mask_todo = false([length(list_jobs) 1]);
+for num_j = 1:length(list_jobs)
+    mask_todo(num_j) = strcmp(status.(list_jobs{num_j}),'none');
+end
+list_num_failed = find(mask_failed);
 list_num_failed = list_num_failed(:)';
-list_num_none = find(ismember(job_status,'none'));
+list_num_none = find(mask_todo);
 list_num_none = list_num_none(:)';
 flag_any_fail = ~isempty(list_num_failed);
 
@@ -855,12 +863,6 @@ end
 if any(mask_child)
     mask_child = mask_child | sub_find_children(mask_child_strict,graph_deps);
 end
-
-%% Update (or add) a variable in an existing '.mat' file
-function sub_add_var(file_name,var_name,var_value)
-
-eval([var_name ' = var_value;']);
-save('-append',file_name,var_name)
 
 %% Read a text file
 function str_txt = sub_read_txt(file_name)
