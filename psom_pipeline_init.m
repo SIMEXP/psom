@@ -426,7 +426,7 @@ end
 
 %% Test for the existence of an old pipeline 
 
-flag_old_pipeline = exist(file_jobs,'file');
+flag_old_pipeline = psom_exist(file_jobs);
 
 if flag_old_pipeline
 
@@ -450,7 +450,7 @@ if flag_old_pipeline
     if flag_verbose
         fprintf('    Loading old status ...\n');
     end
-    if exist(file_status,'file')
+    if psom_exist(file_status)
         try
             all_status_old = load(file_status);
         catch
@@ -469,7 +469,7 @@ if flag_old_pipeline
     if flag_verbose
         fprintf('    Loading old logs ...\n');
     end
-    if exist(file_logs,'file')
+    if psom_exist(file_logs)
         try
             all_logs_old = load(file_logs);
         catch
@@ -707,7 +707,7 @@ if flag_verbose
     fprintf('    Saving the individual ''jobs'' file %s ...\n',file_jobs);
 end
 
-if exist(file_jobs,'file')
+if psom_exist(file_jobs)
     pipeline_all = psom_merge_pipeline(pipeline_old,pipeline);
     if strcmp(gb_psom_language,'octave')
         sub_save_struct_fields(file_jobs,pipeline_all);
@@ -756,7 +756,7 @@ for num_j = 1:nb_jobs
     all_status.(name_job) = job_status{num_j};
 end
 
-if exist(file_status,'file')
+if psom_exist(file_status)
     all_status = psom_merge_pipeline(all_status_old,all_status);
     if strcmp(gb_psom_language,'octave')
         sub_save_struct_fields(file_status,all_status);
@@ -793,7 +793,7 @@ for num_j = 1:nb_jobs
     end
 end
 
-if exist(file_logs,'file')
+if psom_exist(file_logs)
     all_logs = psom_merge_pipeline(all_logs_old,all_logs);
     if strcmp(gb_psom_language,'octave')
         sub_save_struct_fields(file_logs,all_logs);
@@ -843,7 +843,7 @@ for num_j = list_num_unfinished
     
     for num_f = 1:length(list_files_necessary)
         
-        if ~exist(list_files_necessary{num_f},'file')&~exist(list_files_necessary{num_f},'dir')&~isempty(list_files_necessary{num_f})&~strcmp(list_files_necessary{num_f},'gb_niak_omitted')
+        if ~psom_exist(list_files_necessary{num_f})&~exist(list_files_necessary{num_f},'dir')&~isempty(list_files_necessary{num_f})&~strcmp(list_files_necessary{num_f},'gb_niak_omitted')
 
             if flag_job_OK
                 msg_files = sprintf('        Job %s, the following file(s) are missing : %s',name_job,list_files_necessary{num_f});
@@ -965,7 +965,7 @@ end
 %% Read a text file
 function str_txt = sub_read_txt(file_name)
 
-if exist(file_name,'file')
+if psom_exist(file_name)
     hf = fopen(file_name,'r');
     str_txt = fread(hf,Inf,'uint8=>char')';
     fclose(hf);
@@ -1006,7 +1006,7 @@ for num_j = list_restart % loop over jobs that need to be restarted
         flag_OK = true;
         
         for num_f = 1:length(deps.(name_job).(name_job2))
-            flag_file = exist(deps.(name_job).(name_job2){num_f},'file');
+            flag_file = psom_exist(deps.(name_job).(name_job2){num_f});
             
             if ~flag_file
                 if flag_verbose
