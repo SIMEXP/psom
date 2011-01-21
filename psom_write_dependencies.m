@@ -86,7 +86,7 @@ psom_set_defaults
 
 [graph_deps,list_jobs] = psom_build_dependencies(pipeline);
 
-file_tmp = niak_file_tmp('.dot');
+file_tmp = psom_file_tmp('.dot');
 
 opt_graph.label_nodes = list_jobs;
 

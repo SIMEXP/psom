@@ -1,8 +1,4 @@
 function [] = psom_visu_dependencies(pipeline,opt)
-%
-% _________________________________________________________________________
-% SUMMARY OF PSOM_VISU_DEPENDENCIES
-%
 % Visualize the graph of dependencies of a pipeline
 %
 % SYNTAX:
