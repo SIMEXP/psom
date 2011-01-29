@@ -303,7 +303,7 @@ end
 %% Options
 gb_name_structure = 'opt';
 gb_list_fields    = {'flag_clean' , 'flag_pause' , 'flag_update' , 'path_search'       , 'restart' , 'path_logs' , 'command_matlab' , 'flag_verbose' };
-gb_list_defaults  = {true         , false        , true          , gb_psom_path_search , {}        , NaN         , ''               , true           };
+gb_list_defaults  = {true         , true         , true          , gb_psom_path_search , {}        , NaN         , ''               , true           };
 psom_set_defaults
 name_pipeline = 'PIPE';
 
