@@ -590,7 +590,7 @@ for num_j = 1:nb_jobs
         
         %% Check if the user did not force a restart on that job
         flag_force = psom_find_str_cell(name_job,opt.restart);
-        if flag_force
+        if flag_force&&~flag_restart(num_j)
             if flag_verbose
                 fprintf('    User has manually forced to restart job %s.\n',name_job)
             end

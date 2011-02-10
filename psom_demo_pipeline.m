@@ -1,4 +1,4 @@
-function [] = psom_demo_pipeline(path_demo,opt)
+function [pipeline] = psom_demo_pipeline(path_demo,opt)
 %
 % _________________________________________________________________________
 % SUMMARY OF PSOM_DEMO_PIPELINE
@@ -97,6 +97,13 @@ end
 % Set up the options to run the pipeline
 opt.path_logs = [local_path_demo 'logs' filesep];  % where to store the log files
 
+if ~isfield(opt,'flag_test')
+    flag_test = false;
+else
+    flag_test = opt.flag_test;
+    opt = rmfield(opt,'flag_test');
+end
+
 if ~isfield(opt,'mode')
     opt.mode = 'batch';
 end
@@ -113,35 +120,18 @@ if ~isfield(opt,'time_between_checks')
     opt.time_between_checks = 0.5;
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Prepare the demo folder %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-msg = 'The demo is about to remove the content of the following folder and save the demo results there:';
-msg2 = local_path_demo;
-msg3 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max([length(msg),length(msg2),length(msg3)])]);
-fprintf('\n%s\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,msg3,stars);
-pause
-
-if exist(local_path_demo,'dir')
-    rmdir(local_path_demo,'s');
-end
-
-file_weights = [local_path_demo filesep 'weights.mat'];
-weights = rand([2 50]);
-psom_mkdir(local_path_demo);
-save(file_weights,'weights');
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %% What is a pipeline ? %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%    
+if ~flag_test
+    msg = 'The demo is about to generate a toy pipeline and plot the dependency graph.';
+    msg2 = 'Press CTRL-C to stop here or any key to continue.';
+    stars = repmat('*',[1 max(length(msg),length(msg2))]);
+    fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
+    pause
+end
 
-msg = 'The demo is about to generate a toy pipeline and plot the dependency graph.';
-msg2 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2))]);
-fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-pause
+file_weights = [local_path_demo filesep 'weights.mat'];
 
 % Job "message"
 pipeline.message.command = 'fprintf(''The number of samples was : %i. Well that info will be in the logs anyway but still...\n'',opt.nb_samples)';
@@ -172,7 +162,30 @@ pipeline.weights.files_in.sessions.session1 = [local_path_demo 'weights.mat'];
 pipeline.weights.files_out = [local_path_demo 'results.mat'];
 pipeline.weights.opt = struct();
 
+if flag_test
+    return
+end
+
 psom_visu_dependencies(pipeline);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Prepare the demo folder %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+msg = 'The demo is about to remove the content of the following folder and save the demo results there:';
+msg2 = local_path_demo;
+msg3 = 'Press CTRL-C to stop here or any key to continue.';
+stars = repmat('*',[1 max([length(msg),length(msg2),length(msg3)])]);
+fprintf('\n%s\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,msg3,stars);
+pause
+
+if exist(local_path_demo,'dir')
+    rmdir(local_path_demo,'s');
+end
+
+weights = rand([2 50]);
+psom_mkdir(local_path_demo);
+save(file_weights,'weights');
 
 %%%%%%%%%%%%%%%%%%%%
 %% Run a pipeline %%
