@@ -1,10 +1,5 @@
 function [] = psom_write_pipe2xml(pipeline, path_write, opt)
-%
-%
-% ___________________________________________________________________________
-% SUMMARY PSOM_WRITE_PIPE2XML
-%
-% Split a pipeline into seperate jobs and create a xml file of the pipeline.
+% Split a pipeline into seperate .mat jobs and an xml representation
 % 
 % SYNTAX:
 % [] = PSOM_WRITE_PIPE2XML(PIPELINE,PATH_WRITE,OPT)
@@ -13,58 +8,47 @@ function [] = psom_write_pipe2xml(pipeline, path_write, opt)
 % INPUTS
 %
 % PIPELINE
-%       (structure) A formated PSOM PIPELINE.
+%	(structure) A formated PSOM PIPELINE.
 % 
 % PATH_WRITE
-%       (string) String containing the folder where to save the outputs.
+%   (string) String containing the folder where to save the outputs.
 %
 % OPT
-%       (structure) with the following fields :
+%   (structure) with the following fields :
 %       
-%       XML_NAME
-%           (string) Name of the xml file to save in.
+%	XML_NAME
+%   	(string) Name of the xml file to save in.
 % 
-%       PATH_JOBS
-%           (string) Path where to save the jobs.
+%	PATH_JOBS
+%   	(string) Path where to save the jobs.
 % 
 % ___________________________________________________________________________
 % OUTPUTS
 %
+% This functional will create the following files in PATH_WRITE : 
+%
 % PIPELINE.xml
 % 
-%       A .xml file containing the pipeline.
+%	A .xml file containing the pipeline.
 %       
-%       If OPT.XML_NAME is specified, that filename will be used instead.
+%   If OPT.XML_NAME is specified, that filename will be used instead.
 %
 %   
 % JOB_(NAME OF JOB).mat 
 % 
-%       Files for each job in the given PIPELINE.
+%   Files for each job in the given PIPELINE.
 %
-%       Will be saved in PATH_WRITE folder or OPT.PATH_JOBS if defined.
+%   Will be saved in PATH_WRITE folder or OPT.PATH_JOBS if defined.
 % 
 % _________________________________________________________________________
 % COMMENTS:
 %
-% Empty file strings or strings equal to 'gb_niak_omitted' in the pipeline
-% description are ignored in the dependency graph and checks for
-% the existence of required files.
+% Copyright (c) Sebastien Lavoie-Courchesne, 
+% Centre de recherche de l'institut de Gériatrie de Montréal
+% Département d'informatique et de recherche opérationnelle
+% Université de Montréal, 2011.
 %
-% If a pipeline is already running (a 'PIPE.lock' file could be found in
-% the logs folder), a warning will be issued and the user may choose to
-% stop the pipeline execution. Otherwise, the '.lock' file will be deleted
-% and the pipeline will be restarted.
-%
-% If this is not the first time a pipeline is executed, the pipeline
-% manager will check which jobs have been successfully completed, and will
-% not restart these ones. If a job description has somehow been
-% modified since a previous processing, this job and all its children will
-% be restarted. For more details on this behavior, please read the
-% documentation of PSOM_PIPELINE_INIT or run the pipeline demo in
-% NIAK_DEMO_PIPELINE.
-%
-% Copyright (c) Sebastien Lavoie-Courchesne, Montreal Neurological Institute, 2008.
-% Maintainer : pbellec@bic.mni.mcgill.ca
+% Maintainer : pierre.bellec@criugm.qc.ca
 % See licensing information in the code.
 % Keywords : pipeline, xml
 
@@ -88,8 +72,8 @@ function [] = psom_write_pipe2xml(pipeline, path_write, opt)
 
 
 gb_name_structure = 'opt';
-gb_list_fields = {'xml_name','path_jobs'};
-gb_list_defaults = {strcat(path_write,'pipeline.xml'),path_write};
+gb_list_fields    = {'xml_name'                        , 'path_jobs' };
+gb_list_defaults  = {strcat(path_write,'pipeline.xml') , path_write  };
 niak_set_defaults;
 
 num_jobs = 1;
@@ -114,7 +98,7 @@ for [job,name] = pipeline
 
   fprintf(fid,strcat('<id>',md5sum(name,true),'</id>'));
   fprintf(fid,strcat('<name>',name,'</name>'));
-  fprintf(fid,strcat('<job_file>',strcat(name,'.mat'),'</job_file>'));
+  fprintf(fid,strcat('<job_file> job_',strcat(name,'.mat'),'</job_file>'));
 
   if ~isempty(deps.(name))
     for [name2,name2] = deps.(name)
