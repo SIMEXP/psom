@@ -77,26 +77,33 @@ file_running  = [path_f filesep name_job '.running'];
 file_failed   = [path_f filesep name_job '.failed'];
 file_finished = [path_f filesep name_job '.finished'];
 
-if exist(file_running,'file')|exist(file_failed,'file')|exist(file_finished,'file')
-    error('Already found a tag on that job. Sorry dude, I must quit ...');
+try
+    job = sub_load_job(file_jobs,name_job); % This is launched through the pipeline manager
+    flag_psom = true;
+catch
+    job = load(file_job);
+    flag_psom = false;
 end
 
-%% Create a running tag for the job
-tmp = datestr(clock);
-save(file_running,'tmp')
+if flag_psom        
+    if exist(file_running,'file')|exist(file_failed,'file')|exist(file_finished,'file')
+        error('Already found a tag on that job. Sorry dude, I must quit ...');
+    end
+    
+    %% Create a running tag for the job
+    tmp = datestr(clock);
+    save(file_running,'tmp')
+end
 
 %% Print general info about the job
 msg = sprintf('Log of the (%s) job : %s\nStarted on %s\nUser: %s\nhost : %s\nsystem : %s',gb_psom_language,name_job,datestr(clock),gb_psom_user,gb_psom_localhost,gb_psom_OS);
 stars = repmat('*',[1 30]);
 fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
 
-job = sub_load_job(file_jobs,name_job);
-
+%% Upload job info
 gb_name_structure = 'job';
 gb_list_fields    = {'files_in' , 'files_out' , 'files_clean' , 'command','opt' };
 gb_list_defaults  = {{}         , {}          , {}            , NaN      , {}   };
-psom_set_defaults
-
 psom_set_defaults
 command, files_in, files_out, files_clean, opt
 
@@ -135,43 +142,49 @@ try
     list_files = psom_files2cell(files_out);
 
     for num_f = 1:length(list_files)
-        if ~exist(list_files{num_f},'file')&~exist(list_files{num_f},'dir')
+        if ~psom_exist(list_files{num_f})&&~exist(list_files{num_f},'dir')
             fprintf('The output file or directory %s has not been generated!\n',list_files{num_f});
             flag_failed = true;
         else
             fprintf('The output file or directory %s was successfully generated!\n',list_files{num_f});
         end
-    end
-
-    %% Finishing the job
-    delete(file_running);
+    end        
     
+    %% Verbose an epilogue
     if exist(file_failed)
         flag_failed = true;
         fprintf('Huho the job just finished but I found a FAILED tag. There must be something weird going on with the pipeline manager. Anyway, I will let the FAILED tag just in case ...');
     end
-        
-    if flag_failed
-        msg1 = sprintf('%s : The job has FAILED',datestr(clock));
-        save(file_failed,'tmp')       
-    else
-        msg1 = sprintf('%s : The job was successfully completed',datestr(clock));
-        save(file_finished,'tmp')        
-    end
-
-    msg2 = sprintf('Total time used to process the job : %1.2f sec.',telapsed);
-    stars = repmat('*',[1 max(size(msg1,2),size(msg2,2))]);
-    fprintf('\n%s\n%s\n%s\n%s\n',stars,msg1,msg2,stars);    
-
-catch
     
-    if exist('hf','var')
-        fprintf('%s',str_log);
+    
+    
+    %% Create a tag file for output status
+    if flag_psom   
+        %% Finishing the job
+        delete(file_running); 
+        if flag_failed
+            msg1 = sprintf('%s : The job has FAILED',datestr(clock));
+            save(file_failed,'tmp')       
+        else
+            msg1 = sprintf('%s : The job was successfully completed',datestr(clock));
+            save(file_finished,'tmp')        
+        end
+        msg2 = sprintf('Total time used to process the job : %1.2f sec.',telapsed);
+        stars = repmat('*',[1 max(size(msg1,2),size(msg2,2))]);
+        fprintf('\n%s\n%s\n%s\n%s\n',stars,msg1,msg2,stars);  
+    else
+        msg2 = sprintf('Total time used to process the job : %1.2f sec.',telapsed);
+        stars = repmat('*',[1 size(msg2,2)]);
+        fprintf('\n%s\n%s\n%s\n%s\n',stars,msg2,stars);  
     end
-    delete(file_running);
-    msg1 = sprintf('The job has FAILED');
-    tmp = datestr(clock);
-    save(file_failed,'tmp');
+        
+catch
+    if flag_psom    
+        delete(file_running);
+        msg1 = sprintf('The job has FAILED');
+        tmp = datestr(clock);
+        save(file_failed,'tmp');
+    end
     errmsg = lasterror;
     rethrow(errmsg)
 end
