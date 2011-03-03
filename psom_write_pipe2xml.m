@@ -82,16 +82,14 @@ num_jobs = 1;
 
 [fid, msg] = fopen(xml_name,'w','native');
 if (fid == -1)
-  printf(msg);
-  exit(-1);
+    printf(strcat('ERROR Opening xml file : ',msg,': ',xml_name));
+    exit(-1);
 end
 
 fprintf(fid,'<?xml version="1.0" encoding="UTF-8" ?>');
 fprintf(fid,'<xml>');
 
 for [job,name] = pipeline
-  list_jobs{num_jobs} = name;
-  num_jobs++;
   fprintf(fid,'<job>');
 
   save(strcat(path_jobs,'job_',name,'.mat'),'-struct','job');
@@ -128,6 +126,7 @@ for [job,name] = pipeline
 end
 
 fprintf(fid,'</xml>');
+
 test = fclose(fid);
 if (test == -1)
   printf('There was an error closing the xml file. It might be corrupted, or it might not.');
