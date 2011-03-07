@@ -230,11 +230,13 @@ function [cell_struct,ind_struct] = sub_struct2cell(my_struct)
 cell_struct = struct2cell(my_struct);
 size_fields = cellfun('length',cell_struct);
 nb_f = length(size_fields);
-ind_struct = zeros([sum(size_fields) 1]);
-pos_end = cumsum(size_fields);
-pos_start = [1 ; (pos_end(1:end-1)+1)];
-for num_f = 1:nb_f
-    ind_struct(pos_start(num_f):pos_end(num_f)) = num_f;
+ind_struct = ones([sum(size_fields) 1]);
+if nb_f>1
+   pos_end = cumsum(size_fields);
+   pos_start = [1 ; (pos_end(1:end-1)+1)];
+   for num_f = 1:nb_f
+       ind_struct(pos_start(num_f):pos_end(num_f)) = num_f;
+   end
 end
 cell_struct = [cell_struct{:}]';
     
