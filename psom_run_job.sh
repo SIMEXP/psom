@@ -45,8 +45,8 @@
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
 
-if(nargin != 1)
-    error("USAGE: niak_run_job <JOB.mat>\n");
+if(nargin != 1 && nargin != 2)
+    error("USAGE: psom_run_job <JOB.mat> or psom_run_job <JOB.mat> <PATH change>\n");
 end
 
 args = argv();
