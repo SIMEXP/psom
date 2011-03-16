@@ -92,8 +92,9 @@ while(num_s < length(xml_string))
     else
       xml_struct.(key) = psom_xml2struct(value);
     end
-    num_s += length(key_end);
+    num_s += length(key_end)-1;
   end
+  num_s++;
 end
 
 

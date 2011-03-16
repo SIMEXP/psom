@@ -1,4 +1,4 @@
-#!/usr/bin/octave -q
+#!/usr/bin/env octave -q
 % Executes a .mat job.
 %
 % SYNTAX:

@@ -1,4 +1,4 @@
-#!/usr/bin/octave -q
+#!/usr/bin/env octave -q
 % Takes an xml definition of an fmri preprocess pipeline and creates an xml 
 % pipeline and seperate .mat jobs.
 %
