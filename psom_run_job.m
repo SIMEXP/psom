@@ -52,17 +52,7 @@ gb_list_fields = {'flag_rand'};
 gb_list_defaults = {true};
 psom_set_defaults
 
-if strcmp(gb_psom_language,'matlab')
-    try
-        RandStream.setDefaultStream(RandStream('mt19937ar','seed',sum(100*clock))); % matlab 7.9+
-    catch        
-        rand('state',sum(100*clock)); % Matlab 5+
-        randn('state',sum(100*clock));
-    end
-    % Note : in octave 3.x the random number generator is initialized based
-    % on the CPU time by default, so there is nothing to do.
-    % PSOM is not compatible with older versions of Octave.
-end
+psom_set_rand_seed();
 
 %% Generate file names
 [path_f,name_job,ext_f] = fileparts(file_job);
