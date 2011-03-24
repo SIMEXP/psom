@@ -1,4 +1,4 @@
-function [status,msg] = psom_run_job(file_job,opt)
+function [status,msg] = psom_run_job(file_job)
 % Load some variables in a matlab file and run the corresponding job. 
 % The function is generating empty files to flag the status of the 
 % processing (running, failed or finished). 
@@ -43,15 +43,7 @@ function [status,msg] = psom_run_job(file_job,opt)
 % THE SOFTWARE.
 
 global gb_psom_name_job
-
 psom_gb_vars
-
-%% Options
-gb_name_structure = 'opt';
-gb_list_fields = {'flag_rand'};
-gb_list_defaults = {true};
-psom_set_defaults
-
 psom_set_rand_seed();
 
 %% Generate file names
@@ -71,7 +63,11 @@ try
     job = sub_load_job(file_jobs,name_job); % This is launched through the pipeline manager
     flag_psom = true;
 catch
-    job = load(file_job);
+    if ischar(file_job)
+        job = load(file_job);
+    else
+        job = file_job;
+    end
     flag_psom = false;
 end
 
