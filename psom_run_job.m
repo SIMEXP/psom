@@ -46,18 +46,20 @@ global gb_psom_name_job
 psom_gb_vars
 psom_set_rand_seed();
 
-%% Generate file names
-[path_f,name_job,ext_f] = fileparts(file_job);
-gb_psom_name_job = name_job;
+try
+    %% Generate file names
+    [path_f,name_job,ext_f] = fileparts(file_job);
+    gb_psom_name_job = name_job;
 
-if ~strcmp(ext_f,'.mat')
-    error('The job file %s should be a .mat file !',file_job);
+    if ~strcmp(ext_f,'.mat')
+        error('The job file %s should be a .mat file !',file_job);
+    end
+
+    file_jobs     = [path_f filesep 'PIPE_jobs.mat'];
+    file_running  = [path_f filesep name_job '.running'];
+    file_failed   = [path_f filesep name_job '.failed'];
+    file_finished = [path_f filesep name_job '.finished'];
 end
-
-file_jobs     = [path_f filesep 'PIPE_jobs.mat'];
-file_running  = [path_f filesep name_job '.running'];
-file_failed   = [path_f filesep name_job '.failed'];
-file_finished = [path_f filesep name_job '.finished'];
 
 try
     job = sub_load_job(file_jobs,name_job); % This is launched through the pipeline manager
@@ -102,13 +104,10 @@ try
     flag_failed = false;
    
     try
-
         tic;
         eval(command)
         telapsed = toc;
-
     catch
-
         telapsed = toc;
         flag_failed = true;
         errmsg = lasterror;
@@ -134,36 +133,34 @@ try
         else
             fprintf('The output file or directory %s was successfully generated!\n',list_files{num_f});
         end
-    end        
-    
-    %% Verbose an epilogue
-    if exist(file_failed)
-        flag_failed = true;
-        fprintf('Huho the job just finished but I found a FAILED tag. There must be something weird going on with the pipeline manager. Anyway, I will let the FAILED tag just in case ...');
-    end
-    
-    
+    end                   
     
     %% Create a tag file for output status
     if flag_psom   
+        %% Check for double tag files
+        if exist(file_failed)
+            flag_failed = true;
+            fprintf('Huho the job just finished but I found a FAILED tag. There must be something weird going on with the pipeline manager. Anyway, I will let the FAILED tag just in case ...');
+        end     
+    
         %% Finishing the job
         delete(file_running); 
         if flag_failed
-            msg1 = sprintf('%s : The job has FAILED',datestr(clock));
             save(file_failed,'tmp')       
         else
-            msg1 = sprintf('%s : The job was successfully completed',datestr(clock));
             save(file_finished,'tmp')        
         end
-        msg2 = sprintf('Total time used to process the job : %1.2f sec.',telapsed);
-        stars = repmat('*',[1 max(size(msg1,2),size(msg2,2))]);
-        fprintf('\n%s\n%s\n%s\n%s\n',stars,msg1,msg2,stars);  
-    else
-        msg2 = sprintf('Total time used to process the job : %1.2f sec.',telapsed);
-        stars = repmat('*',[1 size(msg2,2)]);
-        fprintf('\n%s\n%s\n%s\n%s\n',stars,msg2,stars);  
     end
-        
+    
+    %% Verbose an epilogue
+    if flag_failed
+        msg1 = sprintf('%s : The job has FAILED',datestr(clock));
+    else
+        msg1 = sprintf('%s : The job was successfully completed',datestr(clock));    
+    end
+    msg2 = sprintf('Total time used to process the job : %1.2f sec.',telapsed);
+    stars = repmat('*',[1 max(size(msg1,2),size(msg2,2))]);
+    fprintf('\n%s\n%s\n%s\n%s\n',stars,msg1,msg2,stars);         
 catch
     if flag_psom    
         delete(file_running);
