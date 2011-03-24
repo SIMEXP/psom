@@ -49,7 +49,6 @@ psom_set_rand_seed();
 try
     %% Generate file names
     [path_f,name_job,ext_f] = fileparts(file_job);
-    gb_psom_name_job = name_job;
 
     if ~strcmp(ext_f,'.mat')
         error('The job file %s should be a .mat file !',file_job);
@@ -59,7 +58,10 @@ try
     file_running  = [path_f filesep name_job '.running'];
     file_failed   = [path_f filesep name_job '.failed'];
     file_finished = [path_f filesep name_job '.finished'];
+catch
+    name_job = 'manual';
 end
+gb_psom_name_job = name_job;
 
 try
     job = sub_load_job(file_jobs,name_job); % This is launched through the pipeline manager
