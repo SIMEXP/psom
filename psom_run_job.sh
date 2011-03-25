@@ -65,4 +65,9 @@ for num_p = 1:length(path_all)
     end    
 end
 
-psom_run_job(args{1});
+failed = psom_run_job(args{1});
+if(~failed) 
+    printf('***Success***\n');
+else
+    printf('***Failure***\n');
+end

@@ -59,7 +59,6 @@ end
 
 if(length(key_a) != length(key_b)*2)
   error('Error parsing xml file, misparsed key blocks.');
-  exit(-1);
 end
 
 num_s = 1;

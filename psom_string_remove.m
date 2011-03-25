@@ -57,7 +57,7 @@ a = strfind(string,remove_start);
 string_removed = string;
 
 if(length(a) == 0)
-  return
+    return
 end
 
 for num_c=1:length(a)
@@ -65,5 +65,4 @@ for num_c=1:length(a)
   comment = string(a(num_c):a(num_c)+b(1));
   string_removed = strrep(string_removed,comment,'');
 end
-
 endfunction 

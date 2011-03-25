@@ -70,6 +70,9 @@ end
 if ~exist(jobs_folder,'dir')
     error(strcat('No jobs_folder found : ',jobs_folder));
 end
+if (jobs_folder(end) != filesep)
+    jobs_folder = strcat(jobs_folder,filesep);
+end
 
 pipeline = psom_read_xml(pipe_definition);
 files_in = pipeline.niak_fmri_preproc.files_in;
@@ -77,3 +80,4 @@ opt = pipeline.niak_fmri_preproc.opt;
 opt.flag_test = 1;
 pipeline2 = niak_pipeline_fmri_preprocess(files_in,opt);
 psom_write_pipeline2xml(pipeline2,jobs_folder);
+printf('***Success***\n');

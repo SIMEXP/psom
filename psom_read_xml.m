@@ -50,15 +50,12 @@ function [xml_struct] = psom_read_xml(xml_file)
 
 [fid,msg] = fopen(xml_file,'r');
 if(fid == -1)
-  printf(msg);
-  exit(-1);
+  error(msg);
 end
 
 xml_text = char(fread(fid,[1,Inf],'char'));
 xml_uncommented = psom_string_remove(xml_text,'<!','>');
 xml_uncommented = psom_string_remove(xml_uncommented,'<?','?>');
 xml_struct = psom_xml2struct(xml_uncommented,0);
-
 fclose(fid);
-
 endfunction

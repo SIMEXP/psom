@@ -1,10 +1,10 @@
-function [status,msg] = psom_run_job(file_job)
+function [flag_failed,msg] = psom_run_job(file_job)
 % Load some variables in a matlab file and run the corresponding job. 
 % The function is generating empty files to flag the status of the 
 % processing (running, failed or finished). 
 %
 % SYNTAX:
-% [STATUS,MSG] = PSOM_RUN_JOB(FILE_JOB)
+% [failed,MSG] = PSOM_RUN_JOB(FILE_JOB)
 %
 % _________________________________________________________________________
 % COMMENTS:
