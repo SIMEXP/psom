@@ -150,7 +150,7 @@ try
         if flag_failed
             save(file_failed,'tmp')       
         else
-            save(file_finished,'tmp')        
+            save(file_finished,'tmp')     
         end
     end
     

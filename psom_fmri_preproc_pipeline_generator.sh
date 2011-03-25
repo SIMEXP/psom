@@ -1,4 +1,4 @@
-#!/usr/bin/env octave -q
+#!/usr/bin/env octave
 % Takes an xml definition of an fmri preprocess pipeline and creates an xml 
 % pipeline and seperate .mat jobs.
 %
@@ -72,6 +72,8 @@ if ~exist(jobs_folder,'dir')
 end
 
 pipeline = psom_read_xml(pipe_definition);
-pipeline.xml.opt.flag_test = 1;
-pipeline2 = niak_pipeline_fmri_preprocess(pipeline.xml.files_in,pipeline.xml.opt);
-psom_write_pipe2xml(pipeline2,jobs_folder);
+files_in = pipeline.niak_fmri_preproc.files_in;
+opt = pipeline.niak_fmri_preproc.opt;
+opt.flag_test = 1;
+pipeline2 = niak_pipeline_fmri_preprocess(files_in,opt);
+psom_write_pipeline2xml(pipeline2,jobs_folder);

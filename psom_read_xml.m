@@ -55,8 +55,8 @@ if(fid == -1)
 end
 
 xml_text = char(fread(fid,[1,Inf],'char'));
-xml_uncommented = psom_string_remove(xml_text,'<!--','-->');
-xml_uncommented = psom_string_remove(xml_uncommented,'<?','>');
+xml_uncommented = psom_string_remove(xml_text,'<!','>');
+xml_uncommented = psom_string_remove(xml_uncommented,'<?','?>');
 xml_struct = psom_xml2struct(xml_uncommented,0);
 
 fclose(fid);

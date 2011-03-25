@@ -50,7 +50,7 @@ key_a = strfind(xml_string,'<');
 key_b = strfind(xml_string,'</');
 if(length(key_a) == 0)
     if(xml_string(1) == '"')
-	xml_struct = strrep(xml_string,'"','');
+	xml_struct = xml_string(2:end);
     else
 	xml_struct = str2num(xml_string);
     end
@@ -65,6 +65,8 @@ end
 num_s = 1;
 xml_struct = '';
 key_index = 1;
+contains_name = 0;
+contains_path = 0;
 while(num_s < length(xml_string)) 
   if(xml_string(num_s) == '<')
     key = '';
@@ -86,16 +88,50 @@ while(num_s < length(xml_string))
       num_v++;
       num_s++;
     end
-    if(length(key_start_i) > 1)
+    if(length(value) > 12)
+      start = strfind(value,'<');
+      if(strcmp(value(start:start+5),'<name>'))
+        num_i = start(1)+6;
+        num_n = 1;
+        while(!strcmp(value(num_i:num_i+6),'</name>'))
+          name(num_n) = value(num_i);
+          num_n++;
+          num_i++;
+        end
+        key = name;
+        contains_name = 1;
+        value = value(num_i+5:end);
+      end
+    end
+    if(contains_name == 1)
+      xml_struct.(key) = psom_xml2struct(value);
+    elseif(length(key_start_i) > 1)
       xml_struct.(key){key_index} = psom_xml2struct(value);
       key_index++;
     else
       xml_struct.(key) = psom_xml2struct(value);
     end
     num_s += length(key_end)-1;
+    key_name = 0;
   end
   num_s++;
 end
 
+xml_struct = path2vec(xml_struct);
+endfunction
 
+function [xml_struct] = path2vec(xml_struct) 
+
+if(isstruct(xml_struct))
+  names = fieldnames(xml_struct);
+  if(length(names) == 1)
+    if(strcmp(fieldnames(xml_struct)(1),'path'))
+      xml_struct = xml_struct.path;
+    end
+  else
+    for n = 1:length(names)
+      xml_struct.(names{n}) = path2vec(xml_struct.(names{n}));
+    end
+  end
+end
 endfunction

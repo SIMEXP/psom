@@ -1,4 +1,4 @@
-function [string_removed] = psom_string_remove(string,start,end)
+function [string_removed] = psom_string_remove(string,remove_start,remove_end)
 % Removes substrings from a string.
 % 
 % SYNTAX:
@@ -53,23 +53,17 @@ function [string_removed] = psom_string_remove(string,start,end)
 % THE SOFTWARE.
 
 
-a = strfind(string,start);
+a = strfind(string,remove_start);
+string_removed = string;
+
 if(length(a) == 0)
-  string_removed = string;
   return
 end
 
-b = strfind(string,end);
-if(length(a) != length(b))
-  error(strcat('Error removing ',start,' to ',end,', incoherent number of blocks.'));
-  string_removed = string;
-  return
+for num_c=1:length(a)
+  b = strfind(string(a(num_c):end),remove_end);
+  comment = string(a(num_c):a(num_c)+b(1));
+  string_removed = strrep(string_removed,comment,'');
 end
-
-string_removed = substr(string,1,a(1)-1);
-for num_c=2:length(a)
-  string_removed = strcat(string_removed,substr(string,b(num_c-1)+3,a(num_c)-b(num_c-1)-3));
-end
-string_removed = strcat(string_removed,substr(string,b(num_c)+3,length(string)-b(num_c)-3));
 
 endfunction 

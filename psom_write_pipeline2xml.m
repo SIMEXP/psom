@@ -1,4 +1,4 @@
-function [] = psom_write_pipe2xml(pipeline, path_write, opt)
+function [] = psom_write_pipeline2xml(pipeline, path_write, opt)
 % Split a pipeline into seperate .mat jobs and an xml representation
 % 
 % SYNTAX:
