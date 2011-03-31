@@ -576,7 +576,7 @@ for num_j = 1:nb_jobs
             if flag_same & strcmp(job_status_old{num_j},'none')
                 fprintf('    The job %s has not yet been processed, it will be executed.\n',name_job);
                 flag_restart_job = true;
-            elseif flag_same & strcmp(job_status_old{num_j},'submitted')
+            elseif flag_same & (strcmp(job_status_old{num_j},'submitted')|strcmp(job_status_old{num_j},'running'))
                 fprintf('    The job %s was not submitted successfully, it will be restarted.\n',name_job);
                 flag_restart_job = true;
             end
