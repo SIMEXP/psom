@@ -111,6 +111,23 @@ while(num_s < length(xml_string))
 end
 
 xml_struct = path2vec(xml_struct);
+xml_struct = addFilesep2folderOut(xml_struct);
+endfunction
+
+function [xml_struct] = addFilesep2folderOut(xml_struct)
+if(isstruct(xml_struct))
+  names = fieldnames(xml_struct);
+  for n = 1:length(names)
+    if(strcmp(names{n},'folder_out'))
+      if(ischar(xml_struct.folder_out))
+        if(xml_struct.folder_out(end) ~= filesep)
+          xml_struct.folder_out = strcat(xml_struct.folder_out,filesep);
+        end
+      end
+    end
+    xml_struct.(names{n}) = addFilesep2folderOut(xml_struct.(names{n}));
+  end
+end
 endfunction
 
 function [xml_struct] = path2vec(xml_struct) 
@@ -118,7 +135,7 @@ function [xml_struct] = path2vec(xml_struct)
 if(isstruct(xml_struct))
   names = fieldnames(xml_struct);
   if(length(names) == 1)
-    if(strcmp(fieldnames(xml_struct)(1),'path'))
+    if(strcmp(names{1},'path'))
       xml_struct = xml_struct.path;
     end
   else

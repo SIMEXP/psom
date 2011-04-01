@@ -96,7 +96,7 @@ for [job,name] = pipeline
 
   fprintf(fid,strcat('    <id>',md5sum(name,true),'</id>\n'));
   fprintf(fid,strcat('    <name>',name,'</name>\n'));
-  fprintf(fid,strcat('    <job_file> job_',strcat(name,'.mat'),'</job_file>\n'));
+  fprintf(fid,strcat('    <job_file>job_',strcat(name,'.mat'),'</job_file>\n'));
 
   if ~isempty(deps.(name))
     fprintf(fid,'    <dependencies>\n');

@@ -55,7 +55,7 @@
 % THE SOFTWARE.
 
 if(nargin != 2)
-    error("USAGE: niak_generate_pipeline <pipe_definition.xml> <jobs_folder>\n");
+    error("USAGE: niak_pipeline_fmri_preprocess_generator <pipe_definition.xml> <jobs_folder>\n");
 end
 
 args = argv();
