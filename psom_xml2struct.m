@@ -50,7 +50,7 @@ key_a = strfind(xml_string,'<');
 key_b = strfind(xml_string,'</');
 if(length(key_a) == 0)
     if(xml_string(1) == '"')
-	xml_struct = xml_string(2:end);
+	xml_struct = xml_string(2:end-1);
     else
 	xml_struct = str2num(xml_string);
     end
@@ -90,16 +90,10 @@ while(num_s < length(xml_string))
     if(length(value) > 12)
       start = strfind(value,'<');
       if(strcmp(value(start:start+5),'<name>'))
-        num_i = start(1)+6;
-        num_n = 1;
-        while(!strcmp(value(num_i:num_i+6),'</name>'))
-          name(num_n) = value(num_i);
-          num_n++;
-          num_i++;
-        end
-        key = name;
+        num_end = strfind(value,'</name>');
+        key = value(start+7:num_end-2);
         contains_name = 1;
-        value = value(num_i+5:end);
+        value = value(num_end+6:end);
       end
     end
     if(contains_name == 1)
