@@ -51,20 +51,19 @@ end
 
 args = argv();
 job = load(args{1});
-files_out = job.files_out;
-
-path_all = psom_files2cell(files_out);
-path_all = cellfun (@fileparts,path_all,'UniformOutput',false);
-path_all = unique(path_all);
-
-for num_p = 1:length(path_all)
+if isfield(job,'files_out')
+  files_out = job.files_out;
+  path_all = psom_files2cell(files_out);
+  path_all = cellfun (@fileparts,path_all,'UniformOutput',false);
+  path_all = unique(path_all);
+  for num_p = 1:length(path_all)
     path_f = path_all{num_p};
     [succ,messg,messgid] = psom_mkdir(path_f);
     if succ == 0
-        warning(messgid,messg);
+      warning(messgid,messg);
     end    
+  end
 end
-
 failed = psom_run_job(args{1});
 if(~failed) 
     printf('***Success***\n');

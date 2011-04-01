@@ -75,8 +75,8 @@ if (jobs_folder(end) != filesep)
 end
 
 pipeline = psom_read_xml(pipe_definition);
-files_in = pipeline.niak_fmri_preproc.files_in;
-opt = pipeline.niak_fmri_preproc.opt;
+files_in = pipeline.niak_pipeline_fmri_preprocess.files_in;
+opt = pipeline.niak_pipeline_fmri_preprocess.opt;
 opt.flag_test = 1;
 pipeline2 = niak_pipeline_fmri_preprocess(files_in,opt);
 psom_write_pipeline2xml(pipeline2,jobs_folder);
