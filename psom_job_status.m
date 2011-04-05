@@ -104,12 +104,12 @@ for num_j = 1:nb_jobs
     file_finished = [path_logs name_job '.finished'];
     file_exit     = [path_logs name_job '.exit'];
     file_oqsub    = [path_logs name_job '.oqsub'];
-        
-    flag_running  = psom_exist(file_running);
+            
     flag_failed   = psom_exist(file_failed);
-    flag_finished = psom_exist(file_finished);
+    flag_finished = psom_exist(file_finished);    
     flag_exit     = psom_exist(file_exit);
-    flag_oqsub    = psom_exist(file_oqsub);    
+    flag_oqsub    = psom_exist(file_oqsub);   
+    flag_running  = psom_exist(file_running); 
     
     if (flag_running+flag_finished+flag_failed)>1
         error('I am confused : job %s has multiple tags. Sorry dude, I must quit ...',name_job);
