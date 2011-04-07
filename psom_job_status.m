@@ -111,15 +111,10 @@ for num_j = 1:nb_jobs
     flag_oqsub    = psom_exist(file_oqsub);   
     flag_running  = psom_exist(file_running); 
     
-    if (flag_running+flag_finished+flag_failed)>1
+    if (flag_finished+flag_failed)>1
         error('I am confused : job %s has multiple tags. Sorry dude, I must quit ...',name_job);
     end          
-        
-    % if ~(flag_finished || flag_failed) & (flag_exit||flag_oqsub) % This
-    % would work in a well configured qsub environment, but is a total
-    % disaster in an environment producing oqsub/eqsub before the end of
-    % the jobs.
-               
+                     
     if ~(flag_finished || flag_failed) & flag_exit
 
         curr_status{num_j} = 'exit';                    
