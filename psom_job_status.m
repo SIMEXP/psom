@@ -37,10 +37,6 @@ function curr_status = psom_job_status(path_logs,list_jobs,mode_pipe)
 %           'none' : no attempt has been made to process the job yet 
 %                  (neither 'failed', 'running' or 'finished').
 %
-%           'exit' : there is no tag on the job, yet the associated script
-%                   was terminated. That implies that the script somehow 
-%                   crashed. Sad ...
-%
 %           'absent' : there is no tag file and no job file. It looks like
 %                   the job name does not exist in the pipeline.
 %
@@ -105,21 +101,17 @@ for num_j = 1:nb_jobs
     file_exit     = [path_logs name_job '.exit'];
     file_oqsub    = [path_logs name_job '.oqsub'];
             
-    flag_failed   = psom_exist(file_failed);
-    flag_finished = psom_exist(file_finished);    
     flag_exit     = psom_exist(file_exit);
     flag_oqsub    = psom_exist(file_oqsub);   
+    flag_failed   = psom_exist(file_failed);
+    flag_finished = psom_exist(file_finished);            
     flag_running  = psom_exist(file_running); 
     
     if (flag_finished+flag_failed)>1
         error('I am confused : job %s has multiple tags. Sorry dude, I must quit ...',name_job);
     end          
                      
-    if ~(flag_finished || flag_failed) & flag_exit
-
-        curr_status{num_j} = 'exit';                    
-        
-    elseif flag_finished
+   if flag_finished
         
         switch mode_pipe
             case 'qsub'
