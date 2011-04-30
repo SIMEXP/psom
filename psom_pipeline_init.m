@@ -397,7 +397,7 @@ if ~flag_ok
         end
     end
 
-    error('The following output files are generated multiple times : %s.\nThe following jobs are responsible for that : %s',str_files,str_jobs);
+    error('The following output files are generated multiple times : %s.\n\nThe following jobs are responsible for that : %s',str_files,str_jobs);
 end
 
 %% Check for cycles
