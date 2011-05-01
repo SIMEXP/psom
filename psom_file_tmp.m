@@ -50,11 +50,20 @@ function file_name = psom_file_tmp(ext)
 global gb_psom_name_job
 flag_gb_psom_fast_gb = 1; %% the initialization of global variables will be as fast as possible
 psom_gb_vars
-flag_tmp = 1;
-
-if ~isempty(gb_psom_name_job)
-    file_name = sprintf('%spsom_tmp_%s_%i%s',gb_psom_tmp,gb_psom_name_job,floor(1000000000*rand(1)),ext);
-else
-    file_name = sprintf('%spsom_tmp_%i%s',gb_psom_tmp,floor(1000000000*rand(1)),ext);
+if nargin == 0
+    ext = '.tmp';
 end
+flag_tmp = 1;
+while flag_tmp == 1
+    label = clock;
+    label(end) = 10000*label(end);
+    label = round(sum(label));
+    if ~isempty(gb_psom_name_job)
+        file_name = sprintf('%spsom_tmp_%s_%i%s',gb_psom_tmp,gb_psom_name_job,label,ext);
+    else
+        file_name = sprintf('%spsom_tmp_%i%s',gb_psom_tmp,label,ext);
+    end
+    flag_tmp = psom_exist(file_name);
+end
+
 save(file_name,'flag_tmp')

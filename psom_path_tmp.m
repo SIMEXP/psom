@@ -1,8 +1,4 @@
-function path_name = psom_file_tmp(ext)
-%
-% _________________________________________________________________________
-% SUMMARY PSOM_PATH_TMP
-%
+function path_name = psom_path_tmp(ext)
 % Suggest a name for a temporary folder.
 %
 % SYNTAX:
@@ -52,16 +48,23 @@ function path_name = psom_file_tmp(ext)
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
 global gb_psom_name_job
+flag_gb_psom_fast_gb = 1; %% the initialization of global variables will be as fast as possible
 psom_gb_vars
 flag_tmp = 1;
+if nargin == 0
+    ext = '';
+end
 
 while flag_tmp == 1
+    label = clock;
+    label(end) = 10000*label(end);
+    label = round(sum(label));
     if ~isempty(gb_psom_name_job)
-        path_name = sprintf('%spsom_tmp_%s_%i%s%s',gb_psom_tmp,gb_psom_name_job,floor(1000000000*rand(1)),ext,filesep);   
+        path_name = sprintf('%spsom_tmp_%s_%i%s%s',gb_psom_tmp,gb_psom_name_job,label,ext,filesep);   
     else
-        path_name = sprintf('%spsom_tmp_%i%s%s',gb_psom_tmp,floor(1000000000*rand(1)),ext,filesep);   
+        path_name = sprintf('%spsom_tmp_%i%s%s',gb_psom_tmp,label,ext,filesep);   
     end
-    flag_tmp = exist(path_name)>0;
+    flag_tmp = exist(path_name,'dir')>0;
 end
 
 psom_mkdir(path_name);
