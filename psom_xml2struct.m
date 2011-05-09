@@ -136,7 +136,12 @@ if(isstruct(xml_struct))
   names = fieldnames(xml_struct);
   if(length(names) == 1)
     if(strcmp(names{1},'path'))
-      xml_struct = xml_struct.path;
+      if(ischar(xml_struct.path))
+        tmp{1} = xml_struct.path;
+        xml_struct = tmp;
+      else
+        xml_struct = xml_struct.path;
+      end
     end
   else
     for n = 1:length(names)
