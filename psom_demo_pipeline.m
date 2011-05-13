@@ -205,13 +205,13 @@ pipeline.sum.opt = 'let''s change something...';
 psom_run_pipeline(pipeline,opt);
 
 %% Test 2 : failed jobs
-msg = 'The demo is about to change the job ''sum'' to create a bug, and then restart the pipeline.';
+msg = 'The demo is about to change the job ''quadratic'' to create a bug, and then restart the pipeline.';
 msg2 = 'Press CTRL-C to stop here or any key to continue.';
 stars = repmat('*',[1 max(length(msg),length(msg2))]);
 fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
 pause
 
-pipeline.sum.command = 'BUG';
+pipeline.quadratic.command = 'BUG!';
 psom_run_pipeline(pipeline,opt);
 
 % Visualize the log file of the failed job
@@ -221,6 +221,8 @@ stars = repmat('*',[1 max(length(msg),length(msg2))]);
 fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
 pause
 
+command = 'load(files_in{1}); load(files_in{2}); d = b+c, save(files_out,''d'')';
+pipeline.sum.command = command;
 psom_pipeline_visu(opt.path_logs,'log','sum');
 
 % fix the bug, restart the pipeline
@@ -230,7 +232,8 @@ stars = repmat('*',[1 max(length(msg),length(msg2))]);
 fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
 pause
 
-pipeline.sum.command = command;
+command = 'load(files_in); b = a.^2; save(files_out,''b'')';
+pipeline.quadratic.command   = command;
 psom_run_pipeline(pipeline,opt);
 
 %% Test 3 : Add a new job
@@ -241,7 +244,7 @@ fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
 pause
 
 pipeline.cleanup.command     = 'delete(files_clean)';
-pipeline.cleanup.files_clean = pipeline.cubic.files_out;
+pipeline.cleanup.files_clean = pipeline.sample.files_out;
 psom_visu_dependencies(pipeline);
 psom_run_pipeline(pipeline,opt);
 
@@ -252,7 +255,7 @@ stars = repmat('*',[1 max(length(msg),length(msg2))]);
 fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
 pause
 
-opt.restart = {'sum'};
+opt.restart = {'quadratic'};
 psom_run_pipeline(pipeline,opt);
 opt = rmfield(opt,'restart');
 
