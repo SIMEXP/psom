@@ -59,10 +59,14 @@ function [] = psom_set_rand_seed(seed)
 if nargin == 0
     seed = sum(100*clock);
 end
-
-try
-    RandStream.setDefaultStream(RandStream('mt19937ar','seed',seed)); % matlab 7.9+
-catch
-    rand('state',seed); % Matlab 5+ or Octave
-    randn('state',seed); % Matlab 5+ or Octave
+if exist('OCTAVE_VERSION','builtin')
+    rand('state',seed);  % Octave
+    randn('state',seed); % Octave
+else
+    try
+        RandStream.setDefaultStream(RandStream('mt19937ar','seed',seed)); % matlab 7.9+
+    catch
+        rand('state',seed);  % Matlab 5+
+        randn('state',seed); % Matlab 5+
+    end
 end
