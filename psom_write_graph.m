@@ -88,7 +88,7 @@ nb_nodes = size(graph,1);
 
 if isempty(label_nodes)
     for num_n = 1:nb_nodes
-        label_nodes = sprintf('node%i',num_n);
+        label_nodes{num_n} = sprintf('node%i',num_n);
     end
 end
 
