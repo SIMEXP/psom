@@ -220,10 +220,7 @@ msg2 = 'Press CTRL-C to stop here or any key to continue.';
 stars = repmat('*',[1 max(length(msg),length(msg2))]);
 fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
 pause
-
-command = 'load(files_in{1}); load(files_in{2}); d = b+c, save(files_out,''d'')';
-pipeline.sum.command = command;
-psom_pipeline_visu(opt.path_logs,'log','sum');
+psom_pipeline_visu(opt.path_logs,'log','quadratic');
 
 % fix the bug, restart the pipeline
 msg = 'The demo is about to fix the bug in the job ''sum'' and restart the pipeline.';
