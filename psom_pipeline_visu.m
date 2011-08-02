@@ -65,9 +65,9 @@ function [] = psom_pipeline_visu(path_logs,action,opt_action)
 %
 % ACTION = 'time'
 %       Print the execution time for a set of jobs. For this action, OPT is
-%       a string and any job whose name contains that string will be
-%       included in the computation time. Use an empty string to include
-%       all jobs.
+%       a regular expression (see REGEXP) and any job whose name matches
+%       this expression will be included in the computation time. Use an
+%       empty string to include all jobs.
 %
 % ACTION = 'monitor'
 %       Print (with updates) the pipeline master log.
@@ -121,13 +121,15 @@ if ~strcmp(path_logs(end),filesep)
 end
 	
 %% Get status
-file_pipeline = [path_logs 'PIPE.mat'];
-file_jobs = [path_logs 'PIPE_jobs.mat'];
 name_pipeline = 'PIPE';
-file_status = [path_logs filesep name_pipeline '_status.mat'];
-file_status_backup = [path_logs filesep name_pipeline '_status_backup.mat'];
-file_logs = [path_logs filesep name_pipeline '_logs.mat'];
-file_logs_backup = [path_logs filesep name_pipeline '_logs_backup.mat'];
+file_pipeline       = [path_logs 'PIPE.mat'];
+file_jobs           = [path_logs 'PIPE_jobs.mat'];
+file_status         = [path_logs filesep name_pipeline '_status.mat'];
+file_status_backup  = [path_logs filesep name_pipeline '_status_backup.mat'];
+file_logs           = [path_logs filesep name_pipeline '_logs.mat'];
+file_logs_backup    = [path_logs filesep name_pipeline '_logs_backup.mat'];
+file_profile        = [path_logs filesep name_pipeline '_profile.mat'];
+file_profile_backup = [path_logs filesep name_pipeline '_profile_backup.mat'];
 pipeline = load(file_jobs);
 list_jobs = fieldnames(pipeline);
 
@@ -235,7 +237,11 @@ switch action
         if isempty(opt_action)
             ind_job = 1:length(list_jobs);
         else
-            ind_job =  find(psom_find_str_cell(list_jobs,opt_action));
+            mask_include = false([length(list_jobs) 1]);
+            for num_j = 1:length(list_jobs)
+                mask_include(num_j) = ~isempty(regexp(list_jobs{num_j},opt_action));
+            end
+            ind_job = find(mask_include);
             ind_job = ind_job(:)';
         end
 
@@ -243,32 +249,42 @@ switch action
             error('%s : there is no is no job fitting that description in the pipeline.',opt_action);
         end
 
-
         tot_time = 0;
-        tag_str = 'Total time used to process the job :';
-        
+        try
+            profile = load(file_profile);
+            flag_profile = true;
+        catch
+            flag_profile = false;
+        end
+        lmax = max(cellfun('length',list_jobs,'UniformOutput',true));
+        fprintf('\n%s\n',repmat('*',[1 lmax+1]));
         for num_j = ind_job
 
-            try
-                log_str = load(file_logs,list_jobs{num_j});            
-            catch
-                warning('There was something wrong when loading the log file %s, I''ll try loading the backup instead',file_logs)
-                log_str = load(file_logs_backup,list_jobs{num_j});            
+            if ~flag_profile
+                try
+                    log_str = load(file_logs,list_jobs{num_j});            
+                catch
+                    warning('There was something wrong when loading the log file %s, I''ll try loading the backup instead',file_logs)
+                    log_str = load(file_logs_backup,list_jobs{num_j});            
+                end
+                ind_str = findstr(log_str.(list_jobs{num_j}),tag_str);
+                sub_str = log_str.(list_jobs{num_j})(ind_str+length(tag_str):end);
+                ind_str_end = findstr(sub_str,' sec.');
+                sub_str = sub_str(1:ind_str_end-1);
+                ctime = str2num(sub_str);
+            else
+                ctime = profile.(list_jobs{num_j}).elapsed_time;
             end
-            ind_str = findstr(log_str.(list_jobs{num_j}),tag_str);
-            sub_str = log_str.(list_jobs{num_j})(ind_str+length(tag_str):end);
-            ind_str_end = findstr(sub_str,' sec.');
-            sub_str = sub_str(1:ind_str_end-1);
-            ctime = str2num(sub_str);
             if isempty(ctime)
                 fprintf('Huho, I could not parse computation time for job %s, that''weird ! Sorry about that ... \n',list_jobs{num_j});
             else
-                fprintf('Computation time for job %s : %1.2f s, %1.2f mn, %1.2f hours, %1.2f days.\n',list_jobs{num_j},ctime,ctime/60,ctime/3600,ctime/(24*3600));
+                name_job = [list_jobs{num_j} repmat(' ',[1 lmax-length(list_jobs{num_j})])];
+                fprintf('%s : %1.2f s, %1.2f mn, %1.2f hours, %1.2f days.\n',name_job,ctime,ctime/60,ctime/3600,ctime/(24*3600));
                 tot_time = tot_time + ctime;
             end
 
         end
-        fprintf('Total computation time :  %1.2f s, %1.2f mn, %1.2f hours, %1.2f days.\n',tot_time,tot_time/60,tot_time/3600,tot_time/(24*3600));
+        fprintf('%s\nTotal computation time :  %1.2f s, %1.2f mn, %1.2f hours, %1.2f days.\n',repmat('*',[1 lmax+1]),tot_time,tot_time/60,tot_time/3600,tot_time/(24*3600));
 
     case 'log'
 

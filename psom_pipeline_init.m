@@ -16,103 +16,103 @@ function file_pipeline = psom_pipeline_init(pipeline,opt)
 % _________________________________________________________________________
 % INPUTS:
 %
-% * PIPELINE
-%       (structure) a matlab structure which defines a pipeline.
-%       Each field name <JOB_NAME> will be used to name the corresponding
-%       job. The fields <JOB_NAME> are themselves structure, with
-%       the following fields :
+% PIPELINE
+%    (structure) a matlab structure which defines a pipeline.
+%    Each field name <JOB_NAME> will be used to name the corresponding
+%    job. The fields <JOB_NAME> are themselves structure, with
+%    the following fields :
 %
-%       COMMAND
-%           (string) the name of the command applied for this job.
-%           This command can use the variables FILES_IN, FILES_OUT and OPT
-%           associated with the job (see below).
-%           Examples :
-%               'niak_brick_something(files_in,files_out,opt);'
-%               'my_function(opt)'
+%    COMMAND
+%        (string) the name of the command applied for this job.
+%        This command can use the variables FILES_IN, FILES_OUT and OPT
+%        associated with the job (see below).
+%        Examples :
+%          'niak_brick_something(files_in,files_out,opt);'
+%          'my_function(opt)'
 %
-%       FILES_IN
-%           (string, cell of strings, structure whose terminal nodes are
-%           string or cell of strings)
-%           The argument FILES_IN of the BRICK. Note that for properly
-%           handling dependencies, this field needs to contain the exact
-%           name of the file (full path, no wildcards, no '' for default
-%           values).
+%    FILES_IN
+%        (string, cell of strings, structure whose terminal nodes are
+%        string or cell of strings)
+%        The argument FILES_IN of the BRICK. Note that for properly
+%        handling dependencies, this field needs to contain the exact
+%        name of the file (full path, no wildcards, no '' for default
+%        values).
 %
-%       FILES_OUT
-%           (string, cell of strings, structure whose terminal nodes are
-%           string or cell of strings) the argument FILES_OUT of
-%           the BRICK. Note that for properly handling dependencies, this
-%           field needs to contain the exact name of the file
-%           (full path, no wildcards, no '' for default values).
+%    FILES_OUT
+%        (string, cell of strings, structure whose terminal nodes are
+%        string or cell of strings) the argument FILES_OUT of
+%        the BRICK. Note that for properly handling dependencies, this
+%        field needs to contain the exact name of the file
+%        (full path, no wildcards, no '' for default values).
 %
-%       OPT
-%           (any matlab variable) options of the job. This field has no
-%           impact on dependencies. OPT can for example be a structure,
-%           where each field will be used as an argument of the command.
+%    OPT
+%        (any matlab variable) options of the job. This field has no
+%        impact on dependencies. OPT can for example be a structure,
+%        where each field will be used as an argument of the command.
 %
-% * OPT
-%       (structure) with the following fields :
+% OPT
+%    (structure) with the following fields :
 %
-%       PATH_LOGS
-%           (string) The folder where the .mat files will be stored. That
-%           folder needs to be empty, and left untouched during the whole
-%           pipeline processing. Renaming or deleting files from the
-%           PATH_LOGS may result in unrecoverable crash of the pipeline.
+%    PATH_LOGS
+%        (string) The folder where the .mat files will be stored. That
+%        folder needs to be empty, and left untouched during the whole
+%        pipeline processing. Renaming or deleting files from the
+%        PATH_LOGS may result in unrecoverable crash of the pipeline.
 %
-%       PATH_SEARCH
-%           (string, default current matlab search path) the matlab search
-%           path that will be used by the jobs. if PATH_SEARCH is empty,
-%           the default is used. If PATH_SEARCH equals 'gb_psom_omitted',
-%           then PSOM will not attempt to set the search path, i.e. the
-%           search path for every job will be the current search path in
-%           'session' mode, and the default Octave/Matlab search path in
-%           the other modes.
+%    PATH_SEARCH
+%        (string, default current matlab search path) the matlab search
+%        path that will be used by the jobs. if PATH_SEARCH is empty,
+%        the default is used. If PATH_SEARCH equals 'gb_psom_omitted',
+%        then PSOM will not attempt to set the search path, i.e. the
+%        search path for every job will be the current search path in
+%        'session' mode, and the default Octave/Matlab search path in
+%        the other modes.
 %
-%       COMMAND_MATLAB
-%           (string, default GB_PSOM_COMMAND_MATLAB or
-%           GB_PSOM_COMMAND_OCTAVE depending on the current environment)
-%           how to invoke Matlab (or Octave).
-%           You may want to update that to add the full path of the command.
-%           The defaut for this field can be set using the variable
-%           GB_PSOM_COMMAND_MATLAB/OCTAVE in the file PSOM_GB_VARS.
+%    COMMAND_MATLAB
+%        (string, default GB_PSOM_COMMAND_MATLAB or
+%        GB_PSOM_COMMAND_OCTAVE depending on the current environment)
+%        how to invoke Matlab (or Octave).
+%        You may want to update that to add the full path of the command.
+%        The defaut for this field can be set using the variable
+%        GB_PSOM_COMMAND_MATLAB/OCTAVE in the file PSOM_GB_VARS.
 %
-%       RESTART
-%           (cell of strings, default {}) any job whose name contains one 
-%           of the strings in RESTART will be restarted, along with all of 
-%           its children, and some of his parents whenever needed. See the
-%           note 3 for more details.
+%    RESTART
+%        (cell of strings, default {}) any job whose name contains one
+%        of the strings in RESTART will be restarted, along with all of
+%        its children, and some of his parents whenever needed. See the
+%        note 3 for more details.
 %
-%       FLAG_UPDATE
-%           (boolean, default true) If FLAG_UPDATE is true, a comparison
-%           between previous pipelines and the current pipeline will be
-%           performed to restart updated jobs. 
-%       
-%       FLAG_PAUSE
-%           (boolean, default false) If FLAG_PAUSE is true, the pipeline
-%           initialization may pause in some situations, i.e. before
-%           writting an update of a pipeline (and incidentally flush old
-%           outputs) and before starting a pipeline if some necessary input 
-%           files are missing. This lets the user an opportunity to cancel
-%           the pipeline execution before anything is written on the disk.
+%    FLAG_UPDATE
+%        (boolean, default true) If FLAG_UPDATE is true, a comparison
+%        between previous pipelines and the current pipeline will be
+%        performed to restart updated jobs.
+%     
+%    FLAG_PAUSE
+%        (boolean, default false) If FLAG_PAUSE is true, the pipeline
+%        initialization may pause in some situations, i.e. before
+%        writting an update of a pipeline (and incidentally flush old
+%        outputs) and before starting a pipeline if some necessary input
+%        files are missing. This lets the user an opportunity to cancel
+%        the pipeline execution before anything is written on the disk.
 %
-%       FLAG_CLEAN
-%           (boolean, default true) if FLAG_CLEAN is true, before a job is
-%           restarted all files named as the outputs will be deleted. This
-%           is to avoid any confusion as of when a particular output has
-%           been created, in case overwritting would not be successfull.
-%           This behavior may not be desirable when a particular job is
-%           actually able to recover from where it was interrupted.
+%    FLAG_CLEAN
+%        (boolean, default true) if FLAG_CLEAN is true, before a job is
+%        restarted all files named as the outputs will be deleted. This
+%        is to avoid any confusion as of when a particular output has
+%        been created, in case overwritting would not be successfull.
+%        This behavior may not be desirable when a particular job is
+%        actually able to recover from where it was interrupted.
 %
-%       FLAG_VERBOSE
-%           (boolean, default true) if the flag is true, then the function 
-%           prints some infos during the processing.
+%    FLAG_VERBOSE
+%        (boolean, default true) if the flag is true, then the function
+%        prints some infos during the processing.
 %
 % _________________________________________________________________________
 % OUTPUTS:
 %
 % FILE_PIPELINE
-%       (string) the file name of the .MAT file recapitulating all the
-%       infos on the pipeline
+%    (string) the file name of the .MAT file recapitulating all the
+%    infos on the pipeline
 %
 % _________________________________________________________________________
 % SEE ALSO:
@@ -266,7 +266,7 @@ function file_pipeline = psom_pipeline_init(pipeline,opt)
 %   	4. Existing tag/log/exit/qsub files in the logs folder are deleted, 
 %       as well as the 'tmp' subfolder, if it exists.
 %
-% Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008.
+% Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008-2011.
 % Maintainer : pbellec@bic.mni.mcgill.ca
 % See licensing information in the code.
 % Keywords : pipeline
@@ -336,13 +336,12 @@ if flag_verbose
 end
 
 %% Generate file names 
-file_pipeline = cat(2,path_logs,filesep,name_pipeline,'.mat');
-file_jobs = cat(2,path_logs,filesep,name_pipeline,'_jobs.mat');
-file_jobs_backup = cat(2,path_logs,filesep,name_pipeline,'_jobs_backup.mat');
-file_logs = cat(2,path_logs,filesep,name_pipeline,'_logs.mat');
-file_logs_backup = cat(2,path_logs,filesep,name_pipeline,'_logs_backup.mat');
-file_status = cat(2,path_logs,filesep,name_pipeline,'_status.mat');
-file_status_backup = cat(2,path_logs,filesep,name_pipeline,'_status_backup.mat');
+file_pipeline       = [path_logs filesep name_pipeline '.mat'                ];
+file_jobs           = [path_logs filesep name_pipeline '_jobs.mat'           ];
+file_logs           = [path_logs,filesep name_pipeline '_logs.mat'           ];
+file_status         = [path_logs,filesep name_pipeline '_status.mat'         ];
+file_profile        = [path_logs,filesep name_pipeline '_profile.mat'        ];
+
 list_jobs = fieldnames(pipeline);
 nb_jobs = length(list_jobs);
 
@@ -358,7 +357,6 @@ end
 if flag_verbose
     fprintf('    Checking that all jobs are associated with a command ...\n');
 end
-
 for num_j = 1:nb_jobs
     if ~isfield(pipeline.(list_jobs{num_j}),'command')
         error('The job %s has no ''command'' field. Sorry dude, I cannot process that pipeline.\n',list_jobs{num_j});
@@ -366,21 +364,17 @@ for num_j = 1:nb_jobs
 end
 
 %% Generate dependencies
-
 if flag_verbose
     fprintf('    Generating dependencies ...\n');
 end
-
 [graph_deps,list_jobs,files_in,files_out,files_clean,deps] = psom_build_dependencies(pipeline,opt.flag_verbose);
 
 %% Check if some outputs were not generated twice
 if flag_verbose
     fprintf('    Checking if some outputs were not generated twice ...\n');
 end
-
 [flag_ok,list_files_failed,list_jobs_failed] = psom_is_files_out_ok(files_out);
-
-if ~flag_ok    
+if ~flag_ok
     for num_f = 1:length(list_files_failed)
         if num_f == 1
             str_files = list_files_failed{num_f};
@@ -401,15 +395,11 @@ if ~flag_ok
 end
 
 %% Check for cycles
-
 if flag_verbose
     fprintf('    Checking if the graph of dependencies is acyclic ...\n');
 end
-
 [flag_dag,list_vert_cycle] = psom_is_dag(graph_deps);
-
 if ~flag_dag
-    
     for num_f = 1:length(list_vert_cycle)
         if num_f == 1
             str_files = list_jobs{list_vert_cycle(num_f)};
@@ -425,80 +415,37 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Test for the existence of an old pipeline 
-
 flag_old_pipeline = psom_exist(file_jobs);
 
 if flag_old_pipeline
-
     if flag_verbose
         fprintf('\nLoading previous pipeline ...\n');
     end
-
-    %% Old jobs
-    if flag_verbose
-        fprintf('    Loading old jobs ...\n');
-    end
-    try
-        pipeline_old = load(file_jobs);
-    catch
-        warning('There was something wrong when loading the old job description file %s, I''ll try loading the backup instead',file_jobs)
-        pipeline_old = load(file_jobs_backup);
-        copyfile(file_jobs_backup,file_jobs,'f');
-    end
-    
-    %% Old status
-    if flag_verbose
-        fprintf('    Loading old status ...\n');
-    end
-    if psom_exist(file_status)
-        try
-            all_status_old = load(file_status);
-        catch
-            warning('There was something wrong when loading the old status file %s, I''ll try loading the backup instead',file_status)
-            all_status_old = load(file_status_backup);
-            copyfile(file_status_backup,file_status,'f');
-        end
-    else
-        for num_j = 1:nb_jobs
-            name_job = list_jobs{num_j};
-            all_status_old.(name_job) = 'none';
-        end
-    end
-    
-    %% Old logs
-    if flag_verbose
-        fprintf('    Loading old logs ...\n');
-    end
-    if psom_exist(file_logs)
-        try
-            all_logs_old = load(file_logs);
-        catch
-            warning('There was something wrong when loading the old logs file %s, I''ll try loading the backup instead',file_logs)
-            all_logs_old = load(file_logs_backup);
-            copyfile(file_logs_backup,file_logs,'f');
-        end
-    else
-        all_logs_old = struct([]);
-    end
-    
-else
-
-    pipeline_old = struct([]);
-    all_status_old = struct([]);
-    all_logs_old = struct([]);
-
 end
 
-%% If an old pipeline exists, update the status of the jobs based on the
-%% tag files that can be found
+%% Old jobs
+pipeline_old = sub_load_old(file_jobs);
 
+%% Old status
+all_status_old = sub_load_old(file_status);
+if isempty(all_status_old)
+    for num_j = 1:nb_jobs
+        name_job = list_jobs{num_j};
+        all_status_old.(name_job) = 'none';
+    end
+end
+    
+%% Old logs
+all_logs_old = sub_load_old(file_logs);
 
+%% Old profile
+profile_old = sub_load_old(file_profile);
+
+%% Update the status of the jobs using the tag files that can be found
 if flag_verbose
     fprintf('    Cleaning up job status ...\n');
 end
-
 job_status = cell(size(list_jobs));
-
 for num_j = 1:length(list_jobs)
     name_job = list_jobs{num_j};
     if isfield(all_status_old,name_job)
@@ -507,9 +454,6 @@ for num_j = 1:length(list_jobs)
         job_status{num_j} = 'none';
     end
 end
-
-%% Update the job status using the tags that can be found in the log
-%% folder
 mask_inq = ismember(job_status,{'submitted','running'});
 list_num_inq = find(mask_inq);
 list_num_inq = list_num_inq(:)';
@@ -520,9 +464,7 @@ curr_status = psom_job_status(path_logs,list_jobs_inq,'session');
 mask_finished = ismember(curr_status,'finished');
 list_num_finished = list_num_inq(mask_finished);
 list_num_finished = list_num_finished(:)';
-
 for num_j = list_num_finished
-    
     name_job = list_jobs{num_j};
     text_log = sub_read_txt([path_logs filesep name_job '.log']);
     text_qsub_o = sub_read_txt([path_logs filesep name_job '.oqsub']);
@@ -535,9 +477,7 @@ for num_j = list_num_finished
     all_logs.(name_job) = text_log;
     job_status{num_j} = 'finished';
 end
-
 job_status_old = job_status;
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Stage 3 : Set up the 'restart' flags %%
@@ -721,10 +661,8 @@ else
         save(file_jobs,'-struct','pipeline');
     end
 end
-copyfile(file_jobs,file_jobs_backup,'f');
 
 %% Save the dependencies
-
 if flag_verbose
     fprintf('    Saving the pipeline dependencies in %s...\n',file_pipeline);
 end
@@ -745,7 +683,6 @@ path_work = opt.path_search;
 save(file_pipeline,'history','deps','graph_deps','list_jobs','files_in','files_out','path_work')
 
 %% Save the status
-
 if flag_verbose
     fprintf('    Saving the ''status'' file %s ...\n',file_status);
 end
@@ -758,19 +695,12 @@ end
 
 if psom_exist(file_status)
     all_status = psom_merge_pipeline(all_status_old,all_status);
-    if strcmp(gb_psom_language,'octave')
-        sub_save_struct_fields(file_status,all_status);
-    else
-        save(file_status,'-struct','all_status');
-    end
-else
-    if strcmp(gb_psom_language,'octave')
-        sub_save_struct_fields(file_status,all_status);
-    else
-        save(file_status,'-struct','all_status');
-    end
 end
-copyfile(file_status,file_status_backup,'f');
+if strcmp(gb_psom_language,'octave')
+    sub_save_struct_fields(file_status,all_status);
+else
+    save(file_status,'-struct','all_status');
+end
 
 %% Save the logs 
 if flag_verbose
@@ -795,19 +725,39 @@ end
 
 if psom_exist(file_logs)
     all_logs = psom_merge_pipeline(all_logs_old,all_logs);
-    if strcmp(gb_psom_language,'octave')
-        sub_save_struct_fields(file_logs,all_logs);
-    else
-        save(file_logs,'-struct','all_logs');
-    end
+end
+if strcmp(gb_psom_language,'octave')
+    sub_save_struct_fields(file_logs,all_logs);
 else
-    if strcmp(gb_psom_language,'octave')
-        sub_save_struct_fields(file_logs,all_logs);
+    save(file_logs,'-struct','all_logs');
+end
+
+%% Save the profile
+if flag_verbose
+    fprintf('    Saving the ''profile'' file %s ...\n',file_profile);
+end
+profile = struct();
+for num_j = 1:nb_jobs
+    name_job = list_jobs{num_j};
+    if flag_finished(num_j)||flag_failed(num_j)
+        if isfield(profile_old,name_job)
+            profile.(name_job) = profile_old.(name_job);
+        else
+            profile.(name_job) = '';
+        end
     else
-        save(file_logs,'-struct','all_logs');
+        profile.(name_job) = '';
     end
 end
-copyfile(file_logs,file_logs_backup,'f');
+
+if psom_exist(file_profile)
+    profile = psom_merge_pipeline(profile_old,profile);
+end
+if strcmp(gb_psom_language,'octave')
+    sub_save_struct_fields(file_profile,profile);
+else
+    save(file_profile,'-struct','profile');
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Stage 5: Check for input files, generate output folders and clean old outputs %%
@@ -906,7 +856,6 @@ for num_j = 1:length(list_jobs)
 end
 
 %% Clean up the log folders from old tag and log files
-
 if flag_verbose
     fprintf('    Cleaning up old tags and logs from the logs folders ...\n')
 end
@@ -1026,4 +975,21 @@ for num_j = list_restart % loop over jobs that need to be restarted
         end
     end
     
+end
+
+%% Load a previous version of the pipeline. If the file is corrupted, load the backup and copy over the original file_jobs
+function pipeline_str = sub_load_old(file_name)
+
+if psom_exist(file_name)
+    try
+        pipeline_str = load(file_name);
+    catch
+        [path_f,name_f,ext_f] = fileparts(file_name);
+        file_backup = [path_f name_f '_backup' ext_f];
+        warning('There was something wrong when loading the file %s, I''ll try loading the backup instead',file_name)
+        pipeline_str = load(file_backup);
+        copyfile(file_backup,file_name,'f');
+    end
+else
+    pipeline_str = struct([]);
 end

@@ -1,8 +1,4 @@
 function [] = psom_pipeline_process(file_pipeline,opt)
-%
-% _________________________________________________________________________
-% SUMMARY OF PSOM_PIPELINE_PROCESS
-%
 % Process a pipeline that has previously been initialized.
 %
 % SYNTAX:
@@ -254,16 +250,20 @@ hat_qsub_e = sprintf('\n\n*****************\nERROR QSUB\n*****************\n');
 
 %% Generating file names
 [path_logs,name_pipeline,ext_pl] = fileparts(file_pipeline);
-file_pipe_running = cat(2,path_logs,filesep,name_pipeline,'.lock');
-file_pipe_log = cat(2,path_logs,filesep,name_pipeline,'_history.txt');
-file_manager_opt = cat(2,path_logs,filesep,name_pipeline,'_manager_opt.mat');
-file_logs = cat(2,path_logs,filesep,name_pipeline,'_logs.mat');
-file_logs_backup = cat(2,path_logs,filesep,name_pipeline,'_logs_backup.mat');
-file_status = cat(2,path_logs,filesep,name_pipeline,'_status.mat');
-file_status_backup = cat(2,path_logs,filesep,name_pipeline,'_status_backup.mat');
-file_jobs = cat(2,path_logs,filesep,name_pipeline,'_jobs.mat');
-logs = load(file_logs);
-status = load(file_status);
+file_pipe_running   = [ path_logs filesep name_pipeline '.lock'               ];
+file_pipe_log       = [ path_logs filesep name_pipeline '_history.txt'        ];
+file_manager_opt    = [ path_logs filesep name_pipeline '_manager_opt.mat'    ];
+file_logs           = [ path_logs filesep name_pipeline '_logs.mat'           ];
+file_logs_backup    = [ path_logs filesep name_pipeline '_logs_backup.mat'    ];
+file_status         = [ path_logs filesep name_pipeline '_status.mat'         ];
+file_status_backup  = [ path_logs filesep name_pipeline '_status_backup.mat'  ];
+file_jobs           = [ path_logs filesep name_pipeline '_jobs.mat'           ];
+file_profile        = [ path_logs filesep name_pipeline '_profile.mat'        ];
+file_profile_backup = [ path_logs filesep name_pipeline '_profile_status.mat' ];
+
+logs    = load( file_logs    );
+status  = load( file_status  );
+profile = load( file_profile );
 
 %% If necessary, create a temporary subfolder in the "logs" folder
 path_tmp = [path_logs filesep 'tmp'];
@@ -431,11 +431,14 @@ try
     
     %% The pipeline manager really starts here
     while ((max(mask_todo)>0) || (max(mask_running)>0)) && exist(file_pipe_running,'file')
+
         %% Update logs & status
-        save(file_logs,'-struct','logs');
-        save(file_logs_backup,'-struct','logs');
-        save(file_status,'-struct','status');
-        save(file_status_backup,'-struct','status');        
+        save(file_logs           ,'-struct','logs');
+        save(file_logs_backup    ,'-struct','logs');
+        save(file_status         ,'-struct','status');
+        save(file_status_backup  ,'-struct','status');        
+        save(file_profile        ,'-struct','profile');
+        save(file_profile_backup ,'-struct','profile');
         flag_nothing_happened = true;
         
         %% Update the status of running jobs
@@ -482,7 +485,7 @@ try
                     %% for finished or failed jobs, transfer the individual
                     %% test log files to the matlab global logs structure
                     nb_queued = nb_queued - 1;
-                    text_log = sub_read_txt([path_logs filesep name_job '.log']);
+                    text_log    = sub_read_txt([path_logs filesep name_job '.log']);
                     text_qsub_o = sub_read_txt([path_logs filesep name_job '.oqsub']);
                     text_qsub_e = sub_read_txt([path_logs filesep name_job '.eqsub']);                    
                     if isempty(text_qsub_o)&isempty(text_qsub_e)
@@ -490,6 +493,8 @@ try
                     else
                         logs.(name_job) = [text_log hat_qsub_o text_qsub_o hat_qsub_e text_qsub_e];
                     end
+                    %% Update profile for the jobs
+                    profile.(name_job) = load([path_logs filesep name_job '.profile.mat']);
                     sub_clean_job(path_logs,name_job); % clean up all tags & log
                 end
                 
@@ -717,10 +722,12 @@ catch
 end
 
 %% Update the final status
-save(file_logs,'-struct','logs');
-save(file_logs_backup,'-struct','logs');
-save(file_status,'-struct','status');
-save(file_status_backup,'-struct','status');
+save(file_logs           ,'-struct','logs');
+save(file_logs_backup    ,'-struct','logs');
+save(file_status         ,'-struct','status');
+save(file_status_backup  ,'-struct','status');
+save(file_profile        ,'-struct','profile');
+save(file_profile_backup ,'-struct','profile');
 
 %% Print general info about the pipeline
 msg_line1 = sprintf('The processing of the pipeline is terminated.');
@@ -885,7 +892,8 @@ files{4} = [path_logs filesep name_job '.running'];
 files{5} = [path_logs filesep name_job '.exit'];
 files{6} = [path_logs filesep name_job '.eqsub'];
 files{7} = [path_logs filesep name_job '.oqsub'];
-files{8} = [path_logs filesep 'tmp' filesep name_job '.sh'];
+files{8} = [path_logs filesep name_job '.profile.mat'];
+files{9} = [path_logs filesep 'tmp' filesep name_job '.sh'];
 
 for num_f = 1:length(files)
     if psom_exist(files{num_f});

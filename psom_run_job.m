@@ -58,6 +58,7 @@ try
     file_running  = [path_f filesep name_job '.running'];
     file_failed   = [path_f filesep name_job '.failed'];
     file_finished = [path_f filesep name_job '.finished'];
+    file_profile  = [path_f filesep name_job '.profile.mat'];
 catch
     name_job = 'manual';
 end
@@ -75,7 +76,7 @@ catch
     flag_psom = false;
 end
 
-if flag_psom        
+if flag_psom
     if exist(file_running,'file')|exist(file_failed,'file')|exist(file_finished,'file')
         error('Already found a tag on that job. Sorry dude, I must quit ...');
     end
@@ -86,6 +87,7 @@ if flag_psom
 end
 
 %% Print general info about the job
+start_time = clock;
 msg = sprintf('Log of the (%s) job : %s\nStarted on %s\nUser: %s\nhost : %s\nsystem : %s',gb_psom_language,name_job,datestr(clock),gb_psom_user,gb_psom_localhost,gb_psom_OS);
 stars = repmat('*',[1 30]);
 fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
@@ -136,6 +138,16 @@ try
             fprintf('The output file or directory %s was successfully generated!\n',list_files{num_f});
         end
     end                   
+
+    %% Verbose an epilogue
+    if flag_failed
+        msg1 = sprintf('%s : The job has FAILED',datestr(clock));
+    else
+        msg1 = sprintf('%s : The job was successfully completed',datestr(clock));
+    end
+    msg2 = sprintf('Total time used to process the job : %1.2f sec.',telapsed);
+    stars = repmat('*',[1 max(size(msg1,2),size(msg2,2))]);
+    fprintf('\n%s\n%s\n%s\n%s\n',stars,msg1,msg2,stars);
     
     %% Create a tag file for output status
     if flag_psom   
@@ -144,7 +156,12 @@ try
             flag_failed = true;
             fprintf('Huho the job just finished but I found a FAILED tag. There must be something weird going on with the pipeline manager. Anyway, I will let the FAILED tag just in case ...');
         end     
-    
+
+        %% Create a profile
+        end_time = clock;
+        elapsed_time = telapsed;
+        save(file_profile,'start_time','end_time','elapsed_time');
+        
         %% Finishing the job
         delete(file_running); 
         if flag_failed
@@ -154,15 +171,6 @@ try
         end
     end
     
-    %% Verbose an epilogue
-    if flag_failed
-        msg1 = sprintf('%s : The job has FAILED',datestr(clock));
-    else
-        msg1 = sprintf('%s : The job was successfully completed',datestr(clock));    
-    end
-    msg2 = sprintf('Total time used to process the job : %1.2f sec.',telapsed);
-    stars = repmat('*',[1 max(size(msg1,2),size(msg2,2))]);
-    fprintf('\n%s\n%s\n%s\n%s\n',stars,msg1,msg2,stars);         
 catch
     if flag_psom    
         delete(file_running);

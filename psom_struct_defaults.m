@@ -69,14 +69,18 @@ end
 opt_up = cell2struct(list_defaults,list_fields,2);
 
 %% Check that no "NaN" field was omitted
+str_field = '';
 for num_f = 1:length(list_fields)
-    str_field = '';
     if isreal(list_defaults{num_f})&&(length(list_defaults{num_f}(:))==1)&&isnan(list_defaults{num_f})&&~isfield(opt,list_fields{num_f})
-        str_field = [list_fields{num_f},' ',str_field];
+        if isempty(str_field)
+            str_field = list_fields{num_f};
+        else
+            str_field = [str_field ' , ' list_fields{num_f}];
+        end
     end
-    if ~isempty(str_field)
-        error(sprintf('A value must be specified for the following fields : %s\n',str_field));
-    end
+end
+if ~isempty(str_field)
+    error(sprintf('A value must be specified for the following fields (%s)\n',str_field));
 end
 
 %% Set defaults
