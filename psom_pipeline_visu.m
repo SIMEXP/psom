@@ -273,7 +273,11 @@ switch action
                 sub_str = sub_str(1:ind_str_end-1);
                 ctime = str2num(sub_str);
             else
-                ctime = profile.(list_jobs{num_j}).elapsed_time;
+                try
+                    ctime = profile.(list_jobs{num_j}).elapsed_time;
+                else
+                    ctime = [];
+                end
             end
             if isempty(ctime)
                 fprintf('Huho, I could not parse computation time for job %s, that''weird ! Sorry about that ... \n',list_jobs{num_j});
