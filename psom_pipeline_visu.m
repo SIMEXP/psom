@@ -275,7 +275,7 @@ switch action
             else
                 try
                     ctime = profile.(list_jobs{num_j}).elapsed_time;
-                else
+                catch
                     ctime = [];
                 end
             end
