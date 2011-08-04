@@ -108,11 +108,12 @@ try
     flag_failed = false;
    
     try
-        tic;
         eval(command)
-        telapsed = toc;
+        end_time = clock;
+        elapsed_time = etime(end_time,start_time);
     catch
-        telapsed = toc;
+        end_time = clock;
+        elapsed_time = etime(end_time,start_time);
         flag_failed = true;
         errmsg = lasterror;
         fprintf('\n\n%s\nSomething went bad ... the job has FAILED !\nThe last error message occured was :\n%s\n',stars,errmsg.message);
@@ -145,7 +146,7 @@ try
     else
         msg1 = sprintf('%s : The job was successfully completed',datestr(clock));
     end
-    msg2 = sprintf('Total time used to process the job : %1.2f sec.',telapsed);
+    msg2 = sprintf('Total time used to process the job : %1.2f sec.',elapsed_time);
     stars = repmat('*',[1 max(size(msg1,2),size(msg2,2))]);
     fprintf('\n%s\n%s\n%s\n%s\n',stars,msg1,msg2,stars);
     
@@ -158,8 +159,6 @@ try
         end     
 
         %% Create a profile
-        end_time = clock;
-        elapsed_time = telapsed;
         save(file_profile,'start_time','end_time','elapsed_time');
         
         %% Finishing the job
