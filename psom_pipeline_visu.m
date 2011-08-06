@@ -274,7 +274,7 @@ switch action
                 ctime = str2num(sub_str);
             else
                 try
-                    ctime = etime(profile.(list_jobs{num_j}).end_time,profile.(list_jobs{num_j}).start_time);
+                    ctime = profile.(list_jobs{num_j}).elapsed_time;
                 catch
                     ctime = [];
                 end
