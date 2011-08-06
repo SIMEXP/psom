@@ -238,6 +238,11 @@ gb_list_fields    = {'flag_clean' , 'flag_pause' , 'init_matlab'       , 'flag_u
 gb_list_defaults  = {true         , true         , gb_psom_init_matlab , true          , false        ,  gb_psom_path_search , {}        , gb_psom_shell_options , NaN         , ''               , true           , gb_psom_mode , gb_psom_mode_pm         , 0            , gb_psom_qsub_options , []                    , []                    , []               };
 psom_set_defaults
 
+if ~strcmp(opt.path_logs(end),filesep)
+    opt.path_logs = [opt.path_logs filesep];
+    path_logs = opt.path_logs;
+end
+
 if isempty(path_search)
     path_search = path;
     opt.path_search = path_search;
