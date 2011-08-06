@@ -1,4 +1,4 @@
-=﻿Pipeline System for Octave and Matlab (PSOM), version 0.8.8=
+=Pipeline System for Octave and Matlab (PSOM), version 0.8.9=
 
 A pipeline is a collection of jobs, i.e. matlab or octave codes with a well identified set of options that are using files as inputs and are producing files as outputs. PSOM is a framework to implement, run and re-run pipelines in Matlab or Octave :
   * Describe the pipeline using a straightforward structure representation.
@@ -15,7 +15,10 @@ PSOM was implemented by Pierre [http://simexp-lab.org/brainwiki/doku.php?id=pier
 LICENSE
 
 Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008-10.
-Maintainer : pbellec@bic.mni.mcgill.ca
+Département d'informatique et de recherche opérationnelle
+Centre de recherche de l'institut de Gériatrie de Montréal
+Université de Montréal, 2010-2011
+Maintainer : pierre.bellec@criugm.qc.ca
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
