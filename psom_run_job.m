@@ -86,18 +86,18 @@ if flag_psom
     save(file_running,'tmp')
 end
 
-%% Print general info about the job
-start_time = clock;
-msg = sprintf('Log of the (%s) job : %s\nStarted on %s\nUser: %s\nhost : %s\nsystem : %s',gb_psom_language,name_job,datestr(clock),gb_psom_user,gb_psom_localhost,gb_psom_OS);
-stars = repmat('*',[1 30]);
-fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
-
 %% Upload job info
 gb_name_structure = 'job';
 gb_list_fields    = {'files_in' , 'files_out' , 'files_clean' , 'command','opt' };
 gb_list_defaults  = {{}         , {}          , {}            , NaN      , {}   };
 psom_set_defaults
 command, files_in, files_out, files_clean, opt
+
+%% Print general info about the job
+start_time = clock;
+msg = sprintf('Log of the (%s) job : %s\nStarted on %s\nUser: %s\nhost : %s\nsystem : %s',gb_psom_language,name_job,datestr(clock),gb_psom_user,gb_psom_localhost,gb_psom_OS);
+stars = repmat('*',[1 30]);
+fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
 
 try
     %% The job starts now !
@@ -110,10 +110,8 @@ try
     try
         eval(command)
         end_time = clock;
-        elapsed_time = etime(end_time,start_time);
     catch
         end_time = clock;
-        elapsed_time = etime(end_time,start_time);
         flag_failed = true;
         errmsg = lasterror;
         fprintf('\n\n%s\nSomething went bad ... the job has FAILED !\nThe last error message occured was :\n%s\n',stars,errmsg.message);
@@ -141,6 +139,7 @@ try
     end                   
 
     %% Verbose an epilogue
+    elapsed_time = etime(end_time,start_time);
     if flag_failed
         msg1 = sprintf('%s : The job has FAILED',datestr(clock));
     else
