@@ -246,7 +246,7 @@ psom_visu_dependencies(pipeline);
 psom_run_pipeline(pipeline,opt);
 
 %% Test 4 : Restart jobs
-msg = 'The demo is about to explicitely restart the ''sum'' then restart the pipeline.';
+msg = 'The demo is about to explicitely restart the ''quadratic'' job and then restart the pipeline.';
 msg2 = 'Press CTRL-C to stop here or any key to continue.';
 stars = repmat('*',[1 max(length(msg),length(msg2))]);
 fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
