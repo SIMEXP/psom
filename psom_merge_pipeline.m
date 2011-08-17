@@ -1,4 +1,4 @@
-function struct12 = psom_merge_pipeline(struct1,struct2)
+function struct12 = psom_merge_pipeline(struct1,struct2,prefix)
 % Merge two pipelines (or any two arbitrary structures with one entry).
 %
 % SYNTAX:
