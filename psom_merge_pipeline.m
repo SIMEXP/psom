@@ -1,22 +1,21 @@
 function struct12 = psom_merge_pipeline(struct1,struct2)
-%
-% _________________________________________________________________________
-% SUMMARY PSOM_MERGE_PIPELINE
-%
-% Merge two pipelines (actuallu work for two arbitrary structures with one 
-% entry).
+% Merge two pipelines (or any two arbitrary structures with one entry).
 %
 % SYNTAX:
-%   PIPE12 = PSOM_MERGE_PIPELINE(PIPE1,PIPE2)
+%   PIPE12 = PSOM_MERGE_PIPELINE(PIPE1,PIPE2,PREFIX)
 %
 % _________________________________________________________________________
 % INPUTS:
 %
 % PIPE1   
-%       (structure) with one entry.
+%    (structure) with one entry.
 %
 % PIPE2   
-%       (structure) with one entry.
+%    (structure) with one entry.
+%
+% PREFIX 
+%    (string, default '') a prefix added to all field names in PIPE2 before
+%    merging.
 %
 % _________________________________________________________________________
 % OUTPUTS:
@@ -56,11 +55,15 @@ function struct12 = psom_merge_pipeline(struct1,struct2)
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
 
+if nargin < 3
+    prefix = '';
+end
+
 list_fields = fieldnames(struct2);
 struct12 = struct1;
 
 for num_f = 1:length(list_fields)
     
-    struct12.(list_fields{num_f}) = struct2.(list_fields{num_f});
+    struct12.([prefix list_fields{num_f}]) = struct2.(list_fields{num_f});
     
 end
