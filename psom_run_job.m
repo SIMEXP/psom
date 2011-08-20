@@ -44,7 +44,7 @@ function [flag_failed,msg] = psom_run_job(file_job)
 
 global gb_psom_name_job
 psom_gb_vars
-psom_set_rand_seed();
+seed = psom_set_rand_seed();
 
 try
     %% Generate file names
@@ -158,7 +158,7 @@ try
         end     
 
         %% Create a profile
-        save(file_profile,'start_time','end_time','elapsed_time');
+        save(file_profile,'start_time','end_time','elapsed_time','seed');
         
         %% Finishing the job
         delete(file_running); 

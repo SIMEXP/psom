@@ -1,19 +1,23 @@
-function [] = psom_set_rand_seed(seed)
+function seed = psom_set_rand_seed(seed)
 % Change the seed of the uniform and Gaussian rand number generator
 %
 % SYNTAX:
-% [] = PSOM_SET_RAND_SEED(SEED)
+% SEED = PSOM_SET_RAND_SEED(SEED)
 %
 % _________________________________________________________________________
 % INPUTS:
 %
 % SEED
-%       (scalar, default sum(100*clock))) the seed of the random number 
-%       generator.
+%   (scalar, default sum(100*clock))) the seed of the random number
+%   generator.
 %       
 % _________________________________________________________________________
 % OUTPUTS:
-%         
+%
+% SEED
+%   (scalar) the seed of the random number generator. It is identical to
+%   the input, unless the default was used.
+%
 % _________________________________________________________________________
 % SEE ALSO:
 % RAND, RANDN, RANDSTREAM
