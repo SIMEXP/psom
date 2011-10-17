@@ -430,7 +430,7 @@ pipeline_old = sub_load_old(file_jobs);
 all_status_old = sub_load_old(file_status);
 if isempty(all_status_old)
     for num_j = 1:nb_jobs
-        name_job = list_jobs{num_j};
+        name_job = list_jobs{num_j};        
         all_status_old.(name_job) = 'none';
     end
 end
@@ -991,5 +991,5 @@ if psom_exist(file_name)
         copyfile(file_backup,file_name,'f');
     end
 else
-    pipeline_str = struct([]);
+    pipeline_str = struct();
 end
