@@ -470,7 +470,7 @@ for num_j = list_num_finished
     text_qsub_o = sub_read_txt([path_logs filesep name_job '.oqsub']);
     text_qsub_e = sub_read_txt([path_logs filesep name_job '.eqsub']);
     
-    if ~isempty(text_qsub_o)&isempty(text_qsub_e)
+    if ~isempty(text_qsub_o)&&isempty(text_qsub_e)
         text_log = [text_log hat_qsub_o text_qsub_o hat_qsub_e text_qsub_e];
     end
     
@@ -494,7 +494,7 @@ for num_j = 1:nb_jobs
     name_job = list_jobs{num_j};
     flag_restart_job = flag_restart(num_j);
     
-    if strcmp(job_status_old{num_j},'failed')|strcmp(job_status_old{num_j},'exit')
+    if strcmp(job_status_old{num_j},'failed')||strcmp(job_status_old{num_j},'exit')
         flag_restart_job = true;
         if flag_verbose
             fprintf('    The job %s had failed, it will be restarted.\n',name_job)
@@ -513,10 +513,10 @@ for num_j = 1:nb_jobs
                     fprintf('    The OPT.FLAG_UPDATE is off, jobs are not going to be checked for updates.\n');
                 end
             end
-            if flag_same & strcmp(job_status_old{num_j},'none')
+            if flag_same && strcmp(job_status_old{num_j},'none')
                 fprintf('    The job %s has not yet been processed, it will be executed.\n',name_job);
                 flag_restart_job = true;
-            elseif flag_same & (strcmp(job_status_old{num_j},'submitted')|strcmp(job_status_old{num_j},'running'))
+            elseif flag_same && (strcmp(job_status_old{num_j},'submitted')|strcmp(job_status_old{num_j},'running'))
                 fprintf('    The job %s was not submitted successfully, it will be restarted.\n',name_job);
                 flag_restart_job = true;
             end
@@ -793,7 +793,7 @@ for num_j = list_num_unfinished
     
     for num_f = 1:length(list_files_necessary)
         
-        if ~psom_exist(list_files_necessary{num_f})&~exist(list_files_necessary{num_f},'dir')&~isempty(list_files_necessary{num_f})&~strcmp(list_files_necessary{num_f},'gb_niak_omitted')
+        if ~psom_exist(list_files_necessary{num_f})&&~exist(list_files_necessary{num_f},'dir')&&~isempty(list_files_necessary{num_f})&&~strcmp(list_files_necessary{num_f},'gb_niak_omitted')
 
             if flag_job_OK
                 msg_files = sprintf('        Job %s, the following file(s) are missing : %s',name_job,list_files_necessary{num_f});
