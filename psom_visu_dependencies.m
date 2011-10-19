@@ -74,16 +74,21 @@ if exist('biograph')
     view(bg);
     file_tmp = '';
 
-elseif exist('dot','file')
-    
-    file_tmp = psom_file_tmp('_graph.pdf');
-    psom_write_dependencies(file_tmp,pipeline,opt);
-    system([gb_psom_pdf_viewer ' ' file_tmp '&']);    
-
 else
-    
-    warning('I could not find the BIOGRAPH command or the DOT command. This probably means that the Matlab bioinformatics toolbox is not installed and that you did not install the GRAPHVIZ package on your system. Sorry dude, I can''t plot the graph.')
-    file_tmp = '';
 
+   [flag_dot,msg] = system('dot -help');
+
+    if flag_dot==1
+    
+        file_tmp = psom_file_tmp('_graph.pdf');
+        psom_write_dependencies(file_tmp,pipeline,opt);
+        system([gb_psom_pdf_viewer ' ' file_tmp '&']);    
+
+    else
+    
+        warning('I could not find the BIOGRAPH command or the DOT command. This probably means that the Matlab bioinformatics toolbox is not installed and that you did not install the GRAPHVIZ package on your system. Sorry dude, I can''t plot the graph.')
+        file_tmp = '';
+
+    end
 end
 

@@ -1,8 +1,4 @@
 function cell_files = psom_files2cell(files)
-%
-% _________________________________________________________________________
-% SUMMARY PSOM_FILES2CELL
-%
 % Convert a string, cell of strings or a structure where each field is a
 % string into one single cell of strings.
 %
@@ -73,7 +69,7 @@ elseif iscellstr(files) %% That's a cell
     
     for num_i = 1:length(files)
 
-        if ~strcmp(files{num_i},'gb_niak_omitted')&~isempty(files{num_i})
+        if ~strcmp(files{num_i},'gb_niak_omitted')&&~isempty(files{num_i})
             cell_files{num_cell} = regexprep(files{num_i},[filesep '+'],filesep);            
             num_cell = num_cell + 1;
         end
@@ -83,7 +79,7 @@ elseif iscellstr(files) %% That's a cell
 elseif ischar(files) % That's a string
 
     for num_f = 1:size(files,1)
-        if ~strcmp(files(num_f,:),'gb_niak_omitted')&~isempty(files(num_f,:))
+        if ~strcmp(files(num_f,:),'gb_niak_omitted')&&~isempty(files(num_f,:))
             cell_files{num_cell} = regexprep(files(num_f,:),[filesep '+'],filesep);            
         end
     end
