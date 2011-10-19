@@ -488,7 +488,7 @@ try
                     text_log    = sub_read_txt([path_logs filesep name_job '.log']);
                     text_qsub_o = sub_read_txt([path_logs filesep name_job '.oqsub']);
                     text_qsub_e = sub_read_txt([path_logs filesep name_job '.eqsub']);                    
-                    if isempty(text_qsub_o)&isempty(text_qsub_e)
+                    if isempty(text_qsub_o)&&isempty(text_qsub_e)
                         logs.(name_job) = text_log;                        
                     else
                         logs.(name_job) = [text_log hat_qsub_o text_qsub_o hat_qsub_e text_qsub_e];
