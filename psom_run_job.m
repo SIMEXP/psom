@@ -77,7 +77,7 @@ catch
 end
 
 if flag_psom
-    if exist(file_running,'file')|exist(file_failed,'file')|exist(file_finished,'file')
+    if exist(file_running,'file')||exist(file_failed,'file')||exist(file_finished,'file')
         error('Already found a tag on that job. Sorry dude, I must quit ...');
     end
     

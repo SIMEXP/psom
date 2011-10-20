@@ -76,9 +76,9 @@ if exist('biograph')
 
 else
 
-   [flag_dot,msg] = system('dot -help');
+   [flag_dot,msg] = system('dot -V');
 
-    if flag_dot==1
+    if flag_dot==0
     
         file_tmp = psom_file_tmp('_graph.pdf');
         psom_write_dependencies(file_tmp,pipeline,opt);
