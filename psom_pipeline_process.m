@@ -8,100 +8,100 @@ function [] = psom_pipeline_process(file_pipeline,opt)
 % INPUTS:
 %
 % FILE_PIPELINE
-%       (string) The file name of a .MAT file generated using
-%       PSOM_PIPELINE_INIT.
+%    (string) The file name of a .MAT file generated using
+%    PSOM_PIPELINE_INIT.
 %
 % OPT
-%       (structure) with the following fields :
+%    (structure) with the following fields :
 %
-%       MODE
-%           (string, default 'session') how to execute the jobs :
+%    MODE
+%        (string, default 'session') how to execute the jobs :
 %
-%           'session'
-%               the pipeline is executed within the current session.
+%        'session'
+%            the pipeline is executed within the current session.
 %
-%           'batch'
-%               Start each job in an independent matlab session. Note that
-%               more than one session can be started at the same time to
-%               take advantage of muli-processors machine. The pipeline
-%               will run in the background, you can continue to work, close
-%               matlab or even unlog from your machine on a linux system
-%               without interrupting it. The command used to send the jobs
-%               in the background is "at" on linux/mac, and "start" on
-%               windows.
+%        'batch'
+%            Start each job in an independent matlab session. Note that
+%            more than one session can be started at the same time to
+%            take advantage of muli-processors machine. The pipeline
+%            will run in the background, you can continue to work, close
+%            matlab or even unlog from your machine on a linux system
+%            without interrupting it. The command used to send the jobs
+%            in the background is "at" on linux/mac, and "start" on
+%            windows.
 %
-%           'qsub'
-%               Use the qsub system (sge or pbs) to process the jobs. The
-%               pipeline runs on all accessible resources.
+%        'qsub'
+%            Use the qsub system (sge or pbs) to process the jobs. The
+%            pipeline runs on all accessible resources.
 %
-%           'msub'
-%               Use the msub system (MOAB) to process the jobs. The
-%               pipeline runs on all accessible resources.
+%        'msub'
+%            Use the msub system (MOAB) to process the jobs. The
+%            pipeline runs on all accessible resources.
 %
-%       MODE_PIPELINE_MANAGER
-%           (string, default same as OPT.MODE) same as OPT.MODE, but
-%           applies to the pipeline manager itself rather than the jobs.
+%    MODE_PIPELINE_MANAGER
+%        (string, default same as OPT.MODE) same as OPT.MODE, but
+%        applies to the pipeline manager itself rather than the jobs.
 %
-%       MAX_QUEUED
-%           (integer, default 1 'batch' modes, Inf in 'session' and 'qsub'
-%           modes)
-%           The maximum number of jobs that can be processed
-%           simultaneously. Some qsub systems actually put restrictions
-%           on that. Contact your local system administrator for more info.
+%    MAX_QUEUED
+%        (integer, default 1 'batch' modes, Inf in 'session' and 'qsub'
+%        modes)
+%        The maximum number of jobs that can be processed
+%        simultaneously. Some qsub systems actually put restrictions
+%        on that. Contact your local system administrator for more info.
 %
-%       SHELL_OPTIONS
-%           (string, default GB_PSOM_SHELL_OPTIONS defined in PSOM_GB_VARS)
-%           some commands that will be added at the begining of the shell
-%           script submitted to batch or qsub. This can be used to set
-%           important variables, or source an initialization script.
+%    SHELL_OPTIONS
+%        (string, default GB_PSOM_SHELL_OPTIONS defined in PSOM_GB_VARS)
+%        some commands that will be added at the begining of the shell
+%        script submitted to batch or qsub. This can be used to set
+%        important variables, or source an initialization script.
 %
-%       QSUB_OPTIONS
-%           (string, GB_PSOM_QSUB_OPTIONS defined in PSOM_GB_VARS)
-%           This field can be used to pass any argument when submitting a
-%           job with qsub/msub. For example, '-q all.q@yeatman,all.q@zeus'
-%           will force qsub/msub to only use the yeatman and zeus
-%           workstations in the all.q queue. It can also be used to put
-%           restrictions on the minimum avalaible memory, etc.
+%    QSUB_OPTIONS
+%        (string, GB_PSOM_QSUB_OPTIONS defined in PSOM_GB_VARS)
+%        This field can be used to pass any argument when submitting a
+%        job with qsub/msub. For example, '-q all.q@yeatman,all.q@zeus'
+%        will force qsub/msub to only use the yeatman and zeus
+%        workstations in the all.q queue. It can also be used to put
+%        restrictions on the minimum avalaible memory, etc.
 %
-%       COMMAND_MATLAB
-%           (string, default GB_PSOM_COMMAND_MATLAB or
-%           GB_PSOM_COMMAND_OCTAVE depending on the current environment)
-%           how to invoke matlab (or OCTAVE).
-%           You may want to update that to add the full path of the command.
-%           The defaut for this field can be set using the variable
-%           GB_PSOM_COMMAND_MATLAB/OCTAVE in the file PSOM_GB_VARS.
+%    COMMAND_MATLAB
+%        (string, default GB_PSOM_COMMAND_MATLAB or
+%        GB_PSOM_COMMAND_OCTAVE depending on the current environment)
+%        how to invoke matlab (or OCTAVE).
+%        You may want to update that to add the full path of the command.
+%        The defaut for this field can be set using the variable
+%        GB_PSOM_COMMAND_MATLAB/OCTAVE in the file PSOM_GB_VARS.
 %
-%       INIT_MATLAB
-%           (string, default '') a matlab command (multiple commands can
-%           actually be passed using comma separation) that will be
-%           executed at the begining of any matlab job. That mechanism can
-%           be used, e.g., to set up the state of the random generation
-%           number.
+%    INIT_MATLAB
+%        (string, default '') a matlab command (multiple commands can
+%        actually be passed using comma separation) that will be
+%        executed at the begining of any matlab job. That mechanism can
+%        be used, e.g., to set up the state of the random generation
+%        number.
 %
-%       TIME_BETWEEN_CHECKS
-%           (real value, default 0 in 'session' mode, 10 otherwise)
-%           The time (in seconds) where the pipeline processing remains
-%           inactive to wait for jobs to complete before attempting to
-%           submit new jobs.
+%    TIME_BETWEEN_CHECKS
+%        (real value, default 0 in 'session' mode, 10 otherwise)
+%        The time (in seconds) where the pipeline processing remains
+%        inactive to wait for jobs to complete before attempting to
+%        submit new jobs.
 %
-%       TIME_COOL_DOWN
-%           (real value, default 2 in 'qsub' mode, 0 otherwise)
-%           A small pause time between evaluation of status and flushing of
-%           tags. This is to let qsub the time to write the output/error
-%           log files.
+%    TIME_COOL_DOWN
+%        (real value, default 2 in 'qsub' mode, 0 otherwise)
+%        A small pause time between evaluation of status and flushing of
+%        tags. This is to let qsub the time to write the output/error
+%        log files.
 %
-%       NB_CHECKS_PER_POINT
-%           (integer,defautlt 6) After NB_CHECKS_PER_POINT successive checks
-%           where the pipeline processor did not find anything to do, it
-%           will issue a '.' verbose to show it is not dead.
+%    NB_CHECKS_PER_POINT
+%        (integer,defautlt 6) After NB_CHECKS_PER_POINT successive checks
+%        where the pipeline processor did not find anything to do, it
+%        will issue a '.' verbose to show it is not dead.
 %
-%       FLAG_DEBUG
-%           (boolean, default false) if FLAG_DEBUG is true, the program
-%           prints additional information for debugging purposes.
+%    FLAG_DEBUG
+%        (boolean, default false) if FLAG_DEBUG is true, the program
+%        prints additional information for debugging purposes.
 %
-%       FLAG_VERBOSE
-%           (boolean, default true) if the flag is true, then the function 
-%           prints some infos during the processing.
+%    FLAG_VERBOSE
+%        (boolean, default true) if the flag is true, then the function 
+%        prints some infos during the processing.
 %
 % _________________________________________________________________________
 % OUTPUTS:
@@ -425,10 +425,18 @@ try
     mask_running = false(size(mask_done));
     
     %% Initialize miscallenaous variables
-    nb_queued = 0;
-    nb_checks = 0;
-    nb_points = 0;
+    nb_queued   = 0;                   % Number of queued jobs
+    nb_todo     = sum(mask_todo);      % Number of to-do jobs
+    nb_finished = sum(mask_finished);  % Number of finished jobs
+    nb_failed   = sum(mask_failed);    % Number of failed jobs
+    nb_checks   = 0;                   % Number of checks to print a points
+    nb_points   = 0;                   % Number of printed points
     
+    lmax = 0;
+    for num_j = 1:length(list_jobs)
+        lmax = max(lmax,length(list_jobs{num_j}));
+    end   
+
     %% The pipeline manager really starts here
     while ((max(mask_todo)>0) || (max(mask_running)>0)) && exist(file_pipe_running,'file')
 
@@ -475,10 +483,11 @@ try
                 
                 if strcmp(status.(name_job),'exit') % the script crashed ('exit' tag)
                     if flag_verbose
-                        fprintf('%s - The script of job %s terminated without generating any tag, I guess we will count that one as failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
+                        fprintf('%s - The script of job %s terminated without generating any tag, I guess we will count that one as failed.\n',datestr(clock),name_job);
                     end
-                    sub_add_line_log(hfpl,sprintf('%s - The script of job %s terminated without generating any tag, I guess we will count that one as failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued));;
+                    sub_add_line_log(hfpl,sprintf('%s - The script of job %s terminated without generating any tag, I guess we will count that one as failed.\n',datestr(clock),name_job));;
                     status.(name_job) = 'failed';
+                    nb_failed = nb_failed + 1;
                 end
                 
                 if strcmp(status.(name_job),'failed')||strcmp(status.(name_job),'finished')
@@ -495,30 +504,34 @@ try
                     end
                     %% Update profile for the jobs
                     profile.(name_job) = load([path_logs filesep name_job '.profile.mat']);
-                    sub_clean_job(path_logs,name_job); % clean up all tags & log
+                    sub_clean_job(path_logs,name_job); % clean up all tags & log                    
                 end
                 
                 switch status.(name_job)
                     
                     case 'failed' % the job has failed, too bad !
-                        
+
+                        nb_failed = nb_failed + 1;   
+                        msg = sprintf('%s - The job %s%s has failed                     ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
                         if flag_verbose
-                            fprintf('%s - The job %s has failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
+                            fprintf('%s (%i running / %i failed / %i finished / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo);
                         end
-                        sub_add_line_log(hfpl,sprintf('%s - The job %s has failed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued));
+                        sub_add_line_log(hfpl,sprintf('%s (%i running / %i failed / %i finished / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo));
                         mask_child = false([1 length(mask_todo)]);
                         mask_child(num_j) = true;
                         mask_child = sub_find_children(mask_child,graph_deps);
                         mask_todo(mask_child) = false; % Remove the children of the failed job from the to-do list
-                        
+
                     case 'finished'
-                        
+
+                        nb_finished = nb_finished + 1;                        
+                        msg = sprintf('%s - The job %s%s has been successfully completed',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
                         if flag_verbose
-                            fprintf('%s - The job %s has been successfully completed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued);
+                            fprintf('%s (%i running / %i failed / %i finished / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo);
                         end
-                        sub_add_line_log(hfpl,sprintf('%s - The job %s has been successfully completed (%i jobs in queue).\n',datestr(clock),name_job,nb_queued));
+                        sub_add_line_log(hfpl,sprintf('%s (%i running / %i failed / %i finished / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo));
                         graph_deps(num_j,:) = 0; % update dependencies
-                        
+
                 end
                 
             end % if flag changed
@@ -567,12 +580,14 @@ try
             mask_todo(num_job) = false;
             mask_running(num_job) = true;
             nb_queued = nb_queued + 1;
+            nb_todo = nb_todo - 1;
             status.(name_job) = 'submitted';
+            msg = sprintf('%s - The job %s%s has been submitted to the queue',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));            
             if flag_verbose
-                fprintf('%s - The job %s has been submitted to the queue (%i jobs in queue).\n',datestr(clock),name_job,nb_queued)
+                fprintf('%s (%i running / %i failed / %i finished / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo);
             end
-            sub_add_line_log(hfpl,sprintf('%s - The job %s has been submitted to the queue (%i jobs in queue).\n',datestr(clock),name_job,nb_queued));
-            
+            sub_add_line_log(hfpl,sprintf('%s (%i running / %i failed / %i finished / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo));
+                        
             %% Create a temporary shell scripts for 'batch' or 'qsub' modes
             if ~strcmp(opt.mode,'session')
                 if ~isempty(opt.init_matlab)

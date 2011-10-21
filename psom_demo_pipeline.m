@@ -1,8 +1,4 @@
 function [pipeline] = psom_demo_pipeline(path_demo,opt)
-%
-% _________________________________________________________________________
-% SUMMARY OF PSOM_DEMO_PIPELINE
-%
 % This is a script to demonstrate how to use the pipeline system for Octave
 % and Matlab (PSOM).
 %
@@ -13,33 +9,33 @@ function [pipeline] = psom_demo_pipeline(path_demo,opt)
 % INPUTS:
 %
 % PATH_DEMO
-%       (string, default local_path_demo defined in the file 
-%       PSOM_GB_VARS) 
-%       the full path to the PSOM demo folder. IMPORTANT WARNING : PSOM 
-%       will empty totally this folder and then build example files and 
-%       logs in it.
+%    (string, default local_path_demo defined in the file 
+%    PSOM_GB_VARS) 
+%    the full path to the PSOM demo folder. IMPORTANT WARNING : PSOM 
+%    will empty totally this folder and then build example files and 
+%    logs in it.
 %
 % OPT
-%       (structure, optional) the option structure passed on to 
-%       PSOM_RUN_PIPELINE. If not specified, the default values will be
-%       used. Note that the default for the demo are different from
-%       NIAK_RUN_PIPELINE. Specifically :
+%    (structure, optional) the option structure passed on to 
+%    PSOM_RUN_PIPELINE. If not specified, the default values will be
+%    used. Note that the default for the demo are different from
+%    NIAK_RUN_PIPELINE. Specifically :
 %
-%       MODE
-%           default 'batch'
+%    MODE
+%        default 'batch'
 %
-%       MODE_PIPELINE_MANAGER
-%           default 'session'
+%    MODE_PIPELINE_MANAGER
+%        default 'session'
 %
-%       MAX_QUEUED
-%           default 2
+%    MAX_QUEUED
+%        default 2
 %
-%       TIME_BETWEEN_CHECKS
-%           default 0.5
+%    TIME_BETWEEN_CHECKS
+%        default 0.5
 %
-%       This default configuration was selected for fast execution of the
-%       demo. Note that these defaults cannot be changed through editing 
-%       PSOM_GB_VARS.
+%    This default configuration was selected for fast execution of the
+%    demo. Note that these defaults cannot be changed through editing 
+%    PSOM_GB_VARS.
 %
 % _________________________________________________________________________
 % OUTPUTS:

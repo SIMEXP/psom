@@ -8,112 +8,112 @@ function [] = psom_run_pipeline(pipeline,opt)
 % INPUTS:
 %
 % PIPELINE
-%       (structure) a matlab structure which defines a pipeline.
-%       Each field name <JOB_NAME> will be used to name jobs of the
-%       pipeline. The fields <JOB_NAME> are themselves structure, with the
-%       following fields :
+%    (structure) a matlab structure which defines a pipeline.
+%    Each field name <JOB_NAME> will be used to name jobs of the
+%    pipeline. The fields <JOB_NAME> are themselves structure, with the
+%    following fields :
 %
-%       COMMAND
-%           (string) the name of the command applied for this job.
-%           This command can use the variables FILES_IN, FILES_OUT and OPT
-%           associated with the job (see below).
-%           Examples :
-%               'niak_brick_something(files_in,files_out,opt);'
-%               'my_function(opt)'
+%    COMMAND
+%        (string) the name of the command applied for this job.
+%        This command can use the variables FILES_IN, FILES_OUT and OPT
+%        associated with the job (see below).
+%        Examples :
+%         'niak_brick_something(files_in,files_out,opt);'
+%         'my_function(opt)'
 %
-%       FILES_IN
-%           (string, cell of strings, structure whose terminal nodes are
-%           string or cell of strings)
-%           The argument FILES_IN of the BRICK. Note that for properly
-%           handling dependencies, this field needs to contain the exact
-%           name of the file (full path, no wildcards, no '' for default
-%           values).
+%    FILES_IN
+%        (string, cell of strings, structure whose terminal nodes are
+%        string or cell of strings)
+%        The argument FILES_IN of the BRICK. Note that for properly
+%        handling dependencies, this field needs to contain the exact
+%        name of the file (full path, no wildcards, no '' for default
+%        values).
 %
-%       FILES_OUT
-%           (string, cell of strings, structure whose terminal nodes are
-%           string or cell of strings) the argument FILES_OUT of
-%           the BRICK. Note that for properly handling dependencies, this
-%           field needs to contain the exact name of the file
-%           (full path, no wildcards, no '' for default values).
+%    FILES_OUT
+%        (string, cell of strings, structure whose terminal nodes are
+%        string or cell of strings) the argument FILES_OUT of
+%        the BRICK. Note that for properly handling dependencies, this
+%        field needs to contain the exact name of the file
+%        (full path, no wildcards, no '' for default values).
 %
-%       OPT
-%           (any matlab variable) options of the job. This field has no
-%           impact on dependencies. OPT can for example be a structure,
-%           where each field will be used as an argument of the command.
+%    OPT
+%        (any matlab variable) options of the job. This field has no
+%        impact on dependencies. OPT can for example be a structure,
+%        where each field will be used as an argument of the command.
 %
 % OPT
-%       (structure) with the following fields :
+%    (structure) with the following fields :
 %
-%       PATH_LOGS
-%           (string) The folder where the .M and .MAT files will be stored.
+%    PATH_LOGS
+%        (string) The folder where the .M and .MAT files will be stored.
 %
-%       MODE
-%           (string, default GB_PSOM_MODE defined in PSOM_GB_VARS)
-%           how to execute the jobs :
+%    MODE
+%        (string, default GB_PSOM_MODE defined in PSOM_GB_VARS)
+%        how to execute the jobs :
 %
-%           'session'
-%               the pipeline is executed within the current session. The
-%               current matlab search path will be used instead of the one
-%               that was active when the pipeline was initialized.
+%        'session'
+%            the pipeline is executed within the current session. The
+%            current matlab search path will be used instead of the one
+%            that was active when the pipeline was initialized.
 %
-%           'batch'
-%               Start the pipeline manager and each job in independent
-%               matlab sessions. Note that more than one session can be
-%               started at the same time to take advantage of
-%               muli-processors machine. Moreover, the pipeline will run in
-%               the background, you can continue to work, close matlab or
-%               even unlog from your machine on a linux system without
-%               interrupting it. The matlab path will be the same as the
-%               current path. Log files will be created for all jobs.
+%        'batch'
+%            Start the pipeline manager and each job in independent
+%            matlab sessions. Note that more than one session can be
+%            started at the same time to take advantage of
+%            muli-processors machine. Moreover, the pipeline will run in
+%            the background, you can continue to work, close matlab or
+%            even unlog from your machine on a linux system without
+%            interrupting it. The matlab path will be the same as the
+%            current path. Log files will be created for all jobs.
 %
-%           'qsub'
-%               Use the qsub system (sge or pbs) to process the jobs. The
-%               pipeline runs in the background.
+%        'qsub'
+%            Use the qsub system (sge or pbs) to process the jobs. The
+%            pipeline runs in the background.
 %
-%           'msub'
-%               Use the msub system (MOAB) to process the jobs. The
-%               pipeline runs on all accessible resources.
+%        'msub'
+%            Use the msub system (MOAB) to process the jobs. The
+%            pipeline runs on all accessible resources.
 %
-%       MODE_PIPELINE_MANAGER
-%           (string, default GB_PSOM_MODE_PM defined in PSOM_GB_VARS)
-%           same as OPT.MODE, but applies to the pipeline manager itself.
+%    MODE_PIPELINE_MANAGER
+%        (string, default GB_PSOM_MODE_PM defined in PSOM_GB_VARS)
+%        same as OPT.MODE, but applies to the pipeline manager itself.
 %
-%       MAX_QUEUED
-%           (integer, default 1 'batch' modes, Inf in 'session' and 'qsub'
-%           modes)
-%           The maximum number of jobs that can be processed
-%           simultaneously. Some qsub systems actually put restrictions
-%           on that. Contact your local system administrator for more info.
+%    MAX_QUEUED
+%        (integer, default 1 'batch' modes, Inf in 'session' and 'qsub'
+%        modes)
+%        The maximum number of jobs that can be processed
+%        simultaneously. Some qsub systems actually put restrictions
+%        on that. Contact your local system administrator for more info.
 %
-%       SHELL_OPTIONS
-%           (string, default GB_PSOM_SHELL_OPTIONS defined in PSOM_GB_VARS)
-%           some commands that will be added at the begining of the shell
-%           script submitted to batch or qsub. This can be used to set
-%           important variables, or source an initialization script.
+%    SHELL_OPTIONS
+%        (string, default GB_PSOM_SHELL_OPTIONS defined in PSOM_GB_VARS)
+%        some commands that will be added at the begining of the shell
+%        script submitted to batch or qsub. This can be used to set
+%        important variables, or source an initialization script.
 %
-%       QSUB_OPTIONS
-%           (string, GB_PSOM_QSUB_OPTIONS defined in PSOM_GB_VARS)
-%           This field can be used to pass any argument when submitting a
-%           job with qsub. For example, '-q all.q@yeatman,all.q@zeus' will
-%           force qsub to only use the yeatman and zeus workstations in the
-%           all.q queue. It can also be used to put restrictions on the
-%           minimum avalaible memory, etc.
+%    QSUB_OPTIONS
+%        (string, GB_PSOM_QSUB_OPTIONS defined in PSOM_GB_VARS)
+%        This field can be used to pass any argument when submitting a
+%        job with qsub. For example, '-q all.q@yeatman,all.q@zeus' will
+%        force qsub to only use the yeatman and zeus workstations in the
+%        all.q queue. It can also be used to put restrictions on the
+%        minimum avalaible memory, etc.
 %
-%       PATH_SEARCH
-%           (string, default current matlab search path) the matlab search
-%           path that will be used by the jobs. if PATH_SEARCH is empty,
-%           the default is used. If PATH_SEARCH equals 'gb_psom_omitted',
-%           then PSOM will not attempt to set the search path, i.e. the
-%           search path for every job will be the current search path in
-%           'session' mode, and the default Octave/Matlab search path in
-%           the other modes.
+%    PATH_SEARCH
+%        (string, default current matlab search path) the matlab search
+%        path that will be used by the jobs. if PATH_SEARCH is empty,
+%        the default is used. If PATH_SEARCH equals 'gb_psom_omitted',
+%        then PSOM will not attempt to set the search path, i.e. the
+%        search path for every job will be the current search path in
+%        'session' mode, and the default Octave/Matlab search path in
+%        the other modes.
 %
-%       RESTART
-%           (cell of strings, default {}) any job whose name contains one
-%           of the strings in RESTART will be restarted
+%    RESTART
+%        (cell of strings, default {}) any job whose name contains one
+%        of the strings in RESTART will be restarted
 %
-%       There are actually other minor options available, see
-%       PSOM_PIPELINE_INIT and PSOM_PIPELINE_PROCESS for details.
+%    There are actually other minor options available, see
+%    PSOM_PIPELINE_INIT and PSOM_PIPELINE_PROCESS for details.
 %
 % _________________________________________________________________________
 % OUTPUTS:
@@ -122,54 +122,54 @@ function [] = psom_run_pipeline(pipeline,opt)
 % all the output files. In addition logs and parameters of the pipeline are
 % stored in the log folder :
 %
-%   PIPE.mat
+% PIPE.mat
 %
-%       A .MAT file with the following variables:
+%    A .MAT file with the following variables:
 %
-%       OPT
-%           The options used to initialize the pipeline
+%    OPT
+%        The options used to initialize the pipeline
 %
-%       PIPELINE
-%           The pipeline structure
+%    PIPELINE
+%        The pipeline structure
 %
-%       HISTORY
-%           A string recapituling when and who created the pipeline, (and
-%           on which machine).
+%    HISTORY
+%        A string recapituling when and who created the pipeline, (and
+%        on which machine).
 %
-%       DEPS, LIST_JOBS, FILES_IN, FILES_OUT, GRAPH_DEPS
-%           See PSOM_BUILD_DEPENDENCIES for more info.
+%    DEPS, LIST_JOBS, FILES_IN, FILES_OUT, GRAPH_DEPS
+%        See PSOM_BUILD_DEPENDENCIES for more info.
 %
-%       PATH_WORK
-%           The matlab/octave search path
+%    PATH_WORK
+%        The matlab/octave search path
 %
-%   PIPE_history.txt
+% PIPE_history.txt
 %
-%       A text file with the history of the pipeline. Basically, it keeps
-%       track of the time of submission, completion and failure of all jobs
-%       of the pipeline. If the pipeline is executed multiple times with
-%       the same log folders, the history file is keeping track of all
-%       sessions.
+%    A text file with the history of the pipeline. Basically, it keeps
+%    track of the time of submission, completion and failure of all jobs
+%    of the pipeline. If the pipeline is executed multiple times with
+%    the same log folders, the history file is keeping track of all
+%    sessions.
 %
-%   PIPE_jobs.mat
+% PIPE_jobs.mat
 %
-%       A .mat file which contains variables <NAME_JOB> where NAME_JOB is
-%       the name of any job in the pipeline, and is equal to the field
-%       PIPELINE.<NAME_JOB> for the lattest execution of this job in the
-%       pipeline.
+%    A .mat file which contains variables <NAME_JOB> where NAME_JOB is
+%    the name of any job in the pipeline, and is equal to the field
+%    PIPELINE.<NAME_JOB> for the lattest execution of this job in the
+%    pipeline.
 %
-%   PIPE_LOGS
+% PIPE_logs.mat
 %
-%       A .mat file which contains variables <NAME_JOB> where NAME_JOB is
-%       the name of any job in the pipeline. The variable <NAME_JOB> is a
-%       string which contains the log of the job. Jobs that have not been
-%       processed yet have an empty log.
+%    A .mat file which contains variables <NAME_JOB> where NAME_JOB is
+%    the name of any job in the pipeline. The variable <NAME_JOB> is a
+%    string which contains the log of the job. Jobs that have not been
+%    processed yet have an empty log.
 %
-%   PIPE_status.mat
+% PIPE_status.mat
 %
-%       A .mat file which contains variables <NAME_JOB> where NAME_JOB is
-%       the name of any job in the pipeline. The variable <NAME_JOB> is a
-%       string which describes the current status of the job (either
-%       'submitted', 'finished', 'failed', 'none').
+%    A .mat file which contains variables <NAME_JOB> where NAME_JOB is
+%    the name of any job in the pipeline. The variable <NAME_JOB> is a
+%    string which describes the current status of the job (either
+%    'submitted', 'finished', 'failed', 'none').
 %
 % _________________________________________________________________________
 % SEE ALSO:
@@ -304,6 +304,7 @@ end
 
 %% Check for a 'lock' tag
 file_pipe_running = cat(2,path_logs,filesep,name_pipeline,'.lock');
+file_logs = cat(2,path_logs,filesep,name_pipeline,'_history.txt');
 if exist(file_pipe_running,'file') % Is the pipeline running ?
 
     fprintf('\nA lock file %s has been found on the pipeline !\nIf the pipeline crashed, press CTRL-C now, delete manually the lock and restart the pipeline.\nOtherwise press any key to monitor the current pipeline execution.\n\n',file_pipe_running)
@@ -365,8 +366,16 @@ else
         switch opt.mode_pipeline_manager
             
             case {'batch','qsub','msub'}
-                
-                psom_pipeline_visu(path_logs,'monitor');
+                hf = fopen(file_logs,'r');
+                if hf~=-1
+                    %fseek(hf,0,'seek_end');
+                    str_logs = fread(hf,Inf,'uint8=>char')';
+                    nb_chars = ftell(hf)
+                    fclose(hf);
+                else
+                    nb_chars = 0;
+                end
+                psom_pipeline_visu(path_logs,'monitor',nb_chars);
                 
         end
     end

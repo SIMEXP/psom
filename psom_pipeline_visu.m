@@ -191,6 +191,9 @@ switch action
 
     case 'monitor'
 
+        if nargin < 3
+            opt_action = 0; % By default, read the whole history
+        end
         %% Prints the history of the pipeline, with updates
 
         file_monitor = [path_logs filesep name_pipeline '_history.txt'];
@@ -205,14 +208,14 @@ switch action
         stars = repmat('*',size(msg));
         fprintf('\n\n%s\n%s\n%s\n\n',stars,msg,stars);
 
-        while ~exist(file_monitor,'file') && exist(file_pipe_running,'file') % the pipeline started but the log file has not yet been created
+        while ~psom_exist(file_monitor) && psom_exist(file_pipe_running) % the pipeline started but the log file has not yet been created
 
             fprintf('I could not find any log file. This pipeline has not been started (yet?). Press CTRL-C to cancel.\n');
             pause(1)
 
         end
         
-        sub_tail(file_monitor,file_pipe_running);
+        sub_tail(file_monitor,file_pipe_running,opt_action);
         
     case 'time'
 
@@ -262,6 +265,7 @@ switch action
                 catch
                     ctime = [];
                 end
+
             end
             if isempty(ctime)
                 fprintf('Huho, I could not parse computation time for job %s, that''weird ! Sorry about that ... \n',list_jobs{num_j});
@@ -319,28 +323,23 @@ end
 %% sub-functions %%
 %%%%%%%%%%%%%%%%%%%
 
-function [] = sub_tail(file_read,file_running,time_pause)
+function [] = sub_tail(file_read,file_running,nb_chars)
 
 % prints out the content of the text file FILE_READ with constant updates
-% as long as the file FILE_RUNNING exists. TIME_PAUSE (default 0.5) is the
-% time between two prints.
+% as long as the file FILE_RUNNING exists. 
 
 if nargin < 3
     time_pause = 0.5;
 end
 
-hf = fopen(file_read,'r');
-
-str_read = fread(hf, Inf, 'uint8=>char')';
-fprintf('%s',str_read);
-
 flag_running = true;
-
 while flag_running
     flag_running = psom_exist(file_running);
-    str_read = fread(hf, Inf, 'uint8=>char')';
-    fprintf('%s',str_read);
-    pause(time_pause)
+    hf = fopen(file_read,'r');
+    fseek(hf,nb_chars);
+    str_read = fread(hf, Inf , 'uint8=>char')';
+    nb_chars = ftell(hf);
+    fclose(hf);    
+    fprintf('%s',str_read);            
 end
 
-fclose(hf)
