@@ -1,9 +1,5 @@
 function [] = psom_pipeline_visu(path_logs,action,opt_action)
-%
-% _________________________________________________________________________
-% SUMMARY OF PSOM_PIPELINE_VISU
-%
-% Display various information on a pipeline.
+% Display various information from the logs of a pipeline.
 %
 % SYNTAX:
 % [] = PSOM_PIPELINE_VISU(PATH_LOGS,ACTION,OPT)
@@ -12,29 +8,29 @@ function [] = psom_pipeline_visu(path_logs,action,opt_action)
 % INPUTS:
 %
 % PATH_LOGS
-%       (string) The path of the pipeline logs
+%    (string) The path of the pipeline logs
 %
 % ACTION
-%       (string) Possible values :
+%    (string) Possible values :
 %
-%           'submitted', 'running', 'failed', 'finished', 'none'
-%               List the jobs that have this status.
+%    'submitted', 'running', 'failed', 'finished', 'none'
+%        List the jobs that have this status.
 %
-%           'monitor'
-%               Monitor the execution of the pipeline.
+%    'monitor'
+%        Monitor the execution of the pipeline.
 %
-%           'log'
-%               Display the log of one job.
+%    'log'
+%        Display the log of one job.
 %
-%           'time'
-%               Display the execution time of a set of jobs
+%    'time'
+%        Display the execution time of a set of jobs
 %
-%           'flowchart'
-%               Draw the graph of dependencies of the pipeline.
+%    'flowchart'
+%        Draw the graph of dependencies of the pipeline.
 %
 %
 % OPT
-%       (string) see the following notes on action 'log' and 'time'
+%    (string) see the following notes on action 'log' and 'time'
 %
 % _________________________________________________________________________
 % OUTPUTS:
@@ -42,51 +38,51 @@ function [] = psom_pipeline_visu(path_logs,action,opt_action)
 % What the function does depends on the argument ACTION :
 %
 % ACTION = 'submitted'
-%       Display a list of the jobs of the pipeline that are scheduled in
-%       the queue but not currently running.
+%    Display a list of the jobs of the pipeline that are scheduled in
+%    the queue but not currently running.
 %
 % ACTION = 'running'
-%       Display a list of the jobs of the pipeline that are currently
-%       running
+%    Display a list of the jobs of the pipeline that are currently
+%    running
 %
 % ACTION = 'failed'
-%       Display a list of the jobs of the pipeline that have failed. Note
-%       that jobs with an 'exit' status are counted as failures.
+%    Display a list of the jobs of the pipeline that have failed. Note
+%    that jobs with an 'exit' status are counted as failures.
 %
 % ACTION = 'finished'
-%       Display a list of finished jobs of the pipeline.
+%    Display a list of finished jobs of the pipeline.
 %
 % ACTION = 'none'
-%       Display a list of jobs without tag (no attempt has been made to
-%       process the job).
+%    Display a list of jobs without tag (no attempt has been made to
+%    process the job).
 %
 % ACTION = 'log'
-%       Print (with updates) the log files for the job OPT.
+%    Print (with updates) the log files for the job OPT.
 %
 % ACTION = 'time'
-%       Print the execution time for a set of jobs. For this action, OPT is
-%       a regular expression (see REGEXP) and any job whose name matches
-%       this expression will be included in the computation time. Use an
-%       empty string to include all jobs.
+%    Print the execution time for a set of jobs. For this action, OPT is
+%    a regular expression (see REGEXP) and any job whose name matches
+%    this expression will be included in the computation time. Use an
+%    empty string to include all jobs.
 %
 % ACTION = 'monitor'
-%       Print (with updates) the pipeline master log.
-%
-%
-% ACTION = 'flowchart'
-%       Represent the dependency graph between jobs.
+%    Print (with updates) the pipeline master log.
 %
 % _________________________________________________________________________
 % SEE ALSO:
 %
 % PSOM_PIPELINE_INIT, PSOM_PIPELINE_PROCESS, PSOM_RUN_PIPELINE,
-% PSOM_DEMO_PIPELINE
+% PSOM_DEMO_PIPELINE, PSOM_VISU_DEPENDENCIES
 %
 % _________________________________________________________________________
 % COMMENTS:
 %
-% Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008.
-% Maintainer : pbellec@bic.mni.mcgill.ca
+% Copyright (c) Pierre Bellec, 
+% Montreal Neurological Institute, 2008-2010
+% Département d'informatique et de recherche opérationnelle
+% Centre de recherche de l'institut de Gériatrie de Montréal
+% Université de Montréal, 2011
+% Maintainer : pierre.bellec@criugm.qc.ca
 % See licensing information in the code.
 % Keywords : pipeline
 
@@ -215,21 +211,9 @@ switch action
             pause(1)
 
         end
-
-        if strcmp(gb_psom_language,'octave')
-            old_pager = page_output_immediately(true);
-        end
         
-        if strcmp(gb_psom_language,'matlab')
-            sub_tail(file_monitor,file_pipe_running);
-        else
-            system(['tail -f ' file_monitor]);
-        end             
+        sub_tail(file_monitor,file_pipe_running);
         
-        if strcmp(gb_psom_language,'octave')
-            page_output_immediately(old_pager);
-        end
-
     case 'time'
 
         %% Prints the computation time for a list of jobs
@@ -353,7 +337,7 @@ fprintf('%s',str_read);
 flag_running = true;
 
 while flag_running
-    flag_running = exist(file_running,'file');
+    flag_running = psom_exist(file_running);
     str_read = fread(hf, Inf, 'uint8=>char')';
     fprintf('%s',str_read);
     pause(time_pause)
