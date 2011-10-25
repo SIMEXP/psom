@@ -1,26 +1,40 @@
-function [flag_failed,msg] = psom_run_job(file_job)
-% Load some variables in a matlab file and run the corresponding job. 
-% The function is generating empty files to flag the status of the 
-% processing (running, failed or finished). 
+function flag_failed = psom_run_job(file_job)
+% Run a PSOM job. 
 %
 % SYNTAX:
-% [failed,MSG] = PSOM_RUN_JOB(FILE_JOB)
+% FLAG_FAILED = PSOM_RUN_JOB(FILE_JOB)
+%_________________________________________________________________________
+% INPUTS:
+%
+% JOB
+%    (string or structure) JOB is a structure defining a PSOM job (with
+%    COMMAND, FILES_IN, FILES_OUT, FILES_CLEAN, OPT fields. This job can 
+%    also be specified through a mat file, where the job attributes are 
+%   saved as variables.
+%
+%_________________________________________________________________________
+% OUTPUTS:
+%
+% FLAG_FAILED
+%    (boolean) FLAG_FAILED is true if the job has failed. This happens if 
+%    the command of the job generated an error, or if one of the output 
+%    files of the job was not successfully generated.
 %
 % _________________________________________________________________________
 % COMMENTS:
 %
-% NOTE 1:
-%
-% This function is not meant to be used by itself. It is called by
-% PSOM_PIPELINE_PROCESS and PSOM_RUN_PIPELINE
-% 
-% NOTE 2:
 % When running a job, this function will create a global variable named
 % "gb_psom_name_job". This can be accessed by the command executed by the
 % job. This may be useful for example to build unique temporary file names.
 % 
-% Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008.
-% Maintainer : pbellec@bic.mni.mcgill.ca
+% When called by the pipeline manager, this function will generate tag files 
+% to code for the status of the job (running, finished or failed).
+%
+% Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008-2010.
+% Departement d'informatique et de recherche operationnelle
+% Centre de recherche de l'institut de Geriatrie de Montreal
+% Universite de Montreal, 2010-2011.
+% Maintainer : pierre.bellec@criugm.qc.ca
 % See licensing information in the code.
 % Keywords : pipeline
 
