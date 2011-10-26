@@ -122,7 +122,7 @@ try
     flag_failed = false;
    
     try
-        eval(command)
+        sub_eval(command,files_in,files_out,files_clean,opt)
         end_time = clock;
     catch
         end_time = clock;
@@ -197,6 +197,10 @@ end
 %%%%%%%%%%%%%%%%%%
 %% Subfunctions %%
 %%%%%%%%%%%%%%%%%%
+
+function [] = sub_eval(command,files_in,files_out,files_clean,opt)
+
+eval(command)
 
 function job = sub_load_job(file_jobs,name_job)
 

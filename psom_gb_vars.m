@@ -30,10 +30,10 @@ gb_psom_qsub_options = '';
 gb_psom_shell_options = ''; 
 
 % Options for the execution mode of the pipeline 
-gb_psom_mode = 'batch'; 
+gb_psom_mode = 'background'; 
 
 % Options for the execution mode of the pipeline manager
-gb_psom_mode_pm = 'batch'; 
+gb_psom_mode_pm = 'background'; 
 
 % Options for the maximal number of jobs
 gb_psom_max_queued = 2;

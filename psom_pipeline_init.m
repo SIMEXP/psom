@@ -1,4 +1,4 @@
-function file_pipeline = psom_pipeline_init(pipeline,opt)
+function [file_pipeline,flag_start] = psom_pipeline_init(pipeline,opt)
 % Prepare the log folders of a pipeline before execution by PSOM.
 %
 % When the pipeline is executed for the first time, that means 
@@ -11,7 +11,7 @@ function file_pipeline = psom_pipeline_init(pipeline,opt)
 % below for details.
 %
 % SYNTAX:
-% FILE_PIPELINE = PSOM_PIPELINE_INIT(PIPELINE,OPT)
+% [FILE_PIPELINE,FLAG_START] = PSOM_PIPELINE_INIT(PIPELINE,OPT)
 %
 % _________________________________________________________________________
 % INPUTS:
@@ -113,6 +113,9 @@ function file_pipeline = psom_pipeline_init(pipeline,opt)
 % FILE_PIPELINE
 %    (string) the file name of the .MAT file recapitulating all the
 %    infos on the pipeline
+%
+% FLAG_START
+%    (boolean) true if some jobs need to be processed, false otherwise.
 %
 % _________________________________________________________________________
 % SEE ALSO:
@@ -297,7 +300,7 @@ psom_gb_vars
 
 %% Syntax
 if ~exist('pipeline','var')||~exist('opt','var')
-    error('syntax: FILE_PIPELINE = PSOM_PIPELINE_INIT(PIPELINE,OPT).\n Type ''help psom_pipeline_init'' for more info.')
+    error('syntax: [FILE_PIPELINE,FLAG_START] = PSOM_PIPELINE_INIT(PIPELINE,OPT).\n Type ''help psom_pipeline_init'' for more info.')
 end
 
 %% Options
@@ -613,6 +616,14 @@ else
     
     flag_finished = false([nb_jobs 1]);
     
+end
+
+if ~any(ismember(job_status,'none'))
+    fprintf('    All jobs are already completed, there is nothing to do. Bye for now !\n')
+    flag_start = false;
+    return    
+else
+    flag_start = true;
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

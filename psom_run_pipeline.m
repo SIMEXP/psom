@@ -258,7 +258,7 @@ end
 
 if max_queued == 0
     switch opt.mode
-        case {'batch'}
+        case {'batch','background'}
             if isempty(gb_psom_max_queued)
                 opt.max_queued = 1;
                 max_queued = 1;
@@ -277,7 +277,7 @@ if max_queued == 0
     end % switch action
 end % default of max_queued
 
-if ~ismember(opt.mode,{'session','batch','qsub','msub'})
+if ~ismember(opt.mode,{'session','background','batch','qsub','msub'})
     error('%s is an unknown mode of pipeline execution. Sorry dude, I must quit ...',opt.mode);
 end
 
@@ -327,7 +327,10 @@ else
         opt_init
     end
 
-    psom_pipeline_init(pipeline,opt_init);   
+    [tmp,flag_start] = psom_pipeline_init(pipeline,opt_init);   
+    if ~flag_start
+        return
+    end
     
     %% Run the pipeline manager
     file_pipeline = cat(2,path_logs,filesep,name_pipeline,'.mat');

@@ -176,18 +176,8 @@ switch action
     case 'flowchart'
 
         %% Display the graph of dependencies of the pipeline
-        if exist('biograph')
-
-            load(file_pipeline,'graph_deps','list_jobs');
-            bg = biograph(graph_deps,list_jobs);
-            dolayout(bg);
-            view(bg);
-            
-        else
-
-            warning('I could not find the BIOGRAPH command. This probably means that the Matlab bioinformatics toolbox is not installed. Sorry dude, I can''t plot the graph.')
-
-        end
+        pipeline = load(file_jobs);        
+        psom_visu_dependencies(pipeline);
 
     case 'monitor'
 

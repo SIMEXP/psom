@@ -67,6 +67,10 @@ function [flag_failed,msg] = psom_run_script(cmd,script,opt,logs)
 %        (boolean, default false) if FLAG_DEBUG is true, the program
 %        prints additional information for debugging purposes.
 %
+%    FILE_HANDLE
+%        (scalar, default []) if non-empty, the handle of a text file 
+%        where all verbose will be appended.
+%
 % LOGS
 %    (structure, optional) Indicates where to save the logs. If 
 %    unspecified, no log is generated. LOGS can have the following 
@@ -136,8 +140,8 @@ if nargin<3
 end
 
 %% Options
-list_fields    = {'name_job'    , 'init_matlab'       , 'flag_debug' , 'shell_options'       , 'command_matlab' , 'mode' , 'qsub_options'       };
-list_defaults  = {'psom_script' , gb_psom_init_matlab , false        , gb_psom_shell_options , ''               , NaN    , gb_psom_qsub_options };
+list_fields    = { 'file_handle' , 'name_job'    , 'init_matlab'       , 'flag_debug' , 'shell_options'       , 'command_matlab' , 'mode' , 'qsub_options'       };
+list_defaults  = { []            , 'psom_script' , gb_psom_init_matlab , false        , gb_psom_shell_options , ''               , NaN    , gb_psom_qsub_options };
 opt = psom_struct_defaults(opt,list_fields,list_defaults);
 
 if ~isempty(opt.init_matlab)&&~ismember(opt.init_matlab(end),{',',';'})
@@ -165,6 +169,10 @@ if ~ismember(opt.mode,{'session','background','batch','qsub','msub'})
     error('%s is an unknown mode of command execution. Sorry dude, I must quit ...',opt.mode);
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Generate the script %%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %% Generate some OS-appropriate options to start Matlab/Octave
 switch gb_psom_language
     case 'matlab'
@@ -177,10 +185,6 @@ switch gb_psom_language
         opt_matlab = '--silent --eval';       
 end
     
-%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Generate the script %%
-%%%%%%%%%%%%%%%%%%%%%%%%%
-
 %% Add an appropriate call to Matlab/Octave
 if ~isempty(cmd)            
     instr_job = sprintf('%s %s "%s %s,exit"',opt.command_matlab,opt_matlab,opt.init_matlab,cmd);
@@ -208,13 +212,26 @@ if ~isempty(logs)&&~isempty(logs.exit)
 end
 
 %% Write the script
-if ~strcmp(opt.mode,'session')    
+if ~strcmp(opt.mode,'session')            
     if opt.flag_debug
-        fprintf('    The following script is used to run the command :\n%s\n\n',instr_job);
+        msg = sprintf('    The following script is used to run the command :\n%s\n\n',instr_job);
+        fprintf('%s',msg);
+        if ~isempty(opt.file_handle)
+            fprintf(opt.file_handle,'%s',msg);
+        end
     end
+    
     hf = fopen(script,'w');
     fprintf(hf,'%s',instr_job);
     fclose(hf);
+else
+    if opt.flag_debug
+        msg = sprintf('    The following command is going to be executed :\n%s\n\n',cmd);
+        fprintf('%s',msg);
+        if ~isempty(opt.file_handle)
+            fprintf(opt.file_handle,'%s',msg);
+        end
+    end
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%   
@@ -225,15 +242,26 @@ switch opt.mode
 
     case 'session'
 
-        if ~isempty(logs)
-            diary(logs.txt)
-            eval(cmd);
-            diary off
-        else
-            eval(cmd);
+        try
+            if ~isempty(logs)
+                diary(logs.txt)
+                sub_eval(cmd);
+                diary off
+            else
+                sub_eval(cmd);
+            end
+            flag_failed = false;
+            msg = '';
+        catch
+            flag_failed = true;
+            errmsg = lasterror;
+            msg = errmsg.message;
+            if isfield(errmsg,'stack')
+                for num_e = 1:length(errmsg.stack)
+                    msg = sprintf('%s\nFile %s at line %i\n',msg,errmsg.stack(num_e).file,errmsg.stack(num_e).line);
+                end           
+            end
         end
-        flag_failed = false;
-        msg = '';
 
     case 'background'
        
@@ -241,7 +269,8 @@ switch opt.mode
            [flag_failed,msg] = system(['. ' script]);
        else
            if strcmp(gb_psom_language,'octave')
-               flag_failed = system(['. ' script ],false,'async');
+               system(['. ' script ],false,'async');
+               flag_failed = 0;
            else 
                flag_failed = system(['. ' script ' &']);
            end
@@ -259,7 +288,8 @@ switch opt.mode
             [flag_failed,msg] = system(instr_batch);    
         else
             if strcmp(gb_psom_language,'octave')
-                 flag_failed = system(instr_batch,false,'async');
+                 system(instr_batch,false,'async');
+                 flag_failed = 0;
             else
                  flag_failed = system([instr_batch ' &']);
             end
@@ -278,11 +308,16 @@ switch opt.mode
             [flag_failed,msg] = system(instr_qsub);
         else 
             if strcmp(gb_psom_language,'octave')
-                flag_failed = system(instr_qsub,false,'async');
+                system(instr_qsub,false,'async');
+                flag_failed = 0;
             else
                 flag_failed = system([instr_qsub ' &']);
             end
             msg = '';
         end
-
 end
+
+%%%%%% Subfunctions %%%%%%
+
+function [] = sub_eval(cmd)
+eval(cmd)

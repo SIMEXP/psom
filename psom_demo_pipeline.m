@@ -1,9 +1,9 @@
-function [pipeline] = psom_demo_pipeline(path_demo,opt)
+function [pipeline,opt] = psom_demo_pipeline(path_demo,opt)
 % This is a script to demonstrate how to use the pipeline system for Octave
 % and Matlab (PSOM).
 %
 % SYNTAX:
-% PSOM_DEMO_PIPELINE(PATH_DEMO,OPT)
+% [PIPELINE,OPT_PIPE] = PSOM_DEMO_PIPELINE(PATH_DEMO,OPT)
 %
 % _________________________________________________________________________
 % INPUTS:
@@ -22,7 +22,7 @@ function [pipeline] = psom_demo_pipeline(path_demo,opt)
 %    NIAK_RUN_PIPELINE. Specifically :
 %
 %    MODE
-%        default 'batch'
+%        default 'background'
 %
 %    MODE_PIPELINE_MANAGER
 %        default 'session'
@@ -40,6 +40,12 @@ function [pipeline] = psom_demo_pipeline(path_demo,opt)
 % _________________________________________________________________________
 % OUTPUTS:
 % 
+% PIPELINE
+%    (structure) the toy pipeline.
+%
+% OPT_PIPE
+%    (structure) the options used to execute the pipeline using PSOM.
+%
 % _________________________________________________________________________
 % COMMENTS:
 %
@@ -101,7 +107,7 @@ else
 end
 
 if ~isfield(opt,'mode')
-    opt.mode = 'batch';
+    opt.mode = 'background';
 end
 
 if ~isfield(opt,'mode_pipeline_manager')
@@ -211,7 +217,7 @@ pipeline.quadratic.command = 'BUG!';
 psom_run_pipeline(pipeline,opt);
 
 % Visualize the log file of the failed job
-msg = 'The demo is about to display the log file of the failed job ''sum''.';
+msg = 'The demo is about to display the log file of the failed job ''quadratic''.';
 msg2 = 'Press CTRL-C to stop here or any key to continue.';
 stars = repmat('*',[1 max(length(msg),length(msg2))]);
 fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
@@ -219,7 +225,7 @@ pause
 psom_pipeline_visu(opt.path_logs,'log','quadratic');
 
 % fix the bug, restart the pipeline
-msg = 'The demo is about to fix the bug in the job ''sum'' and restart the pipeline.';
+msg = 'The demo is about to fix the bug in the job ''quadratic'' and restart the pipeline.';
 msg2 = 'Press CTRL-C to stop here or any key to continue.';
 stars = repmat('*',[1 max(length(msg),length(msg2))]);
 fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);

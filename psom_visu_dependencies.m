@@ -8,7 +8,9 @@ function [] = psom_visu_dependencies(pipeline,opt)
 % INPUTS:
 %
 % PIPELINE
-%   (structure) a pipeline structure, see PSOM_RUN_PIPELINE
+%   (structure) a pipeline structure, see PSOM_RUN_PIPELINE. The dependency 
+%   graph of a pipeline can also be directly submitted instead of a
+%   pipeline.
 %
 %
 % OPT
@@ -82,7 +84,8 @@ else
     
         file_tmp = psom_file_tmp('_graph.pdf');
         psom_write_dependencies(file_tmp,pipeline,opt);
-        system([gb_psom_pdf_viewer ' ' file_tmp '&']);    
+        system([gb_psom_pdf_viewer ' ' file_tmp]);
+        delete(file_tmp)
 
     else
     

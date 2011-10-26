@@ -173,7 +173,7 @@ end
 
 if max_queued == 0
     switch opt.mode
-        case {'batch'}
+        case {'batch','background'}
             opt.max_queued = 1;
             max_queued = 1;
         case {'session','qsub','msub'}
@@ -183,7 +183,7 @@ if max_queued == 0
 end % default of max_queued
 
 %% Test the the requested mode of execution of jobs exists
-if ~ismember(opt.mode,{'session','batch','qsub','msub'})
+if ~ismember(opt.mode,{'session','batch','background','qsub','msub'})
     error('%s is an unknown mode of pipeline execution. Sorry dude, I must quit ...',opt.mode);
 end
 
@@ -201,7 +201,7 @@ switch opt.mode
             opt.time_cool_down = 0;
             time_cool_down = 0;
         end
-    case 'batch'
+    case {'batch','background'}
         if isempty(time_between_checks)
             opt.time_between_checks = 10;
             time_between_checks = 10;
@@ -229,20 +229,9 @@ switch opt.mode
         end
 end
 
-switch gb_psom_language
-    case 'matlab'
-        if ispc
-            opt_matlab = '-automation -nodesktop -r';
-        else
-            opt_matlab = '-nosplash -nodesktop -r';
-        end        
-    case 'octave'
-        opt_matlab = '--silent --eval';       
-end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% The pipeline processing starts now  %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Initialize variables  %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Generic messages
 hat_qsub_o = sprintf('\n\n*****************\nOUTPUT QSUB\n*****************\n');
@@ -282,86 +271,43 @@ end
 str_now = datestr(clock);
 save(file_pipe_running,'str_now');
 
-%% If specified, start the pipeline manager in the background
-if ismember(opt.mode_pipeline_manager,{'batch','qsub','msub'})
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% If specified, start the pipeline manager in the background %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if ismember(opt.mode_pipeline_manager,{'batch','background','qsub','msub'})
     
     % save the options of the pipeline manager
     opt.mode_pipeline_manager = 'session';
     save(file_manager_opt,'opt');
     
-    if strcmp(opt.mode_pipeline_manager,'batch')
-        if ispc 
-            mode_pipeline_manager = 'start';
-        else
-            mode_pipeline_manager = 'at';
-        end
-    end
     
     if flag_verbose
-        fprintf('I am sending the pipeline manager in the background using the ''%s'' command.\n',mode_pipeline_manager)
+        fprintf('Starting the pipeline manager (%s mode) ...\n',mode_pipeline_manager)
     end
-            
-    if ~isempty(opt.init_matlab)
-        instr_job = sprintf('%s %s "%s load(''%s'',''path_work''), if ~strcmp(path_work,''gb_psom_omitted''), path(path_work), end, load(''%s''), psom_pipeline_process(''%s'',opt),exit"\n',command_matlab,opt_matlab,opt.init_matlab,file_pipeline,file_manager_opt,file_pipeline);
-    else
-        instr_job = sprintf('%s %s "load(''%s'',''path_work''), if ~strcmp(path_work,''gb_psom_omitted''), path(path_work), end, load(''%s''), psom_pipeline_process(''%s'',opt),exit"\n',command_matlab,opt_matlab,file_pipeline,file_manager_opt,file_pipeline);
-    end
-        
-    if ~isempty(opt.shell_options)
-        instr_job = sprintf('%s\n%s',opt.shell_options,instr_job);
-    end
-    
-    if flag_debug
-        if ispc
-            % for windows
-            fprintf('\n\nThe following batch script is used to run the pipeline manager in the background :\n%s\n\n',instr_job);
-        else
-            fprintf('\n\nThe following shell script is used to run the pipeline manager in the background :\n%s\n\n',instr_job);
-        end
-        fprintf('The pipeline manager is about to start up now. Press CTRL-C to abort.');
-        pause
-    end
-    
+           
+    cmd = sprintf('load(''%s'',''path_work''), if ~strcmp(path_work,''gb_psom_omitted''), path(path_work), end, load(''%s''), psom_pipeline_process(''%s'',opt)',file_pipeline,file_manager_opt,file_pipeline);
+    opt_script.name_job       = 'PSOM_manager';
+    opt_script.mode           = mode_pipeline_manager;
+    opt_script.init_matlab    = opt.init_matlab;
+    opt_script.flag_debug     = opt.flag_debug;        
+    opt_script.shell_options  = opt.shell_options;
+    opt_script.command_matlab = opt.command_matlab;
+    opt_script.qsub_options   = opt.qsub_options;
     if ispc
         file_shell = [path_tmp filesep 'pipeline_manager.bat'];
     else
         file_shell = [path_tmp filesep 'pipeline_manager.sh'];
     end
-    
-    hf = fopen(file_shell,'w');
-    fprintf(hf,'%s',instr_job);
-    fclose(hf);
-    
-    file_qsub_o = [path_logs filesep name_pipeline '.oqsub'];
-    file_qsub_e = [path_logs filesep name_pipeline '.eqsub'];
-    switch mode_pipeline_manager  
-        case 'qsub'            
-            instr_batch = ['qsub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_pipeline(1:min(15,length(name_pipeline))) ' ' opt.qsub_options ' ' file_shell];            
-        case 'msub'            
-            instr_batch = ['msub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_pipeline(1:min(15,length(name_pipeline))) ' ' opt.qsub_options ' ' file_shell];            
-        otherwise            
-            switch gb_psom_OS
-                case 'windows'
-                    instr_batch = sprintf('start /min %s',file_shell);
-                otherwise
-                    instr_batch = ['at -f ' file_shell ' now'];
-            end
-            
-    end
-    
-    [fail,msg] = system(instr_batch);
-    if fail~=0
+    [flag_failed,errmsg] = psom_run_script(cmd,file_shell,opt_script);
+    if flag_failed~=0
         if ispc
             % This is windows
-            error('Something went bad when sending the pipeline in the background. The command was : %s. The error message was : %s',instr_batch,msg)
+            error('Something went bad when sending the pipeline in the background. The error message was : %s',errmsg)
         else
-            error('Something went bad when sending the pipeline in the background. The command was : %s. The error message was : %s',instr_batch,msg)
+            error('Something went bad when sending the pipeline in the background. The error message was : %s',errmsg)
         end
-    end
-    if flag_debug
-        fprintf('\n\nThe call to at/qsub/msub produced the following message :\n%s\n\n',msg);
-    end
-    
+    end        
     return
     
 end
@@ -436,8 +382,11 @@ try
     for num_j = 1:length(list_jobs)
         lmax = max(lmax,length(list_jobs{num_j}));
     end   
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %% The pipeline manager really starts here %%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    %% The pipeline manager really starts here
     while ((max(mask_todo)>0) || (max(mask_running)>0)) && exist(file_pipe_running,'file')
 
         %% Update logs & status
@@ -453,7 +402,7 @@ try
         list_num_running = find(mask_running);
         list_num_running = list_num_running(:)';
         list_jobs_running = list_jobs(list_num_running);
-        new_status_running_jobs = psom_job_status(path_logs,list_jobs_running,opt.mode);
+        new_status_running_jobs = psom_job_status(path_logs,list_jobs_running,opt.mode);        
         pause(time_cool_down); % pause for a while to let the system finish to write eqsub and oqsub files (useful in 'qsub' mode).
         
         %% Loop over running jobs to check the new status
@@ -575,125 +524,54 @@ try
             num_job = list_num_to_run(num_jr);
             num_jr = num_jr + 1;
             name_job = list_jobs{num_job};
-            file_job = [path_logs filesep name_job '.mat'];
-            file_log = [path_logs filesep name_job '.log'];
+            
             mask_todo(num_job) = false;
             mask_running(num_job) = true;
             nb_queued = nb_queued + 1;
             nb_todo = nb_todo - 1;
             status.(name_job) = 'submitted';
             msg = sprintf('%s - The job %s%s has been submitted to the queue',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));            
-            if flag_verbose
-                fprintf('%s (%i running / %i failed / %i finished / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo);
-            end
-            sub_add_line_log(hfpl,sprintf('%s (%i running / %i failed / %i finished / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo));
+            sub_add_line_log(hfpl,sprintf('%s (%i running / %i failed / %i finished / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
                         
             %% Create a temporary shell scripts for 'batch' or 'qsub' modes
-            if ~strcmp(opt.mode,'session')
-                if ~isempty(opt.init_matlab)
-                    if ~ismember(opt.init_matlab(end),{',',';'})
-                        opt.init_matlab = [opt.init_matlab ','];
-                    end
-                end
-                        
-                if ~isempty(opt.init_matlab)
-                    instr_job = sprintf('%s %s "%s load(''%s'',''path_work''), if ~strcmp(path_work,''gb_psom_omitted''), path(path_work), end, psom_run_job(''%s''),exit">%s\n',command_matlab,opt_matlab,opt.init_matlab,file_pipeline,file_job,file_log);
-                else
-                    instr_job = sprintf('%s %s "load(''%s'',''path_work''), if ~strcmp(path_work,''gb_psom_omitted''), path(path_work), end, psom_run_job(''%s''),exit">%s\n',command_matlab,opt_matlab,file_pipeline,file_job,file_log);
-                end
-                                                
-                if ~isempty(opt.shell_options)
-                    instr_job = sprintf('%s\n%s',opt.shell_options,instr_job);
-                end
-                
-                if ispc
-                    % this is windows
-                    file_shell = [path_tmp filesep name_job '.bat'];
-                else
-                    file_shell = [path_tmp filesep name_job '.sh'];
-                end
-                
-                file_exit = [path_logs filesep name_job '.exit'];
-                hf = fopen(file_shell,'w');
-                if ispc
-                    % this is windows
-                    fprintf(hf,'%s\ntype nul > %s\nexit\n',instr_job,file_exit);
-                else
-                    fprintf(hf,'%s\ntouch %s',instr_job,file_exit);
-                end
-                fclose(hf);
-                
+            file_job       = [path_logs filesep name_job '.mat'];
+            file_log       = [path_logs filesep name_job '.log'];
+            file_exit      = [path_logs filesep name_job '.exit'];
+            file_qsub_o    = [path_logs filesep name_job '.oqsub'];
+            file_qsub_e    = [path_logs filesep name_job '.eqsub'];
+            opt_logs.txt   = file_log;
+            opt_logs.eqsub = file_qsub_e;
+            opt_logs.oqsub = file_qsub_o;
+            opt_logs.exit  = file_exit;
+            opt_script.name_job       = name_job;
+            opt_script.mode           = opt.mode;
+            opt_script.init_matlab    = opt.init_matlab;
+            opt_script.flag_debug     = opt.flag_debug;        
+            opt_script.shell_options  = opt.shell_options;
+            opt_script.command_matlab = opt.command_matlab;
+            opt_script.qsub_options   = opt.qsub_options;
+            opt_script.file_handle    = hfpl;
+            if ~strcmp(opt.mode,'session')                
+                cmd = sprintf('load(''%s'',''path_work''), if ~strcmp(path_work,''gb_psom_omitted''), path(path_work), end, psom_run_job(''%s'')',file_pipeline,file_job);
+            else
+                cmd = sprintf('psom_run_job(''%s'')',file_job);
             end
-            
-            %% run the job
-            switch opt.mode
                 
-                case 'session'
-                    
-                    diary(file_log)
-                    psom_run_job(file_job);
-                    diary off
-                    
-                case 'batch'
-                    
-                    if ispc
-                        instr_batch = ['start /min ' file_shell];
-                    else
-                        instr_batch = ['at -f ' file_shell ' now'];
-                    end
-                    
-                    [fail,msg] = system(instr_batch);
-                    if flag_debug||(fail~=0)
-                        fprintf('The batch command was : %s\n The feedback was : %s\n',instr_batch,msg);
-                        sub_add_line_log(hfpl,sprintf('The batch command was : %s\n The feedback was : %s\n',instr_batch,msg));
-                    end
-                    if fail~=0
-                        error('Something went bad with the batch command.')
-                    end
-                                       
-                case 'qsub'
-                    
-                    file_qsub_o = [path_logs filesep name_job '.oqsub'];
-                    file_qsub_e = [path_logs filesep name_job '.eqsub'];
-                    
-                    instr_qsub = ['qsub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_job(1:min(15,length(name_job))) ' ' opt.qsub_options ' ' file_shell];
-                    if flag_debug
-                        [fail,msg] = system(instr_qsub);
-                        fprintf('The qsub command was : %s.\n The feedback was : %s\n',instr_qsub,msg);
-                        sub_add_line_log(hfpl,sprintf('The qsub command was : %s.\n The feedback was : %s\n',instr_qsub,msg));
-                        if fail~=0
-                            error('Something went bad with the qsub command.')
-                        end
-                    else
-                        
-                        [fail,msg] = system([instr_qsub '&']);
-                        
-                        if fail~=0
-                            error('Something went bad with the qsub command. The command was : %s . The error message was : %s',instr_qsub,msg)
-                        end
-                    end
-                case 'msub'
-                    
-                    file_qsub_o = [path_logs filesep name_job '.oqsub'];
-                    file_qsub_e = [path_logs filesep name_job '.eqsub'];
-                    
-                    instr_qsub = ['msub -e ' file_qsub_e ' -o ' file_qsub_o ' -N ' name_job(1:min(15,length(name_job))) ' ' opt.qsub_options ' ' file_shell];
-                    if flag_debug
-                        [fail,msg] = system(instr_qsub);
-                        fprintf('The msub command was : %s.\n The feedback was : %s\n',instr_qsub,msg);
-                        sub_add_line_log(hfpl,sprintf('The msub command was : %s.\n The feedback was : %s\n',instr_qsub,msg));
-                        if fail~=0
-                            error('Something went bad with the msub command.')
-                        end
-                    else
-                        
-                        [fail,msg] = system([instr_qsub '&']);
-                        
-                        if fail~=0
-                            error('Something went bad with the msub command. The command was : %s . The error message was : %s',instr_qsub,msg)
-                        end
-                    end
-            end % switch mode
+            if ispc % this is windows
+                script = [path_tmp filesep name_job '.bat'];
+            else
+                script = [path_tmp filesep name_job '.sh'];
+            end
+                
+            [flag_failed,errmsg] = psom_run_script(cmd,script,opt_script,opt_logs);
+            if flag_failed~=0
+                msg = fprintf('The execution of the job %s failed.\n The feedback was : %s\n',name_job,errmsg);
+                sub_add_line_log(hfpl,msg,true);
+                error('Something went bad with the batch command.')
+            elseif flag_debug
+                msg = fprintf('The feedback from the execution of job %s was : %s\n',name_job,errmsg);
+                sub_add_line_log(hfpl,msg,true);
+            end            
         end % submit jobs
         
         pause(time_between_checks); % To avoid wasting resources, wait a bit before re-trying to submit jobs
@@ -916,7 +794,13 @@ for num_f = 1:length(files)
     end
 end
 
-function [] = sub_add_line_log(file_write,str_write);
+function [] = sub_add_line_log(file_write,str_write,flag_verbose);
+if nargin<3
+    flag_verbose = false;
+end
+if flag_verbose
+    fprintf('%s',str_write)
+end
 
 if ischar(file_write)
     hf = fopen(file_write,'a');
