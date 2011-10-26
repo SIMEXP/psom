@@ -16,10 +16,10 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % how to invoke matlab   
-gb_psom_command_matlab = 'matlab'; 
+gb_psom_command_matlab = [matlabroot filesep 'bin' filesep 'matlab']; 
 
 % how to invoke octave
-gb_psom_command_octave = 'octave'; 
+gb_psom_command_octave = [matlabroot filesep 'bin' filesep 'octave']; 
 
 % Options for the sge qsub system, example : '-q all.q@yeatman,all.q@zeus'
 % will force qsub to only use the yeatman and zeus workstations through the
