@@ -48,7 +48,7 @@ gb_psom_init_matlab = '';
 gb_psom_path_search = '';
 
 % where to store temporary files
-gb_psom_tmp = cat(2,filesep,'tmp',filesep); 
+gb_psom_tmp = tempdir; 
 
 % How to open pdf files
 gb_psom_pdf_viewer = 'evince';
@@ -102,20 +102,20 @@ end
 
 %% getting user name.
 switch (gb_psom_OS)
-case 'unix'
+    case 'unix'
 	gb_psom_user = getenv('USER');
-case 'windows'
+    case 'windows'
 	gb_psom_user = getenv('USERNAME');	
-otherwise
+    otherwise
 	gb_psom_user = 'unknown';
 end
 
 %% Getting the local computer's name
 switch (gb_psom_OS)
-case 'unix'
+    case 'unix'
 	[gb_psom_tmp_var,gb_psom_localhost] = system('uname -n');
-    gb_psom_localhost = deblank(gb_psom_localhost);
-otherwise
+        gb_psom_localhost = deblank(gb_psom_localhost);
+    otherwise
 	gb_psom_localhost = 'unknown';
 end
 
