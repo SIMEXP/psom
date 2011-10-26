@@ -136,8 +136,8 @@ if nargin<3
 end
 
 %% Options
-list_fields    = {'init_matlab'       , 'flag_debug' , 'shell_options'       , 'command_matlab' , 'mode' , 'qsub_options'       };
-list_defaults  = {gb_psom_init_matlab , true         , gb_psom_shell_options , ''               , NAN    , gb_psom_qsub_options };
+list_fields    = {'name_job'    , 'init_matlab'       , 'flag_debug' , 'shell_options'       , 'command_matlab' , 'mode' , 'qsub_options'       };
+list_defaults  = {'psom_script' , gb_psom_init_matlab , false        , gb_psom_shell_options , ''               , NaN    , gb_psom_qsub_options };
 opt = psom_struct_defaults(opt,list_fields,list_defaults);
 
 if ~isempty(opt.init_matlab)&&~ismember(opt.init_matlab(end),{',',';'})
@@ -209,7 +209,7 @@ end
 
 %% Write the script
 if ~strcmp(opt.mode,'session')    
-    if flag_debug
+    if opt.flag_debug
         fprintf('    The following script is used to run the command :\n%s\n\n',instr_job);
     end
     hf = fopen(script,'w');
@@ -240,20 +240,30 @@ switch opt.mode
        if opt.flag_debug
            [flag_failed,msg] = system(['. ' script]);
        else
-           [flag_failed,msg] = system(['. ' script ' &']);
+           if strcmp(gb_psom_language,'octave')
+               flag_failed = system(['. ' script ],false,'async');
+           else 
+               flag_failed = system(['. ' script ' &']);
+           end
+           msg = '';
        end
 
     case 'batch'
 
         if ispc
             instr_batch = sprintf('start /b %s',script); % /min instead of /b ?
-        otherwise
+        else
             instr_batch = ['at -f ' script ' now'];
         end
         if opt.flag_debug 
-            [fail,msg] = system(instr_batch);    
-        else 
-            [fail,msg] = system([instr_batch ' &']);
+            [flag_failed,msg] = system(instr_batch);    
+        else
+            if strcmp(gb_psom_language,'octave')
+                 flag_failed = system(instr_batch,false,'async');
+            else
+                 flag_failed = system([instr_batch ' &']);
+            end
+            msg = '';
         end
 
     case {'qsub','msub'}
@@ -265,9 +275,14 @@ switch opt.mode
         end
         instr_qsub = [opt.mode qsub_logs ' -N ' opt.name_job ' ' opt.qsub_options ' ' script];            
         if flag_debug
-            [fail,msg] = system(instr_qsub);
+            [flag_failed,msg] = system(instr_qsub);
         else 
-            [fail,msg] = system([instr_qsub ' &']);
+            if strcmp(gb_psom_language,'octave')
+                flag_failed = system(instr_qsub,false,'async');
+            else
+                flag_failed = system([instr_qsub ' &']);
+            end
+            msg = '';
         end
 
 end
