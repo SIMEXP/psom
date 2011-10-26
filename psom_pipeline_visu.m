@@ -211,7 +211,7 @@ switch action
 
         %% Prints the computation time for a list of jobs
 
-        if isempty(opt_action)
+        if ~exist('opt_action','var')||isempty(opt_action)
             ind_job = 1:length(list_jobs);
         else
             mask_include = false([length(list_jobs) 1]);
@@ -233,7 +233,7 @@ switch action
         catch
             flag_profile = false;
         end
-        lmax = max(cellfun('length',list_jobs,'UniformOutput',true));
+        lmax = max(cellfun(@length,list_jobs,'UniformOutput',true));
         fprintf('\n%s\n',repmat('*',[1 lmax+1]));
         for num_j = ind_job
 
