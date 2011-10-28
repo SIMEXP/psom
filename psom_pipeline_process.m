@@ -16,27 +16,13 @@ function [] = psom_pipeline_process(file_pipeline,opt)
 %
 %    MODE
 %        (string, default 'session') how to execute the jobs :
-%
-%        'session'
-%            the pipeline is executed within the current session.
-%
-%        'batch'
-%            Start each job in an independent matlab session. Note that
-%            more than one session can be started at the same time to
-%            take advantage of muli-processors machine. The pipeline
-%            will run in the background, you can continue to work, close
-%            matlab or even unlog from your machine on a linux system
-%            without interrupting it. The command used to send the jobs
-%            in the background is "at" on linux/mac, and "start" on
-%            windows.
-%
-%        'qsub'
-%            Use the qsub system (sge or pbs) to process the jobs. The
-%            pipeline runs on all accessible resources.
-%
-%        'msub'
-%            Use the msub system (MOAB) to process the jobs. The
-%            pipeline runs on all accessible resources.
+%        'session'    : current Matlab session.
+%        'background' : background execution, non-unlogin-proofed 
+%                       (asynchronous system call).
+%        'batch'      : background execution, unlogin-proofed ('at' in 
+%                       UNIX, start in WINDOWS.
+%        'qsub'       : remote execution using qsub (torque, SGE, PBS).
+%        'msub'       : remote execution using msub (MOAB)
 %
 %    MODE_PIPELINE_MANAGER
 %        (string, default same as OPT.MODE) same as OPT.MODE, but
@@ -117,8 +103,11 @@ function [] = psom_pipeline_process(file_pipeline,opt)
 % Empty file names, or file names equal to 'gb_niak_omitted' are ignored
 % when building the dependency graph between jobs.
 %
-% Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008.
-% Maintainer : pbellec@bic.mni.mcgill.ca
+% Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008-2010.
+% Departement d'informatique et de recherche operationnelle
+% Centre de recherche de l'institut de Geriatrie de Montreal
+% Universite de Montreal, 2010-2011.
+% Maintainer : pierre.bellec@criugm.qc.ca
 % See licensing information in the code.
 % Keywords : pipeline
 
@@ -153,8 +142,8 @@ end
 
 %% Options
 gb_name_structure = 'opt';
-gb_list_fields    = {'flag_verbose' , 'init_matlab'       , 'flag_debug' , 'shell_options'       , 'command_matlab' , 'mode'    , 'mode_pipeline_manager' , 'max_queued' , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
-gb_list_defaults  = {true           , gb_psom_init_matlab , true         , gb_psom_shell_options , ''               , 'session' , ''                      , 0            , gb_psom_qsub_options , []                    , []                    , []               };
+gb_list_fields    = { 'flag_verbose' , 'init_matlab'       , 'flag_debug' , 'shell_options'       , 'command_matlab' , 'mode'    , 'mode_pipeline_manager' , 'max_queued' , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
+gb_list_defaults  = { true           , gb_psom_init_matlab , true         , gb_psom_shell_options , ''               , 'session' , ''                      , 0            , gb_psom_qsub_options , []                    , []                    , []               };
 psom_set_defaults
 
 flag_verbose = flag_verbose || flag_debug;
@@ -281,12 +270,11 @@ if ismember(opt.mode_pipeline_manager,{'batch','background','qsub','msub'})
     opt.mode_pipeline_manager = 'session';
     save(file_manager_opt,'opt');
     
-    
     if flag_verbose
         fprintf('Starting the pipeline manager (%s mode) ...\n',mode_pipeline_manager)
     end
            
-    cmd = sprintf('load(''%s'',''path_work''), if ~strcmp(path_work,''gb_psom_omitted''), path(path_work), end, load(''%s''), psom_pipeline_process(''%s'',opt)',file_pipeline,file_manager_opt,file_pipeline);
+    cmd = sprintf('load(''%s''), psom_pipeline_process(''%s'',opt)',file_manager_opt,file_pipeline);
     opt_script.name_job       = 'PSOM_manager';
     opt_script.mode           = mode_pipeline_manager;
     opt_script.init_matlab    = opt.init_matlab;
@@ -294,6 +282,7 @@ if ismember(opt.mode_pipeline_manager,{'batch','background','qsub','msub'})
     opt_script.shell_options  = opt.shell_options;
     opt_script.command_matlab = opt.command_matlab;
     opt_script.qsub_options   = opt.qsub_options;
+    opt_script.path_search    = file_pipeline;
     if ispc
         file_shell = [path_tmp filesep 'pipeline_manager.bat'];
     else
@@ -533,7 +522,7 @@ try
             msg = sprintf('%s - The job %s%s has been submitted to the queue',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));            
             sub_add_line_log(hfpl,sprintf('%s (%i running / %i failed / %i finished / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
                         
-            %% Create a temporary shell scripts for 'batch' or 'qsub' modes
+            %% Execute the job in a "shelled" environment
             file_job       = [path_logs filesep name_job '.mat'];
             file_log       = [path_logs filesep name_job '.log'];
             file_exit      = [path_logs filesep name_job '.exit'];
@@ -543,6 +532,7 @@ try
             opt_logs.eqsub = file_qsub_e;
             opt_logs.oqsub = file_qsub_o;
             opt_logs.exit  = file_exit;
+            opt_script.path_search    = file_pipeline;
             opt_script.name_job       = name_job;
             opt_script.mode           = opt.mode;
             opt_script.init_matlab    = opt.init_matlab;
@@ -551,11 +541,7 @@ try
             opt_script.command_matlab = opt.command_matlab;
             opt_script.qsub_options   = opt.qsub_options;
             opt_script.file_handle    = hfpl;
-            if ~strcmp(opt.mode,'session')                
-                cmd = sprintf('load(''%s'',''path_work''), if ~strcmp(path_work,''gb_psom_omitted''), path(path_work), end, psom_run_job(''%s'')',file_pipeline,file_job);
-            else
-                cmd = sprintf('psom_run_job(''%s'')',file_job);
-            end
+            cmd = sprintf('psom_run_job(''%s'')',file_job);
                 
             if ispc % this is windows
                 script = [path_tmp filesep name_job '.bat'];
@@ -565,11 +551,11 @@ try
                 
             [flag_failed,errmsg] = psom_run_script(cmd,script,opt_script,opt_logs);
             if flag_failed~=0
-                msg = fprintf('The execution of the job %s failed.\n The feedback was : %s\n',name_job,errmsg);
+                msg = fprintf('\n    The execution of the job %s failed.\n The feedback was : %s\n',name_job,errmsg);
                 sub_add_line_log(hfpl,msg,true);
-                error('Something went bad with the batch command.')
+                error('Something went bad with the execution of the job.')
             elseif flag_debug
-                msg = fprintf('The feedback from the execution of job %s was : %s\n',name_job,errmsg);
+                msg = fprintf('\n    The feedback from the execution of job %s was : %s\n',name_job,errmsg);
                 sub_add_line_log(hfpl,msg,true);
             end            
         end % submit jobs

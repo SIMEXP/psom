@@ -57,11 +57,18 @@ function [flag_failed,msg] = psom_run_script(cmd,script,opt,logs)
 %        GB_PSOM_COMMAND_MATLAB/OCTAVE in the file PSOM_GB_VARS.
 %
 %    INIT_MATLAB
-%        (string, default '') a matlab command (multiple commands can
-%        actually be passed using comma separation) that will be
-%        executed at the begining of any matlab/Octave job. That 
-%        mechanism can be used, e.g., to set up the state of the random 
-%        generation number.
+%        (string, GB_PSOM_INIT_MATLAB defined in PSOM_GB_VARS) a matlab 
+%        command (multiple commands can actually be passed using comma 
+%        separation) that will be executed at the begining of any 
+%        matlab/Octave job.
+%
+%    PATH_SEARCH
+%        (string, default GB_PSOM_PATH_SEARCH in the file PSOM_GB_VARS). 
+%        If PATH_SEARCH is empty, the current path is used. If 
+%        PATH_SEARCH equals 'gb_psom_omitted', then PSOM will not attempt 
+%        to set the search path, i.e. the search path for every job will 
+%        be the current search path in 'session' mode, and the default 
+%        Octave/Matlab search path in the other modes. 
 %
 %    FLAG_DEBUG
 %        (boolean, default false) if FLAG_DEBUG is true, the program
@@ -106,6 +113,16 @@ function [flag_failed,msg] = psom_run_script(cmd,script,opt,logs)
 % The function will automatically use Matlab (resp. Octave) to execute the 
 % commmand when invoked from Matlab (resp. Octave).  
 %
+% In every mode but 'session', the following files will be generated:
+%   * A script to run the command calling matlab
+%   * A .mat file with the search path (same as script, with an '_path.mat'
+%     extension. That's if OPT.PATH_SEARCH is not used to directly specify 
+%     a search path.
+%   * A text log file (if LOGS.TXT is used)
+%   * A text log file from qsub (if LOGS.OQSUB is used, in qsub/msub modes)
+%   * A text error file from qsub (if LOGS.EQSUB is used, in qsub/msub modes)
+%   * A tag file (upon completion of the script, if LOGS.EXIT is used)
+%
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008-2010.
 % Departement d'informatique et de recherche operationnelle
 % Centre de recherche de l'institut de Geriatrie de Montreal
@@ -140,9 +157,21 @@ if nargin<3
 end
 
 %% Options
-list_fields    = { 'file_handle' , 'name_job'    , 'init_matlab'       , 'flag_debug' , 'shell_options'       , 'command_matlab' , 'mode' , 'qsub_options'       };
-list_defaults  = { []            , 'psom_script' , gb_psom_init_matlab , false        , gb_psom_shell_options , ''               , NaN    , gb_psom_qsub_options };
+list_fields    = { 'path_search'       , 'file_handle' , 'name_job'    , 'init_matlab'       , 'flag_debug' , 'shell_options'       , 'command_matlab' , 'mode' , 'qsub_options'       };
+list_defaults  = { gb_psom_path_search , []            , 'psom_script' , gb_psom_init_matlab , false        , gb_psom_shell_options , ''               , NaN    , gb_psom_qsub_options };
 opt = psom_struct_defaults(opt,list_fields,list_defaults);
+
+if opt.flag_debug
+    msg = sprintf('\n    The execution mode is %s\n',opt.mode);
+    fprintf(msg);
+    if ~isempty(opt.file_handle)
+        fprintf(opt.file_handle,'%s',msg);
+    end
+end
+
+if isempty(opt.path_search)
+    opt.path_search = path;
+end
 
 if ~isempty(opt.init_matlab)&&~ismember(opt.init_matlab(end),{',',';'})
     opt.init_matlab = [opt.init_matlab ','];
@@ -184,12 +213,25 @@ switch gb_psom_language
     case 'octave'
         opt_matlab = '--silent --eval';       
 end
-    
+
+%% Set-up the search path for the job
+if ~strcmp(opt.path_search,'gb_niak_omitted')&&~strcmp(opt.mode,'session')&&~isempty(cmd)
+    if (length(opt.path_search)>4)&&(strcmp(opt.path_search(end-3:end),'.mat'))
+        file_path = opt.path_search;
+    else
+        [path_f,name_f,ext_f] = fileparts(script);
+        file_path = fullfile(path_f,[name_f '_path.mat']);
+        path_work = opt.path_search;
+        save(file_path,'path_work');
+    end 
+    opt.init_matlab = [sprintf('load(''%s'',''path_work''), path(path_work),',file_path) opt.init_matlab];
+end
+        
 %% Add an appropriate call to Matlab/Octave
 if ~isempty(cmd)            
     instr_job = sprintf('%s %s "%s %s,exit"',opt.command_matlab,opt_matlab,opt.init_matlab,cmd);
     if ~isempty(logs)
-        instr_job = sprintf('%s>%s\n',instr_job,logs.txt);
+        instr_job = sprintf('%s >%s 2>%s\n',instr_job,logs.txt,logs.txt);
     else
         instr_job = sprintf('%s\n',instr_job);
     end
@@ -205,16 +247,20 @@ end
 %% Add a .exit tag file
 if ~isempty(logs)&&~isempty(logs.exit)
     if ispc % this is windows
-        instr_job = sprintf('%s\ntype nul > %s\nexit\n',instr_job,logs.exit);
+        instr_job = sprintf('%stype nul > %s\nexit\n',instr_job,logs.exit);
     else
-        instr_job = sprintf('%s\ntouch %s',instr_job,logs.exit);
+        instr_job = sprintf('%stouch %s',instr_job,logs.exit);
     end
 end
 
 %% Write the script
 if ~strcmp(opt.mode,'session')            
     if opt.flag_debug
-        msg = sprintf('    The following script is used to run the command :\n%s\n\n',instr_job);
+        msg = sprintf('    This is the content of the script used to run the command :\n"\n%s\n"\n',instr_job);
+        if ~strcmp(opt.path_search,'gb_niak_omitted')&&~isempty(cmd)
+            msg = sprintf('%s    The following matlab search path is used (may be truncated):\n%s\n',msg,opt.path_search(1:min(100,length(opt.path_search))));
+            msg = sprintf('%s    The search path will be loaded from the following file:\n%s\n',msg,file_path);
+        end
         fprintf('%s',msg);
         if ~isempty(opt.file_handle)
             fprintf(opt.file_handle,'%s',msg);
@@ -244,9 +290,9 @@ switch opt.mode
 
         try
             if ~isempty(logs)
-                diary(logs.txt)
+                diary(logs.txt);
                 sub_eval(cmd);
-                diary off
+                diary off;
             else
                 sub_eval(cmd);
             end
@@ -266,7 +312,13 @@ switch opt.mode
     case 'background'
        
        if opt.flag_debug
-           [flag_failed,msg] = system(['. ' script]);
+           cmd_script = ['. ' script];
+           msg = sprintf('    The script is executed using the command :\n%s\n\n',cmd_script);
+           fprintf('%s',msg);
+           if ~isempty(opt.file_handle)
+               fprintf(opt.file_handle,'%s',msg);
+           end
+           [flag_failed,msg] = system(cmd_script);
        else
            if strcmp(gb_psom_language,'octave')
                system(['. ' script ],false,'async');
@@ -285,6 +337,11 @@ switch opt.mode
             instr_batch = ['at -f ' script ' now'];
         end
         if opt.flag_debug 
+            msg = sprintf('    The script is executed using the command :\n%s\n\n',instr_batch);
+            fprintf('%s',msg);
+            if ~isempty(opt.file_handle)
+                fprintf(opt.file_handle,'%s',msg);
+            end
             [flag_failed,msg] = system(instr_batch);    
         else
             if strcmp(gb_psom_language,'octave')
@@ -304,7 +361,12 @@ switch opt.mode
             qsub_logs = [' -e ' logs.eqsub ' -o ' logs.oqsub];
         end
         instr_qsub = [opt.mode qsub_logs ' -N ' opt.name_job ' ' opt.qsub_options ' ' script];            
-        if flag_debug
+        if opt.flag_debug
+            msg = sprintf('    The script is executed using the command :\n%s\n\n',instr_qsub);
+            fprintf('%s',msg);
+            if ~isempty(opt.file_handle)
+                fprintf(opt.file_handle,'%s',msg);
+            end
             [flag_failed,msg] = system(instr_qsub);
         else 
             if strcmp(gb_psom_language,'octave')

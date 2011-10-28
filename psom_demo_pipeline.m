@@ -1,6 +1,5 @@
 function [pipeline,opt] = psom_demo_pipeline(path_demo,opt)
-% This is a script to demonstrate how to use the pipeline system for Octave
-% and Matlab (PSOM).
+% Short tutorial on the pipeline system for Octave and Matlab (PSOM).
 %
 % SYNTAX:
 % [PIPELINE,OPT_PIPE] = PSOM_DEMO_PIPELINE(PATH_DEMO,OPT)
