@@ -212,16 +212,19 @@ test_failed = false;
 label_failed = '';
 for num_t = 1:length(tests)
     label = tests{num_t};
+    msg = sprintf('Running the "%s" test',label);
+    stars = repmat('*',[1 length(msg)]);
+    fprintf('\n%s\n%s\n%s\n\n',stars,msg,stars);                        
+            
     switch label
+
         case 'script_pipe'
+
             if test_failed
                 continue
             end
 
             % Test description
-            msg = sprintf('Running the "%s" test',label);
-            stars = repmat('*',[1 length(msg)]);
-            fprintf('\n%s\n%s\n%s\n\n',stars,msg,stars);                        
             if strcmp(opt.mode_pipeline_manager,'session')
                 fprintf('The execution mode of the pipeline manager is ''session'' ... There is nothing to do !\n')
                 continue
@@ -253,7 +256,6 @@ for num_t = 1:length(tests)
                 test_failed = true;
                 label_failed = label;
                 continue
-
             else
                 if ~isempty(errmsg)
                     fprintf('\n    The script was successfully submitted ... The feedback was : %s\n',errmsg);
@@ -275,13 +277,13 @@ for num_t = 1:length(tests)
                 fprintf('The tag file %s was successfully generated !\n',logs.exit)
                 fprintf('\nThe test was successful !\n') 
             else
-                fprintf('I could not find the file the test was supposed to generate ...\n    %s\n',file_test);
+                fprintf('I could not find the file the test was supposed to generate ...\n    %s\n',logs.exit);
                 fprintf('The log of the job was:\n')
                 sub_print_log(logs.txt)
-                sub_print_logs(logs.eqsub)
-                sub_print_logs(logs.oqsub)
+                sub_print_log(logs.eqsub)
+                sub_print_log(logs.oqsub)
                 fprintf('\nThe test has failed !\n')
-                flag_failed = true;
+                test_failed = true;
                 label_failed = 'script_pipe_submission';
             end
 
@@ -292,9 +294,6 @@ for num_t = 1:length(tests)
             end
 
             % Test description
-            msg = sprintf('Running the "%s" test',label);
-            stars = repmat('*',[1 length(msg)]);
-            fprintf('\n%s\n%s\n%s\n\n',stars,msg,stars);                        
             if strcmp(opt.mode_pipeline_manager,'session')
                 fprintf('The execution mode of the pipeline manager is ''session'' ... There is nothing to do !\n')
                 continue
@@ -326,7 +325,7 @@ for num_t = 1:length(tests)
                     fprintf('\n    The test failed. The script could not be submitted ! \n');
                 end
                 test_failed = true;
-                flag_failed = 'script_pipe_bis';
+                label_failed = 'script_pipe_bis';
                 continue           
             end
 
@@ -348,8 +347,6 @@ for num_t = 1:length(tests)
                 fprintf('\nThe test has failed !\n')
                 test_failed = true;
                 label_failed = label;
-                %\nCheck the following files for more infos:\n%s\n%s\n%s\n
-                %logs.txt,logs.eqsub,logs.oqsub
             end
 
         case 'psom_pipe'
@@ -359,9 +356,6 @@ for num_t = 1:length(tests)
             end
 
             % Test description
-            msg = sprintf('Running the "%s" test',label);
-            stars = repmat('*',[1 length(msg)]);
-            fprintf('\n%s\n%s\n%s\n\n',stars,msg,stars);                        
             if strcmp(opt.mode_pipeline_manager,'session')
                 fprintf('The execution mode of the pipeline manager is ''session'' ... There is nothing to do !\n')
                 continue
@@ -419,7 +413,83 @@ for num_t = 1:length(tests)
                 test_failed = true;
                 label_failed = label;
             end
+
         case 'script_job'
+            continue
+            if test_failed
+                continue
+            end
+
+            % Test description
+            if strcmp(opt.mode,'session')
+                fprintf('The execution mode of the job manager is ''session'' ... There is nothing to do !\n')
+                continue
+            end
+            fprintf('Trying to execute a simple command trough the pipeline manager...\n');
+
+            % Design and start the script
+            path_xp = fullfile(path_test,label,filesep);
+            psom_mkdir(path_xp);
+            opt_script.mode = opt.mode_pipeline_manager;
+            if ispc
+                script = fullfile(path_xp,[label '.bat']);
+            else
+                script = fullfile(path_xp,[label '.sh']);
+            end
+  
+            file_job_pm    = fullfile(path_xp,[label '_job_pm.mat']);
+            
+            file_job_test  = fullfile(path_xp,[label '_job_test.mat']);
+            job.opt.logs.txt   = fullfile(path_xp,[label '.log']);
+            job.opt.logs.eqsub = fullfile(path_xp,[label '.eqsub']);
+            job.opt.logs.oqsub = fullfile(path_xp,[label '.oqsub']);
+            job.opt.logs.exit  = fullfile(path_xp,[label '.exit']);
+            job.command = sprintf('psom_run_job(''%s'')',file_job_test);
+            save(file_job,'command');
+            cmd = sprintf('psom_run_job(''%s'')',file_job);
+            [flag_failed,errmsg] = psom_run_script('',script,opt_script,logs);
+
+            % Debriefing #1 : did the script start ?
+            if flag_failed~=0
+                if isempty(errmsg)
+                    fprintf('\n    The test failed. The script could not be submitted ! \n The feedback was : %s\n',errmsg);
+                else
+                    fprintf('\n    The test failed. The script could not be submitted ! \n');
+                end
+                test_failed = true;
+                label_failed = label;
+                continue
+            else
+                if ~isempty(errmsg)
+                    fprintf('\n    The script was successfully submitted ... The feedback was : %s\n',errmsg);
+                else
+                    fprintf('\n    The script was successfully submitted ... There was no feedback\n');
+                end
+            end
+
+            % Debriefing #2 : did the script work ?
+            fprintf('Now waiting to see if the script worked ... This could take a while (in qsub/msub modes) ...\nPSOM is going to wait %i seconds. You can change this time using TIME_WAIT.\n',time_wait)
+            time_elapsed = 0;
+            while (~psom_exist(logs.exit))&&(time_elapsed<time_wait)
+                pause(1)
+                fprintf('.')
+                time_elapsed = time_elapsed+1;
+            end
+
+            if psom_exist(logs.exit)
+                fprintf('The tag file %s was successfully generated !\n',logs.exit)
+                fprintf('\nThe test was successful !\n') 
+            else
+                fprintf('I could not find the file the test was supposed to generate ...\n    %s\n',logs.exit);
+                fprintf('The log of the job was:\n')
+                sub_print_log(logs.txt)
+                sub_print_log(logs.eqsub)
+                sub_print_log(logs.oqsub)
+                fprintf('\nThe test has failed !\n')
+                test_failed = true;
+                label_failed = 'script_job_submission';
+            end
+
         case 'matlab_job'
         case 'psom_job'
         otherwise
@@ -436,13 +506,13 @@ if ~test_failed
     stars = repmat('*',[1 length(msg)]);
     fprintf('\n%s\n%s\n%s\n\n',stars,msg,stars);    
     fprintf('PSOM will be able to run pipelines ... enjoy !\n')
-    fprintf('If some configuration options were manually specified, consider editing PSOM_GB_VARS_LOCAL to make those changes permanent locally.\n')
+    fprintf('If some configuration options were manually specified, consider editing PSOM_GB_VARS_LOCAL to turn those changes into defaults.\n')
     fprintf('Go to http://code.google.com/p/psom/wiki/ConfigurationPsom for more info.\n')
-    fprintf('Please note that a number of potential issues unfortunately could not be tested here:\n')
-    fprintf('   * A limitation on the number of concurent matlab sessions due to the number of available licenses.\n')
-    fprintf('   * Job failure due to an interruption of service (e.g. the execution server was turned off or crashed while the job is running).\n')
+    fprintf('Please note that a number of potential issues can still compromise the stability of PSOM:\n')
+    fprintf('   * A limitation on the number of concurrent matlab sessions due to the number of available licenses.\n')
+    fprintf('   * Job failure due to an interruption of service (e.g. if the execution server is turned off or crashes while the job is running).\n')
     fprintf('   * Job failure due to insufficient resources (e.g. out of memory, out of disk space).\n')
-    fprintf('   * All the execution servers may not have a similar configuration. These test only apply to employed execution servers.\n')
+    fprintf('   * An execution server with a different configuration than the one tested here. The tests are only valid for employed execution servers.\n')
 
 else
     msg = sprintf('The test failed !');

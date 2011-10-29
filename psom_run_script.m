@@ -342,17 +342,9 @@ switch opt.mode
             if ~isempty(opt.file_handle)
                 fprintf(opt.file_handle,'%s',msg);
             end
-            [flag_failed,msg] = system(instr_batch);    
-        else
-            if strcmp(gb_psom_language,'octave')
-                 system(instr_batch,false,'async');
-                 flag_failed = 0;
-            else
-                 flag_failed = system([instr_batch ' &']);
-            end
-            msg = '';
         end
-
+        [flag_failed,msg] = system(instr_batch);    
+        
     case {'qsub','msub'}
         
         if isempty(logs)
