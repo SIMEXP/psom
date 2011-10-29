@@ -1,4 +1,4 @@
-function opt = psom_config(path_test,opt,tests)
+function opt = psom_config(path_test,opt,tests,time_wait)
 % Test the configuration of PSOM
 %
 % SYNTAX:
@@ -415,7 +415,7 @@ for num_t = 1:length(tests)
             end
 
         case 'script_job'
-            continue
+            
             if test_failed
                 continue
             end
@@ -430,29 +430,64 @@ for num_t = 1:length(tests)
             % Design and start the script
             path_xp = fullfile(path_test,label,filesep);
             psom_mkdir(path_xp);
-            opt_script.mode = opt.mode_pipeline_manager;
+            opt_pipe = opt_script;
+            opt_pipe.mode = opt.mode_pipeline_manager;
+            opt_pipe.flag_debug = false;
             if ispc
-                script = fullfile(path_xp,[label '.bat']);
+                script_pm = fullfile(path_xp,[label '_pm.bat']);
+                script_job = fullfile(path_xp,[label '.bat']);
             else
-                script = fullfile(path_xp,[label '.sh']);
+                script_pm = fullfile(path_xp,[label '_pm.sh']);
+                script_job = fullfile(path_xp,[label '.bat']);
             end
-  
-            file_job_pm    = fullfile(path_xp,[label '_job_pm.mat']);
-            
-            file_job_test  = fullfile(path_xp,[label '_job_test.mat']);
-            job.opt.logs.txt   = fullfile(path_xp,[label '.log']);
-            job.opt.logs.eqsub = fullfile(path_xp,[label '.eqsub']);
-            job.opt.logs.oqsub = fullfile(path_xp,[label '.oqsub']);
-            job.opt.logs.exit  = fullfile(path_xp,[label '.exit']);
-            job.command = sprintf('psom_run_job(''%s'')',file_job_test);
-            save(file_job,'command');
-            cmd = sprintf('psom_run_job(''%s'')',file_job);
-            [flag_failed,errmsg] = psom_run_script('',script,opt_script,logs);
+            file_pipe = fullfile(path_xp,[label '_pm.mat']);
+            file_job = fullfile(path_xp,[label '.mat']);
+            opt_job = opt_script;
+            opt_job.mode = opt.mode;
+            logs_pm.txt   = fullfile(path_xp,[label '_pm.log']);
+            logs_pm.eqsub = fullfile(path_xp,[label '_pm.eqsub']);
+            logs_pm.oqsub = fullfile(path_xp,[label '_pm.oqsub']);
+            logs_pm.exit  = fullfile(path_xp,[label '_pm.exit']);            
+            logs.txt   = fullfile(path_xp,[label '.log']);
+            logs.eqsub = fullfile(path_xp,[label '.eqsub']);
+            logs.oqsub = fullfile(path_xp,[label '.oqsub']);
+            logs.exit  = fullfile(path_xp,[label '.exit']);
+            save(file_job,'script_job','logs','opt_job');
+            cmd = sprintf('load(''%s''), [flag_failed,errmsg] = psom_run_script('''',script_job,opt_job,logs); save(''%s'',''flag_failed'',''errmsg'')',file_job,file_pipe); 
+            [flag_failed,errmsg] = psom_run_script(cmd,script_pm,opt_pipe,logs_pm);
 
-            % Debriefing #1 : did the script start ?
             if flag_failed~=0
                 if isempty(errmsg)
-                    fprintf('\n    The test failed. The script could not be submitted ! \n The feedback was : %s\n',errmsg);
+                    fprintf('\n    The test failed. The pipeline manager did not start ! \n The feedback was : %s\n',errmsg);
+                else
+                    fprintf('\n    The test failed. The pipeline manager did not start ! \n');
+                end
+                test_failed = true;
+                label_failed = 'script_job_pipeline';
+                continue
+            end
+            % Debriefing #0 : did the pipeline manager start ?
+            fprintf('Now waiting on the pipeline manager to start ... This could take a while (in qsub/msub modes) ...\nPSOM is going to wait %i seconds. You can change this time using TIME_WAIT.\n',time_wait)
+            time_elapsed = 0;
+            while (~psom_exist(file_pipe))&&(time_elapsed<time_wait)
+                pause(1)
+                fprintf('.')
+                time_elapsed = time_elapsed+1;
+            end
+
+            if ~psom_exist(file_pipe)
+                fprintf('I could not find the file the pipeline manager was supposed to generate ...\n    %s\n',file_pipe);
+                fprintf('\nThe test has failed !\n')
+                test_failed = true;
+                label_failed = 'script_job_pipeline';
+                continue
+            end
+
+            % Debriefing #1 : did the script start ?
+            load(file_pipe)
+            if flag_failed~=0
+                if isempty(errmsg)
+                    fprintf('\n    The test failed. The job script could not be submitted ! \n The feedback was : %s\n',errmsg);
                 else
                     fprintf('\n    The test failed. The script could not be submitted ! \n');
                 end
@@ -468,7 +503,7 @@ for num_t = 1:length(tests)
             end
 
             % Debriefing #2 : did the script work ?
-            fprintf('Now waiting to see if the script worked ... This could take a while (in qsub/msub modes) ...\nPSOM is going to wait %i seconds. You can change this time using TIME_WAIT.\n',time_wait)
+            fprintf('Now waiting to see if the script submitted by the job manager worked ... This could take a while (in qsub/msub modes) ...\nPSOM is going to wait %i seconds. You can change this time using TIME_WAIT.\n',time_wait)
             time_elapsed = 0;
             while (~psom_exist(logs.exit))&&(time_elapsed<time_wait)
                 pause(1)
@@ -521,10 +556,17 @@ else
     fprintf('The test that failed was "%s":\n',label_failed);
     switch label_failed
 
-        case 'script_pipe'
-
-            fprintf('PSOM was not able to execute a simple command in a script using a %s execution mode.\n',opt.mode_pipeline_manager);
-            switch opt.mode_pipeline_manager
+        case {'script_pipe','script_job'}
+            if strcmp(label_failed,'script_job')
+                mode = opt.mode;
+            else
+                mode = opt.mode_pipeline_manager;
+            end
+            fprintf('PSOM was not able to execute a simple command in a script using a "%s" execution mode.\n',mode);
+            if strcmp(label_failed,'script_job')
+                fprintf('This occured as the script was submitted by the pipeline manager.\nNote that the session of the pipeline manager may be different of the current session.\n')
+            end
+            switch mode
                 case 'background'
                    fprintf('PSOM is using the dot command (.) in a system call to execute the script.\n')
                    fprintf('This method is thought to be robust and should not fail on most systems.\n')  
@@ -537,10 +579,10 @@ else
                    fprintf('Check that this command is available on your system.\n');
                    fprintf('If it is not, then this mode is not available.\n');
                 case {'qsub','msub'}
-                   fprintf('PSOM is using the "%s" command in a system call to execute the script.\n',upper(opt.mode_pipeline_manager))
-                   fprintf('Check that this command is available on your system. If it is not, then this mode is simply not available.\n');       
-                   fprintf('If you want to use this execution mode, please contact your administration system.\n')            
-                   fprintf('The options passed to %s may also be inappropriate. The selected options were (OPT.QSUB_OPTIONS):\n%s\n',upper(opt.mode_pipeline_manager),opt.qsub_options)                   
+                   fprintf('PSOM is using the "%s" command in a system call to execute the script.\n',upper(mode))
+                   fprintf('Check that this command is available on your system. If it is not, then this mode is not available either.\n');       
+                   fprintf('If you want to use this execution mode, please contact your system administrator.\n')            
+                   fprintf('The options passed to %s may also be inappropriate. The selected options were (OPT.QSUB_OPTIONS):\n%s\n',upper(mode),opt.qsub_options)                   
             end
             fprintf('One of the possible causes of the problem may be the options used at the begining of the script. These options were (OPT.SHELL_OPTIONS):\n%s\n',opt.shell_options)
             
@@ -575,12 +617,12 @@ else
 
         case 'script_pipe_bis'
 
-            fprintf('The %s test failed at a point which was already (succesfully) tested by the "script_pipe" test.')
+            fprintf('The "matlab_pipe" test failed at a point which was already (succesfully) tested by the "script_pipe" test.')
             fprintf('This should not happen. Unfortunately, there is not a common fix to this problem.')
 
         case 'script_pipe_ter'
 
-            fprintf('The %s test failed at a point which was already (succesfully) tested by the "script_pipe" test.')
+            fprintf('The "psom_pipe" test failed at a point which was already (succesfully) tested by the "script_pipe" test.')
             fprintf('This should not happen. Unfortunately, there is not a common fix to this problem.')
 
         case 'matlab_pipe'
@@ -591,7 +633,7 @@ else
             fprintf('Some commands can be executed at the begining of the %s session and could cause (or fix) the problem.\n',upper(gb_psom_language))
             fprintf('These commands were (OPT.INIT_MATLAB): %s\n',opt.init_matlab);
             fprintf('Another possible issue is that the specified %s search path crashed %s\n',upper(gb_psom_language),upper(gb_psom_language));
-            fprintf('This will often happen if the version of %s invoked by PSOM is different of the one you are currently using.\n',upper(gb_psom_language));            
+            fprintf('This will often happen if the version (or installation location) of %s as invoked by PSOM is different of the one you are currently using.\n',upper(gb_psom_language));            
             fprintf('The search path used in this test (OPT.PATH_SEARCH) was:',opt.path_search);
             if isempty(opt.path_search)
                 fprintf(' Search path of the current session (OPT.PATH_SEARCH = '''')\n')
@@ -616,6 +658,11 @@ else
                 fprintf(' %s\n    (the output may have been truncated, see the output OPT.PATH_SEARCH)\n',opt.path_search)
             end
 
+        case 'script_job_pipeline'
+
+            fprintf('The "script_job" test failed at a point which was already (succesfully) tested by the "psom_pipe" test.\n')
+            fprintf('This should not happen. Unfortunately, there is not a common fix to this problem.\n')
+            
     end
     fprintf('Note that this text only contains general directions which usually help to solve your particular issue.\nThe detailed logs above may however point more specifically to the source of the problem.\n')
     fprintf('If you cannot find a solution, or if the directions provided by this test were not relevant to your problem,\nplease help improving PSOM by reporting this issue (along with a copy of the test) to www.nitrc.org/forum/forum.php?forum_id=1316\n')
