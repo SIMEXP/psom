@@ -199,6 +199,21 @@ else
     logs = psom_struct_defaults(logs,list_fields,list_defaults);
 end
 
+if ispc&&~isempty(logs)
+    if ~isempty(logs.txt)
+        logs.txt = ['"' logs.txt '"'];
+    end
+    if ~isempty(logs.eqsub)
+        logs.eqsub = ['"' logs.eqsub '"'];
+    end
+    if ~isempty(logs.oqsub)
+        logs.oqsub = ['"' logs.oqsub '"'];
+    end
+    if ~isempty(logs.exit)
+        logs.exit = ['"' logs.exit '"'];
+    end
+end 
+
 %% Check that the execution mode exists
 if ~ismember(opt.mode,{'session','background','batch','qsub','msub'})
     error('%s is an unknown mode of command execution. Sorry dude, I must quit ...',opt.mode);
@@ -321,7 +336,7 @@ switch opt.mode
     case 'background'
 
        if ispc
-            cmd_script = script; % /min instead of /b ?
+            cmd_script = ['"' script '"']; % /min instead of /b ?
        else
             cmd_script = ['. ' script ];
        end
@@ -349,7 +364,7 @@ switch opt.mode
     case 'batch'
 
         if ispc
-            instr_batch = sprintf('start /b %s',script); % /min instead of /b ?
+            instr_batch = sprintf('start /b "%s"',script); % /min instead of /b ?
         else
             instr_batch = ['at -f ' script ' now'];
         end
@@ -372,7 +387,11 @@ switch opt.mode
         else
             qsub_logs = [' -e ' logs.eqsub ' -o ' logs.oqsub];
         end
-        instr_qsub = [opt.mode qsub_logs ' -N ' opt.name_job ' ' opt.qsub_options ' ' script];            
+        if ispc
+            instr_qsub = [opt.mode qsub_logs ' -N ' opt.name_job ' ' opt.qsub_options ' "' script '"'];            
+        else
+            instr_qsub = [opt.mode qsub_logs ' -N ' opt.name_job ' ' opt.qsub_options ' ' script];            
+        end
         if opt.flag_debug
             if strcmp(gb_psom_language,'octave')
                 instr_qsub = [instr_qsub ' 2>&1']; % In octave, the error stream is lost. Redirect it to standard output
