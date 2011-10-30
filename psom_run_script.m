@@ -319,12 +319,16 @@ switch opt.mode
         end
 
     case 'background'
-       
+
+       if ispc
+            cmd_script = script; % /min instead of /b ?
+       else
+            cmd_script = ['. ' script ];
+       end
+
        if opt.flag_debug
            if strcmp(gb_psom_language,'octave')
-               cmd_script = ['. ' script ' 2>&1']; % In octave, the error stream is lost. Redirect it to standard output
-           else
-               cmd_script = ['. ' script ];
+               cmd_script = [cmd_script ' 2>&1']; % In octave, the error stream is lost. Redirect it to standard output
            end
            msg = sprintf('    The script is executed using the command :\n%s\n\n',cmd_script);
            fprintf('%s',msg);
@@ -334,10 +338,10 @@ switch opt.mode
            [flag_failed,msg] = system(cmd_script);
        else
            if strcmp(gb_psom_language,'octave')
-               system(['. ' script ],false,'async');
+               system(cmd_script,false,'async');
                flag_failed = 0;
            else 
-               flag_failed = system(['. ' script ' &']);
+               flag_failed = system([cmd_script ' &']);
            end
            msg = '';
        end
