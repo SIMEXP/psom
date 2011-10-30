@@ -88,15 +88,15 @@ function [flag_failed,msg] = psom_run_script(cmd,script,opt,logs)
 %
 %    EQSUB
 %        (string) where the error log file from QSUB will be generated.
-%        This is only used in 'qsub' and 'msub' modes.
+%        This is only required in 'qsub' and 'msub' modes.
 %
 %    OQSUB
 %        (string) where the output log file from QSUB will be generated.
-%        This is only used in 'qsub' and 'msub' modes.
+%        This is only required in 'qsub' and 'msub' modes.
 %
 %    EXIT
 %        (string) the name of an empty file that will be generated 
-%        when the script is finished. This is ignored in 'session' mode.
+%        when the script is finished. 
 % 
 %_________________________________________________________________________
 % OUTPUTS:
@@ -110,14 +110,15 @@ function [flag_failed,msg] = psom_run_script(cmd,script,opt,logs)
 % _________________________________________________________________________
 % COMMENTS:
 %
-% The function will automatically use Matlab (resp. Octave) to execute the 
-% commmand when invoked from Matlab (resp. Octave).  
+% The function will automatically use Matlab (Octave) to execute the 
+% commmand in the specified mode. In all modes but 'session', this involves
+% the generation of a script which runs a new Matlab (Octave) session.
 %
-% In every mode but 'session', the following files will be generated:
-%   * A script to run the command calling matlab
+% The following files are generated:
+%   * A script to run the command calling matlab (except in 'session' mode)
 %   * A .mat file with the search path (same as script, with an '_path.mat'
 %     extension. That's if OPT.PATH_SEARCH is not used to directly specify 
-%     a search path.
+%     a search path. (except in 'session' mode)
 %   * A text log file (if LOGS.TXT is used)
 %   * A text log file from qsub (if LOGS.OQSUB is used, in qsub/msub modes)
 %   * A text error file from qsub (if LOGS.EQSUB is used, in qsub/msub modes)
@@ -190,7 +191,12 @@ if nargin < 4
     logs = [];
 else
     list_fields   = { 'txt' , 'eqsub' , 'oqsub' , 'exit' };
-    list_defaults = { NaN   , NaN     , NaN     , ''     };
+    if ismember(opt.mode,{'qsub','msub'})
+        list_defaults = { NaN   , NaN     , NaN     , ''     };
+    else
+        list_defaults = { NaN   , ''      , ''      , ''     };
+    end
+    logs = psom_struct_defaults(logs,list_fields,list_defaults);
 end
 
 %% Check that the execution mode exists
@@ -308,11 +314,18 @@ switch opt.mode
                 end           
             end
         end
+        if ~isempty(logs.exit)
+            save(logs.exit,'flag_failed')
+        end
 
     case 'background'
        
        if opt.flag_debug
-           cmd_script = ['. ' script];
+           if strcmp(gb_psom_language,'octave')
+               cmd_script = ['. ' script ' 2>&1']; % In octave, the error stream is lost. Redirect it to standard output
+           else
+               cmd_script = ['. ' script ];
+           end
            msg = sprintf('    The script is executed using the command :\n%s\n\n',cmd_script);
            fprintf('%s',msg);
            if ~isempty(opt.file_handle)
@@ -336,6 +349,9 @@ switch opt.mode
         else
             instr_batch = ['at -f ' script ' now'];
         end
+        if strcmp(gb_psom_language,'octave')
+            instr_batch = [instr_batch ' 2>&1']; % In octave, the error stream is lost. Redirect it to standard output
+        end
         if opt.flag_debug 
             msg = sprintf('    The script is executed using the command :\n%s\n\n',instr_batch);
             fprintf('%s',msg);
@@ -354,6 +370,9 @@ switch opt.mode
         end
         instr_qsub = [opt.mode qsub_logs ' -N ' opt.name_job ' ' opt.qsub_options ' ' script];            
         if opt.flag_debug
+            if strcmp(gb_psom_language,'octave')
+                instr_qsub = [instr_qsub ' 2>&1']; % In octave, the error stream is lost. Redirect it to standard output
+            end
             msg = sprintf('    The script is executed using the command :\n%s\n\n',instr_qsub);
             fprintf('%s',msg);
             if ~isempty(opt.file_handle)
