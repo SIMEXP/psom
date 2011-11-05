@@ -221,7 +221,7 @@ switch gb_psom_language
 end
 
 %% Set-up the search path for the job
-if ~strcmp(opt.path_search,'gb_niak_omitted')&&~strcmp(opt.mode,'session')&&~isempty(cmd)
+if ~strcmp(opt.mode,'session')&&~isempty(cmd)
     if (length(opt.path_search)>4)&&(strcmp(opt.path_search(end-3:end),'.mat'))
         file_path = opt.path_search;
     else
@@ -230,7 +230,9 @@ if ~strcmp(opt.path_search,'gb_niak_omitted')&&~strcmp(opt.mode,'session')&&~ise
         path_work = opt.path_search;
         save(file_path,'path_work');
     end 
-    opt.init_matlab = [sprintf('load(''%s'',''path_work''), path(path_work),',file_path) opt.init_matlab];
+    opt.init_matlab = [sprintf('load(''%s'',''path_work''), if ~ismember(path_work,{''gb_niak_omitted'',''gb_psom_omitted''}), path(path_work), end,',file_path) opt.init_matlab];
+else
+    file_path = '';
 end
         
 %% Add an appropriate call to Matlab/Octave

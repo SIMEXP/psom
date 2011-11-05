@@ -169,7 +169,7 @@ end
 fprintf('Search path (OPT.PATH_SEARCH) ... ')
 if isempty(opt.path_search)
     fprintf(' Search path of the current session ('''')\n')
-elseif strcmp(opt.path_search,'gb_niak_omitted')
+elseif strcmp(opt.path_search,'gb_niak_omitted')||strcmp(opt.path_search,'gb_psom_omitted')
     fprintf(' Default search path at start-up (''gb_niak_omitted'')\n')
 else
     fprintf(' %s\n    (the output may have been truncated, see the output OPT.PATH_SEARCH)\n',opt.path_search(1:min(100,length(opt.path_search))))
@@ -854,8 +854,8 @@ else
             fprintf('The search path used in this test (OPT.PATH_SEARCH) was:');
             if isempty(opt.path_search)
                 fprintf(' Search path of the current session (OPT.PATH_SEARCH = '''')\n')
-            elseif strcmp(opt.path_search,'gb_niak_omitted')
-                fprintf(' The default search path at start-up\n    (OPT.PATH_SEARCH = ''gb_niak_omitted'')\n')
+            elseif strcmp(opt.path_search,'gb_niak_omitted')||strcmp(opt.path_search,'gb_psom_omitted')
+                fprintf(' The default search path at start-up\n    (OPT.PATH_SEARCH = ''gb_psom_omitted'')\n')
             else
                 fprintf(' %s\n    (the output may have been truncated, see the output OPT.PATH_SEARCH)\n',opt.path_search)
             end
@@ -876,8 +876,8 @@ else
             fprintf('The search path used in this test (OPT.PATH_SEARCH) was:');
             if isempty(opt.path_search)
                 fprintf(' Search path of the current session (OPT.PATH_SEARCH = '''')\n')
-            elseif strcmp(opt.path_search,'gb_niak_omitted')
-                fprintf(' The default search path at start-up\n    (OPT.PATH_SEARCH = ''gb_niak_omitted'')\n')
+            elseif strcmp(opt.path_search,'gb_niak_omitted')||strcmp(opt.path_search,'gb_psom_omitted')
+                fprintf(' The default search path at start-up\n    (OPT.PATH_SEARCH = ''gb_psom_omitted'')\n')
             else
                 fprintf(' %s\n    (the output may have been truncated, see the output OPT.PATH_SEARCH)\n',opt.path_search)
             end
