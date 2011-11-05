@@ -361,7 +361,7 @@ else
         hf = fopen(file_logs,'r');
         if hf~=-1
             str_logs = fread(hf,Inf,'uint8=>char')';
-            nb_chars = ftell(hf)
+            nb_chars = ftell(hf);
             fclose(hf);
         else
             nb_chars = 0;

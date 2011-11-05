@@ -199,21 +199,6 @@ else
     logs = psom_struct_defaults(logs,list_fields,list_defaults);
 end
 
-if ispc&&~isempty(logs)
-    if ~isempty(logs.txt)
-        logs.txt = ['"' logs.txt '"'];
-    end
-    if ~isempty(logs.eqsub)
-        logs.eqsub = ['"' logs.eqsub '"'];
-    end
-    if ~isempty(logs.oqsub)
-        logs.oqsub = ['"' logs.oqsub '"'];
-    end
-    if ~isempty(logs.exit)
-        logs.exit = ['"' logs.exit '"'];
-    end
-end 
-
 %% Check that the execution mode exists
 if ~ismember(opt.mode,{'session','background','batch','qsub','msub'})
     error('%s is an unknown mode of command execution. Sorry dude, I must quit ...',opt.mode);
@@ -240,7 +225,7 @@ if ~strcmp(opt.path_search,'gb_niak_omitted')&&~strcmp(opt.mode,'session')&&~ise
     if (length(opt.path_search)>4)&&(strcmp(opt.path_search(end-3:end),'.mat'))
         file_path = opt.path_search;
     else
-        [path_f,name_f,ext_f] = fileparts(script);
+        [path_f,name_f] = fileparts(script);
         file_path = fullfile(path_f,[name_f '_path.mat']);
         path_work = opt.path_search;
         save(file_path,'path_work');
@@ -250,9 +235,9 @@ end
         
 %% Add an appropriate call to Matlab/Octave
 if ~isempty(cmd)            
-    instr_job = sprintf('%s %s "%s %s,exit"',opt.command_matlab,opt_matlab,opt.init_matlab,cmd);
+    instr_job = sprintf('"%s" %s "%s %s,exit"',opt.command_matlab,opt_matlab,opt.init_matlab,cmd);
     if ~isempty(logs)
-        instr_job = sprintf('%s >%s 2>%s\n',instr_job,logs.txt,logs.txt);
+        instr_job = sprintf('%s >"%s" 2>&1\n',instr_job,logs.txt);
     else
         instr_job = sprintf('%s\n',instr_job);
     end
@@ -268,9 +253,13 @@ end
 %% Add a .exit tag file
 if ~isempty(logs)&&~isempty(logs.exit)
     if ispc % this is windows
-        instr_job = sprintf('%stype nul > %s\nexit\n',instr_job,logs.exit);
+        instr_job = sprintf('%stype nul > "%s"\nexit\n',instr_job,logs.exit);
     else
-        instr_job = sprintf('%stouch %s',instr_job,logs.exit);
+        instr_job = sprintf('%stouch "%s"',instr_job,logs.exit);
+    end
+else
+    if ispc
+        instr_job = sprintf('%sexit\n',instr_job);
     end
 end
 
@@ -338,7 +327,7 @@ switch opt.mode
        if ispc
             cmd_script = ['"' script '"']; % /min instead of /b ?
        else
-            cmd_script = ['. ' script ];
+            cmd_script = ['. "' script '"'];
        end
 
        if opt.flag_debug
@@ -364,9 +353,9 @@ switch opt.mode
     case 'batch'
 
         if ispc
-            instr_batch = sprintf('start /b "%s"',script); % /min instead of /b ?
+            instr_batch = sprintf('start /min "%s" "%s"',opt.name_job,script); 
         else
-            instr_batch = ['at -f ' script ' now'];
+            instr_batch = ['at -f "' script '" now'];
         end
         if strcmp(gb_psom_language,'octave')
             instr_batch = [instr_batch ' 2>&1']; % In octave, the error stream is lost. Redirect it to standard output
@@ -385,13 +374,9 @@ switch opt.mode
         if isempty(logs)
             qsub_logs = '';
         else
-            qsub_logs = [' -e ' logs.eqsub ' -o ' logs.oqsub];
+            qsub_logs = [' -e "' logs.eqsub '" -o "' logs.oqsub '"'];
         end
-        if ispc
-            instr_qsub = [opt.mode qsub_logs ' -N ' opt.name_job ' ' opt.qsub_options ' "' script '"'];            
-        else
-            instr_qsub = [opt.mode qsub_logs ' -N ' opt.name_job ' ' opt.qsub_options ' ' script];            
-        end
+        instr_qsub = [opt.mode qsub_logs ' -N ' opt.name_job ' ' opt.qsub_options ' "' script '"'];            
         if opt.flag_debug
             if strcmp(gb_psom_language,'octave')
                 instr_qsub = [instr_qsub ' 2>&1']; % In octave, the error stream is lost. Redirect it to standard output

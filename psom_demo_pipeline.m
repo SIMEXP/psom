@@ -32,6 +32,9 @@ function [pipeline,opt] = psom_demo_pipeline(path_demo,opt)
 %    TIME_BETWEEN_CHECKS
 %        default 0.5
 %
+%    FLAG_PAUSE
+%        default true
+%
 %    This default configuration was selected for fast execution of the
 %    demo. Note that these defaults cannot be changed through editing 
 %    PSOM_GB_VARS.
@@ -55,6 +58,8 @@ function [pipeline,opt] = psom_demo_pipeline(path_demo,opt)
 % You can run a specific block of code by selecting it and press F9, or by
 % putting the cursor anywhere in the block and press CTRL+ENTER.
 %
+% If FLAG_PAUSE is set to false, both the demo and the pipeline manager
+% will not require confirmations to proceed.
 % _________________________________________________________________________
 % COMMENTS:
 %
@@ -121,6 +126,10 @@ if ~isfield(opt,'time_between_checks')
     opt.time_between_checks = 0.5;
 end
 
+if ~isfield(opt,'flag_pause')
+    opt.flag_pause = true;
+end
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %% What is a pipeline ? %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%    
@@ -129,7 +138,9 @@ if ~flag_test
     msg2 = 'Press CTRL-C to stop here or any key to continue.';
     stars = repmat('*',[1 max(length(msg),length(msg2))]);
     fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-    pause
+    if opt.flag_pause
+        pause
+    end
 end
 
 % Job "sample" :    No input, generate a random vector a
@@ -161,7 +172,9 @@ if flag_test
     return
 end
 
-psom_visu_dependencies(pipeline);
+if opt.flag_pause
+    psom_visu_dependencies(pipeline);
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Prepare the demo folder %%
@@ -172,7 +185,9 @@ msg2 = local_path_demo;
 msg3 = 'Press CTRL-C to stop here or any key to continue.';
 stars = repmat('*',[1 max([length(msg),length(msg2),length(msg3)])]);
 fprintf('\n%s\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,msg3,stars);
-pause
+if opt.flag_pause
+    pause
+end
 
 if exist(local_path_demo,'dir')
     rmdir(local_path_demo,'s');
@@ -186,7 +201,9 @@ msg   = 'The demo is about to execute the toy pipeline.';
 msg2  = 'Press CTRL-C to stop here or any key to continue.';
 stars = repmat('*',[1 max(length(msg),length(msg2))]);
 fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-pause
+if opt.flag_pause
+    pause
+end
 
 % The following line is running the pipeline manager on the toy pipeline
 psom_run_pipeline(pipeline,opt);
@@ -200,7 +217,9 @@ msg = 'The demo is about to change an option of the job ''sum'' and restart the 
 msg2 = 'Press CTRL-C to stop here or any key to continue.';
 stars = repmat('*',[1 max(length(msg),length(msg2))]);
 fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-pause
+if opt.flag_pause
+    pause
+end
 
 pipeline.sum.opt = 'let''s change something...';
 psom_run_pipeline(pipeline,opt);
@@ -210,7 +229,9 @@ msg = 'The demo is about to change the job ''quadratic'' to create a bug, and th
 msg2 = 'Press CTRL-C to stop here or any key to continue.';
 stars = repmat('*',[1 max(length(msg),length(msg2))]);
 fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-pause
+if opt.flag_pause
+    pause
+end
 
 pipeline.quadratic.command = 'BUG!';
 psom_run_pipeline(pipeline,opt);
@@ -220,7 +241,9 @@ msg = 'The demo is about to display the log file of the failed job ''quadratic''
 msg2 = 'Press CTRL-C to stop here or any key to continue.';
 stars = repmat('*',[1 max(length(msg),length(msg2))]);
 fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-pause
+if opt.flag_pause
+    pause
+end
 psom_pipeline_visu(opt.path_logs,'log','quadratic');
 
 % fix the bug, restart the pipeline
@@ -228,7 +251,9 @@ msg = 'The demo is about to fix the bug in the job ''quadratic'' and restart the
 msg2 = 'Press CTRL-C to stop here or any key to continue.';
 stars = repmat('*',[1 max(length(msg),length(msg2))]);
 fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-pause
+if opt.flag_pause
+    pause
+end
 
 command = 'load(files_in); b = a.^2; save(files_out,''b'')';
 pipeline.quadratic.command   = command;
@@ -239,11 +264,15 @@ msg = 'The demo is about to add new job ''cleanup'', plot the updated dependency
 msg2 = 'Press CTRL-C to stop here or any key to continue.';
 stars = repmat('*',[1 max(length(msg),length(msg2))]);
 fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-pause
+if opt.flag_pause
+    pause
+end
 
 pipeline.cleanup.command     = 'delete(files_clean)';
 pipeline.cleanup.files_clean = pipeline.sample.files_out;
-psom_visu_dependencies(pipeline);
+if opt.flag_pause
+    psom_visu_dependencies(pipeline);
+end
 psom_run_pipeline(pipeline,opt);
 
 %% Test 4 : Restart jobs
@@ -251,7 +280,9 @@ msg = 'The demo is about to explicitely restart the ''quadratic'' job and then r
 msg2 = 'Press CTRL-C to stop here or any key to continue.';
 stars = repmat('*',[1 max(length(msg),length(msg2))]);
 fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-pause
+if opt.flag_pause
+    pause
+end
 
 opt.restart = {'quadratic'};
 psom_run_pipeline(pipeline,opt);
@@ -261,21 +292,26 @@ opt = rmfield(opt,'restart');
 %% Monitor a pipeline %%
 %%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Display flowchart
-msg = 'The demo is about to display the flowchart of the pipeline';
-msg2 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2))]);
-fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-pause
-
-psom_pipeline_visu(opt.path_logs,'flowchart')
+if opt.flag_pause
+    %% Display flowchart
+    msg = 'The demo is about to display the flowchart of the pipeline';
+    msg2 = 'Press CTRL-C to stop here or any key to continue.';
+    stars = repmat('*',[1 max(length(msg),length(msg2))]);
+    fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
+    if opt.flag_pause
+        pause
+    end
+    psom_pipeline_visu(opt.path_logs,'flowchart')
+end
 
 %% List the jobs
 msg = 'The demo is about to display a list of the finished jobs';
 msg2 = 'Press CTRL-C to stop here or any key to continue.';
 stars = repmat('*',[1 max(length(msg),length(msg2))]);
 fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-pause
+if opt.flag_pause
+    pause
+end
 
 psom_pipeline_visu(opt.path_logs,'finished')
 
@@ -284,7 +320,9 @@ msg = 'The demo is about to display the log of the ''sum'' job';
 msg2 = 'Press CTRL-C to stop here or any key to continue.';
 stars = repmat('*',[1 max(length(msg),length(msg2))]);
 fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-pause
+if opt.flag_pause
+    pause
+end
 
 psom_pipeline_visu(opt.path_logs,'log','sum')
 
@@ -293,7 +331,9 @@ msg = 'The demo is about to display the computation time for all jobs of the pip
 msg2 = 'Press CTRL-C to stop here or any key to continue.';
 stars = repmat('*',[1 max(length(msg),length(msg2))]);
 fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-pause
+if opt.flag_pause
+    pause
+end
 
 psom_pipeline_visu(opt.path_logs,'time','')
 
@@ -302,7 +342,9 @@ msg = 'The demo is about to monitor the history of the pipeline';
 msg2 = 'Press CTRL-C to stop here or any key to continue.';
 stars = repmat('*',[1 max(length(msg),length(msg2))]);
 fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-pause
+if opt.flag_pause
+    pause
+end
 
 psom_pipeline_visu(opt.path_logs,'monitor')
 

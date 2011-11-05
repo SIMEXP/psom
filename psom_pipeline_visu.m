@@ -317,16 +317,11 @@ function [] = sub_tail(file_read,file_running,nb_chars)
 
 % prints out the content of the text file FILE_READ with constant updates
 % as long as the file FILE_RUNNING exists. 
-
-if nargin < 3
-    time_pause = 0.5;
-end
-
 flag_running = true;
 while flag_running
     flag_running = psom_exist(file_running);
     hf = fopen(file_read,'r');
-    fseek(hf,nb_chars);
+    fseek(hf,nb_chars,'bof');
     str_read = fread(hf, Inf , 'uint8=>char')';
     nb_chars = ftell(hf);
     fclose(hf);    

@@ -33,7 +33,7 @@ gb_psom_shell_options = '';
 gb_psom_mode = 'background'; 
 
 % Options for the execution mode of the pipeline manager
-gb_psom_mode_pm = 'background'; 
+gb_psom_mode_pm = 'session'; 
 
 % Options for the maximal number of jobs
 gb_psom_max_queued = 2;

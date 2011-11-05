@@ -166,7 +166,7 @@ end
 if ~isempty(opt.qsub_options)&&(strcmp(opt.mode,'qsub')||strcmp(opt.mode_pipeline_manager,'qsub')||strcmp(opt.mode,'msub')||strcmp(opt.mode_pipeline_manager,'msub'))
     fprintf('How to start QSUB/MSUB (OPT.QSUB_OPTIONS) ...  %s\n',opt.qsub_options);
 end
-fprintf('Search path (OPT.PATH_SEARCH) ... ',gb_psom_language)
+fprintf('Search path (OPT.PATH_SEARCH) ... ')
 if isempty(opt.path_search)
     fprintf(' Search path of the current session ('''')\n')
 elseif strcmp(opt.path_search,'gb_niak_omitted')
@@ -228,10 +228,6 @@ for num_t = 1:length(tests)
             end
 
             % Test description
-            if strcmp(opt.mode_pipeline_manager,'session')
-                fprintf('The execution mode of the pipeline manager is ''session'' ... There is nothing to do !\n')
-                continue
-            end
             fprintf('Trying to execute a simple command ...\n');
 
             % Design and start the script
@@ -297,10 +293,6 @@ for num_t = 1:length(tests)
             end
 
             % Test description
-            if strcmp(opt.mode_pipeline_manager,'session')
-                fprintf('The execution mode of the pipeline manager is ''session'' ... There is nothing to do !\n')
-                continue
-            end
             fprintf('Trying to start matlab from the command line ...\n');
 
             % Design and start the script
@@ -359,10 +351,6 @@ for num_t = 1:length(tests)
             end
 
             % Test description
-            if strcmp(opt.mode_pipeline_manager,'session')
-                fprintf('The execution mode of the pipeline manager is ''session'' ... There is nothing to do !\n')
-                continue
-            end
             fprintf('Trying to start the pipeline manager ...\n');
 
             % Design and start the script
@@ -424,10 +412,6 @@ for num_t = 1:length(tests)
             end
 
             % Test description
-            if strcmp(opt.mode,'session')
-                fprintf('The execution mode of the job manager is ''session'' ... There is nothing to do !\n')
-                continue
-            end
             fprintf('Trying to execute a simple command through the pipeline manager...\n');
 
             % Design and start the script
@@ -536,10 +520,6 @@ for num_t = 1:length(tests)
             end
 
             % Test description
-            if strcmp(opt.mode,'session')
-                fprintf('The execution mode of the job manager is ''session'' ... There is nothing to do !\n')
-                continue
-            end
             fprintf('Trying to execute matlab through the pipeline manager...\n');
 
             % Design and start the script
@@ -560,6 +540,7 @@ for num_t = 1:length(tests)
             file_test = fullfile(path_xp,[label '_test.mat']); 
             opt_job = opt_script;
             opt_job.mode = opt.mode;
+            opt_job.flag_debug = true;
             logs_pm.txt   = fullfile(path_xp,[label '_pm.log']);
             logs_pm.eqsub = fullfile(path_xp,[label '_pm.eqsub']);
             logs_pm.oqsub = fullfile(path_xp,[label '_pm.oqsub']);
@@ -651,10 +632,6 @@ for num_t = 1:length(tests)
             end
 
             % Test description
-            if strcmp(opt.mode,'session')
-                fprintf('The execution mode of the job manager is ''session'' ... There is nothing to do !\n')
-                continue
-            end
             fprintf('Trying to execute a simple job through the pipeline manager...\n');
 
             % Design and start the script
@@ -874,7 +851,7 @@ else
             fprintf('These commands were (OPT.INIT_MATLAB): %s\n',opt.init_matlab);
             fprintf('Another possible issue is that the specified %s search path crashed %s\n',upper(gb_psom_language),upper(gb_psom_language));
             fprintf('This will often happen if the version (or installation location) of %s as invoked by PSOM is different of the one you are currently using.\n',upper(gb_psom_language));            
-            fprintf('The search path used in this test (OPT.PATH_SEARCH) was:',opt.path_search);
+            fprintf('The search path used in this test (OPT.PATH_SEARCH) was:');
             if isempty(opt.path_search)
                 fprintf(' Search path of the current session (OPT.PATH_SEARCH = '''')\n')
             elseif strcmp(opt.path_search,'gb_niak_omitted')
@@ -896,7 +873,7 @@ else
             fprintf('Some commands can be executed at the begining of the %s session and could cause (or fix) the problem.\n',upper(gb_psom_language))
             fprintf('These commands were (OPT.INIT_MATLAB): %s\n',opt.init_matlab);            
             fprintf('A likely cause of the problem is that the specified %s search path did not include the PSOM tools\n',upper(gb_psom_language));                        
-            fprintf('The search path used in this test (OPT.PATH_SEARCH) was:',opt.path_search);
+            fprintf('The search path used in this test (OPT.PATH_SEARCH) was:');
             if isempty(opt.path_search)
                 fprintf(' Search path of the current session (OPT.PATH_SEARCH = '''')\n')
             elseif strcmp(opt.path_search,'gb_niak_omitted')
