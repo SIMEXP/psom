@@ -1,4 +1,4 @@
-function versions = niak_version_svn()
+function [svn]= psom_version_svn(verbose)
 % Retrieve the svn version of all root library in the matlab PATH 
 %
 % SYNTAX :
@@ -6,7 +6,7 @@ function versions = niak_version_svn()
 %
 % _________________________________________________________________________
 % INPUTS :
-%
+%   VERBOSE (boolean) (default false)
 %   
 % _________________________________________________________________________
 % OUTPUTS:
@@ -44,34 +44,43 @@ function versions = niak_version_svn()
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
 
-
+if ~exist('verbose','var')
+    verbose = false;
+end
 %%%%%%%%%%%%%%%%%
 %%     SVN     %%
 %%%%%%%%%%%%%%%%%
     k=0;
-
-    svn_repositories = find_svn_rootdir();
+    svn=[];
+tic
+    svn_repositories = find_svn_rootdir()
 
     if ~isempty(svn_repositories)
 
         for svn_rep_idx = 1:size(svn_repositories,2)
             k=k+1;
-            [status,version]=system(cat(2,'svnversion ',svn_repositories{svn_rep_idx}));
-            [status,info]=system(cat(2,'svn info ',svn_repositories{svn_rep_idx}));
+            [status,version]=system(fullfile('svnversion ',svn_repositories{svn_rep_idx}));
+            [status,info]=system(fullfile('svn info ',svn_repositories{svn_rep_idx}));
             [pathstr,name,ext,versn] = fileparts(svn_repositories{svn_rep_idx});
 
-            versions.svn(k).name = name;
-            versions.svn(k).version = version;
-            versions.svn(k).path = svn_repositories{svn_rep_idx};
-            versions.svn(k).info = info;
+            svn(k).name = name;
+            svn(k).version = version;
+            svn(k).path = svn_repositories{svn_rep_idx};
+            svn(k).info = info;
+            
+            if verbose
+                disp(fullfile(svn(k).name,': ',svn(k).version(2:end)));
+            end
+            
         end
     end
+toc
 
 end
 
 
 %% sub function
-function svn_repositories=find_svn_rootdir()
+function [svn_repositories]=find_svn_rootdir()
  
  k=0;
  
@@ -82,47 +91,38 @@ function svn_repositories=find_svn_rootdir()
  
  for nb_line=1:size(idx_line,2)
     
-    str_path=[];
     if nb_line == 1 
         str_path = output(1:idx_line(nb_line)-1);
     else
         str_path = output(idx_line(nb_line-1)+1:idx_line(nb_line)-1);
     end
     
-    % Look if the folder contain a .svn folder
-    found_root_dir = dir(str_path);
-    for a=1:size(found_root_dir,1)
-        
-        % if a .svn is found
-        if isequal(found_root_dir(a).name,'.svn')
-            
-            % Look if is the root svn folder
+    % Check if it is not a hiden path
+    if isempty(strfind(str_path,'/.'))
+    
+    % Remove any filesep at the end of the path
+        if strcmp(str_path(end),filesep)
+            str_path = str_path(1:end-1);
+        end
+
+        % Look if the path contain a .svn folder
+        if (exist(cat(2,str_path,filesep,'.svn'),'dir') == 7)
+
+            % Look if it's the root svn folder
             [pathstr,name,ext,versn] = fileparts(str_path);
-            found_dir = dir(pathstr);
 
-            flag_not_rootdir = false;
-            for a=1:size(found_dir,1)
-
-                if isequal(found_dir(a).name,'.svn')
-                        flag_not_rootdir = true;
-                        break
-                end
-
-            end
-
-            if ~flag_not_rootdir 
+            if (exist(cat(2,pathstr,filesep,'.svn'),'dir') == 7)
+                % Do nothing!
+            else
                 k=k+1;
                 svn_repositories{k} = str_path;
             end
-            break
-            
+
         end
-    
     end
-    
-    
-    
  end
  
 end
- 
+
+
+    
