@@ -43,8 +43,8 @@ function []=psom_update_svn()
     vers = psom_version_svn();
 
     for k=1:size(vers,2)
-        disp(fullfile('Check for "',vers(k).name,'" updates ...'))
+        disp(cat(2,'Check for "',vers(k).name,'" updates ...'))
         [status, output]=system(fullfile('svn update ',vers(k).path,' 2>&1'));
-        disp(fullfile('"',vers(k).name,'" updated', output))
+        disp(cat(2,'"',vers(k).name,'" updated', output))
     end
 end

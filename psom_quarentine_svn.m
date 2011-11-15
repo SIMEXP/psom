@@ -1,5 +1,50 @@
 function []=psom_quarentine_svn(quarentine_path,svn_rev_libs)
+% Create a quarentine at the path specified of all the svn libraries, you
+% can also specify the version of each library that you whant in the
+% quarentine.
+%
+% SYNTAX :
+% PSOM_QUARENTINE_SVN(QUARENTINE_PATH,SVN_REV_LIBS)
+%
+% _________________________________________________________________________
+% INPUTS :
+%           QUARENTINE_PATH the path of the directory that you whant to
+%           create for the quarentine.
+%
+%           SVN_REV_LIBS (optional) the struct containing 'name' and 
+%           'version' of each lib that you whant to put in a quarentine 
+%           (custome quanrentine).   
+%   
+% _________________________________________________________________________
+% OUTPUTS:
+%
+%
+% _________________________________________________________________________
+% COMMENTS : 
+%
+%
+% Copyright (c) Christian L. Dansereau, Centre de recherche de l'Institut universitaire de gériatrie de Montréal, 2011.
+% Maintainer : pbellec@bic.mni.mcgill.ca
+% See licensing information in the code.
+% Keywords : svn,version,update
 
+% Permission is hereby granted, free of charge, to any person obtaining a copy
+% of this software and associated documentation files (the "Software"), to deal
+% in the Software without restriction, including without limitation the rights
+% to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+% copies of the Software, and to permit persons to whom the Software is
+% furnished to do so, subject to the following conditions:
+%
+% The above copyright notice and this permission notice shall be included in
+% all copies or substantial portions of the Software.
+%
+% THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+% IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+% FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+% AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+% LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+% OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+% THE SOFTWARE.
 
 
 if ~exist('quarentine_path','var')
