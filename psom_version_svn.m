@@ -2,11 +2,11 @@ function [svn]= psom_version_svn(verbose)
 % Retrieve the svn version of all root library in the matlab PATH 
 %
 % SYNTAX :
-% VERSIONS = PSOM_VERSION_SVN()
+% VERSIONS = PSOM_VERSION_SVN( VERBOSE )
 %
 % _________________________________________________________________________
 % INPUTS :
-%   VERBOSE (boolean) (default false)
+%   VERBOSE (boolean) (default false if output detected)
 %   
 % _________________________________________________________________________
 % OUTPUTS:
@@ -44,37 +44,42 @@ function [svn]= psom_version_svn(verbose)
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
 
-if ~exist('verbose','var')
+if (nargout == 0) & ~exist('verbose','var')
+    verbose = true;
+elseif ~exist('verbose','var')
     verbose = false;
 end
+
 %%%%%%%%%%%%%%%%%
 %%     SVN     %%
 %%%%%%%%%%%%%%%%%
     k=0;
     svn=[];
-tic
-    svn_repositories = find_svn_rootdir()
+if verbose, tic,end
+    svn_repositories = find_svn_rootdir();
 
     if ~isempty(svn_repositories)
 
         for svn_rep_idx = 1:size(svn_repositories,2)
             k=k+1;
-            [status,version]=system(fullfile('svnversion ',svn_repositories{svn_rep_idx}));
-            [status,info]=system(fullfile('svn info ',svn_repositories{svn_rep_idx}));
+            [status,version]=system(fullfile('svnversion ',svn_repositories{svn_rep_idx},' 2>&1'));
+            [status,info]=system(fullfile('svn info ',svn_repositories{svn_rep_idx},' 2>&1'));
             [pathstr,name,ext,versn] = fileparts(svn_repositories{svn_rep_idx});
 
             svn(k).name = name;
             svn(k).version = version;
             svn(k).path = svn_repositories{svn_rep_idx};
             svn(k).info = info;
-            
+           
             if verbose
-                disp(fullfile(svn(k).name,': ',svn(k).version(2:end)));
+                tmp_msg = cat(2,svn(k).name,': ',svn(k).version(2:end));
+                tmp_msg(regexp(tmp_msg,'\n')) = '';
+                fprintf('%s\n',tmp_msg);
             end
             
         end
     end
-toc
+if verbose, toc,end
 
 end
 
