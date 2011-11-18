@@ -2,7 +2,7 @@ function [pipeline,opt] = psom_demo_pipeline(path_demo,opt)
 % Short tutorial on the pipeline system for Octave and Matlab (PSOM).
 %
 % SYNTAX:
-% [PIPELINE,OPT_PIPE] = PSOM_DEMO_PIPELINE(PATH_DEMO,OPT)
+% [PIPELINE,OPT] = PSOM_DEMO_PIPELINE(PATH_DEMO,OPT)
 %
 % _________________________________________________________________________
 % INPUTS:
@@ -16,28 +16,11 @@ function [pipeline,opt] = psom_demo_pipeline(path_demo,opt)
 %
 % OPT
 %    (structure, optional) the option structure passed on to 
-%    PSOM_RUN_PIPELINE. If not specified, the default values will be
-%    used. Note that the default for the demo are different from
-%    NIAK_RUN_PIPELINE. Specifically :
+%    PSOM_RUN_PIPELINE with one additional field:
 %
-%    MODE
-%        default 'background'
-%
-%    MODE_PIPELINE_MANAGER
-%        default 'session'
-%
-%    MAX_QUEUED
-%        default 2
-%
-%    TIME_BETWEEN_CHECKS
-%        default 0.5
-%
-%    FLAG_PAUSE
-%        default true
-%
-%    This default configuration was selected for fast execution of the
-%    demo. Note that these defaults cannot be changed through editing 
-%    PSOM_GB_VARS.
+%    FLAG_TEST
+%        (boolean, default false) if FLAG_TEST is true, the demo only builds 
+%        PIPELINE and generates OPT_PIPE before exiting. 
 %
 % _________________________________________________________________________
 % OUTPUTS:
@@ -47,7 +30,7 @@ function [pipeline,opt] = psom_demo_pipeline(path_demo,opt)
 %
 % OPT_PIPE
 %    (structure) the options used to execute the pipeline using PSOM.
-%
+%    
 % _________________________________________________________________________
 % COMMENTS:
 %
@@ -58,15 +41,19 @@ function [pipeline,opt] = psom_demo_pipeline(path_demo,opt)
 % You can run a specific block of code by selecting it and press F9, or by
 % putting the cursor anywhere in the block and press CTRL+ENTER.
 %
-% If FLAG_PAUSE is set to false, both the demo and the pipeline manager
-% will not require confirmations to proceed.
+% If OPT.FLAG_PAUSE is set to false, both the demo and the pipeline manager
+% will not require confirmations to proceed, and the dependency graphs will
+% not be displayed.
 % _________________________________________________________________________
 % COMMENTS:
 %
 % This demo will create some files and one folder in PATH_DEMO
 %
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008-2010.
-% Maintainer : pbellec@bic.mni.mcgill.ca
+% Departement d'informatique et de recherche operationnelle
+% Centre de recherche de l'institut de Geriatrie de Montreal
+% Universite de Montreal, 2011
+% Maintainer : pierre.bellec@criugm.qc.ca
 % See licensing information in the code.
 % Keywords : pipeline, PSOM, demo
 
@@ -108,22 +95,6 @@ if ~isfield(opt,'flag_test')
 else
     flag_test = opt.flag_test;
     opt = rmfield(opt,'flag_test');
-end
-
-if ~isfield(opt,'mode')
-    opt.mode = 'background';
-end
-
-if ~isfield(opt,'mode_pipeline_manager')
-    opt.mode_pipeline_manager = 'session';
-end
-
-if ~isfield(opt,'max_queued')
-    opt.max_queued = 2;
-end
-
-if ~isfield(opt,'time_between_checks')
-    opt.time_between_checks = 0.5;
 end
 
 if ~isfield(opt,'flag_pause')
@@ -208,23 +179,11 @@ end
 % The following line is running the pipeline manager on the toy pipeline
 psom_run_pipeline(pipeline,opt);
 
-%%%%%%%%%%%%%%%%%%%%%%%%
-%% Restart a pipeline %%
-%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Updating the pipeline (with one bug %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Test 1 : change the options
-msg = 'The demo is about to change an option of the job ''sum'' and restart the pipeline.';
-msg2 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2))]);
-fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-if opt.flag_pause
-    pause
-end
-
-pipeline.sum.opt = 'let''s change something...';
-psom_run_pipeline(pipeline,opt);
-
-%% Test 2 : failed jobs
+%% Add a bug in 'quadratic'
 msg = 'The demo is about to change the job ''quadratic'' to create a bug, and then restart the pipeline.';
 msg2 = 'Press CTRL-C to stop here or any key to continue.';
 stars = repmat('*',[1 max(length(msg),length(msg2))]);
@@ -259,7 +218,10 @@ command = 'load(files_in); b = a.^2; save(files_out,''b'')';
 pipeline.quadratic.command   = command;
 psom_run_pipeline(pipeline,opt);
 
-%% Test 3 : Add a new job
+%%%%%%%%%%%%%%%%%%
+%% Adding a job %%
+%%%%%%%%%%%%%%%%%%
+
 msg = 'The demo is about to add new job ''cleanup'', plot the updated dependency graph and restart the pipeline.';
 msg2 = 'Press CTRL-C to stop here or any key to continue.';
 stars = repmat('*',[1 max(length(msg),length(msg2))]);
@@ -275,7 +237,9 @@ if opt.flag_pause
 end
 psom_run_pipeline(pipeline,opt);
 
-%% Test 4 : Restart jobs
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Restarting a job after clean-up %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 msg = 'The demo is about to explicitely restart the ''quadratic'' job and then restart the pipeline.';
 msg2 = 'Press CTRL-C to stop here or any key to continue.';
 stars = repmat('*',[1 max(length(msg),length(msg2))]);
@@ -347,4 +311,3 @@ if opt.flag_pause
 end
 
 psom_pipeline_visu(opt.path_logs,'monitor')
-
