@@ -53,40 +53,9 @@ end
 %%%%%%%%%%%%%%%%%
 %%     SVN     %%
 %%%%%%%%%%%%%%%%%
-    k=0;
-    svn=[];
+    
 if verbose, tic,end
-    svn_repositories = find_svn_rootdir();
-
-    if ~isempty(svn_repositories)
-
-        for svn_rep_idx = 1:size(svn_repositories,2)
-            k=k+1;
-            [status,version]=system(fullfile('svnversion ',svn_repositories{svn_rep_idx},' 2>&1'));
-            [status,info]=system(fullfile('svn info ',svn_repositories{svn_rep_idx},' 2>&1'));
-            [pathstr,name,ext,versn] = fileparts(svn_repositories{svn_rep_idx});
-
-            svn(k).name = name;
-            svn(k).version = version;
-            svn(k).path = svn_repositories{svn_rep_idx};
-            svn(k).info = info;
-           
-            if verbose
-                tmp_msg = cat(2,svn(k).name,': ',svn(k).version(2:end));
-                tmp_msg(regexp(tmp_msg,'\n')) = '';
-                fprintf('%s\n',tmp_msg);
-            end
-            
-        end
-    end
-if verbose, toc,end
-
-end
-
-
-%% sub function
-function [svn_repositories]=find_svn_rootdir()
- 
+   
  k=0;
  
  output=path;
@@ -94,7 +63,7 @@ function [svn_repositories]=find_svn_rootdir()
  
  idx_line = strfind(output,':');
  
- for nb_line=1:size(idx_line,2)
+  for nb_line=1:size(idx_line,2)
     
     if nb_line == 1 
         str_path = output(1:idx_line(nb_line)-1);
@@ -103,31 +72,84 @@ function [svn_repositories]=find_svn_rootdir()
     end
     
     % Check if it is not a hiden path
-    if isempty(strfind(str_path,'/.'))
+    if isempty(strfind(str_path,'/.svn'))
     
-    % Remove any filesep at the end of the path
+        % Remove any filesep at the end of the path
         if strcmp(str_path(end),filesep)
             str_path = str_path(1:end-1);
         end
+        
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%
+        % put all paths in cells %
+        %%%%%%%%%%%%%%%%%%%%%%%%%%
+        k=k+1;
+        path_list{k}=str_path;
+        
+    end
+  end
+  
+ n_root=0;
+ for nb_line=1:size(path_list,2)
+    
+     str_path = path_list{nb_line};
 
         % Look if the path contain a .svn folder
         if (exist(cat(2,str_path,filesep,'.svn'),'dir') == 7)
 
             % Look if it's the root svn folder
-            [pathstr,name,ext,versn] = fileparts(str_path);
+            [parent_pathstr,parent_name,ext,versn] = fileparts(str_path);
 
-            if (exist(cat(2,pathstr,filesep,'.svn'),'dir') == 7)
+            if (exist(cat(2,parent_pathstr,filesep,'.svn'),'dir') == 7)
                 % Do nothing!
+                for idx=1:size(path_list,2)
+                    detect_shortest_path(idx) = ~isempty(strmatch(path_list{idx},parent_pathstr));
+                end
+                if sum(detect_shortest_path) == 0
+                    
+                    % Find the real root dir
+                    ppath = parent_pathstr;
+                    flag_root = true;
+                    while flag_root
+                        % Look if it's the root svn folder
+                        [ppath,pname,ext,versn] = fileparts(ppath);
+                        parent_name = cat(2,pname,'-',parent_name);
+                        if (exist(cat(2,ppath,filesep,'.svn'),'dir') == 0)
+                            flag_root = false;
+                        end
+                    end
+                    
+                    n_root=n_root+1;
+                    svn(n_root) = get_info_svndir(str_path,parent_name,verbose);
+                end
             else
-                k=k+1;
-                svn_repositories{k} = str_path;
+                n_root=n_root+1;
+                svn(n_root) = get_info_svndir(str_path,parent_name,verbose);
             end
 
         end
-    end
+    
  end
  
+if verbose, toc,end
 end
 
+%% sub function
+function [svn]=get_info_svndir(rootpath,parent_name,verbose)
 
+    [status,version]=system(fullfile('svnversion ',rootpath,' 2>&1'));
+    [status,info]=system(fullfile('svn info ',rootpath,' 2>&1'));
+
+    svn.name = parent_name;
+    svn.version = version;
+    svn.path = rootpath;
+    svn.info = info;
+
+    if verbose
+        tmp_msg = cat(2,svn.name,': ',svn.version(2:end));
+        tmp_msg(regexp(tmp_msg,'\n')) = '';
+        fprintf('%s\n',tmp_msg);
+    end
+  
+end
     

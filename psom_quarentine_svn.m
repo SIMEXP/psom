@@ -26,7 +26,7 @@ function []=psom_quarentine_svn(quarentine_path,svn_rev_libs)
 % Copyright (c) Christian L. Dansereau, Centre de recherche de l'Institut universitaire de gériatrie de Montréal, 2011.
 % Maintainer : pbellec@bic.mni.mcgill.ca
 % See licensing information in the code.
-% Keywords : svn,version,update
+% Keywords : svn,version,export,quarentine
 
 % Permission is hereby granted, free of charge, to any person obtaining a copy
 % of this software and associated documentation files (the "Software"), to deal
