@@ -137,8 +137,8 @@ end
 %% sub function
 function [svn]=get_info_svndir(rootpath,parent_name,verbose)
 
-    [status,version]=system(fullfile('svnversion ',rootpath,' 2>&1'));
-    [status,info]=system(fullfile('svn info ',rootpath,' 2>&1'));
+    [status,version]=system(cat(2,'svnversion ',rootpath,' 2>&1'));
+    [status,info]=system(cat(2,'svn info ',rootpath,' 2>&1'));
 
     svn.name = parent_name;
     svn.version = version;
@@ -146,7 +146,7 @@ function [svn]=get_info_svndir(rootpath,parent_name,verbose)
     svn.info = info;
 
     if verbose
-        tmp_msg = cat(2,svn.name,': ',svn.version(2:end));
+        tmp_msg = cat(2,svn.name,': ',svn.version);
         tmp_msg(regexp(tmp_msg,'\n')) = '';
         fprintf('%s\n',tmp_msg);
     end
