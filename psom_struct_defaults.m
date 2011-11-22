@@ -1,23 +1,28 @@
-function opt_up = psom_struct_defaults(opt,list_fields,list_defaults)
+function opt_up = psom_struct_defaults(opt,list_fields,list_defaults,flag_warning)
 % Assign default values to the fields of a structure.
 %
 % SYNTAX:
-% OPT_UP = PSOM_STRUCT_DEFAULTS(OPT,LIST_FIELDS,LIST_DEFAULTS)
+% OPT_UP = PSOM_STRUCT_DEFAULTS(OPT,LIST_FIELDS,LIST_DEFAULTS,FLAG_WARNING)
 %
 % _________________________________________________________________________
 % INPUTS: 
 %
-%   OPT
-%       (structure)
+% OPT
+%    (structure) arbitrary structure
 %
-%   LIST_FIELDS      
-%       (cell of strings, size 1*N) names of fields.
+% LIST_FIELDS      
+%    (cell of strings, size 1*N) names of fields.
 %
-%   LIST_DEFAULTS    
-%       (cell, size 1*N) the default values for each listed field. A NaN 
-%       will produce an error message if the field is not found in OPT. 
-%       Fields present in OPT and absent from LIST_FIELDS will issue a 
-%       warning.
+% LIST_DEFAULTS    
+%    (cell, size 1*N) the default values for each listed field. A NaN 
+%    will produce an error message if the field is not found in OPT. 
+%    Fields present in OPT and absent from LIST_FIELDS will issue a 
+%    warning and be ignored (unless FLAG_WARNING below is true, in 
+%    which case a warning is not issued and the fields are retained).
+%
+% FLAG_WARNING
+%    (boolean, default true) if FLAG_WARNING is true, issue warnings for 
+%    unrecognized fields.
 %
 % _________________________________________________________________________
 % OUTPUTS :
@@ -65,6 +70,10 @@ if ~isstruct(opt)
     error('OPT should be a structure');
 end
 
+if nargin<4
+    flag_warning = true;
+end
+
 %% Build a default structure
 opt_up = cell2struct(list_defaults,list_fields,2);
 
@@ -91,9 +100,9 @@ for num_f = 1:nb_fields
 end
 
 %% Test if some field were not used, and eventually issue a warning.
-if length(fieldnames(opt_up))>length(list_fields)
+if flag_warning&&(length(fieldnames(opt_up))>length(list_fields))
     list_fields_up = fieldnames(opt_up);
-	mask = ~ismember(list_fields_up,list_fields);
+    mask = ~ismember(list_fields_up,list_fields);
     list_ind = find(mask);
     str_field = '';
     for num_i = 1:length(list_ind)
