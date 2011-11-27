@@ -1,32 +1,37 @@
-function []=psom_quarentine_svn(quarentine_path,svn_rev_libs)
-% Create a quarentine at the path specified of all the svn libraries, you
+function []=psom_quarantine_svn(quarantine_path,svn_rev_libs)
+% Create a quarantine at the path specified of all the svn libraries, you
 % can also specify the version of each library that you whant in the
-% quarentine.
+% quarantine.
 %
 % SYNTAX :
-% PSOM_QUARENTINE_SVN(QUARENTINE_PATH,SVN_REV_LIBS)
+% PSOM_QUARANTINE_SVN(QUARENTINE_PATH,SVN_REV_LIBS)
 %
 % _________________________________________________________________________
 % INPUTS :
-%           QUARENTINE_PATH the path of the directory that you whant to
-%           create for the quarentine.
 %
-%           SVN_REV_LIBS (optional) the struct containing 'name' and 
-%           'version' of each lib that you whant to put in a quarentine 
-%           (custome quanrentine).   
+% QUARANTINE_PATH 
+%    (string) the path of the quarantine.
+%
+% SVN_REV_LIBS 
+%    (structure, optional) a structure with two fields 'name' and 'version' 
+%    for each lib to add in the quarantine    
 %   
 % _________________________________________________________________________
 % OUTPUTS:
 %
-%
 % _________________________________________________________________________
 % COMMENTS : 
 %
+% This function uses PSOM_VERSION_SVN to find all the SVN libraries in the 
+% search path. The folder of the SVN library and its position in the SVN
+% project defines its name (ex the subfolder 'trunk' of the SVN library 
+% located in the folder 'my_library' is called 'my_library-trunk'
 %
-% Copyright (c) Christian L. Dansereau, Centre de recherche de l'Institut universitaire de gériatrie de Montréal, 2011.
-% Maintainer : pbellec@bic.mni.mcgill.ca
+% Copyright (c) Christian L. Dansereau, 
+% Centre de recherche de l'Institut universitaire de gériatrie de Montréal, 2011.
+% Maintainer : pierre.bellec@criugm.qc.ca
 % See licensing information in the code.
-% Keywords : svn,version,export,quarentine
+% Keywords : svn, version, export, quarantine
 
 % Permission is hereby granted, free of charge, to any person obtaining a copy
 % of this software and associated documentation files (the "Software"), to deal
@@ -47,19 +52,19 @@ function []=psom_quarentine_svn(quarentine_path,svn_rev_libs)
 % THE SOFTWARE.
 
 
-if ~exist('quarentine_path','var')
-    error(strcat('You need to specify the quarentine path!'))
+if ~exist('quarantine_path','var')
+    error(strcat('You need to specify the quarantine path!'))
     return;
 end
 
 % Remove any filesep at the end of the path
-if strcmp(quarentine_path(end),filesep)
-    quarentine_path = quarentine_path(1:end-1);
+if strcmp(quarantine_path(end),filesep)
+    quarantine_path = quarantine_path(1:end-1);
 end
 
 % Create destination path
-if ~exist(quarentine_path)
-    psom_mkdir(quarentine_path);
+if ~exist(quarantine_path)
+    psom_mkdir(quarantine_path);
 end
 
 % Get the SVN root repositories
@@ -67,7 +72,7 @@ vers = psom_version_svn();
 if exist('svn_rev_libs','var')
     
     if ~isstruct(svn_rev_libs)
-        error(strcat('The quarentine path must be a struct: .name and .version'))
+        error(strcat('The quarantine path must be a struct: .name and .version'))
         return;
     end
     
@@ -91,11 +96,11 @@ if exist('svn_rev_libs','var')
                 end
 
                 % Create destination folder
-                destination_folder = cat(2,filesep,svn_rev_libs(i).name,svn_rev_libs(i).version);
+                destination_folder = cat(2,filesep,svn_rev_libs(i).name,'-',svn_rev_libs(i).version);
 
                 % Execute the svn export command
-                fprintf('%s\n',cat(2,'Exporting the quarentine of "',svn_rev_libs(i).name,'" Version: ',svn_rev_libs(i).version,' ...'))
-                [status,output]=system(cat(2,'svn export -r ',svn_rev_libs(i).version,' ',vers(k).path,' ',quarentine_path,destination_folder,' 2>&1'));
+                fprintf('%s\n',cat(2,'Exporting the quarantine of "',svn_rev_libs(i).name,'" Version: ',svn_rev_libs(i).version,' ...'))
+                [status,output]=system(cat(2,'svn export -r ',svn_rev_libs(i).version,' ',vers(k).path,' ',quarantine_path,destination_folder,' 2>&1'));
                 fprintf('%s\n',cat(2,svn_rev_libs(i).name,': ',output))
             end
         end
@@ -109,11 +114,11 @@ else
         vers(k).version(regexp(vers(k).version,'\n')) = '';
 
         % Create destination folder
-        destination_folder = cat(2,filesep,vers(k).name,vers(k).version);
+        destination_folder = cat(2,filesep,vers(k).name,'-',vers(k).version);
 
         % Execute the svn export command
-        fprintf('%s\n',cat(2,'Exporting the quarentine of "',vers(k).name,'" ...'))
-        [status,output]=system(cat(2,'svn export ',vers(k).path,' ',quarentine_path,destination_folder,' 2>&1'));
+        fprintf('%s\n',cat(2,'Exporting the quarantine of "',vers(k).name,'" ...'))
+        [status,output]=system(cat(2,'svn export ',vers(k).path,' ',quarantine_path,destination_folder,' 2>&1'));
         fprintf('%s\n',cat(2,vers(k).name,': ',output))
 
     end
