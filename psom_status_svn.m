@@ -1,8 +1,8 @@
-function []=psom_update_svn()
-% Update all SVN libraries in the search path
+function []=psom_status_svn()
+% Get the status of all SVN libraries in the search path
 %
 % SYNTAX :
-% PSOM_UPDATE_SVN()
+% PSOM_STATUS_SVN()
 %
 % Copyright (c) Christian L. Dansereau, 
 % Centre de recherche de l'Institut universitaire de gériatrie de Montréal, 2011.
@@ -28,12 +28,11 @@ function []=psom_update_svn()
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
 
-
     vers = psom_version_svn();
 
     for k=1:size(vers,2)
-        disp(cat(2,'Check for "',vers(k).name,'" updates ...'))
-        [status, output]=system(fullfile('svn update ',vers(k).path,' 2>&1'));
+        disp(cat(2,'Status of the project "',vers(k).name,'" ...'))
+        [status, output]=system(fullfile('svn status ',vers(k).path,' 2>&1'));
         disp(output)
     end
 end
