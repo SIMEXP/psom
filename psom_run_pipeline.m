@@ -121,6 +121,13 @@ function [] = psom_run_pipeline(pipeline,opt)
 %        (cell of strings, default {}) any job whose name contains one
 %        of the strings in RESTART will be restarted
 %
+%    TYPE_RESTART
+%        (string, default 'substring') defines how OPT.RESTART is to be
+%        interpreted. Available options:
+%        'substring' : restart jobs whose name contains one of the 
+%            string in OPT.RESTART
+%        'exact' restart jobs whose name is listed in OPT.RESTART.
+%
 %    There are actually other minor options available, see
 %    PSOM_PIPELINE_INIT and PSOM_PIPELINE_PROCESS for details.
 %
@@ -239,8 +246,8 @@ end
 name_pipeline = 'PIPE';
 
 gb_name_structure = 'opt';
-gb_list_fields    = {'flag_clean' , 'flag_pause' , 'init_matlab'       , 'flag_update' , 'flag_debug' , 'path_search'       , 'restart' , 'shell_options'       , 'path_logs' , 'command_matlab' , 'flag_verbose' , 'mode'       , 'mode_pipeline_manager' , 'max_queued' , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
-gb_list_defaults  = {true         , true         , gb_psom_init_matlab , true          , false        , gb_psom_path_search , {}        , gb_psom_shell_options , NaN         , ''               , true           , gb_psom_mode , gb_psom_mode_pm         , 0            , gb_psom_qsub_options , []                    , []                    , []               };
+gb_list_fields    = {'type_restart' , 'flag_clean' , 'flag_pause' , 'init_matlab'       , 'flag_update' , 'flag_debug' , 'path_search'       , 'restart' , 'shell_options'       , 'path_logs' , 'command_matlab' , 'flag_verbose' , 'mode'       , 'mode_pipeline_manager' , 'max_queued' , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
+gb_list_defaults  = {'substring'    , true         , true         , gb_psom_init_matlab , true          , false        , gb_psom_path_search , {}        , gb_psom_shell_options , NaN         , ''               , true           , gb_psom_mode , gb_psom_mode_pm         , 0            , gb_psom_qsub_options , []                    , []                    , []               };
 psom_set_defaults
 
 if ~strcmp(opt.path_logs(end),filesep)
@@ -327,6 +334,7 @@ else
     opt_init.flag_update    = opt.flag_update;    
     opt_init.flag_pause     = opt.flag_pause;
     opt_init.flag_clean     = opt.flag_clean;
+    opt_init.type_restart   = opt.type_restart;
     
     if flag_debug
         opt_init

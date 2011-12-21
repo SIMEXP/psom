@@ -88,6 +88,13 @@ function [file_pipeline,flag_start] = psom_pipeline_init(pipeline,opt)
 %        its children, and some of his parents whenever needed. See the
 %        note 3 for more details.
 %
+%    TYPE_RESTART
+%        (string, default 'substring') defines how OPT.RESTART is to be
+%        interpreted. Available options:
+%        'substring' : restart jobs whose name contains one of the 
+%            string in OPT.RESTART
+%        'exact' restart jobs whose name is listed in OPT.RESTART.
+%
 %    FLAG_UPDATE
 %        (boolean, default true) If FLAG_UPDATE is true, a comparison
 %        between previous pipelines and the current pipeline will be
@@ -270,8 +277,8 @@ end
 
 %% Options
 gb_name_structure = 'opt';
-gb_list_fields    = { 'path_search'       , 'flag_clean' , 'flag_pause' , 'flag_update' , 'restart' , 'path_logs' , 'command_matlab' , 'flag_verbose' };
-gb_list_defaults  = { gb_psom_path_search , true         , true         , true          , {}        , NaN         , ''               , true           };
+gb_list_fields    = { 'path_search'       , 'flag_clean' , 'flag_pause' , 'flag_update' , 'restart' , 'path_logs' , 'command_matlab' , 'flag_verbose' , 'type_restart' };
+gb_list_defaults  = { gb_psom_path_search , true         , true         , true          , {}        , NaN         , ''               , true           , 'substring'    };
 psom_set_defaults
 name_pipeline = 'PIPE';
 
@@ -497,7 +504,14 @@ for num_j = 1:nb_jobs
         end
         
         %% Check if the user did not force a restart on that job
-        flag_force = psom_find_str_cell(name_job,opt.restart);
+        switch opt.type_restart
+            case 'substring'
+                flag_force = psom_find_str_cell(name_job,opt.restart);
+            case 'exact'
+                flag_force = ismember(name_job,opt.restart);
+            otherwise
+                error('%s is an unknow method to restart job (OPT.TYPE_RESTART)',opt.type_restart)
+        end
         if flag_force&&~flag_restart(num_j)
             if flag_verbose
                 fprintf('    User has manually forced to restart job %s.\n',name_job)
