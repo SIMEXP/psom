@@ -450,7 +450,7 @@ try
                     case 'failed' % the job has failed, too bad !
 
                         nb_failed = nb_failed + 1;   
-                        msg = sprintf('%s - The job %s%s has failed                     ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
+                        msg = sprintf('%s - %s%s failed   ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
                         if flag_verbose
                             fprintf('%s (%i running / %i failed / %i finished / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo);
                         end
@@ -463,7 +463,7 @@ try
                     case 'finished'
 
                         nb_finished = nb_finished + 1;                        
-                        msg = sprintf('%s - The job %s%s has been successfully completed',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
+                        msg = sprintf('%s - %s%s completed',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
                         if flag_verbose
                             fprintf('%s (%i running / %i failed / %i finished / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo);
                         end
@@ -519,7 +519,7 @@ try
             nb_queued = nb_queued + 1;
             nb_todo = nb_todo - 1;
             status.(name_job) = 'submitted';
-            msg = sprintf('%s - The job %s%s has been submitted to the queue',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));            
+            msg = sprintf('%s - %s%s submitted',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));            
             sub_add_line_log(hfpl,sprintf('%s (%i running / %i failed / %i finished / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
                         
             %% Execute the job in a "shelled" environment
