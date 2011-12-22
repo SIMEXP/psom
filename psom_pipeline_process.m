@@ -376,7 +376,7 @@ try
     %% The pipeline manager really starts here %%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    while ((max(mask_todo)>0) || (max(mask_running)>0)) && exist(file_pipe_running,'file')
+    while (any(mask_todo) || any(mask_running)) && psom_exist(file_pipe_running)
 
         %% Update logs & status
         save(file_logs           ,'-struct','logs');
@@ -452,9 +452,9 @@ try
                         nb_failed = nb_failed + 1;   
                         msg = sprintf('%s - %s%s failed   ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
                         if flag_verbose
-                            fprintf('%s (%i running / %i failed / %i finished / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo);
+                            fprintf('%s (%i run / %i fail / %i finish / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo);
                         end
-                        sub_add_line_log(hfpl,sprintf('%s (%i running / %i failed / %i finished / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo));
+                        sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i finish / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo));
                         mask_child = false([1 length(mask_todo)]);
                         mask_child(num_j) = true;
                         mask_child = sub_find_children(mask_child,graph_deps);
@@ -465,9 +465,9 @@ try
                         nb_finished = nb_finished + 1;                        
                         msg = sprintf('%s - %s%s completed',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
                         if flag_verbose
-                            fprintf('%s (%i running / %i failed / %i finished / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo);
+                            fprintf('%s (%i run / %i fail / %i finish / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo);
                         end
-                        sub_add_line_log(hfpl,sprintf('%s (%i running / %i failed / %i finished / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo));
+                        sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i finish / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo));
                         graph_deps(num_j,:) = 0; % update dependencies
 
                 end
@@ -520,7 +520,7 @@ try
             nb_todo = nb_todo - 1;
             status.(name_job) = 'submitted';
             msg = sprintf('%s - %s%s submitted',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));            
-            sub_add_line_log(hfpl,sprintf('%s (%i running / %i failed / %i finished / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
+            sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i finish / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
                         
             %% Execute the job in a "shelled" environment
             file_job       = [path_logs filesep name_job '.mat'];
@@ -560,8 +560,10 @@ try
             end            
         end % submit jobs
         
-        pause(time_between_checks); % To avoid wasting resources, wait a bit before re-trying to submit jobs
-        
+        if (any(mask_todo) || any(mask_running)) && psom_exist(file_pipe_running)
+            pause(time_between_checks); % To avoid wasting resources, wait a bit before re-trying to submit jobs
+        end
+
         if nb_checks >= nb_checks_per_point
             nb_checks = 0;
             if flag_verbose
