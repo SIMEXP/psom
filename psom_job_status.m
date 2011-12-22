@@ -115,7 +115,7 @@ for num_j = 1:nb_jobs
         
         switch mode_pipe
             case {'qsub','msub'}
-                if flag_oqsub&flag_exit
+                if flag_oqsub&&flag_exit
                     curr_status{num_j} = 'finished';
                 else
                     curr_status{num_j} = 'running';
@@ -134,7 +134,7 @@ for num_j = 1:nb_jobs
 
         switch mode_pipe
             case {'qsub','msub'}
-                if flag_oqsub&flag_exit
+                if flag_oqsub&&flag_exit
                     curr_status{num_j} = 'failed';
                 else
                     curr_status{num_j} = 'running';
