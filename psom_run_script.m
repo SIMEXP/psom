@@ -394,7 +394,7 @@ switch opt.mode
                 system(instr_qsub,false,'async');
                 flag_failed = 0;
             else
-                flag_failed = system([instr_qsub ' &']);
+                flag_failed = system([instr_qsub ' > /dev/null &']);
             end
             msg = '';
         end
