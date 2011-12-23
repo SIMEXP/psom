@@ -391,7 +391,7 @@ switch opt.mode
             [flag_failed,msg] = system(instr_qsub);
         else 
             if strcmp(gb_psom_language,'octave')
-                system(instr_qsub,false,'async');
+                system([instr_qsub ' > /dev/null'],false,'async');
                 flag_failed = 0;
             else
                 flag_failed = system([instr_qsub ' > /dev/null &']);
