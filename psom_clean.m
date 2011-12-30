@@ -7,11 +7,13 @@ function [status,msg] = psom_clean(files_clean,opt)
 % _________________________________________________________________________
 % INPUTS
 %
-% CLEAN  
+% FILES_CLEAN  
 %   (string, cell of string or structure) A list of files or folders that 
 %   need to be  cleaned up. The files/folders names can be organized as a 
 %   string, cell of strings or nested structures with string or cell of 
-%   strings as terminal nodes. 
+%   strings as terminal nodes. Strings can also be organized in an array
+%   with one file name per row (padded with blanks, as implemented by the 
+%   command CHAR).
 %
 % OPT
 %   (structure) with the following field :
@@ -64,29 +66,50 @@ if ~exist('files_clean','var')
     error('Please specify FILES_CLEAN')
 end
 
-files_clean = niak_files2cell(files_clean);
-
+if exist('OCTAVE_VERSION','builtin')
+    flag_rmdir = confirm_recursive_rmdir(false);
+end
+files_clean = psom_files2cell(files_clean);
+ 
 %% Options
-gb_name_structure = 'opt';
-gb_list_fields    = {'flag_verbose' };
-gb_list_defaults  = {true           };
-niak_set_defaults
+if nargin < 2
+    opt = struct();
+end
+opt = psom_struct_defaults(opt,{'flag_verbose'},{true});
 
 nb_files = length(files_clean);
 
 for num_f = 1:nb_files
     file_name = files_clean{num_f};
-    
-    if flag_verbose
-        fprintf('Deleting file ''%s'' \n',file_name);
-    end
-    if ~ exist (file_name,'file')
-        warning(['I could not find the file ' file_name]);
+    if size(file_name,1)==1
+        sub_clean_file(file_name,opt.flag_verbose)
     else
-        instr_delete = ['rm -rf ',file_name];
-        [err,msg] = system(instr_delete);
-        if err~=0
-            warning('There was a problem deleting file %s. Error message : %s',file_name,msg);
-        end
+        for num_f2 = 1:size(file_name,1)
+            sub_clean_file(deblank(file_name(num_f2,:)),opt.flag_verbose);
+        end    
+    end
+end
+status = 1;
+msg = '';
+
+if exist('OCTAVE_VERSION','builtin')
+    confirm_recursive_rmdir(flag_rmdir);
+end
+
+function [status,msg] = sub_clean_file(file_name,flag_verbose);
+
+if flag_verbose
+    fprintf('Deleting file ''%s'' \n',file_name);
+end
+flag_exist = psom_exist(file_name);
+if ~flag_exist
+    warning(['I could not find the file or folder ' file_name]);
+else
+    if flag_exist == 1
+        delete(file_name);
+    elseif flag_exist == 7
+        rmdir(file_name,'s');
+    else
+        warning(['I could not find the file or folder ' file_name]);
     end
 end

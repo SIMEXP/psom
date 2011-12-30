@@ -14,14 +14,14 @@ function flag_exist = psom_exist(file_name)
 % OUTPUTS:
 %
 % FLAG_EXIST
-%   (boolean) true if FILE_NAME exists, false otherwise.
+%   (integer) 1 if FILE_NAME is a file, 7 if it is a folder, 0 otherwise.
 %
 % _________________________________________________________________________
 % COMMENTS:
 % 
-% This is essentially the same as exist(FILE_NAME,'file') but it is much
-% faster when the search path is large. It will only work for file names
-% with full path though.
+% This is essentially the same as exist(FILE_NAME), restricted to files and 
+% directories, but it is much faster when the search path is large. It will 
+% only work for file names/folder names with full path though.
 %
 % _________________________________________________________________________
 % Copyright (c) Pierre Bellec, Centre de recherche de l'institut de
@@ -49,10 +49,21 @@ function flag_exist = psom_exist(file_name)
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
 
+if size(file_name,1)>1
+    flag_exist = true;
+    for num_f = 1:size(file_name,1)
+        flag_exist = flag_exist && psom_exist(deblank(file_name(num_f,:)));
+    end
+    return
+end
+
 hf = fopen(file_name,'r');
 if hf == -1
     flag_exist = false;
 else
     fclose(hf);
     flag_exist = true;
+end
+if ~flag_exist
+    flag_exist = exist(file_name,'dir');
 end

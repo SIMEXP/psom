@@ -144,7 +144,7 @@ try
     list_files = psom_files2cell(files_out);
 
     for num_f = 1:length(list_files)
-        if ~psom_exist(list_files{num_f})&&~exist(list_files{num_f},'dir')
+        if ~psom_exist(list_files{num_f})
             fprintf('The output file or directory %s has not been generated!\n',list_files{num_f});
             flag_failed = true;
         else
