@@ -145,10 +145,18 @@ try
 
     for num_f = 1:length(list_files)
         if ~psom_exist(list_files{num_f})
-            fprintf('The output file or directory %s has not been generated!\n',list_files{num_f});
+            if size(list_files{num_f},1)>1
+                fprintf('The output file or directory %s (...) has not been generated!\n',list_files{num_f}(1,:));
+            else
+                fprintf('The output file or directory %s has not been generated!\n',list_files{num_f});
+            end
             flag_failed = true;
         else
-            fprintf('The output file or directory %s was successfully generated!\n',list_files{num_f});
+            if size(list_files{num_f},1)>1
+                fprintf('The output file or directory %s (...) was successfully generated!\n',list_files{num_f}(1,:));
+            else
+                fprintf('The output file or directory %s was successfully generated!\n',list_files{num_f});
+            end
         end
     end                   
 

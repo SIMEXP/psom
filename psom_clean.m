@@ -85,7 +85,14 @@ for num_f = 1:nb_files
         sub_clean_file(file_name,opt.flag_verbose)
     else
         for num_f2 = 1:size(file_name,1)
-            sub_clean_file(deblank(file_name(num_f2,:)),opt.flag_verbose);
+            if num_f2 == 1
+                sub_clean_file(deblank(file_name(num_f2,:)),opt.flag_verbose);
+            else
+                sub_clean_file(deblank(file_name(num_f2,:)),false);
+            end
+            if (num_f2 == 2)&&opt.flag_verbose
+                fprintf('              (...)\n')
+            end
         end    
     end
 end
@@ -98,16 +105,19 @@ end
 
 function [status,msg] = sub_clean_file(file_name,flag_verbose);
 
-if flag_verbose
-    fprintf('Deleting file ''%s'' \n',file_name);
-end
 flag_exist = psom_exist(file_name);
 if ~flag_exist
     warning(['I could not find the file or folder ' file_name]);
 else
     if flag_exist == 1
+        if flag_verbose
+            fprintf('Deleting file ''%s'' \n',file_name);
+        end
         delete(file_name);
     elseif flag_exist == 7
+        if flag_verbose
+            fprintf('Deleting folder ''%s'' \n',file_name);
+        end
         rmdir(file_name,'s');
     else
         warning(['I could not find the file or folder ' file_name]);
