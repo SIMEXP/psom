@@ -44,7 +44,7 @@ function [svn]= psom_version_svn(verbose)
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
 
-if (nargout == 0) & ~exist('verbose','var')
+if (nargout == 0) && ~exist('verbose','var')
     verbose = true;
 elseif ~exist('verbose','var')
     verbose = false;
