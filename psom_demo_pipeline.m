@@ -87,6 +87,10 @@ else
     local_path_demo = path_demo;
 end
 
+if ~strcmp(local_path_demo(end),filesep)
+    local_path_demo = [local_path_demo filesep];
+end
+
 % Set up the options to run the pipeline
 opt.path_logs = [local_path_demo 'logs' filesep];  % where to store the log files
 

@@ -81,11 +81,10 @@ elseif ischar(files) % That's a string
     if (size(files,1)==1)&&~strcmp(files,'gb_niak_omitted')
         cell_files{num_cell} = regexprep(files,[filesep '+'],filesep);
     else
-        cell_files{num_cell} = cell([size(files,1) 1]);
         for num_f = 1:size(files,1)
-            cell_files{num_cell}{num_f} = regexprep(files(num_f,:),[filesep '+'],filesep);       
+            cell_files{num_cell} = regexprep(files(num_f,:),[filesep '+'],filesep);
+            num_cell = num_cell+1;
         end
-        cell_files{num_cell} = char(cell_files{num_cell});
     end
     
 else    
