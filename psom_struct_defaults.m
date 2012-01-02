@@ -89,7 +89,7 @@ for num_f = 1:length(list_fields)
     end
 end
 if ~isempty(str_field)
-    error(sprintf('A value must be specified for the following fields (%s)\n',str_field));
+    error(sprintf('A value must be specified for the following fields (%s)',str_field));
 end
 
 %% Set defaults
