@@ -108,6 +108,6 @@ if flag_warning&&(length(fieldnames(opt_up))>length(list_fields))
     for num_i = 1:length(list_ind)
         str_field = [str_field ' ' list_fields_up{list_ind(num_i)}];
     end
-    warning(sprintf('The following field(s) were ignored in the structure : %s\n',str_field));
+    warning('psom:defaults','The following field(s) were ignored in the structure : %s',str_field);
     opt_up = rmfield(opt_up,list_fields_up(mask));
 end
