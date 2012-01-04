@@ -378,7 +378,7 @@ else
 
     psom_pipeline_process(file_pipeline,opt_proc);
 
-    %% In batch and qsub modes, monitor the execution of the pipeline
+    %% If not in session mode, monitor the output of the pipeline
     if flag_verbose&&~strcmp(opt.mode_pipeline_manager,'session')
         psom_pipeline_visu(path_logs,'monitor',nb_chars);
     end

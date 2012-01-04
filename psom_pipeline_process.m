@@ -319,11 +319,8 @@ try
     msg_line3 = sprintf('user: %s, host: %s, system: %s',gb_psom_user,gb_psom_localhost,gb_psom_OS);
     size_msg = max([size(msg_line1,2),size(msg_line2,2),size(msg_line3,2)]);
     msg = sprintf('%s\n%s\n%s',msg_line1,msg_line2,msg_line3);
-    stars = repmat('*',[1 size_msg]);
-    if flag_verbose
-        fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
-    end
-    sub_add_line_log(hfpl,sprintf('\n%s\n%s\n%s\n',stars,msg,stars));
+    stars = repmat('*',[1 size_msg]);    
+    sub_add_line_log(hfpl,sprintf('\n%s\n%s\n%s\n',stars,msg,stars),flag_verbose);
     
     %% Load the pipeline
     load(file_pipeline,'list_jobs','graph_deps','files_in');                
@@ -408,10 +405,7 @@ try
                     flag_nothing_happened = false;
                     nb_checks = 0;
                     if nb_points>0
-                        if flag_verbose
-                            fprintf('\n');
-                        end
-                        sub_add_line_log(hfpl,sprintf('\n'));
+                        sub_add_line_log(hfpl,sprintf('\n'),flag_verbose);
                     end
                     nb_points = 0;
                 end
@@ -420,10 +414,7 @@ try
                 status.(name_job) = new_status_running_jobs{num_l};
                 
                 if strcmp(status.(name_job),'exit') % the script crashed ('exit' tag)
-                    if flag_verbose
-                        fprintf('%s - The script of job %s terminated without generating any tag, I guess we will count that one as failed.\n',datestr(clock),name_job);
-                    end
-                    sub_add_line_log(hfpl,sprintf('%s - The script of job %s terminated without generating any tag, I guess we will count that one as failed.\n',datestr(clock),name_job));;
+                    sub_add_line_log(hfpl,sprintf('%s - The script of job %s terminated without generating any tag, I guess we will count that one as failed.\n',datestr(clock),name_job),flag_verbose);;
                     status.(name_job) = 'failed';
                     nb_failed = nb_failed + 1;
                 end
@@ -451,10 +442,7 @@ try
 
                         nb_failed = nb_failed + 1;   
                         msg = sprintf('%s - %s%s failed   ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
-                        if flag_verbose
-                            fprintf('%s (%i run / %i fail / %i finish / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo);
-                        end
-                        sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i finish / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo));
+                        sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i finish / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
                         mask_child = false([1 length(mask_todo)]);
                         mask_child(num_j) = true;
                         mask_child = sub_find_children(mask_child,graph_deps);
@@ -464,10 +452,7 @@ try
 
                         nb_finished = nb_finished + 1;                        
                         msg = sprintf('%s - %s%s completed',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
-                        if flag_verbose
-                            fprintf('%s (%i run / %i fail / %i finish / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo);
-                        end
-                        sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i finish / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo));
+                        sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i finish / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
                         graph_deps(num_j,:) = 0; % update dependencies
 
                 end
@@ -500,11 +485,8 @@ try
                 %% Reset the 'dot counter'
                 flag_nothing_happened = false;
                 nb_checks = 0;
-                if nb_points>0
-                    if flag_verbose
-                        fprintf('\n');
-                    end
-                    sub_add_line_log(hfpl,sprintf('\n'));
+                if nb_points>0                    
+                    sub_add_line_log(hfpl,sprintf('\n'),flag_verbose);
                 end
                 nb_points = 0;
             end
@@ -569,7 +551,7 @@ try
             if flag_verbose
                 fprintf('.');
             end
-            sub_add_line_log(hfpl,sprintf('.'));
+            sub_add_line_log(hfpl,sprintf('.'),flag_verbose);
             nb_points = nb_points+1;
         else
             nb_checks = nb_checks+1;
@@ -580,13 +562,10 @@ try
 catch
     
     errmsg = lasterror;        
-    fprintf('\n\n******************\nSomething went bad ... the pipeline has FAILED !\nThe last error message occured was :\n%s\n',errmsg.message);
-    
-    sub_add_line_log(hfpl,sprintf('\n\n******************\nSomething went bad ... the pipeline has FAILED !\nThe last error message occured was :\n%s\n',errmsg.message));
+    sub_add_line_log(hfpl,sprintf('\n\n******************\nSomething went bad ... the pipeline has FAILED !\nThe last error message occured was :\n%s\n',errmsg.message),flag_verbose);
     if isfield(errmsg,'stack')
         for num_e = 1:length(errmsg.stack)
-            fprintf('File %s at line %i\n',errmsg.stack(num_e).file,errmsg.stack(num_e).line);
-            sub_add_line_log(hfpl,sprintf('File %s at line %i\n',errmsg.stack(num_e).file,errmsg.stack(num_e).line));
+            sub_add_line_log(hfpl,sprintf('File %s at line %i\n',errmsg.stack(num_e).file,errmsg.stack(num_e).line),flag_verbose);
         end
     end
     if exist('file_pipe_running','var')
@@ -617,16 +596,12 @@ msg_line3 = sprintf('%s',datestr(now));
 size_msg = max([size(msg_line1,2),size(msg_line2,2)]);
 msg = sprintf('%s\n%s\n%s',msg_line1,msg_line2,msg_line3);
 stars = repmat('*',[1 size_msg]);
-if flag_verbose
-    fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
-end
-sub_add_line_log(hfpl,sprintf('\n%s\n%s\n%s\n',stars,msg,stars));
+sub_add_line_log(hfpl,sprintf('\n%s\n%s\n%s\n',stars,msg,stars),flag_verbose);
 
 %% Report if the lock file was manually removed
 if exist('file_pipe_running','var')
-    if ~exist(file_pipe_running,'file')
-        fprintf('The pipeline manager was interrupted because the .lock file was manually deleted.\n');
-        sub_add_line_log(hfpl,sprintf('The pipeline manager was interrupted because the .lock file was manually deleted.\n'));
+    if ~exist(file_pipe_running,'file')        
+        sub_add_line_log(hfpl,sprintf('The pipeline manager was interrupted because the .lock file was manually deleted.\n'),flag_verbose);
     end    
 end
 
@@ -647,74 +622,43 @@ flag_any_fail = ~isempty(list_num_failed);
 
 if flag_any_fail
     if length(list_num_failed) == 1
-        if flag_verbose
-            fprintf('The execution of the following job has failed :\n\n    ');
-        end
-        sub_add_line_log(hfpl,sprintf('The execution of the following job has failed :\n\n    '));
+        sub_add_line_log(hfpl,sprintf('The execution of the following job has failed :\n\n    '),flag_verbose);
     else
-        if flag_verbose
-            fprintf('The execution of the following jobs have failed :\n\n    ');
-        end
-        sub_add_line_log(hfpl,sprintf('The execution of the following jobs have failed :\n\n    '));
+        sub_add_line_log(hfpl,sprintf('The execution of the following jobs have failed :\n\n    '),flag_verbose);
     end
     for num_j = list_num_failed
-        name_job = list_jobs{num_j};
-        if flag_verbose
-            fprintf('%s ; ',name_job);
-        end
-        sub_add_line_log(hfpl,sprintf('%s ; ',name_job));
-    end
-    fprintf('\n\n');
-    sub_add_line_log(hfpl,sprintf('\n\n'));
-    if flag_verbose
-        fprintf('More infos can be found in the individual log files. Use the following command to display these logs :\n\n    psom_pipeline_visu(''%s'',''log'',JOB_NAME)\n\n',path_logs);
-    end
-    sub_add_line_log(hfpl,sprintf('More infos can be found in the individual log files. Use the following command to display these logs :\n\n    psom_pipeline_visu(''%s'',''log'',JOB_NAME)\n\n',path_logs));
+        name_job = list_jobs{num_j};        
+        sub_add_line_log(hfpl,sprintf('%s ; ',name_job),flag_verbose);
+    end    
+    sub_add_line_log(hfpl,sprintf('\n\n'),flag_verbose);
+    sub_add_line_log(hfpl,sprintf('More infos can be found in the individual log files. Use the following command to display these logs :\n\n    psom_pipeline_visu(''%s'',''log'',JOB_NAME)\n\n',path_logs),flag_verbose);
 end
 
 %% Print a list of jobs that could not be processed
 if ~isempty(list_num_none)
     if length(list_num_none) == 1
-        if flag_verbose
-            fprintf('The following job has not been processed due to a dependence on a failed job or the interruption of the pipeline manager :\n\n    ');
-        end
-        sub_add_line_log(hfpl,sprintf('The following job has not been processed due to a dependence on a failed job or the interruption of the pipeline manager :\n\n    '));
+        sub_add_line_log(hfpl,sprintf('The following job has not been processed due to a dependence on a failed job or the interruption of the pipeline manager :\n\n    '),flag_verbose);
     else
-        if flag_verbose
-            fprintf('The following jobs have not been processed due to a dependence on a failed job or the interruption of the pipeline manager :\n\n    ');
-        end
-        sub_add_line_log(hfpl,sprintf('The following jobs have not been processed due to a dependence on a failed job or the interruption of the pipeline manager :\n\n    '));
+        sub_add_line_log(hfpl,sprintf('The following jobs have not been processed due to a dependence on a failed job or the interruption of the pipeline manager :\n\n    '),flag_verbose);
     end
     for num_j = list_num_none
         name_job = list_jobs{num_j};
-        if flag_verbose
-            fprintf('%s ; ',name_job);
-        end
         sub_add_line_log(hfpl,sprintf('%s ; ',name_job));
-    end
-    if flag_verbose
-        fprintf('\n\n');
-    end
+    end    
     sub_add_line_log(hfpl,sprintf('\n\n'));
 end
 
 %% Give a final one-line summary of the processing
-if flag_any_fail
-    if flag_verbose
-        fprintf('All jobs have been processed, but some jobs have failed.\nYou may want to restart the pipeline latter if you managed to fix the problems.\n');
-    end
-    sub_add_line_log(hfpl,sprintf('All jobs have been processed, but some jobs have failed.\nYou may want to restart the pipeline latter if you managed to fix the problems.\n'));
+if flag_any_fail    
+    sub_add_line_log(hfpl,sprintf('All jobs have been processed, but some jobs have failed.\nYou may want to restart the pipeline latter if you managed to fix the problems.\n'),flag_verbose);
 else
     if isempty(list_num_none)
-        if flag_verbose
-            fprintf('All jobs have been successfully completed.\n');
-        end
-        sub_add_line_log(hfpl,sprintf('All jobs have been successfully completed.\n'));
+        sub_add_line_log(hfpl,sprintf('All jobs have been successfully completed.\n'),flag_verbose);
     end
 end
 
-if ismember(opt.mode_pipeline_manager,{'qsub','batch'})&& strcmp(gb_psom_language,'octave')   
-    sub_add_line_log(hfpl,sprintf('Press CTRL-C to go back to Octave.\n'));
+if ~strcmp(opt.mode_pipeline_manager,'session')&& strcmp(gb_psom_language,'octave')   
+    sub_add_line_log(hfpl,sprintf('Press CTRL-C to go back to Octave.\n'),flag_verbose);
 end
 
 %% Close the log file
@@ -783,9 +727,7 @@ for num_f = 1:length(files)
 end
 
 function [] = sub_add_line_log(file_write,str_write,flag_verbose);
-if nargin<3
-    flag_verbose = false;
-end
+
 if flag_verbose
     fprintf('%s',str_write)
 end
