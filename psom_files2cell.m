@@ -78,12 +78,16 @@ elseif iscellstr(files) %% That's a cell
     
 elseif ischar(files) % That's a string
 
-    if (size(files,1)==1)&&~strcmp(files,'gb_niak_omitted')
-        cell_files{num_cell} = regexprep(files,[filesep '+'],filesep);
-    else
+    if (size(files,1)==1)
+        if ~strcmp(files,'gb_niak_omitted')
+            cell_files{num_cell} = regexprep(files,[filesep '+'],filesep);
+        end
+    else        
         for num_f = 1:size(files,1)
-            cell_files{num_cell} = regexprep(files(num_f,:),[filesep '+'],filesep);
-            num_cell = num_cell+1;
+            if ~strcmp(files(num_f,:),'gb_niak_omitted')
+                cell_files{num_cell} = regexprep(files(num_f,:),[filesep '+'],filesep);
+                num_cell = num_cell+1;
+            end
         end
     end
     
