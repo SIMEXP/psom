@@ -643,9 +643,9 @@ if ~isempty(list_num_none)
     end
     for num_j = list_num_none
         name_job = list_jobs{num_j};
-        sub_add_line_log(hfpl,sprintf('%s ; ',name_job));
+        sub_add_line_log(hfpl,sprintf('%s ; ',name_job),flag_verbose);
     end    
-    sub_add_line_log(hfpl,sprintf('\n\n'));
+    sub_add_line_log(hfpl,sprintf('\n\n'),flag_verbose);
 end
 
 %% Give a final one-line summary of the processing
