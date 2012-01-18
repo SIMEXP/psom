@@ -98,7 +98,7 @@ if verbose, tic,end
         if (exist(cat(2,str_path,filesep,'.svn'),'dir') == 7)
 
             % Look if it's the root svn folder
-            [parent_pathstr,parent_name,ext,versn] = fileparts(str_path);
+            [parent_pathstr,parent_name,ext] = fileparts(str_path);
 
             if (exist(cat(2,parent_pathstr,filesep,'.svn'),'dir') == 7)
                 % Do nothing!
@@ -112,7 +112,7 @@ if verbose, tic,end
                     flag_root = true;
                     while flag_root
                         % Look if it's the root svn folder
-                        [ppath,pname,ext,versn] = fileparts(ppath);
+                        [ppath,pname,ext] = fileparts(ppath);
                         parent_name = cat(2,pname,'-',parent_name);
                         if (exist(cat(2,ppath,filesep,'.svn'),'dir') == 0)
                             flag_root = false;
