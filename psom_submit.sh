@@ -4,13 +4,13 @@
 #    psom_submit - submit a job and reports failure with tag files
 #
 # SYNOPSIS
-#    psom_submit [COMMAND] [FILE_FAILED] [FILE_EXIT] [FILE_EQSUB]
+#    psom_submit [COMMAND] [FILE_FAILED] [FILE_EXIT] [FILE_OQSUB]
 #
 # DESCRIPTION
 #    This is a simple script to submit jobs (or execute any command, really) 
 #    and generate two empty files (as well as a warning) if the submission fails.
 #    CMD is the command to execute
-#    FILE_FAILED, FILE_EXIT and FLAG_EQSUB are the name of the tag files generated
+#    FILE_FAILED, FILE_EXIT and FLAG_OQSUB are the name of the tag files generated
 #    In case of failure
 #
 # COPYRIGHT
