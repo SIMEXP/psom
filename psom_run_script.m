@@ -378,16 +378,14 @@ switch opt.mode
         [flag_failed,msg] = system(instr_batch);    
         
     case {'qsub','msub'}
-        
-        if isempty(logs)
-            qsub_logs = '';
-        else
-            qsub_logs = [' -e "' logs.eqsub '" -o "' logs.oqsub '"'];
-        end
-        instr_qsub = sprintf('test ( %s%s -N %s %s "%s" ) || ( touch %s ; touch %s )',opt.mode,qsub_logs,opt.name_job,opt.qsub_options,script,logs.failed,logs.exit);            
+        script_submit = [gb_psom_path_psom 'psom_submit.sh'];
+        qsub_logs = [' -e \"' logs.eqsub '\" -o \"' logs.oqsub '\"'];
+        instr_qsub = sprintf('%s%s -N %s %s \"%s\" )',opt.mode,qsub_logs,opt.name_job,opt.qsub_options,script);            
         if opt.flag_debug
             if strcmp(gb_psom_language,'octave')
-                instr_qsub = [instr_qsub ' 2>&1']; % In octave, the error stream is lost. Redirect it to standard output
+                instr_qsub = [script_submit ' ' instr_qsub ' ' logs.failed ' ' logs.exit '2>&1']; % In octave, the error stream is lost. Redirect it to standard output
+            else
+                instr_qsub = [script_submit ' ' instr_qsub ' ' logs.failed ' ' logs.exit ]; % In octave, the error stream is lost. Redirect it to standard output
             end
             msg = sprintf('    The script is executed using the command :\n%s\n\n',instr_qsub);
             fprintf('%s',msg);
