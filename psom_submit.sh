@@ -39,7 +39,8 @@
 # THE SOFTWARE.
 
 $1
-if [ $? -ne 0]; then
+if [ $? -ne 0 ]
+then
     echo The submission of the job through $1 failed
     touch $2
     touch $3
