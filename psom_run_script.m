@@ -94,6 +94,11 @@ function [flag_failed,msg] = psom_run_script(cmd,script,opt,logs)
 %        (string) where the output log file from QSUB will be generated.
 %        This is only required in 'qsub' and 'msub' modes.
 %
+%    FAILED
+%        (string) the name of a tag file to indicate that the job has
+%        failed in case the submission was not successful.
+%        This is only required in 'qsub' and 'msub' modes.
+%
 %    EXIT
 %        (string) the name of an empty file that will be generated 
 %        when the script is finished. 
@@ -122,12 +127,13 @@ function [flag_failed,msg] = psom_run_script(cmd,script,opt,logs)
 %   * A text log file (if LOGS.TXT is used)
 %   * A text log file from qsub (if LOGS.OQSUB is used, in qsub/msub modes)
 %   * A text error file from qsub (if LOGS.EQSUB is used, in qsub/msub modes)
+%   * A "failed" tag file (if LOGS.FAILED is used, in qsub/msub modes)
 %   * A tag file (upon completion of the script, if LOGS.EXIT is used)
 %
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008-2010.
 % Departement d'informatique et de recherche operationnelle
 % Centre de recherche de l'institut de Geriatrie de Montreal
-% Universite de Montreal, 2010-2011.
+% Universite de Montreal, 2010-2012.
 % Maintainer : pierre.bellec@criugm.qc.ca
 % See licensing information in the code.
 % Keywords : pipeline
@@ -190,11 +196,11 @@ end
 if nargin < 4
     logs = [];
 else
-    list_fields   = { 'txt' , 'eqsub' , 'oqsub' , 'exit' };
+    list_fields   = { 'txt' , 'eqsub' , 'oqsub' , 'failed' , 'exit' };
     if ismember(opt.mode,{'qsub','msub'})
-        list_defaults = { NaN   , NaN     , NaN     , ''     };
+        list_defaults = { NaN   , NaN     , NaN     , NaN    , ''     };
     else
-        list_defaults = { NaN   , ''      , ''      , ''     };
+        list_defaults = { NaN   , ''      , ''      , ''     , ''     };
     end
     logs = psom_struct_defaults(logs,list_fields,list_defaults);
 end
@@ -378,7 +384,7 @@ switch opt.mode
         else
             qsub_logs = [' -e "' logs.eqsub '" -o "' logs.oqsub '"'];
         end
-        instr_qsub = [opt.mode qsub_logs ' -N ' opt.name_job ' ' opt.qsub_options ' "' script '"'];            
+        instr_qsub = sprintf('test ( %s%s -N %s %s "%s" ) || ( touch %s ; touch %s )',opt.mode,qsub_logs,opt.name_job,opt.qsub_options,script,logs.failed,logs.exit);            
         if opt.flag_debug
             if strcmp(gb_psom_language,'octave')
                 instr_qsub = [instr_qsub ' 2>&1']; % In octave, the error stream is lost. Redirect it to standard output

@@ -441,8 +441,8 @@ try
                     case 'failed' % the job has failed, too bad !
 
                         nb_failed = nb_failed + 1;   
-                        msg = sprintf('%s - %s%s failed   ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
-                        sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i finish / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
+                        msg = sprintf('%s %s%s failed   ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
+                        sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
                         mask_child = false([1 length(mask_todo)]);
                         mask_child(num_j) = true;
                         mask_child = sub_find_children(mask_child,graph_deps);
@@ -451,8 +451,8 @@ try
                     case 'finished'
 
                         nb_finished = nb_finished + 1;                        
-                        msg = sprintf('%s - %s%s completed',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
-                        sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i finish / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
+                        msg = sprintf('%s %s%s completed',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
+                        sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
                         graph_deps(num_j,:) = 0; % update dependencies
 
                 end
@@ -501,19 +501,16 @@ try
             nb_queued = nb_queued + 1;
             nb_todo = nb_todo - 1;
             status.(name_job) = 'submitted';
-            msg = sprintf('%s - %s%s submitted',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));            
-            sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i finish / %i left).\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
+            msg = sprintf('%s %s%s submitted',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));            
+            sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
                         
             %% Execute the job in a "shelled" environment
-            file_job       = [path_logs filesep name_job '.mat'];
-            file_log       = [path_logs filesep name_job '.log'];
-            file_exit      = [path_logs filesep name_job '.exit'];
-            file_qsub_o    = [path_logs filesep name_job '.oqsub'];
-            file_qsub_e    = [path_logs filesep name_job '.eqsub'];
-            opt_logs.txt   = file_log;
-            opt_logs.eqsub = file_qsub_e;
-            opt_logs.oqsub = file_qsub_o;
-            opt_logs.exit  = file_exit;
+            file_job        = [path_logs filesep name_job '.mat'];
+            opt_logs.txt    = [path_logs filesep name_job '.log'];
+            opt_logs.eqsub  = [path_logs filesep name_job '.eqsub'];
+            opt_logs.oqsub  = [path_logs filesep name_job '.oqsub'];
+            opt_logs.failed = [path_logs filesep name_job '.failed'];
+            opt_logs.exit   = [path_logs filesep name_job '.exit'];
             opt_script.path_search    = file_pipeline;
             opt_script.name_job       = name_job;
             opt_script.mode           = opt.mode;
