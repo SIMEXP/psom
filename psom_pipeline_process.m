@@ -35,6 +35,11 @@ function [] = psom_pipeline_process(file_pipeline,opt)
 %        simultaneously. Some qsub systems actually put restrictions
 %        on that. Contact your local system administrator for more info.
 %
+%    NB_RESUB
+%        (integer, default 0 in 'session', 'batch' and 'background' modes,
+%        1 otherwise) The number of times a job will be resubmitted if it 
+%        fails.
+%
 %    SHELL_OPTIONS
 %        (string, default GB_PSOM_SHELL_OPTIONS defined in PSOM_GB_VARS)
 %        some commands that will be added at the begining of the shell
@@ -142,8 +147,8 @@ end
 
 %% Options
 gb_name_structure = 'opt';
-gb_list_fields    = { 'flag_verbose' , 'init_matlab'       , 'flag_debug' , 'shell_options'       , 'command_matlab' , 'mode'    , 'mode_pipeline_manager' , 'max_queued' , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
-gb_list_defaults  = { true           , gb_psom_init_matlab , true         , gb_psom_shell_options , ''               , 'session' , ''                      , 0            , gb_psom_qsub_options , []                    , []                    , []               };
+gb_list_fields    = { 'nb_resub'       , 'flag_verbose' , 'init_matlab'       , 'flag_debug' , 'shell_options'       , 'command_matlab' , 'mode'    , 'mode_pipeline_manager' , 'max_queued' , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
+gb_list_defaults  = { gb_psom_nb_resub , true           , gb_psom_init_matlab , true         , gb_psom_shell_options , ''               , 'session' , ''                      , 0            , gb_psom_qsub_options , []                    , []                    , []               };
 psom_set_defaults
 
 flag_verbose = flag_verbose || flag_debug;
@@ -159,6 +164,17 @@ if isempty(opt.command_matlab)
         opt.command_matlab = gb_psom_command_octave;
     end
 end
+
+if isempty(opt.nb_resub)
+    switch opt.mode
+        case {'session','batch','background'}
+            opt.nb_resub = 0;
+            nb_resub = 0;
+        otherwise
+            opt.nb_resub = 1;
+            nb_resub = 1;
+    end % switch action
+end % default of max_queued
 
 if max_queued == 0
     switch opt.mode
@@ -334,6 +350,9 @@ try
     mask_deps = max(graph_deps,[],1)>0;
     mask_deps = mask_deps(:);
     
+    %% Track number of submissions
+    nb_sub = zeros([length(list_jobs) 1]);
+
     %% Initialize the to-do list
     mask_todo = false([length(list_jobs) 1]);
     for num_j = 1:length(list_jobs)
@@ -410,7 +429,7 @@ try
                     nb_points = 0;
                 end
                 
-                % update status in the status file                
+                % update status of the job in the status file                
                 status.(name_job) = new_status_running_jobs{num_l};
                 
                 if strcmp(status.(name_job),'exit') % the script crashed ('exit' tag)
@@ -436,6 +455,7 @@ try
                     if psom_exist(file_profile)
                         profile.(name_job) = load(file_profile);
                     end
+                    profile.(name_job).nb_submit = nb_sub(num_j);
                     sub_clean_job(path_logs,name_job); % clean up all tags & log                    
                 end
                 
@@ -443,13 +463,23 @@ try
                     
                     case 'failed' % the job has failed, too bad !
 
-                        nb_failed = nb_failed + 1;   
-                        msg = sprintf('%s %s%s failed   ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
-                        sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
-                        mask_child = false([1 length(mask_todo)]);
-                        mask_child(num_j) = true;
-                        mask_child = sub_find_children(mask_child,graph_deps);
-                        mask_todo(mask_child) = false; % Remove the children of the failed job from the to-do list
+                        if nb_sub(num_j) > nb_resub % Enough attempts to submit the jobs have been made, it failed !
+                            nb_failed = nb_failed + 1;   
+                            msg = sprintf('%s %s%s failed   ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
+                            sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
+                            mask_child = false([1 length(mask_todo)]);
+                            mask_child(num_j) = true;
+                            mask_child = sub_find_children(mask_child,graph_deps);
+                            mask_todo(mask_child) = false; % Remove the children of the failed job from the to-do list
+                        else % Try to submit the job one more time (at least)
+                            mask_todo(num_j) = true;
+                            status.(name_job) = 'none';
+                            new_status_running_jobs{num_l} = 'none';
+                            nb_todo = nb_todo+1;
+                            msg = sprintf('%s %s%s reset    ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
+                            sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
+                            
+                        end
 
                     case 'finished'
 
@@ -503,6 +533,7 @@ try
             mask_running(num_job) = true;
             nb_queued = nb_queued + 1;
             nb_todo = nb_todo - 1;
+            nb_sub(num_job) = nb_sub(num_job)+1;
             status.(name_job) = 'submitted';
             msg = sprintf('%s %s%s submitted',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));            
             sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
