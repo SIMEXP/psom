@@ -451,9 +451,9 @@ try
                         logs.(name_job) = [text_log hat_qsub_o text_qsub_o hat_qsub_e text_qsub_e];
                     end
                     %% Update profile for the jobs
-                    file_profile = [path_logs filesep name_job '.profile.mat'];
-                    if psom_exist(file_profile)
-                        profile.(name_job) = load(file_profile);
+                    file_profile_job = [path_logs filesep name_job '.profile.mat'];
+                    if psom_exist(file_profile_job)
+                        profile.(name_job) = load(file_profile_job);
                     end
                     profile.(name_job).nb_submit = nb_sub(num_j);
                     sub_clean_job(path_logs,name_job); % clean up all tags & log                    
