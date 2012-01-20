@@ -379,9 +379,15 @@ switch opt.mode
         
     case {'qsub','msub'}
         script_submit = [gb_psom_path_psom 'psom_submit.sh'];
-        qsub_logs = [' -e \"' logs.eqsub '\" -o \"' logs.oqsub '\"'];
+        if ~isempty(logs)
+            qsub_logs = [' -e \"' logs.eqsub '\" -o \"' logs.oqsub '\"'];
+        else 
+            qsub_logs = '';
+        end
         instr_qsub = sprintf('%s%s -N %s %s %s',opt.mode,qsub_logs,opt.name_job,opt.qsub_options,['\"' script '\"']);            
-        instr_qsub = [script_submit ' "' instr_qsub '" ' logs.failed ' ' logs.exit ' ' logs.oqsub ];
+        if ~isempty(logs)
+            instr_qsub = [script_submit ' "' instr_qsub '" ' logs.failed ' ' logs.exit ' ' logs.oqsub ];
+        end
         if opt.flag_debug
             if strcmp(gb_psom_language,'octave')
                 instr_qsub = [instr_qsub ' 2>&1']; % In octave, the error stream is lost. Redirect it to standard output
