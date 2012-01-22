@@ -1,8 +1,8 @@
-function [] = psom_pipeline_visu(path_logs,action,opt_action)
+function res = psom_pipeline_visu(path_logs,action,opt_action)
 % Display various information from the logs of a pipeline.
 %
 % SYNTAX:
-% [] = PSOM_PIPELINE_VISU(PATH_LOGS,ACTION,OPT)
+% RES = PSOM_PIPELINE_VISU(PATH_LOGS,ACTION,OPT)
 %
 % _________________________________________________________________________
 % INPUTS:
@@ -28,6 +28,8 @@ function [] = psom_pipeline_visu(path_logs,action,opt_action)
 %    'flowchart'
 %        Draw the graph of dependencies of the pipeline.
 %
+%    'nb_jobs_running'
+%        plot the number of jobs running as a function of time.
 %
 % OPT
 %    (string) see the following notes on action 'log' and 'time'
@@ -39,34 +41,60 @@ function [] = psom_pipeline_visu(path_logs,action,opt_action)
 %
 % ACTION = 'submitted'
 %    Display a list of the jobs of the pipeline that are scheduled in
-%    the queue but not currently running.
+%    the queue but not currently running. RES is a cell of strings with
+%    the list of the name of these jobs.
 %
 % ACTION = 'running'
 %    Display a list of the jobs of the pipeline that are currently
-%    running
+%    running. RES is a cell of strings with the list of the name of 
+%    these jobs.
 %
 % ACTION = 'failed'
 %    Display a list of the jobs of the pipeline that have failed. Note
-%    that jobs with an 'exit' status are counted as failures.
+%    that jobs with an 'exit' status are counted as failures. RES is a 
+%    cell of strings with the list of the name of these jobs.
 %
 % ACTION = 'finished'
-%    Display a list of finished jobs of the pipeline.
+%    Display a list of finished jobs of the pipeline. RES is a cell of 
+%    strings with the list of the name of these jobs.
 %
 % ACTION = 'none'
 %    Display a list of jobs without tag (no attempt has been made to
-%    process the job).
+%    process the job). RES is a cell of strings with the list of the name 
+%    of these jobs.
 %
 % ACTION = 'log'
-%    Print (with updates) the log files for the job OPT.
+%    Print (with updates) the log files for the job OPT. RES is a string 
+%    containing the log.
 %
 % ACTION = 'time'
 %    Print the execution time for a set of jobs. For this action, OPT is
 %    a regular expression (see REGEXP) and any job whose name matches
 %    this expression will be included in the computation time. Use an
-%    empty string to include all jobs.
+%    empty string to include all jobs. RES is empty.
+%
+% ACTION = 'flowchart'
+%    Print the flowchart. RES is empty.
 %
 % ACTION = 'monitor'
-%    Print (with updates) the pipeline master log.
+%    Print (with updates) the pipeline master log. RES is empty.
+%
+% ACTION = 'nb_jobs_running'
+%    Plot the number of jobs running as a function of the elapsed time 
+%    since the start-up of the first job. If specified, OPT will be used 
+%    as an argument sent to the PLOT command. RES is a structure with 
+%    three fields : 
+%        NB_JOBS_RUNNING (vector), entry I is the number of submitted
+%           jobs at time ALL_TIME(I)
+%        ALL_TIME (vector) a (sorted) list of the times when the number
+%           of submitted jobs changed.
+%        TIME_START (vector) TIME_START(J) is the time when the job 
+%           LIST_JOBS{I} started.
+%        TIME_END (vector) TIME_END(J) is the time when the job 
+%           LIST_JOBS{I} ended.
+%        LIST_JOBS (cell of strings) LIST_JOBS{J} is the name of the Jth
+%           job.
+%        
 %
 % _________________________________________________________________________
 % SEE ALSO:
@@ -126,30 +154,20 @@ file_logs           = [path_logs filesep name_pipeline '_logs.mat'];
 file_logs_backup    = [path_logs filesep name_pipeline '_logs_backup.mat'];
 file_profile        = [path_logs filesep name_pipeline '_profile.mat'];
 file_profile_backup = [path_logs filesep name_pipeline '_profile_backup.mat'];
-pipeline = load(file_jobs);
-list_jobs = fieldnames(pipeline);
-
-try
-    all_status = load(file_status);
-catch
-    warning('There was something wrong when loading the status file %s, I''ll try loading the backup instead',file_status)
-    all_status = load(file_status_backup);
-end
-
-for num_j = 1:length(list_jobs)
-    name_job = list_jobs{num_j};
-    if isfield(all_status,name_job)
-        job_status{num_j} = all_status.(name_job);
-    else
-        job_status{num_j} = 'none';
-    end
-end
-clear all_status
-
 
 switch action
 
     case {'finished','failed','none','running','submitted'}
+ 
+        %% Read status
+        try
+            all_status = load(file_status);
+        catch
+            warning('There was something wrong when loading the status file %s, I''ll try loading the backup instead',file_status)
+            all_status = load(file_status_backup);
+        end
+        list_jobs = fieldnames(all_status);
+        job_status = struct2cell(all_status);
 
         %% List the jobs that have a specific status
 
@@ -172,12 +190,17 @@ switch action
         for num_j = 1:length(jobs_action)
             fprintf('%s\n',jobs_action{num_j});
         end
+        res = jobs_action;
 
     case 'flowchart'
 
+        %% Read pipeline
+        pipeline = load(file_jobs);
+        list_jobs = fieldnames(pipeline);
+
         %% Display the graph of dependencies of the pipeline
-        pipeline = load(file_jobs);        
         psom_visu_dependencies(pipeline);
+        res = [];
 
     case 'monitor'
 
@@ -206,11 +229,15 @@ switch action
         end
         
         sub_tail(file_monitor,file_pipe_running,opt_action);
+        res = [];
         
     case 'time'
 
-        %% Prints the computation time for a list of jobs
+        %% Read pipeline
+        pipeline = load(file_jobs);
+        list_jobs = fieldnames(pipeline);
 
+        %% Prints the computation time for a list of jobs
         if ~exist('opt_action','var')||isempty(opt_action)
             ind_job = 1:length(list_jobs);
         else
@@ -267,18 +294,22 @@ switch action
 
         end
         fprintf('%s\nTotal computation time :  %1.2f s, %1.2f mn, %1.2f hours, %1.2f days.\n',repmat('*',[1 lmax+1]),tot_time,tot_time/60,tot_time/3600,tot_time/(24*3600));
+        res = [];
 
     case 'log'
 
-        %% Prints the log of one job
+        %% Read pipeline
+        all_status = load(file_status);
+        list_jobs = fieldnames(all_status);
 
+        %% Prints the log of one job
         ind_job =  find(ismember(list_jobs,opt_action));
 
         if isempty(ind_job)
             error('%s : is not a job of this pipeline.',opt_action);
         end
 
-        curr_status = job_status{ind_job};
+        curr_status = all_status.(opt_action);
 
         msg = sprintf('  Log file of job %s (status %s) ',opt_action,curr_status);
         stars = repmat('*',size(msg));
@@ -294,14 +325,49 @@ switch action
         else
 
             try
-                load(file_logs,opt_action);
+                log_job = load(file_logs,opt_action);
             catch
                 warning('There was something wrong when loading the log file %s, I''ll try loading the backup instead',file_logs)
-                load(file_logs_backup,opt_action);            
+                log_job = load(file_logs_backup,opt_action);            
             end
-            eval(['fprintf(''%s'',',opt_action,');']);
+            fprintf('%s',log_job.(opt_action));
 
         end
+        res = log_job.(opt_action);
+
+    case 'nb_jobs_running'
+
+        profile_jobs = load(file_profile);
+        list_jobs = fieldnames(profile_jobs);
+        time_start = zeros([length(list_jobs) 1]);
+        time_end = zeros([length(list_jobs) 1]);
+        
+        for num_j = 1:length(list_jobs)
+            if ~isempty(profile_jobs.(list_jobs{num_j}).end_time)
+                [tmp,time_start(num_j)] = datenum(profile_jobs.(list_jobs{num_j}).start_time);
+                [tmp,time_end(num_j)] = datenum(profile_jobs.(list_jobs{num_j}).end_time);
+            end
+        end
+        mask = time_end ~= 0; % Ignore jobs that did not complete
+        time_start = time_start(mask);
+        time_end = time_end(mask);
+        changes = [ones([length(time_start) 1]) ; -ones([length(time_start) 1])];
+        [all_time,order] = sort([time_start;time_end]);
+        changes = changes(order);
+        nb_jobs_running = cumsum(changes);
+        if ~exist('opt_action','var')||isempty(opt_action)
+            plot((all_time-all_time(1))/(60*60),nb_jobs_running);
+        else
+            plot((all_time-all_time(1))/(60*60),nb_jobs_running,opt_action);
+        end
+        ha = gca;
+        set(get(ha,'xlabel'),'string','time elapsed (hrs)')
+        set(get(ha,'ylabel'),'string','# jobs running')
+        res.nb_jobs_running = nb_jobs_running;
+        res.all_time = all_time;
+        res.time_end = time_end;
+        res.time_start = time_start;
+        res.list_jobs = list_jobs;
 
     otherwise
 
