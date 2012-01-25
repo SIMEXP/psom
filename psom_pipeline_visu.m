@@ -8,7 +8,7 @@ function res = psom_pipeline_visu(path_logs,action,opt_action)
 % INPUTS:
 %
 % PATH_LOGS
-%    (string) The path of the pipeline logs
+%    (string, default current folder) The path of the pipeline logs
 %
 % ACTION
 %    (string) Possible values :
@@ -30,6 +30,10 @@ function res = psom_pipeline_visu(path_logs,action,opt_action)
 %
 %    'nb_jobs_running'
 %        plot the number of jobs running as a function of time.
+%
+%    'total_time'
+%        the total time elapsed between the beginning of the first job
+%        and the end of the last job.
 %
 % OPT
 %    (string) see the following notes on action 'log' and 'time'
@@ -94,7 +98,11 @@ function res = psom_pipeline_visu(path_logs,action,opt_action)
 %           LIST_JOBS{I} ended.
 %        LIST_JOBS (cell of strings) LIST_JOBS{J} is the name of the Jth
 %           job.
-%        
+%     
+% ACTION = 'total_time'
+%    Print the total running time (from the start-up of the first job till 
+%    the end of the last job, excluding jobs that have not been processed).
+%    RES is the total time, expressed in seconds.   
 %
 % _________________________________________________________________________
 % SEE ALSO:
@@ -140,6 +148,9 @@ if ~exist('path_logs','var') || ~exist('action','var')
 end
 
 %% Add the folder separator if it was omitted at the end of PATH_LOGS
+if isempty(path_logs)
+    path_logs = pwd;
+end
 if ~strcmp(path_logs(end),filesep)
 	path_logs = [path_logs filesep];
 end
@@ -368,6 +379,26 @@ switch action
         res.time_end = time_end;
         res.time_start = time_start;
         res.list_jobs = list_jobs;
+
+    case 'total_time'
+
+        profile_jobs = load(file_profile);
+        list_jobs = fieldnames(profile_jobs);
+        time_start = zeros([length(list_jobs) 1]);
+        time_end = zeros([length(list_jobs) 1]);
+        
+        for num_j = 1:length(list_jobs)
+            if ~isempty(profile_jobs.(list_jobs{num_j}).end_time)
+                [tmp,time_start(num_j)] = datenum(profile_jobs.(list_jobs{num_j}).start_time);
+                [tmp,time_end(num_j)] = datenum(profile_jobs.(list_jobs{num_j}).end_time);
+            end
+        end
+        mask = time_end ~= 0; % Ignore jobs that did not complete
+        time_start = time_start(mask);
+        time_end = time_end(mask);
+        total_time = max(time_end) - min(time_start);
+        fprintf('Total running time: %1.2f sec, %1.2f mns, %1.2f hrs\n',total_time,total_time/60,total_time/3600);
+        res = total_time;
 
     otherwise
 
