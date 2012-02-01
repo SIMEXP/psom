@@ -1,8 +1,8 @@
-function res = psom_pipeline_visu(path_logs,action,opt_action)
+function res = psom_pipeline_visu(path_logs,action,opt_action,flag_visu)
 % Display various information from the logs of a pipeline.
 %
 % SYNTAX:
-% RES = PSOM_PIPELINE_VISU(PATH_LOGS,ACTION,OPT)
+% RES = PSOM_PIPELINE_VISU(PATH_LOGS,ACTION,OPT,FLAG_VISU)
 %
 % _________________________________________________________________________
 % INPUTS:
@@ -31,12 +31,17 @@ function res = psom_pipeline_visu(path_logs,action,opt_action)
 %    'nb_jobs_running'
 %        plot the number of jobs running as a function of time.
 %
-%    'total_time'
-%        the total time elapsed between the beginning of the first job
-%        and the end of the last job.
+%    'parallel_time'
+%        the execution time using parallel computing, i.e. the time elapsed 
+%        between the beginning of the first job and the end of the last job.
 %
 % OPT
 %    (string) see the following notes on action 'log' and 'time'
+%
+% FLAG_VISU
+%    (boolean, default true) if FLAG_VISU is false, no plot or print is
+%    performed, but RES is still generated. This has no effect for actions
+%    'monitor' and 'flowchart'.
 %
 % _________________________________________________________________________
 % OUTPUTS:
@@ -75,7 +80,8 @@ function res = psom_pipeline_visu(path_logs,action,opt_action)
 %    Print the execution time for a set of jobs. For this action, OPT is
 %    a regular expression (see REGEXP) and any job whose name matches
 %    this expression will be included in the computation time. Use an
-%    empty string to include all jobs. RES is empty.
+%    empty string to include all jobs. RES(J).TIME is the computation 
+%    time of job RES(J).NAME, in seconds.
 %
 % ACTION = 'flowchart'
 %    Print the flowchart. RES is empty.
@@ -99,8 +105,8 @@ function res = psom_pipeline_visu(path_logs,action,opt_action)
 %        LIST_JOBS (cell of strings) LIST_JOBS{J} is the name of the Jth
 %           job.
 %     
-% ACTION = 'total_time'
-%    Print the total running time (from the start-up of the first job till 
+% ACTION = 'parallel_time'
+%    Print the parallel running time (from the start-up of the first job till 
 %    the end of the last job, excluding jobs that have not been processed).
 %    RES is the total time, expressed in seconds.   
 %
@@ -147,6 +153,11 @@ if ~exist('path_logs','var') || ~exist('action','var')
     error('SYNTAX: [] = PSOM_PIPELINE_VISU(PATH_LOGS,ACTION,OPT). Type ''help psom_pipeline_visu'' for more info.')
 end
 
+%% Defaults
+if nargin < 4
+    flag_visu = true;
+end
+
 %% Add the folder separator if it was omitted at the end of PATH_LOGS
 if isempty(path_logs)
     path_logs = pwd;
@@ -189,17 +200,19 @@ switch action
         end
         jobs_action = list_jobs(mask_jobs);
 
-        if isempty(jobs_action)
+        if isempty(jobs_action)&&flag_visu
             msg = sprintf('There is currently no %s job',action);
-        else
+        elseif flag_visu
             msg = sprintf('List of %s job(s)',action);
         end
 
-        stars = repmat('*',size(msg));
-        fprintf('\n\n%s\n%s\n%s\n\n',stars,msg,stars);
-
-        for num_j = 1:length(jobs_action)
-            fprintf('%s\n',jobs_action{num_j});
+        if flag_visu
+            stars = repmat('*',size(msg));
+            fprintf('\n\n%s\n%s\n%s\n\n',stars,msg,stars);
+        
+            for num_j = 1:length(jobs_action)
+                fprintf('%s\n',jobs_action{num_j});
+            end
         end
         res = jobs_action;
 
@@ -245,9 +258,16 @@ switch action
     case 'time'
 
         %% Read pipeline
-        pipeline = load(file_jobs);
-        list_jobs = fieldnames(pipeline);
-
+        try
+            profile = load(file_profile);
+            flag_profile = true;
+            list_jobs = fieldnames(profile);
+        catch
+            flag_profile = false;
+            pipeline = load(file_jobs);
+            list_jobs = fieldnames(pipeline);
+        end
+        
         %% Prints the computation time for a list of jobs
         if ~exist('opt_action','var')||isempty(opt_action)
             ind_job = 1:length(list_jobs);
@@ -265,14 +285,10 @@ switch action
         end
 
         tot_time = 0;
-        try
-            profile = load(file_profile);
-            flag_profile = true;
-        catch
-            flag_profile = false;
+        if flag_visu
+            lmax = max(cellfun(@length,list_jobs,'UniformOutput',true));
+            fprintf('\n%s\n',repmat('*',[1 lmax+1]));
         end
-        lmax = max(cellfun(@length,list_jobs,'UniformOutput',true));
-        fprintf('\n%s\n',repmat('*',[1 lmax+1]));
         for num_j = ind_job
 
             if ~flag_profile
@@ -295,17 +311,20 @@ switch action
                 end
 
             end
-            if isempty(ctime)
+            res(num_j).name = list_jobs{num_j};
+            res(num_j).time = ctime;
+            if flag_visu&&isempty(ctime)
                 fprintf('Huho, I could not parse computation time for job %s, that''weird ! Sorry about that ... \n',list_jobs{num_j});
-            else
+            elseif flag_visu
                 name_job = [list_jobs{num_j} repmat(' ',[1 lmax-length(list_jobs{num_j})])];
                 fprintf('%s : %1.2f s, %1.2f mn, %1.2f hours, %1.2f days.\n',name_job,ctime,ctime/60,ctime/3600,ctime/(24*3600));
                 tot_time = tot_time + ctime;
             end
 
         end
-        fprintf('%s\nTotal computation time :  %1.2f s, %1.2f mn, %1.2f hours, %1.2f days.\n',repmat('*',[1 lmax+1]),tot_time,tot_time/60,tot_time/3600,tot_time/(24*3600));
-        res = [];
+        if flag_visu
+            fprintf('%s\nTotal computation time :  %1.2f s, %1.2f mn, %1.2f hours, %1.2f days.\n',repmat('*',[1 lmax+1]),tot_time,tot_time/60,tot_time/3600,tot_time/(24*3600));
+        end
 
     case 'log'
 
@@ -322,16 +341,22 @@ switch action
 
         curr_status = all_status.(opt_action);
 
-        msg = sprintf('  Log file of job %s (status %s) ',opt_action,curr_status);
-        stars = repmat('*',size(msg));
-        fprintf('\n\n%s\n%s\n%s\n\n',stars,msg,stars);
-
+        if flag_visu
+            msg = sprintf('  Log file of job %s (status %s) ',opt_action,curr_status);
+            stars = repmat('*',size(msg));
+            fprintf('\n\n%s\n%s\n%s\n\n',stars,msg,stars);
+        end
 
         if strcmp(curr_status,'running');
 
-            file_job_log = [path_logs opt_action '.log'];
-            file_job_running = [path_logs opt_action '.running'];
-            sub_tail(file_job_log,file_job_running);
+            if flag_visu
+                file_job_log = [path_logs opt_action '.log'];
+                file_job_running = [path_logs opt_action '.running'];
+                sub_tail(file_job_log,file_job_running);
+            else
+                warning('The job is currently running. The log has not yet been fully generated')
+                res = '';
+            end
 
         else
 
@@ -341,8 +366,9 @@ switch action
                 warning('There was something wrong when loading the log file %s, I''ll try loading the backup instead',file_logs)
                 log_job = load(file_logs_backup,opt_action);            
             end
-            fprintf('%s',log_job.(opt_action));
-
+            if flag_visu
+                fprintf('%s',log_job.(opt_action));
+            end
         end
         res = log_job.(opt_action);
 
@@ -366,21 +392,23 @@ switch action
         [all_time,order] = sort([time_start;time_end]);
         changes = changes(order);
         nb_jobs_running = cumsum(changes);
-        if ~exist('opt_action','var')||isempty(opt_action)
-            plot((all_time-all_time(1))/(60*60),nb_jobs_running);
-        else
-            plot((all_time-all_time(1))/(60*60),nb_jobs_running,opt_action);
+        if flag_visu
+            if ~exist('opt_action','var')||isempty(opt_action)
+                plot((all_time-all_time(1))/(60*60),nb_jobs_running);
+            else
+                plot((all_time-all_time(1))/(60*60),nb_jobs_running,opt_action);
+            end
+            ha = gca;
+            set(get(ha,'xlabel'),'string','time elapsed (hrs)')
+            set(get(ha,'ylabel'),'string','# jobs running')
         end
-        ha = gca;
-        set(get(ha,'xlabel'),'string','time elapsed (hrs)')
-        set(get(ha,'ylabel'),'string','# jobs running')
         res.nb_jobs_running = nb_jobs_running;
         res.all_time = all_time;
         res.time_end = time_end;
         res.time_start = time_start;
         res.list_jobs = list_jobs;
 
-    case 'total_time'
+    case 'parallel_time'
 
         profile_jobs = load(file_profile);
         list_jobs = fieldnames(profile_jobs);
@@ -397,7 +425,9 @@ switch action
         time_start = time_start(mask);
         time_end = time_end(mask);
         total_time = max(time_end) - min(time_start);
-        fprintf('Total running time: %1.2f sec, %1.2f mns, %1.2f hrs\n',total_time,total_time/60,total_time/3600);
+        if flag_visu
+            fprintf('Total running time: %1.2f sec, %1.2f mns, %1.2f hrs\n',total_time,total_time/60,total_time/3600);
+        end
         res = total_time;
 
     otherwise
