@@ -67,7 +67,7 @@ function opt_up = psom_struct_defaults(opt,list_fields,list_defaults,flag_warnin
 % THE SOFTWARE.
 
 if ~isstruct(opt)
-    error('OPT should be a structure');
+    error('%s should be a structure',inputname(1));
 end
 
 if nargin<4
@@ -89,7 +89,7 @@ for num_f = 1:length(list_fields)
     end
 end
 if ~isempty(str_field)
-    error(sprintf('A value must be specified for the following fields (%s)',str_field));
+    error(sprintf('A value must be specified in %s for the following fields (%s)',inputname(1),str_field));
 end
 
 %% Set defaults
@@ -108,6 +108,6 @@ if flag_warning&&(length(fieldnames(opt_up))>length(list_fields))
     for num_i = 1:length(list_ind)
         str_field = [str_field ' ' list_fields_up{list_ind(num_i)}];
     end
-    warning('psom:defaults','The following field(s) were ignored in the structure : %s',str_field);
+    warning('psom:defaults','The following field(s) were ignored in the structure %s: %s',inputname(1),str_field);
     opt_up = rmfield(opt_up,list_fields_up(mask));
 end
