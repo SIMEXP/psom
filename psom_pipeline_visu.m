@@ -380,7 +380,7 @@ switch action
         time_end = zeros([length(list_jobs) 1]);
         
         for num_j = 1:length(list_jobs)
-            if ~isempty(profile_jobs.(list_jobs{num_j}).end_time)
+            if isfield(profile_jobs.(list_jobs{num_j}),'end_time')&&~isempty(profile_jobs.(list_jobs{num_j}).end_time)
                 [tmp,time_start(num_j)] = datenum(profile_jobs.(list_jobs{num_j}).start_time);
                 [tmp,time_end(num_j)] = datenum(profile_jobs.(list_jobs{num_j}).end_time);
             end
@@ -416,7 +416,7 @@ switch action
         time_end = zeros([length(list_jobs) 1]);
         
         for num_j = 1:length(list_jobs)
-            if ~isempty(profile_jobs.(list_jobs{num_j}).end_time)
+            if isfield(profile_jobs.(list_jobs{num_j}),'end_time')&&~isempty(profile_jobs.(list_jobs{num_j}).end_time)
                 [tmp,time_start(num_j)] = datenum(profile_jobs.(list_jobs{num_j}).start_time);
                 [tmp,time_end(num_j)] = datenum(profile_jobs.(list_jobs{num_j}).end_time);
             end
