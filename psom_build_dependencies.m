@@ -1,8 +1,4 @@
 function [graph_deps,list_jobs,files_in,files_out,files_clean,deps] = psom_build_dependencies(pipeline,flag_verbose)
-%
-% _________________________________________________________________________
-% SUMMARY PSOM_BUILD_DEPENDENCIES
-%
 % Generate the dependency graph of a pipeline.
 %
 % SYNTAX:
