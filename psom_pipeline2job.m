@@ -107,12 +107,10 @@ if opt.flag_files
     %% Build files_in
     for num_j = 1:nb_jobs
         name_job = list_jobs{num_j};
-        if nargout > 1
-            if isfield(pipeline.(name_job),'files_in')
-                files_in.(name_job) = psom_files2cell(pipeline.(name_job).files_in);
-            else
-                files_in.(name_job) = {};
-            end
+        if isfield(pipeline.(name_job),'files_in')
+            files_in.(name_job) = psom_files2cell(pipeline.(name_job).files_in);
+        else
+            files_in.(name_job) = {};
         end
         if isfield(pipeline.(name_job),'files_out')
             files_out.(name_job) = psom_files2cell(pipeline.(name_job).files_out);
