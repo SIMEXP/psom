@@ -273,6 +273,11 @@ if isempty(opt.command_matlab)
     end
 end
 
+if strcmp(opt.mode,'session')
+    opt.max_queued = 1;
+    max_queued = 1;
+end
+
 if max_queued == 0
     switch opt.mode
         case {'batch','background'}
