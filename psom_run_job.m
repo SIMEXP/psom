@@ -23,6 +23,10 @@ function flag_failed = psom_run_job(file_job)
 % _________________________________________________________________________
 % COMMENTS:
 %
+% This function will start by deleting all the output files if they exist 
+% before running the job. It will also create all the necessary output 
+% folders.
+%
 % When running a job, this function will create a global variable named
 % "gb_psom_name_job". This can be accessed by the command executed by the
 % job. This may be useful for example to build unique temporary file names.
@@ -105,7 +109,6 @@ gb_name_structure = 'job';
 gb_list_fields    = {'files_in' , 'files_out' , 'files_clean' , 'command','opt' };
 gb_list_defaults  = {{}         , {}          , {}            , NaN      , {}   };
 psom_set_defaults
-command, files_in, files_out, files_clean, opt
 
 %% Print general info about the job
 start_time = clock;
@@ -113,11 +116,34 @@ msg = sprintf('Log of the (%s) job : %s\nStarted on %s\nUser: %s\nhost : %s\nsys
 stars = repmat('*',[1 30]);
 fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
 
+%% create output folders
+fprintf('Creating output folders ...\n')
+list_files = psom_files2cell(job.files_out);
+path_all = cellfun (@fileparts,list_files,'UniformOutput',false);
+path_all = unique(path_all);
+
+for num_p = 1:length(path_all)
+    path_f = path_all{num_p};
+    [succ,messg,messgid] = psom_mkdir(path_f);
+    if succ == 0
+        warning(messgid,messg);
+    end    
+end
+
+%% Removing old outputs
+fprintf('Removing old outputs ...\n')
+list_files = unique(list_files);
+for num_f = 1:length(list_files)
+    if psom_exist(list_files{num_f});
+        psom_clean(list_files{num_f});
+    end
+end
+
+%% The job starts now !
 try
-    %% The job starts now !
     msg = sprintf('The job starts now !');
     stars = repmat('*',[1 size(msg,2)]);
-    fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
+    fprintf('%s\n%s\n',msg,stars);
 
     flag_failed = false;
    

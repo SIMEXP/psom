@@ -108,14 +108,6 @@ function [file_pipeline,flag_start] = psom_pipeline_init(pipeline,opt)
 %        files are missing. This lets the user an opportunity to cancel
 %        the pipeline execution before anything is written on the disk.
 %
-%    FLAG_CLEAN
-%        (boolean, default true) if FLAG_CLEAN is true, before a job is
-%        restarted all files named as the outputs will be deleted. This
-%        is to avoid any confusion as of when a particular output has
-%        been created, in case overwritting would not be successfull.
-%        This behavior may not be desirable when a particular job is
-%        actually able to recover from where it was interrupted.
-%
 %    FLAG_VERBOSE
 %        (boolean, default true) if the flag is true, then the function
 %        prints some infos during the processing.
@@ -231,17 +223,13 @@ function [file_pipeline,flag_start] = psom_pipeline_init(pipeline,opt)
 %       this way, the pipeline initialization will pause to let the user 
 %       the time to cancel the execution of the pipeline.
 %
-%       2. The folders for outputs are created. 
-%
-%       3. Existing files with names similar to the outputs are deleted. 
-%
-%   	4. Existing tag/log/exit/qsub files in the logs folder are deleted, 
+%   	2. Existing tag/log/exit/qsub files in the logs folder are deleted, 
 %       as well as the 'tmp' subfolder, if it exists.
 %
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008-2010.
 % Departement d'informatique et de recherche operationnelle
 % Centre de recherche de l'institut de Geriatrie de Montreal
-% Universite de Montreal, 2010-2011.
+% Universite de Montreal, 2010-2012.
 % Maintainer : pierre.bellec@criugm.qc.ca
 % See licensing information in the code.
 % Keywords : pipeline
@@ -277,8 +265,8 @@ end
 
 %% Options
 gb_name_structure = 'opt';
-gb_list_fields    = { 'path_search'       , 'flag_clean' , 'flag_pause' , 'flag_update' , 'restart' , 'path_logs' , 'command_matlab' , 'flag_verbose' , 'type_restart' };
-gb_list_defaults  = { gb_psom_path_search , true         , true         , true          , {}        , NaN         , ''               , true           , 'substring'    };
+gb_list_fields    = { 'path_search'       , 'flag_pause' , 'flag_update' , 'restart' , 'path_logs' , 'command_matlab' , 'flag_verbose' , 'type_restart' };
+gb_list_defaults  = { gb_psom_path_search , true         , true          , {}        , NaN         , ''               , true           , 'substring'    };
 psom_set_defaults
 name_pipeline = 'PIPE';
 
@@ -749,16 +737,16 @@ else
     save(file_profile,'-struct','profile');
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Stage 5: Check for input files, generate output folders and clean old outputs %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Stage 5: Check for input files %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if flag_verbose
-    fprintf('\nClean up and check the file system for pipeline execution...\n');
+    fprintf('\nCheck the file system for pipeline execution...\n');
 end
+
 %% Check if all the files necessary to complete each job of the pipeline 
 %% can be found
-
 if flag_verbose
     fprintf('    Checking if all the files necessary to complete the pipeline can be found ...\n');
 end
@@ -808,40 +796,6 @@ if ~flag_ready
         pause        
     else
         warning('\nThe input files of some jobs were found missing.\n');
-    end
-end
-
-%% Creating output folders 
-
-if flag_verbose
-    fprintf('    Creating output folders ...\n')
-end
-
-path_all = psom_files2cell(files_out);
-path_all = cellfun (@fileparts,path_all,'UniformOutput',false);
-path_all = unique(path_all);
-
-for num_p = 1:length(path_all)
-    path_f = path_all{num_p};
-    [succ,messg,messgid] = psom_mkdir(path_f);
-    if succ == 0
-        warning(messgid,messg);
-    end    
-end
-
-%% Removing old outputs
-if flag_verbose
-    fprintf('    Removing old outputs ...\n')
-end
-for num_j = 1:length(list_jobs)
-    job_name = list_jobs{num_j};
-    list_files = unique(files_out.(job_name));
-    if flag_clean&&~flag_finished(num_j)
-        for num_f = 1:length(list_files)
-            if psom_exist(list_files{num_f});
-                psom_clean(list_files{num_f});
-            end
-        end
     end
 end
 
