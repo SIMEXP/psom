@@ -758,14 +758,13 @@ files_necessary = all_in(~ismember(all_in,all_out));
 mask_missing = false(length(files_necessary),1);
 flag_OK = true;
 for num_f = 1:length(files_necessary)
-    if ~psom_exist(files_necessary{num_f})&&~exist(files_necessary{num_f},'dir')&&~isempty(files_necessary{num_f})&&~strcmp(files_necessary{num_f},'gb_niak_omitted')
-            if flag_OK
-                fprintf('The following file(s) are missing to process the pipeline : %s',files_necessary{num_f});
-            else
-                fprintf(' , %s',files_necessary{num_f});
-            end
-            flag_OK = false;
+    if ~psom_exist(files_necessary{num_f})
+        if flag_OK
+            fprintf('The following file(s) are missing to process the pipeline : %s',files_necessary{num_f});
+        else
+            fprintf(' , %s',files_necessary{num_f});
         end
+        flag_OK = false;
     end
 end
 
