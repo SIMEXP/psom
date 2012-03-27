@@ -1,4 +1,4 @@
-function [graph_deps,list_jobs,files_in,files_out,files_clean,deps] = psom_build_dependencies(pipeline,flag_verbose)
+function [graph_deps,list_jobs,files_in,files_out,files_clean] = psom_build_dependencies(pipeline,flag_verbose)
 % Generate the dependency graph of a pipeline.
 %
 % SYNTAX:
@@ -61,17 +61,6 @@ function [graph_deps,list_jobs,files_in,files_out,files_clean,deps] = psom_build
 %       <JOB_NAME>
 %           (cell of strings) the list of files deleted by JOB_NAME.
 %
-% DEPS
-%       (structure) the field names are identical to PIPELINE
-%
-%       <JOB_NAME> a structure with the following fields :
-%
-%           <JOB_NAME2>
-%               (cell of strings)
-%               The presence of this field means that the job <JOB_NAME> 
-%               depends on <JOB_NAME2>. The list of files that explain that 
-%               dependency is listed in the cell.
-%
 % _________________________________________________________________________
 % SEE ALSO:
 % PSOM_MANAGE_PIPELINE
@@ -84,8 +73,8 @@ function [graph_deps,list_jobs,files_in,files_out,files_clean,deps] = psom_build
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008-2010.
 % Centre de recherche de l'institut de gériatrie de Montréal, département
 % d'informatique et de recherche opérationnelle, Université de Montréal,
-% Canada, 2010.
-% Maintainer : pbellec@bic.mni.mcgill.ca
+% Canada, 2010-2012.
+% Maintainer : pierre.bellec@criugm.qc.ca
 % See licensing information in the code.
 % Keywords : pipeline, dependencies
 
@@ -189,34 +178,19 @@ for num_j = 1:nb_jobs
             curr_perc = new_perc;
         end
     end
+
     % Files_in/Files_out
     name_job1 = list_jobs{num_j};
     mask_dep = ismember(num_out,num_in(ind_in==num_j));
-    list_job_dep = unique(ind_out(mask_dep));
+    graph_deps(ind_out(mask_dep),num_j) = true;
     
-    if ~isempty(list_job_dep)
-        for num_l = list_job_dep'
-            name_job2 = list_jobs{num_l};
-            graph_deps(num_l,num_j) = true;
-            deps.(name_job1).(name_job2) = cell_out(mask_dep & (ind_out==num_l));
-        end
-    else
-        deps.(name_job1) = struct();
-    end
+    %Files_clean
     mask_dep = ismember(num_in,num_clean(ind_clean==num_j));
-    list_job_dep = unique(ind_in(mask_dep));
-    if ~isempty(list_job_dep)
-        for num_l = list_job_dep'
-            name_job2 = list_jobs{num_l};
-            graph_deps(num_l,num_j) = true;
-            if isfield(deps.(name_job1),name_job2)
-                deps.(name_job1).(name_job2) = [deps.(name_job1).(name_job2) ; cell_in(mask_dep & (ind_in==num_l))];
-            else
-                deps.(name_job1).(name_job2) = cell_in(mask_dep & (ind_in==num_l));
-            end
-        end
-    end
+    graph_deps(ind_in(mask_dep),num_j) = true;
+    mask_dep = ismember(num_out,num_clean(ind_clean==num_j));
+    graph_deps(ind_out(mask_dep),num_j) = true;
 end
+
 if flag_verbose
     fprintf('- %1.2f sec\n',toc)
 end

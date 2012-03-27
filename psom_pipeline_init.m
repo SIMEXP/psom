@@ -330,7 +330,7 @@ end
 if flag_verbose
     fprintf('    Generating dependencies ...\n');
 end
-[graph_deps,list_jobs,files_in,files_out,files_clean,deps] = psom_build_dependencies(pipeline,opt.flag_verbose);
+[graph_deps,list_jobs,files_in,files_out,files_clean] = psom_build_dependencies(pipeline,opt.flag_verbose);
 
 %% Check if some outputs were not generated twice
 if flag_verbose
@@ -446,8 +446,7 @@ job_status_old = job_status;
 %% Stage 3 : Set up the 'restart' flags %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-flag_restart = (ismember(job_status_old,'none')|ismember(job_status_old,'failed')|ismember(job_status_old,'submitted'))';
-
+flag_restart = false([1 length(job_status)]);
 if flag_verbose
     fprintf('\nSetting up the to-do list ...\n');
 end
@@ -456,7 +455,9 @@ for num_j = 1:nb_jobs
     
     name_job = list_jobs{num_j};
     flag_restart_job = flag_restart(num_j);
-    
+    if flag_restart_job
+        continue
+    end
     if strcmp(job_status_old{num_j},'failed')||strcmp(job_status_old{num_j},'exit')
         flag_restart_job = true;
         if flag_verbose
@@ -536,13 +537,13 @@ for num_j = 1:nb_jobs
             end
             
             %% restart the parents of the restarted jobs 
-            mask_new_restart3 = sub_restart_parents(mask_new_restart,flag_restart,pipeline,list_jobs,deps,graph_deps,flag_verbose);
+            mask_new_restart3 = sub_restart_parents(mask_new_restart,flag_restart,list_jobs,files_in,files_out,graph_deps,flag_verbose);
             mask_new_restart3 = mask_new_restart3 & ~flag_restart;
             
             list_add2 = find(mask_new_restart3&~mask_new_restart);
             if ~isempty(list_add2)
                 if flag_verbose
-                    fprintf('    The following job(s) will be restarted because they are producing missing files needed to run some of the restarted jobs :\n')
+                    fprintf('    The following job(s) will be restarted to produce missing files:\n')
                 end
                 for num_a = 1:length(list_add2)
                     if flag_verbose
@@ -658,7 +659,7 @@ else
 end
 
 path_work = path_search;
-save(file_pipeline,'history','deps','graph_deps','list_jobs','files_in','files_out','path_work')
+save(file_pipeline,'history','graph_deps','list_jobs','files_in','files_out','path_work')
 
 %% Save the status
 if flag_verbose
@@ -750,52 +751,30 @@ end
 if flag_verbose
     fprintf('    Checking if all the files necessary to complete the pipeline can be found ...\n');
 end
-
-flag_ready = true;
 mask_unfinished = ~flag_finished;
-list_num_unfinished = find(mask_unfinished);
-list_num_unfinished = list_num_unfinished(:)';
-
-for num_j = list_num_unfinished
-
-    name_job = list_jobs{num_j};
-    list_files_needed = files_in.(name_job);
-    list_files_tobe = psom_files2cell(deps.(name_job));
-    if ~isempty(list_files_needed)
-        list_files_necessary = list_files_needed(~ismember(list_files_needed,list_files_tobe));
-    else
-        list_files_necessary = {};
-    end
-
-    flag_job_OK = true;
-    
-    for num_f = 1:length(list_files_necessary)
-        
-        if ~psom_exist(list_files_necessary{num_f})&&~exist(list_files_necessary{num_f},'dir')&&~isempty(list_files_necessary{num_f})&&~strcmp(list_files_necessary{num_f},'gb_niak_omitted')
-
-            if flag_job_OK
-                msg_files = sprintf('        Job %s, the following file(s) are missing : %s',name_job,list_files_necessary{num_f});
+all_in = psom_files2cell(rmfield(files_in,list_jobs(~mask_unfinished)));
+all_out = psom_files2cell(files_out);
+files_necessary = all_in(~ismember(all_in,all_out));
+mask_missing = false(length(files_necessary),1);
+flag_OK = true;
+for num_f = 1:length(files_necessary)
+    if ~psom_exist(files_necessary{num_f})&&~exist(files_necessary{num_f},'dir')&&~isempty(files_necessary{num_f})&&~strcmp(files_necessary{num_f},'gb_niak_omitted')
+            if flag_OK
+                fprintf('The following file(s) are missing to process the pipeline : %s',files_necessary{num_f});
             else
-                msg_files = char(msg_files,sprintf(' , %s',list_files_necessary{num_f}));
+                fprintf(' , %s',files_necessary{num_f});
             end
-            flag_ready = false;
-            flag_job_OK = false;
-
+            flag_OK = false;
         end
     end
-    
-    if ~flag_job_OK        
-        fprintf('%s\n',msg_files');        
-    end
-    
 end
 
-if ~flag_ready
+if ~flag_OK
     if flag_pause
-        fprintf('\nThe input files of some jobs were found missing.\nPress CTRL-C now if you do not wish to run the pipeline or any key to continue anyway...\n');        
+        fprintf('\n!!! The input files of some jobs were found missing.\nPress CTRL-C now if you do not wish to run the pipeline or any key to continue anyway...\n');        
         pause        
     else
-        warning('\nThe input files of some jobs were found missing.\n');
+        warning('\n!!! The input files of some jobs were found missing.\n');
     end
 end
 
@@ -866,11 +845,8 @@ else
     str_txt = '';
 end
 
-%% find all the jobs that depend on one job 
+%% find all the jobs that depend on a set of jobs 
 function mask_child = sub_find_children(mask,graph_deps)
-% GRAPH_DEPS(J,K) == 1 if and only if JOB K depends on JOB J. GRAPH_DEPS =
-% 0 otherwise. This (ugly but reasonably fast) recursive code will work
-% only if the directed graph defined by GRAPH_DEPS is acyclic.
 
 if max(double(mask))>0
     mask_child = max(graph_deps(mask,:),[],1);    
@@ -880,7 +856,7 @@ end
 
 %% Test if the inputs of some jobs are missing, and set restart
 %% flags on the jobs that can produce those inputs.
-function flag_parent = sub_restart_parents(flag_restart_new,flag_restart,pipeline,list_jobs,deps,graph_deps,flag_verbose)
+function flag_parent = sub_restart_parents(flag_restart_new,flag_restart,list_jobs,files_in,files_out,graph_deps,flag_verbose)
 
 list_restart = find(flag_restart_new);
 
@@ -889,32 +865,24 @@ flag_parent = false(size(flag_restart_new));
 for num_j = list_restart % loop over jobs that need to be restarted
     
     name_job = list_jobs{num_j};
-    
-    % Pick up parents that are not already scheduled to be restarted
-    list_num_parent = find(graph_deps(:,num_j)&~flag_restart_new(:)&~flag_restart(:));     
-    
-    for num_l = list_num_parent'
+    flag_files = false([length(files_in.(name_job)) 1]);
+    for num_f = 1:length(files_in.(name_job))
+        flag_files(num_f) = psom_exist(files_in.(name_job){num_f});
+    end
+    if any(~flag_files)
+
+        target_files = files_in.(name_job)(~flag_files);
+      
+        % Pick up parents that are not already scheduled to be restarted
+        list_num_parent = find(graph_deps(:,num_j)&~flag_restart_new(:)&~flag_restart(:));     
+        flag_missing = false;
+        for num_l = list_num_parent'
         
-        name_job2 = list_jobs{num_l};
-        flag_OK = true;
-        
-        for num_f = 1:length(deps.(name_job).(name_job2))
-            flag_file = psom_exist(deps.(name_job).(name_job2){num_f});
-            
-            if ~flag_file
-                if flag_verbose
-                    if flag_OK
-                        fprintf('    The following file(s) produced by the job %s are missing to process job %s.\n',name_job2,name_job);
-                        fprintf('        %s\n',deps.(name_job).(name_job2){num_f});
-                    else
-                        fprintf('        %s\n',deps.(name_job).(name_job2){num_f});
-                    end
-                end
-            end
-            flag_OK = flag_OK & flag_file;
+            name_job2 = list_jobs{num_l};
+            mask_missing = ismember(files_out.(name_job2),target_files);
+            flag_missing = any(mask_missing);
         end
-        
-        if ~flag_OK
+        if flag_missing
             flag_parent(num_l) = true;
         end
     end
