@@ -313,7 +313,7 @@ switch opt.mode
         end
     otherwise
         if isempty(time_between_checks)
-            time_between_checks = 1;
+            time_between_checks = 0;
         end
         if isempty(nb_checks_per_point)
             nb_checks_per_point = 60;

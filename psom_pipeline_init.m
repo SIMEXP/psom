@@ -447,6 +447,8 @@ job_status_old = job_status;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 flag_restart = false([1 length(job_status)]);
+flag_start = false([1 length(job_status)]);
+flag_start(ismember(job_status_old,{'none','failed','exit'})) = true;
 if flag_verbose
     fprintf('\nSetting up the to-do list ...\n');
 end
@@ -522,7 +524,7 @@ for num_j = 1:nb_jobs
             %% restart the children of the restarted jobs that were not
             %% already planned to be restarted
             mask_new_restart2 = sub_find_children(mask_new_restart,graph_deps);
-            mask_new_restart2 = mask_new_restart2 & ~flag_restart;           
+            mask_new_restart2 = mask_new_restart2 & ~flag_restart & ~flag_start;           
             
             list_add = find(mask_new_restart2&~mask_new_restart);
             if ~isempty(list_add)
@@ -537,8 +539,8 @@ for num_j = 1:nb_jobs
             end
             
             %% restart the parents of the restarted jobs 
-            mask_new_restart3 = sub_restart_parents(mask_new_restart,flag_restart,list_jobs,files_in,files_out,graph_deps,flag_verbose);
-            mask_new_restart3 = mask_new_restart3 & ~flag_restart;
+            mask_new_restart3 = sub_restart_parents(mask_new_restart,flag_restart,flag_start,list_jobs,files_in,files_out,graph_deps,flag_verbose);
+            mask_new_restart3 = mask_new_restart3 & ~flag_restart & ~flag_start;
             
             list_add2 = find(mask_new_restart3&~mask_new_restart);
             if ~isempty(list_add2)
@@ -855,7 +857,7 @@ end
 
 %% Test if the inputs of some jobs are missing, and set restart
 %% flags on the jobs that can produce those inputs.
-function flag_parent = sub_restart_parents(flag_restart_new,flag_restart,list_jobs,files_in,files_out,graph_deps,flag_verbose)
+function flag_parent = sub_restart_parents(flag_restart_new,flag_restart,flag_start,list_jobs,files_in,files_out,graph_deps,flag_verbose)
 
 list_restart = find(flag_restart_new);
 
@@ -873,7 +875,7 @@ for num_j = list_restart % loop over jobs that need to be restarted
         target_files = files_in.(name_job)(~flag_files);
       
         % Pick up parents that are not already scheduled to be restarted
-        list_num_parent = find(graph_deps(:,num_j)&~flag_restart_new(:)&~flag_restart(:));     
+        list_num_parent = find(graph_deps(:,num_j)&~flag_restart_new(:)&~flag_restart(:)&~flag_start(:));     
         flag_missing = false;
         for num_l = list_num_parent'
         

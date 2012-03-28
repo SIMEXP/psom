@@ -321,8 +321,7 @@ end
 % interrupting the pipeline of if an error occurs
 try    
     
-    %% If the pipeline manager is executed in the session, open the log
-    %% file
+    %% open the log file
     if strcmp(gb_psom_language,'matlab');
         hfpl = fopen(file_pipe_log,'a');
     else
@@ -341,7 +340,7 @@ try
     %% Load the pipeline
     load(file_pipeline,'list_jobs','graph_deps','files_in');                
     
-    %% update dependencies
+    %% Update dependencies
     mask_finished = false([length(list_jobs) 1]);
     for num_j = 1:length(list_jobs)
         mask_finished(num_j) = strcmp(status.(list_jobs{num_j}),'finished');
