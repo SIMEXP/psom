@@ -33,6 +33,7 @@ function [flag_failed,msg] = psom_run_script(cmd,script,opt,logs)
 %                       UNIX, start in WINDOWS.
 %        'qsub'       : remote execution using qsub (torque, SGE, PBS).
 %        'msub'       : remote execution using msub (MOAB)
+%        'condor'     : remote execution using condor
 %
 %    SHELL_OPTIONS
 %       (string, default GB_PSOM_SHELL_OPTIONS defined in PSOM_GB_VARS)
@@ -88,16 +89,16 @@ function [flag_failed,msg] = psom_run_script(cmd,script,opt,logs)
 %
 %    EQSUB
 %        (string) where the error log file from QSUB will be generated.
-%        This is only required in 'qsub' and 'msub' modes.
+%        This is only required in 'qsub' and 'msub' and 'condor' modes.
 %
 %    OQSUB
 %        (string) where the output log file from QSUB will be generated.
-%        This is only required in 'qsub' and 'msub' modes.
+%        This is only required in 'qsub' and 'msub' and 'condor' modes.
 %
 %    FAILED
 %        (string) the name of a tag file to indicate that the job has
 %        failed in case the submission was not successful.
-%        This is only required in 'qsub' and 'msub' modes.
+%        This is only required in 'qsub' and 'msub' and 'condor' modes.
 %
 %    EXIT
 %        (string) the name of an empty file that will be generated 
@@ -197,7 +198,7 @@ if nargin < 4
     logs = [];
 else
     list_fields   = { 'txt' , 'eqsub' , 'oqsub' , 'failed' , 'exit' };
-    if ismember(opt.mode,{'qsub','msub'})
+    if ismember(opt.mode,{'qsub','msub','condor'})
         list_defaults = { NaN   , NaN     , NaN     , NaN    , ''     };
     else
         list_defaults = { NaN   , ''      , ''      , ''     , ''     };
@@ -206,7 +207,7 @@ else
 end
 
 %% Check that the execution mode exists
-if ~ismember(opt.mode,{'session','background','batch','qsub','msub'})
+if ~ismember(opt.mode,{'session','background','batch','qsub','msub','condor'})
     error('%s is an unknown mode of command execution. Sorry dude, I must quit ...',opt.mode);
 end
 
@@ -377,19 +378,22 @@ switch opt.mode
         end
         [flag_failed,msg] = system(instr_batch);    
         
-    case {'qsub','msub'}
+    case {'qsub','msub','condor'}
         script_submit = [gb_psom_path_psom 'psom_submit.sh'];
+        switch opt.mode
+            case {'qsub','msub'}
+                sub = opt.mode;
+            case 'condor'
+                sub = [gb_psom_path_psom 'psom_condor.sh'];
+        end
         if ~isempty(logs)
             qsub_logs = [' -e \"' logs.eqsub '\" -o \"' logs.oqsub '\"'];
         else 
             qsub_logs = '';
         end
-        instr_qsub = sprintf('%s%s -N %s %s %s',opt.mode,qsub_logs,opt.name_job,opt.qsub_options,['\"' script '\"']);            
+        instr_qsub = sprintf('%s%s -N %s %s %s',sub,qsub_logs,opt.name_job,opt.qsub_options,['\"' script '\"']);            
         if ~isempty(logs)
-            instr_qsub = sprintf('%s%s -N %s %s %s',opt.mode,qsub_logs,opt.name_job,opt.qsub_options,['\"' script '\"']);
             instr_qsub = [script_submit ' "' instr_qsub '" ' logs.failed ' ' logs.exit ' ' logs.oqsub ];
-        else
-            instr_qsub = sprintf('%s%s -N %s %s %s',opt.mode,qsub_logs,opt.name_job,opt.qsub_options,['"' script '"']); 
         end
         if opt.flag_debug
             if strcmp(gb_psom_language,'octave')

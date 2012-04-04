@@ -68,14 +68,15 @@ function [] = psom_run_pipeline(pipeline,opt)
 %                       UNIX, start in WINDOWS.
 %        'qsub'       : remote execution using qsub (torque, SGE, PBS).
 %        'msub'       : remote execution using msub (MOAB)
+%        'condor'     : remote execution using condor
 %
 %    MODE_PIPELINE_MANAGER
 %        (string, default GB_PSOM_MODE_PM defined in PSOM_GB_VARS)
 %        same as OPT.MODE, but applies to the pipeline manager itself.
 %
 %    MAX_QUEUED
-%        (integer, default 1 'batch' modes, Inf in 'session' and 'qsub'
-%        modes)
+%        (integer, default 1 'batch' modes, Inf in 'session', 'qsub',
+%        'msub' and 'condor' modes)
 %        The maximum number of jobs that can be processed
 %        simultaneously. Some qsub systems actually put restrictions
 %        on that. Contact your local system administrator for more info.
@@ -288,7 +289,7 @@ if max_queued == 0
                 opt.max_queued = gb_psom_max_queued;
                 max_queued = gb_psom_max_queued;
             end
-        case {'session','qsub','msub'}
+        case {'session','qsub','msub','condor'}
             if isempty(gb_psom_max_queued)
                 opt.max_queued = Inf;
                 max_queued = Inf;
@@ -299,7 +300,7 @@ if max_queued == 0
     end % switch action
 end % default of max_queued
 
-if ~ismember(opt.mode,{'session','background','batch','qsub','msub'})
+if ~ismember(opt.mode,{'session','background','batch','qsub','msub','condor'})
     error('%s is an unknown mode of pipeline execution. Sorry dude, I must quit ...',opt.mode);
 end
 

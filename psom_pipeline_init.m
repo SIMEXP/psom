@@ -542,9 +542,14 @@ mask_new_restart = true;
 while any(mask_new_restart)
     list_idle = list_jobs(~flag_restart);
     ind_idle = find(~flag_restart);
-    files_re_in = psom_files2cell(rmfield(files_in,list_idle));
+    files_re_in = unique(psom_files2cell(rmfield(files_in,list_idle)));
     files_re_out = psom_files2cell(rmfield(files_out,list_idle));
     files_nec = files_re_in(~ismember(files_re_in,files_re_out));
+    mask_nec = true(size(files_nec));
+    for num_n = 1:length(files_nec)
+        mask_nec(num_n) = ~psom_exist(files_nec{num_n});
+    end
+    files_nec = files_nec(mask_nec);
     if isempty(files_nec)
         mask_new_restart = false;
         continue

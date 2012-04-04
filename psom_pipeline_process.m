@@ -23,14 +23,15 @@ function [] = psom_pipeline_process(file_pipeline,opt)
 %                       UNIX, start in WINDOWS.
 %        'qsub'       : remote execution using qsub (torque, SGE, PBS).
 %        'msub'       : remote execution using msub (MOAB)
+%        'condor'     : remote execution using condor
 %
 %    MODE_PIPELINE_MANAGER
 %        (string, default same as OPT.MODE) same as OPT.MODE, but
 %        applies to the pipeline manager itself rather than the jobs.
 %
 %    MAX_QUEUED
-%        (integer, default 1 'batch' modes, Inf in 'session' and 'qsub'
-%        modes)
+%        (integer, default 1 'batch' modes, Inf in 'session', 'qsub',
+%        'msub' and 'condor' modes)
 %        The maximum number of jobs that can be processed
 %        simultaneously. Some qsub systems actually put restrictions
 %        on that. Contact your local system administrator for more info.
@@ -76,13 +77,14 @@ function [] = psom_pipeline_process(file_pipeline,opt)
 %        submit new jobs.
 %
 %    TIME_COOL_DOWN
-%        (real value, default 2 in 'qsub' mode, 0 otherwise)
+%        (real value, default 2 in 'qsub', 'msub' and 'condor' modes, 
+%        0 otherwise)
 %        A small pause time between evaluation of status and flushing of
 %        tags. This is to let qsub the time to write the output/error
 %        log files.
 %
 %    NB_CHECKS_PER_POINT
-%        (integer,defautlt 6) After NB_CHECKS_PER_POINT successive checks
+%        (integer,default 6) After NB_CHECKS_PER_POINT successive checks
 %        where the pipeline processor did not find anything to do, it
 %        will issue a '.' verbose to show it is not dead.
 %
@@ -181,14 +183,14 @@ if max_queued == 0
         case {'batch','background'}
             opt.max_queued = 1;
             max_queued = 1;
-        case {'session','qsub','msub'}
+        case {'session','qsub','msub','condor'}
             opt.max_queued = Inf;
             max_queued = Inf;
     end % switch action
 end % default of max_queued
 
 %% Test the the requested mode of execution of jobs exists
-if ~ismember(opt.mode,{'session','batch','background','qsub','msub'})
+if ~ismember(opt.mode,{'session','batch','background','qsub','msub','condor'})
     error('%s is an unknown mode of pipeline execution. Sorry dude, I must quit ...',opt.mode);
 end
 
@@ -219,7 +221,7 @@ switch opt.mode
             opt.time_cool_down = 0;
             time_cool_down = 0;
         end
-    case {'qsub','msub'}
+    case {'qsub','msub','condor'}
         if isempty(time_between_checks)
             opt.time_between_checks = 10;
             time_between_checks = 10;
@@ -229,7 +231,7 @@ switch opt.mode
             nb_checks_per_point = 6;
         end
         if isempty(time_cool_down)
-            opt.time_cool_down = 1;
+            opt.time_cool_down = 2;
             time_cool_down = 2;
         end
 end
@@ -280,7 +282,7 @@ save(file_pipe_running,'str_now');
 %% If specified, start the pipeline manager in the background %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if ismember(opt.mode_pipeline_manager,{'batch','background','qsub','msub'})
+if ismember(opt.mode_pipeline_manager,{'batch','background','qsub','msub','condor'})
     
     % save the options of the pipeline manager
     opt.mode_pipeline_manager = 'session';

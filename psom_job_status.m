@@ -15,7 +15,8 @@ function curr_status = psom_job_status(path_logs,list_jobs,mode_pipe)
 %
 % MODE_PIPE
 %       (string) the execution mode of the pipeline.
-%       Possible values : 'session', 'batch', 'background', 'qsub', 'msub'.
+%       Possible values : 'session', 'batch', 'background', 'qsub', 'msub'
+%       'condor'.
 %
 % _________________________________________________________________________
 % OUTPUTS:
@@ -114,7 +115,7 @@ for num_j = 1:nb_jobs
    if flag_finished
         
         switch mode_pipe
-            case {'qsub','msub'}
+            case {'qsub','msub','condor'}
                 if flag_oqsub&&flag_exit
                     curr_status{num_j} = 'finished';
                 else
@@ -133,7 +134,7 @@ for num_j = 1:nb_jobs
     elseif flag_failed
 
         switch mode_pipe
-            case {'qsub','msub'}
+            case {'qsub','msub','condor'}
                 if flag_oqsub&&flag_exit
                     curr_status{num_j} = 'failed';
                 else
