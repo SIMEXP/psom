@@ -5,11 +5,11 @@
 
 %% Use the local configuration file if any
 if ~exist('gb_psom_gb_vars_local','var')&&exist('psom_gb_vars_local.m','file')		
-	gb_psom_gb_vars_local = true;
-	psom_gb_vars_local
-	return	
+    gb_psom_gb_vars_local = true;
+    psom_gb_vars_local
+    return
 end
-		
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% The following variables need to be changed to configure the pipeline %%
 %% system                                                               %%
@@ -21,12 +21,14 @@ gb_psom_command_matlab = [matlabroot filesep 'bin' filesep 'matlab'];
 % how to invoke octave
 gb_psom_command_octave = [matlabroot filesep 'bin' filesep 'octave']; 
 
-% Options for the sge qsub system, example : '-q all.q@yeatman,all.q@zeus'
+% Options for the sge qsub/msub/condor system. For condor, see the help of 
+% psom_condor.sh 
+% Example : '-q all.q@yeatman,all.q@zeus'
 % will force qsub to only use the yeatman and zeus workstations through the
 % queue called all.q
 gb_psom_qsub_options = ''; 
 
-% Options for the shell in batch or qsub modes
+% Options for the shell in batch, qsub, msub or condor modes
 gb_psom_shell_options = ''; 
 
 % Options for the execution mode of the pipeline 
@@ -62,10 +64,10 @@ gb_psom_pdf_viewer = 'evince';
 %% The following variables should not be changed %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% PSOM version
+% PSOM version
 gb_psom_version = '0.9'; % PSOM release number
 
-%% Is the environment Octave or Matlab ?
+% Is the environment Octave or Matlab ?
 if exist('OCTAVE_VERSION','builtin')    
     % this is octave !
     gb_psom_language = 'octave'; 
@@ -74,14 +76,14 @@ else
     gb_psom_language = 'matlab'; 
 end
 
-%% Get langage version
+% Get langage version
 if strcmp(gb_psom_language,'octave');
     gb_psom_language_version = OCTAVE_VERSION;
 else
     gb_psom_language_version = version;
 end 
 
-%% In which path is PSOM ?
+% In which path is PSOM ?
 str_gb_vars = which('psom_gb_vars');
 if isempty(str_gb_vars)
     error('PSOM is not in the path ! (could not find PSOM_GB_VARS)')
@@ -92,10 +94,10 @@ if strcmp(gb_psom_path_psom,'.')
 end
 gb_psom_path_psom = [gb_psom_path_psom filesep];
 
-%% In which path is the PSOM demo ?
+% In which path is the PSOM demo ?
 gb_psom_path_demo = cat(2,gb_psom_path_psom,'data_demo',filesep);
 
-%% What is the operating system ?
+% What is the operating system ?
 if isunix
     gb_psom_OS = 'unix';
 elseif ispc
@@ -105,23 +107,23 @@ else
     gb_psom_OS = 'unkown';
 end
 
-%% getting user name.
+% Getting user name.
 switch (gb_psom_OS)
     case 'unix'
-	gb_psom_user = getenv('USER');
+        gb_psom_user = getenv('USER');
     case 'windows'
-	gb_psom_user = getenv('USERNAME');	
+        gb_psom_user = getenv('USERNAME');	
     otherwise
-	gb_psom_user = 'unknown';
+        gb_psom_user = 'unknown';
 end
 
-%% Getting the local computer's name
+% Getting the local computer's name
 switch (gb_psom_OS)
     case 'unix'
-	[gb_psom_tmp_var,gb_psom_localhost] = system('uname -n');
+        [gb_psom_tmp_var,gb_psom_localhost] = system('uname -n');
         gb_psom_localhost = deblank(gb_psom_localhost);
     otherwise
-	gb_psom_localhost = 'unknown';
+        gb_psom_localhost = 'unknown';
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

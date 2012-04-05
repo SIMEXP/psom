@@ -269,7 +269,7 @@ if opt.flag_pause
     if opt.flag_pause
         pause
     end
-    psom_pipeline_visu(opt.path_logs,'flowchart')
+    psom_pipeline_visu(opt.path_logs,'flowchart');
 end
 
 %% List the jobs
@@ -281,7 +281,7 @@ if opt.flag_pause
     pause
 end
 
-psom_pipeline_visu(opt.path_logs,'finished')
+psom_pipeline_visu(opt.path_logs,'finished');
 
 %% Display log
 msg = 'The demo is about to display the log of the ''sum'' job';
@@ -292,7 +292,7 @@ if opt.flag_pause
     pause
 end
 
-psom_pipeline_visu(opt.path_logs,'log','sum')
+psom_pipeline_visu(opt.path_logs,'log','sum');
 
 %% Display Computation time
 msg = 'The demo is about to display the computation time for all jobs of the pipeline';
@@ -303,7 +303,7 @@ if opt.flag_pause
     pause
 end
 
-psom_pipeline_visu(opt.path_logs,'time','')
+psom_pipeline_visu(opt.path_logs,'time','');
 
 %% Monitor history
 msg = 'The demo is about to monitor the history of the pipeline';
@@ -314,4 +314,4 @@ if opt.flag_pause
     pause
 end
 
-psom_pipeline_visu(opt.path_logs,'monitor')
+psom_pipeline_visu(opt.path_logs,'monitor');
