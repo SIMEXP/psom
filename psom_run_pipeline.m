@@ -62,10 +62,10 @@ function [] = psom_run_pipeline(pipeline,opt)
 %        (string, default GB_PSOM_MODE defined in PSOM_GB_VARS)
 %        how to execute the jobs :
 %        'session'    : current Matlab session.
-%        'background' : background execution, non-unlogin-proofed 
+%        'background' : background execution, not-unlogin-proofed 
 %                       (asynchronous system call).
 %        'batch'      : background execution, unlogin-proofed ('at' in 
-%                       UNIX, start in WINDOWS.
+%                       UNIX, start in WINDOWS).
 %        'qsub'       : remote execution using qsub (torque, SGE, PBS).
 %        'msub'       : remote execution using msub (MOAB)
 %        'condor'     : remote execution using condor
@@ -183,6 +183,13 @@ function [] = psom_run_pipeline(pipeline,opt)
 %    the name of any job in the pipeline. The variable <NAME_JOB> is a
 %    string which describes the current status of the job (either
 %    'submitted', 'running', 'finished', 'failed', 'none').
+%
+% PIPE_profile.mat
+%
+%    A .mat file which contains variables <NAME_JOB> where NAME_JOB is
+%    the name of any job in the pipeline. The variable <NAME_JOB> is a
+%    structure where each field is a profile variable fot the execution
+%    of the job.
 %
 % _________________________________________________________________________
 % SEE ALSO:
