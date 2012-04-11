@@ -6,7 +6,7 @@ function [job,cleanup] = psom_pipeline2job(pipeline,path_logs,opt)
 % All clean-up jobs are bundled into a separate "job".
 %
 % SYNTAX:
-% [JOB,CLEANUP] = NIAK_PIPELINE2JOB(PIPELINE,PATH_LOGS,OPT)
+% [JOB,CLEANUP] = PSOM_PIPELINE2JOB(PIPELINE,PATH_LOGS,OPT)
 %
 % _________________________________________________________________________
 % INPUTS:
