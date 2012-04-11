@@ -704,6 +704,10 @@ if exist('file_pipe_running','var')
     end
 end
 
+if strcmp(opt.mode,'session')&&strcmp(opt.mode_pipeline_manager,'session')&&flag_any_fail
+    error('All jobs have been processed, but some jobs have failed. You may want to restart the pipeline latter if you managed to fix the problems.')
+end
+
 %%%%%%%%%%%%%%%%%%
 %% subfunctions %%
 %%%%%%%%%%%%%%%%%%
