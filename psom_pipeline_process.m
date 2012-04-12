@@ -274,9 +274,11 @@ if ~exist(file_pipeline,'file') % Does the pipeline exist ?
     error('Could not find the pipeline file %s. You first need to initialize the pipeline using PSOM_PIPELINE_INIT !',file_pipeline);
 end
 
-%% Create a running tag on the pipeline
-str_now = datestr(clock);
-save(file_pipe_running,'str_now');
+%% Create a running tag on the pipeline (if not done during the initialization phase)
+if ~psom_exist(file_pipe_running)
+    str_now = datestr(clock);
+    save(file_pipe_running,'str_now');
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% If specified, start the pipeline manager in the background %%
@@ -397,11 +399,11 @@ try
 
         %% Update logs & status
         save(file_logs           ,'-struct','logs');
-        save(file_logs_backup    ,'-struct','logs');
+        copyfile(file_logs,file_logs_backup,'f');        
         save(file_status         ,'-struct','status');
-        save(file_status_backup  ,'-struct','status');        
+        copyfile(file_status,file_status_backup,'f');
         save(file_profile        ,'-struct','profile');
-        save(file_profile_backup ,'-struct','profile');
+        copyfile(file_profile,file_profile_backup,'f');
         flag_nothing_happened = true;
         
         %% Update the status of running jobs
@@ -615,11 +617,11 @@ end
 
 %% Update the final status
 save(file_logs           ,'-struct','logs');
-save(file_logs_backup    ,'-struct','logs');
+copyfile(file_logs,file_logs_backup,'f');
 save(file_status         ,'-struct','status');
-save(file_status_backup  ,'-struct','status');
+copyfile(file_status,file_status_backup,'f');
 save(file_profile        ,'-struct','profile');
-save(file_profile_backup ,'-struct','profile');
+copyfile(file_profile,file_profile_backup,'f');
 
 %% Print general info about the pipeline
 msg_line1 = sprintf('The processing of the pipeline is terminated.');
