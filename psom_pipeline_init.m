@@ -209,7 +209,8 @@ function [file_pipeline,flag_start] = psom_pipeline_init(pipeline,opt)
 %
 % * STAGE 4: 
 %   
-%   The current description of the pipeline is saved in the logs folder.
+%   The current description of the pipeline is saved in the logs folder
+%   and a lock file is generated.
 %
 %   The directory PATH_LOGS is created if necessary. A description of the
 %   pipeline, its dependencies and the matlab environment are saved in a 
@@ -293,8 +294,12 @@ end
 file_pipeline       = [path_logs filesep name_pipeline '.mat'                ];
 file_jobs           = [path_logs filesep name_pipeline '_jobs.mat'           ];
 file_logs           = [path_logs,filesep name_pipeline '_logs.mat'           ];
+file_logs_backup    = [path_logs,filesep name_pipeline '_logs_backup.mat'    ];
 file_status         = [path_logs,filesep name_pipeline '_status.mat'         ];
+file_status_backup  = [path_logs,filesep name_pipeline '_status_backup.mat'  ];
 file_profile        = [path_logs,filesep name_pipeline '_profile.mat'        ];
+file_profile_backup = [path_logs,filesep name_pipeline '_profile_backup.mat' ];
+file_pipe_running   = [path_logs,filesep name_pipeline '.lock'               ];
 
 list_jobs = fieldnames(pipeline);
 nb_jobs = length(list_jobs);
@@ -676,6 +681,13 @@ if ~exist(path_logs,'dir')
     end
 end
 
+%% Create a .lock file 
+if flag_verbose
+    fprintf('    Creating a ''lock'' file %s ...\n',file_pipe_running);
+end
+str_now = datestr(clock);
+save(file_pipe_running,'str_now');
+
 %% Save the jobs
 if flag_verbose
     fprintf('    Saving the individual ''jobs'' file %s ...\n',file_jobs);
@@ -736,6 +748,8 @@ else
     save(file_status,'-struct','all_status');
 end
 
+copyfile(file_status,file_status_backup,'f');
+
 %% Save the logs 
 if flag_verbose
     fprintf('    Saving the ''logs'' file %s ...\n',file_logs);
@@ -766,6 +780,8 @@ else
     save(file_logs,'-struct','all_logs');
 end
 
+copyfile(file_logs,file_logs_backup,'f'); 
+
 %% Save the profile
 if flag_verbose
     fprintf('    Saving the ''profile'' file %s ...\n',file_profile);
@@ -792,6 +808,8 @@ if strcmp(gb_psom_language,'octave')
 else
     save(file_profile,'-struct','profile');
 end
+
+copyfile(file_profile,file_profile_backup,'f');
 
 %% Clean up the log folders from old tag and log files
 if flag_verbose
