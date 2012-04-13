@@ -446,9 +446,13 @@ flag_restart = false([1 length(job_status)]);
 flag_start = false([1 length(job_status)]);
 flag_start(ismember(job_status_old,{'none','failed','exit'})) = true;
 if flag_verbose
-    fprintf('\nSetting up the to-do list ...\n');
+    fprintf('\nSetting up the to-do list. The following jobs will be executed ...\n');
 end
-
+lmax = 0;
+for num_j = 1:nb_jobs
+    lmax = max(length(list_jobs{num_j}),lmax);
+end
+lmax = lmax + 1;
 for num_j = 1:nb_jobs
     
     name_job = list_jobs{num_j};
@@ -459,7 +463,7 @@ for num_j = 1:nb_jobs
     if strcmp(job_status_old{num_j},'failed')||strcmp(job_status_old{num_j},'exit')
         flag_restart_job = true;
         if flag_verbose
-            fprintf('    The job %s had failed, it will be restarted.\n',name_job)
+            fprintf('    %s%s(failed)\n',name_job,repmat(' ',[1 lmax-length(name_job)]))
         end
     else
         %% If an old pipeline exists, check if the job has been modified
@@ -467,7 +471,7 @@ for num_j = 1:nb_jobs
             if opt.flag_update
                 flag_same = psom_cmp_var(pipeline_old.(name_job),pipeline.(name_job));
                 if ~flag_same&&flag_verbose
-                    fprintf('    The job %s has changed, it will be restarted.\n',name_job);
+                    fprintf('    %s%s(changed)\n',name_job,repmat(' ',[1 lmax-length(name_job)]))
                 end
             else
                 flag_same = true;
@@ -476,17 +480,17 @@ for num_j = 1:nb_jobs
                 end
             end
             if flag_same && strcmp(job_status_old{num_j},'none')
-                fprintf('    The job %s has not yet been processed, it will be executed.\n',name_job);
+                fprintf('    %s%s(new)\n',name_job,repmat(' ',[1 lmax-length(name_job)]))
                 flag_restart_job = true;
             elseif flag_same && (strcmp(job_status_old{num_j},'submitted')|strcmp(job_status_old{num_j},'running'))
-                fprintf('    The job %s was not submitted successfully, it will be restarted.\n',name_job);
+                fprintf('    %s%s(submission failed)\n',name_job,repmat(' ',[1 lmax-length(name_job)]))
                 flag_restart_job = true;
             end
             flag_restart_job = flag_restart_job||~flag_same;
         else
             flag_restart_job = true;
             if flag_verbose
-                fprintf('    The job %s is new, it will be executed.\n',name_job)
+                fprintf('    %s%s(new)\n',name_job,repmat(' ',[1 lmax-length(name_job)]))
             end
         end
         
@@ -501,7 +505,7 @@ for num_j = 1:nb_jobs
         end
         if flag_force&&~flag_restart(num_j)
             if flag_verbose
-                fprintf('    User has manually forced to restart job %s.\n',name_job)
+                fprintf('    %s%s(manual restart)\n',name_job,repmat(' ',[1 lmax-length(name_job)]))
             end
             flag_restart_job = true;
         end
@@ -523,12 +527,9 @@ for num_j = 1:nb_jobs
             
             list_add = find(mask_new_restart2&~mask_new_restart);
             if ~isempty(list_add)
-                if flag_verbose
-                    fprintf('    The following job(s) will be restarted because they are children of restarted jobs :\n')
-                end
                 for num_a = 1:length(list_add)
                     if flag_verbose
-                        fprintf('        %s\n',list_jobs{list_add(num_a)});
+                        fprintf('    %s%s(child of a restarted job)\n',list_jobs{list_add(num_a)},repmat(' ',[1 lmax-length(list_jobs{list_add(num_a)})]))
                     end
                 end
             end            
@@ -567,10 +568,9 @@ while any(mask_new_restart)
         end
     end
     if flag_verbose && any(mask_new_restart)
-        fprintf('    The following job(s) will be restarted to produce missing files:\n')
         list_new = find(mask_new_restart);
         for num_n = 1:length(list_new)
-            fprintf('        %s\n',list_jobs{list_new(num_n)});
+            fprintf('    %s%s(produce necessary files)\n',list_jobs{list_new(num_n)},repmat(' ',[1 lmax-length(list_jobs{list_new(num_n)})]))
         end         
     end
 
@@ -582,12 +582,9 @@ while any(mask_new_restart)
             
         list_add = find(mask_new_restart2&~mask_new_restart);
         if ~isempty(list_add)
-            if flag_verbose
-                fprintf('    The following job(s) will be restarted because they are children of restarted jobs :\n')
-            end
             for num_a = 1:length(list_add)
                 if flag_verbose
-                    fprintf('        %s\n',list_jobs{list_add(num_a)});
+                    fprintf('    %s%s(child of a restarted job)\n',list_jobs{list_add(num_a)},repmat(' ',[1 lmax-length(list_jobs{list_add(num_a)})]))
                 end
             end
         end                       
@@ -607,7 +604,7 @@ job_status = repmat({'none'},[nb_jobs 1]);
 
 if flag_old_pipeline           
     if flag_verbose
-        fprintf('    Initializing the new status (keeping finished jobs "as is")...\n');
+        fprintf('Initializing the new status (keeping finished jobs "as is")...\n');
     end
 end
 flag_finished = ismember(job_status_old,'finished');
@@ -616,7 +613,7 @@ flag_finished = flag_finished & ~flag_restart;
 job_status(flag_finished) = repmat({'finished'},[sum(flag_finished) 1]);
 
 if ~any(ismember(job_status,'none'))
-    fprintf('    All jobs are already completed, there is nothing to do. Bye for now !\n')
+    fprintf('All jobs are already completed, there is nothing to do. Bye for now !\n')
     flag_start = false;
     return    
 else
@@ -627,7 +624,7 @@ end
 %% Check if all the files necessary to complete each job of the pipeline 
 %% can be found
 if flag_verbose
-    fprintf('    Checking if all the files necessary to complete the pipeline can be found ...\n');
+    fprintf('Checking if all the files necessary to complete the pipeline can be found ...\n');
 end
 all_in = psom_files2cell(rmfield(files_in,list_jobs(flag_finished)));
 all_out = psom_files2cell(files_out);
