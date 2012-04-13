@@ -544,8 +544,8 @@ for num_j = 1:nb_jobs
 end
 
 %% iteratively restart jobs that produce necessary and missing input files
-mask_new_restart = true;
-while any(mask_new_restart)
+flag_miss = true;
+while flag_miss
     list_idle = list_jobs(~flag_restart);
     ind_idle = find(~flag_restart);
     files_re_in = unique(psom_files2cell(rmfield(files_in,list_idle)));
@@ -573,7 +573,7 @@ while any(mask_new_restart)
             fprintf('    %s%s(produce necessary files)\n',list_jobs{list_new(num_n)},repmat(' ',[1 lmax-length(list_jobs{list_new(num_n)})]))
         end         
     end
-
+    flag_miss = any(mask_new_restart);
     while any(mask_new_restart)  
         %% restart the children of the restarted jobs that were not
         %% already planned to be restarted
