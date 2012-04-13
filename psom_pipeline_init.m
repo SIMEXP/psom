@@ -565,7 +565,7 @@ while flag_miss
     for num_j = 1:length(list_idle)
         if any(ismember(files_out.(list_idle{num_j}),files_nec))
             mask_new_restart(ind_idle(num_j)) = true;        
-            flag_restart(num_j) = true;
+            flag_restart(ind_idle(num_j)) = true;
         end
     end
     if flag_verbose && any(mask_new_restart)
