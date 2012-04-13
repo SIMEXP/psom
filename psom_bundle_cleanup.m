@@ -66,10 +66,10 @@ for num_j = 1:nb_jobs
         cleanup.files_clean.(list_jobs{num_j}) = pipeline.(list_jobs{num_j}).files_clean;
     end
 end
-cleanup.files_clean = psom_files2cell(cleanup.files_clean);
 
 if ~isempty(fieldnames(cleanup.files_clean))
     pipeline_b = rmfield(pipeline,fieldnames(cleanup.files_clean));
+    cleanup.files_clean = psom_files2cell(cleanup.files_clean);
     pipeline_b.(name) = cleanup;
 else
     pipeline_b = pipeline;
