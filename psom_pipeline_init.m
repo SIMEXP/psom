@@ -558,6 +558,7 @@ while flag_miss
     files_nec = files_nec(mask_nec);
     if isempty(files_nec)
         mask_new_restart = false;
+        flag_miss = false;
         continue
     end
     mask_new_restart = false(size(flag_restart));
