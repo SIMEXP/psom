@@ -99,6 +99,7 @@ if opt.flag_cleanup
     end
     list_jobs = fieldnames(pipeline);
     nb_jobs = length(list_jobs);
+    cleanup.files_clean = psom_files2cell(cleanup.files_clean);
 else
     cleanup = struct();
 end
