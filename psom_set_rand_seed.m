@@ -34,10 +34,12 @@ function seed = psom_set_rand_seed(seed)
 %
 %   This function should work for every version and language.
 %
+%   If the seed is empty, PSOM_SET_RAND_SEED does not do anything.
+%
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008-2010.
 % Centre de recherche de l'institut de Gériatrie de Montréal
 % Département d'informatique et de recherche opérationnelle
-% Université de Montréal, 2010-2011.
+% Université de Montréal, 2010-2012.
 % Maintainer : pierre.bellec@criugm.qc.ca
 % See licensing information in the code.
 % Keywords : random number generator, simulation
@@ -60,9 +62,14 @@ function seed = psom_set_rand_seed(seed)
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
 
-if nargin == 0
+if (nargin == 0)
     seed = sum(100*clock);
 end
+
+if isempty(seed)
+    return
+end
+
 if exist('OCTAVE_VERSION','builtin')
     rand('state',seed);  % Octave
     randn('state',seed); % Octave
