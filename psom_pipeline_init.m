@@ -312,6 +312,17 @@ if flag_verbose
     fprintf('Examining the dependencies of the pipeline ...\n');
 end
 
+%% Remove empty jobs
+if flag_verbose
+    fprintf('    Removing empty jobs ...\n');
+end
+
+for num_j = 1:nb_jobs
+    if length(fieldnames(pipeline.(list_jobs{num_j})))==0
+        pipeline = rmfield(pipeline,list_jobs{num_j});
+    end
+end
+
 %% Check that all jobs have a "command" field
 if flag_verbose
     fprintf('    Checking that all jobs are associated with a command ...\n');
