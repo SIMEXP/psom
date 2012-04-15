@@ -129,8 +129,9 @@ if opt.flag_files
 end
 
 %% Build the job
-job.command = 'psom_run_pipeline(opt.pipeline,opt.psom);';
-job.opt.pipeline = pipeline;
+job.command = 'pipeline = cell2struct(opt.pipeline(:),opt.list_jobs,1); psom_run_pipeline(pipeline,opt.psom);';
+job.opt.pipeline = struct2cell(pipeline);
+job.opt.list_jobs = fieldnames(pipeline);
 job.opt.psom.mode = 'session';
 job.opt.psom.mode_pipeline_manager = 'session';
 job.opt.psom.path_logs = path_logs;
