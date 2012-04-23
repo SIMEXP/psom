@@ -295,6 +295,7 @@ file_pipeline       = [path_logs filesep name_pipeline '.mat'                ];
 file_jobs           = [path_logs filesep name_pipeline '_jobs.mat'           ];
 file_logs           = [path_logs,filesep name_pipeline '_logs.mat'           ];
 file_logs_backup    = [path_logs,filesep name_pipeline '_logs_backup.mat'    ];
+file_news_feed      = [path_logs,filesep name_pipeline '_news_feed.csv'      ];
 file_status         = [path_logs,filesep name_pipeline '_status.mat'         ];
 file_status_backup  = [path_logs,filesep name_pipeline '_status_backup.mat'  ];
 file_profile        = [path_logs,filesep name_pipeline '_profile.mat'        ];
@@ -825,6 +826,9 @@ if flag_verbose
     fprintf('    Cleaning up old tags and logs from the logs folders ...\n')
 end
 
+if psom_exist(file_news_feed)
+    psom_clean(file_news_feed);
+end
 delete([path_logs filesep '*.running']);
 delete([path_logs filesep '*.failed']);
 delete([path_logs filesep '*.finished']);

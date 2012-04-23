@@ -177,6 +177,15 @@ function [] = psom_run_pipeline(pipeline,opt)
 %    string which contains the log of the job. Jobs that have not been
 %    processed yet have an empty log.
 %
+% PIPE_news_feed.csv
+%
+%    A comma-separated values (csv) file, with one line per job 
+%    submission/completion/failure. This file is reset everytime the 
+%    pipeline is started. Jobs that were already completed/failed before
+%    anything is processed are listed as such. This file is useful to 
+%    monitor the activity of the pipeline manager for third-party 
+%    software.
+%    
 % PIPE_status.mat
 %
 %    A .mat file which contains variables <NAME_JOB> where NAME_JOB is

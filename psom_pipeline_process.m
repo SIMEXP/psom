@@ -248,6 +248,7 @@ hat_qsub_e = sprintf('\n\n*****************\nERROR QSUB\n*****************\n');
 [path_logs,name_pipeline,ext_pl] = fileparts(file_pipeline);
 file_pipe_running   = [ path_logs filesep name_pipeline '.lock'               ];
 file_pipe_log       = [ path_logs filesep name_pipeline '_history.txt'        ];
+file_news_feed      = [ path_logs filesep name_pipeline '_news_feed.csv'        ];
 file_manager_opt    = [ path_logs filesep name_pipeline '_manager_opt.mat'    ];
 file_logs           = [ path_logs filesep name_pipeline '_logs.mat'           ];
 file_logs_backup    = [ path_logs filesep name_pipeline '_logs_backup.mat'    ];
@@ -332,6 +333,13 @@ try
         hfpl = file_pipe_log;
     end
     
+    %% Open the news feed file
+    if strcmp(gb_psom_language,'matlab');
+        hfnf = fopen(file_news_feed,'w');
+    else
+        hfnf = file_news_feed;
+    end
+   
     %% Print general info about the pipeline
     msg_line1 = sprintf('The pipeline %s is now being processed.',name_pipeline);
     msg_line2 = sprintf('Started on %s',datestr(clock));
@@ -360,12 +368,18 @@ try
     mask_todo = false([length(list_jobs) 1]);
     for num_j = 1:length(list_jobs)
         mask_todo(num_j) = strcmp(status.(list_jobs{num_j}),'none');
+        if ~mask_todo(num_j)
+            sub_add_line_log(hfnf,sprintf('%s , finished\n',list_jobs{num_j}),false);
+        end
     end    
     mask_done = ~mask_todo;
     
     mask_failed = false([length(list_jobs) 1]);
     for num_j = 1:length(list_jobs)
         mask_failed(num_j) = strcmp(status.(list_jobs{num_j}),'failed');
+        if mask_failed(num_j)
+            sub_add_line_log(hfnf,sprintf('%s , failed\n',list_jobs{num_j}),false);
+        end
     end    
     list_num_failed = find(mask_failed);
     list_num_failed = list_num_failed(:)';
@@ -470,6 +484,7 @@ try
                             nb_failed = nb_failed + 1;   
                             msg = sprintf('%s %s%s failed   ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
                             sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
+                            sub_add_line_log(hfnf,sprintf('%s , failed\n',name_job),false);
                             mask_child = false([1 length(mask_todo)]);
                             mask_child(num_j) = true;
                             mask_child = sub_find_children(mask_child,graph_deps);
@@ -481,7 +496,6 @@ try
                             nb_todo = nb_todo+1;
                             msg = sprintf('%s %s%s reset    ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
                             sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
-                            
                         end
 
                     case 'finished'
@@ -489,6 +503,7 @@ try
                         nb_finished = nb_finished + 1;                        
                         msg = sprintf('%s %s%s completed',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
                         sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
+                        sub_add_line_log(hfnf,sprintf('%s , finished\n',name_job),false);
                         graph_deps(num_j,:) = 0; % update dependencies
 
                 end
@@ -540,7 +555,8 @@ try
             status.(name_job) = 'submitted';
             msg = sprintf('%s %s%s submitted',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));            
             sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
-                        
+            sub_add_line_log(hfnf,sprintf('%s , submitted\n',name_job),false);
+            
             %% Execute the job in a "shelled" environment
             file_job        = [path_logs filesep name_job '.mat'];
             opt_logs.txt    = [path_logs filesep name_job '.log'];
@@ -611,6 +627,7 @@ catch
     %% Close the log file
     if strcmp(gb_psom_language,'matlab')
         fclose(hfpl);
+        fclose(hfnf);
     end
     return
 end
@@ -698,6 +715,7 @@ end
 %% Close the log file
 if strcmp(gb_psom_language,'matlab')
     fclose(hfpl);
+    fclose(hfnf);
 end
 
 if exist('file_pipe_running','var')
