@@ -836,6 +836,7 @@ delete([path_logs filesep '*.exit']);
 delete([path_logs filesep '*.log']);
 delete([path_logs filesep '*.oqsub']);
 delete([path_logs filesep '*.eqsub']);
+delete([path_logs filesep '*.profile.mat']);
 
 if exist([path_logs 'tmp'],'dir')
     if strcmp(gb_psom_language,'octave')
