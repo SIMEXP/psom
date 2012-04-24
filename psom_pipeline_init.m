@@ -715,7 +715,7 @@ end
 for num_j = 1:length(list_jobs)        
     job_name = list_jobs{num_j};        
     list_files = unique(files_out.(job_name));        
-    if flag_clean&&~flag_finished(num_j)        
+    if ~flag_finished(num_j)        
         for num_f = 1:length(list_files)        
             if psom_exist(list_files{num_f});        
                 psom_clean(list_files{num_f});        
