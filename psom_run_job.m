@@ -116,29 +116,6 @@ msg = sprintf('Log of the (%s) job : %s\nStarted on %s\nUser: %s\nhost : %s\nsys
 stars = repmat('*',[1 30]);
 fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
 
-%% create output folders
-fprintf('Creating output folders ...\n')
-list_files = psom_files2cell(job.files_out);
-path_all = cellfun (@fileparts,list_files,'UniformOutput',false);
-path_all = unique(path_all);
-
-for num_p = 1:length(path_all)
-    path_f = path_all{num_p};
-    [succ,messg,messgid] = psom_mkdir(path_f);
-    if succ == 0
-        warning(messgid,messg);
-    end    
-end
-
-%% Removing old outputs
-fprintf('Removing old outputs ...\n')
-list_files = unique(list_files);
-for num_f = 1:length(list_files)
-    if psom_exist(list_files{num_f});
-        psom_clean(list_files{num_f});
-    end
-end
-
 %% The job starts now !
 try
     msg = sprintf('The job starts now !');

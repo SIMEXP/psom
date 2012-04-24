@@ -691,6 +691,39 @@ if ~exist(path_logs,'dir')
     end
 end
 
+%% Creating output folders
+if flag_verbose        
+    fprintf('    Creating output folders ...\n')        
+end        
+
+path_all = psom_files2cell(files_out);        
+path_all = cellfun (@fileparts,path_all,'UniformOutput',false);        
+path_all = unique(path_all);        
+
+for num_p = 1:length(path_all)        
+    path_f = path_all{num_p};        
+    [succ,messg,messgid] = psom_mkdir(path_f);        
+    if succ == 0        
+        warning(messgid,messg);        
+    end        
+end        
+
+%% Removing old outputs
+if flag_verbose        
+    fprintf('    Removing old outputs ...\n')        
+end        
+for num_j = 1:length(list_jobs)        
+    job_name = list_jobs{num_j};        
+    list_files = unique(files_out.(job_name));        
+    if flag_clean&&~flag_finished(num_j)        
+        for num_f = 1:length(list_files)        
+            if psom_exist(list_files{num_f});        
+                psom_clean(list_files{num_f});        
+            end        
+        end        
+    end        
+end
+
 %% Create a .lock file 
 if flag_verbose
     fprintf('    Creating a ''lock'' file %s ...\n',file_pipe_running);
