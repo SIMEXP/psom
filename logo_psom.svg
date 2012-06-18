@@ -16,13 +16,16 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.48.3.1 r9886"
-   sodipodi:docname="New document 1">
+   sodipodi:docname="logo_psom.svg"
+   inkscape:export-filename="/home/pbellec/svn/psom/logo_psom.png"
+   inkscape:export-xdpi="71.887154"
+   inkscape:export-ydpi="71.887154">
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
      bordercolor="#666666"
      borderopacity="1.0"
-     inkscape:pageopacity="0.0"
+     inkscape:pageopacity="0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.7"
      inkscape:cx="427.00922"
@@ -58,6 +61,16 @@
      inkscape:groupmode="layer"
      id="layer1"
      transform="translate(-119.9548,-17.404797)">
+    <path
+       sodipodi:type="arc"
+       style="fill:#ffffff;fill-opacity:0.97254901999999999;stroke:#ffffff;stroke-width:0.50000000000000000;stroke-miterlimit:3.79999995000000013;stroke-opacity:1;stroke-dasharray:none"
+       id="path2991"
+       sodipodi:cx="98.571426"
+       sodipodi:cy="89.260002"
+       sodipodi:rx="108.57143"
+       sodipodi:ry="108.57143"
+       d="m 207.14285,89.260002 a 108.57143,108.57143 0 1 1 -217.14285,0 108.57143,108.57143 0 1 1 217.14285,0 z"
+       transform="matrix(0.98687233,0,0,0.98687233,122.67739,37.148001)" />
     <g
        id="g3039"
        transform="matrix(21.596416,0,0,21.596416,-4711.7872,-2743.5485)"
