@@ -11,8 +11,8 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="187.79431"
-   height="196.40286"
+   width="216.29227"
+   height="216.47757"
    id="svg2"
    version="1.1"
    inkscape:version="0.48.3.1 r9886"
@@ -27,9 +27,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.7"
-     inkscape:cx="427.00922"
-     inkscape:cy="3.2195346"
+     inkscape:zoom="0.49497475"
+     inkscape:cx="170.97026"
+     inkscape:cy="15.175402"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -52,7 +52,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -60,17 +60,17 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-119.9548,-17.404797)">
+     transform="translate(-111.30867,-17.404797)">
     <path
        sodipodi:type="arc"
-       style="fill:#ffffff;fill-opacity:0.97254901999999999;stroke:#ffffff;stroke-width:0.50000000000000000;stroke-miterlimit:3.79999995000000013;stroke-opacity:1;stroke-dasharray:none"
+       style="fill:#ffffff;fill-opacity:0.97254902;stroke:#000000;stroke-width:3.03990698;stroke-miterlimit:3.79999995;stroke-opacity:1;stroke-dasharray:none"
        id="path2991"
        sodipodi:cx="98.571426"
        sodipodi:cy="89.260002"
        sodipodi:rx="108.57143"
        sodipodi:ry="108.57143"
-       d="m 207.14285,89.260002 a 108.57143,108.57143 0 1 1 -217.14285,0 108.57143,108.57143 0 1 1 217.14285,0 z"
-       transform="matrix(0.98687233,0,0,0.98687233,122.67739,37.148001)" />
+       d="m 207.14285,89.260002 c 0,59.962348 -48.60908,108.571428 -108.571424,108.571428 C 38.609083,197.83143 -10,149.22235 -10,89.260002 -10,29.297659 38.609083,-19.311424 98.571426,-19.311424 c 59.962344,0 108.571424,48.609083 108.571424,108.571426 z"
+       transform="matrix(0.98233065,0,0,0.98233065,122.62507,38.053392)" />
     <g
        id="g3039"
        transform="matrix(21.596416,0,0,21.596416,-4711.7872,-2743.5485)"
