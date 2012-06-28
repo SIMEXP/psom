@@ -197,7 +197,14 @@ if opt.flag_pause
 end
 
 pipeline.quadratic.command = 'BUG!';
-psom_run_pipeline(pipeline,opt);
+if strcmp(opt.mode,'session')
+    try 
+        % In session modes, bugs generate actual errors 
+        psom_run_pipeline(pipeline,opt);
+    end
+else
+    psom_run_pipeline(pipeline,opt);
+end
 
 % Visualize the log file of the failed job
 msg = 'The demo is about to display the log file of the failed job ''quadratic''.';
