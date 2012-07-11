@@ -9,14 +9,13 @@ function seed = psom_set_rand_seed(seed)
 %
 % SEED
 %   (scalar, default sum(100*clock))) the seed of the random number
-%   generator.
+%   generator. If SEED is a vector, it is replaced by sum(SEED).
 %       
 % _________________________________________________________________________
 % OUTPUTS:
 %
 % SEED
-%   (scalar) the seed of the random number generator. It is identical to
-%   the input, unless the default was used.
+%   (scalar) the seed of the random number generator. 
 %
 % _________________________________________________________________________
 % SEE ALSO:
@@ -63,12 +62,14 @@ function seed = psom_set_rand_seed(seed)
 % THE SOFTWARE.
 
 if (nargin == 0)
-    seed = sum(100*clock);
+    seed = 100*clock;
 end
 
 if isempty(seed)
     return
 end
+
+seed = sum(seed);
 
 if exist('OCTAVE_VERSION','builtin')
     rand('state',seed);  % Octave
