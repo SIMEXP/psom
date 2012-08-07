@@ -78,7 +78,7 @@ niak_set_defaults;
 
 num_jobs = 1;
 
-[deps,deps,files_in,files_out,files_clean,deps] = psom_build_dependencies(pipeline);
+[deps,list_jobs,files_in,files_out,files_clean] = psom_build_dependencies(pipeline);
 
 [fid, msg] = fopen(xml_name,'w','native');
 if (fid == -1)
@@ -89,19 +89,21 @@ end
 fprintf(fid,'<?xml version="1.0" encoding="UTF-8" ?>\n');
 fprintf(fid,'<pipeline>\n');
 
-for [job,name] = pipeline
+for i=1:size(list_jobs,1)
+  name=list_jobs{i};
   fprintf(fid,'  <job>\n');
-
+  job=pipeline.(name);
   save(strcat(path_jobs,'job_',name,'.mat'),'-struct','job');
 
   fprintf(fid,strcat('    <id>',md5sum(name,true),'</id>\n'));
   fprintf(fid,strcat('    <name>',name,'</name>\n'));
   fprintf(fid,strcat('    <job_file>job_',strcat(name,'.mat'),'</job_file>\n'));
 
-  if ~isempty(deps.(name))
+  if sum(deps(i,:)) ~= 0
     fprintf(fid,'    <dependencies>\n');
-    for [name2,name2] = deps.(name)
-      fprintf(fid,strcat('      <dependency>',md5sum(name2,true),'</dependency>\n'));
+    idx_deps = find(deps(1,:));
+    for j=1:length(idx_deps)
+      fprintf(fid,strcat('      <dependency>',md5sum(list_jobs{idx_deps(j)},true),'</dependency>\n'));
     end
     fprintf(fid,'    </dependencies>\n');
   end
