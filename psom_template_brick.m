@@ -101,7 +101,7 @@ function [files_in,files_out,opt] = niak_template_brick(files_in,files_out,opt)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Syntax
-if ~exist('files_in','var')|~exist('files_out','var')|~exist('opt','var')
+if ~exist('files_in','var')||~exist('files_out','var')||~exist('opt','var')
     error('niak:brick','syntax: [FILES_IN,FILES_OUT,OPT] = PSOM_TEMPLATE_BRICK(FILES_IN,FILES_OUT,OPT).\n Type ''help psom_template_brick'' for more info.')
 end
 
