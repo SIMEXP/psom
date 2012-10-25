@@ -125,7 +125,7 @@ defaults  = {'gb_psom_omitted' , 'gb_psom_omitted' };
 files_out = psom_struct_defaults(files_out,fields,defaults);
 
 %% Building default output names
-[path_f,name_f,ext_f] = niak_fileparts(files_in(1,:)); % parse the folder, file name and extension of the input
+[path_f,name_f,ext_f] = fileparts(files_in); % parse the folder, file name and extension of the input
 
 if strcmp(opt.folder_out,'') % if the output folder is left empty, use the same folder as the input
     opt.folder_out = path_f;    
@@ -140,7 +140,7 @@ if isempty(files_out.mask)
 end
 
 %% If the test flag is true, stop here !
-if flag_test == 1
+if opt.flag_test == 1
     return
 end
 
