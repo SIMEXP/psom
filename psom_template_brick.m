@@ -148,12 +148,12 @@ end
 %% The core of the brick starts here %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if flag_verbose
+if opt.flag_verbose
     fprintf('Performing temporal correction of %s on the fMRI time series in file %s',opt.type_correction,files_in);
 end
 
 %% Correct the time series 
-if flag_verbose
+if opt.flag_verbose
     fprintf('Correct the time series ...\n');
 end
 [hdr,vol] = niak_read_vol(files_in); % read fMRI data
@@ -163,7 +163,7 @@ tseries = niak_correct_mean_var(tseries,type_correction); % Correct the time ser
 vol = niak_tseries2vol(tseries,mask);
 
 %% Save outputs
-if flag_verbose
+if opt.flag_verbose
     fprintf('Save outputs ...\n');
 end
 
