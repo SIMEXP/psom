@@ -149,7 +149,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if flag_verbose
-    fprintf('Performing temporal correction of %s on the fMRI time series in file %s',opt.type_correction,opt.files_in);
+    fprintf('Performing temporal correction of %s on the fMRI time series in file %s',opt.type_correction,files_in);
 end
 
 %% Correct the time series 
