@@ -1,30 +1,29 @@
-function [files_in,files_out,opt] = niak_template_brick(files_in,files_out,opt)
-% This is a template file for "brick" functions in PSOM
-% More info on http://code.google.com/p/psom/wiki/CodingGuidelines
+function [in,out,opt] = psom_template_brick(in,out,opt)
+% This is a template file for "brick" functions in NIAK.
 %
 % SYNTAX:
-% [FILES_IN,FILES_OUT,OPT] = PSOM_TEMPLATE_BRICK(FILES_IN,FILES_OUT,OPT)
+% [IN,OUT,OPT] = PSOM_TEMPLATE_BRICK(IN,OUT,OPT)
 %
 % _________________________________________________________________________
 % INPUTS:
 %
-% FILES_IN        
+% IN        
 %   (string) a file name of a 3D+t fMRI dataset .
 %
-% FILES_OUT
+% OUT
 %   (structure) with the following fields:
 %       
 %   CORRECTED_DATA
-%      (string, default <BASE NAME FMRI>_c.<EXT>) File name for processed 
-%      data.
-%      If FILES_OUT is an empty string, the name of the outputs will be 
-%      the same as the inputs, with a '_c' suffix added at the end.
+%       (string, default <BASE NAME FMRI>_c.<EXT>) File name for processed 
+%       data.
+%       If OUT is an empty string, the name of the outputs will be 
+%       the same as the inputs, with a '_c' suffix added at the end.
 %
 %   MASK
-%      (string, default <BASE NAME FMRI>_mask.<EXT>) File name for a mask 
-%      of the data. If FILES_OUT is an empty string, the name of the 
-%      outputs will be the same as the inputs, with a '_mask' suffix added 
-%      at the end.
+%       (string, default <BASE NAME FMRI>_mask.<EXT>) File name for a mask 
+%       of the data. If OUT is an empty string, the name of the 
+%       outputs will be the same as the inputs, with a '_mask' suffix added 
+%       at the end.
 %
 % OPT           
 %   (structure) with the following fields.  
@@ -38,7 +37,7 @@ function [files_in,files_out,opt] = niak_template_brick(files_in,files_out,opt)
 %      much memory).
 %
 %   FOLDER_OUT 
-%      (string, default: path of FILES_IN) If present, all default outputs 
+%      (string, default: path of IN) If present, all default outputs 
 %      will be created in the folder FOLDER_OUT. The folder needs to be 
 %      created beforehand.
 %
@@ -48,14 +47,12 @@ function [files_in,files_out,opt] = niak_template_brick(files_in,files_out,opt)
 %
 %   FLAG_TEST 
 %      (boolean, default 0) if FLAG_TEST equals 1, the brick does not do 
-%      anything but update the default values in FILES_IN, FILES_OUT and 
-%      OPT.
+%      anything but update the default values in IN, OUT and OPT.
 %           
 % _________________________________________________________________________
 % OUTPUTS:
 %
-% The structures FILES_IN, FILES_OUT and OPT are updated with default
-% valued. If OPT.FLAG_TEST == 0, the specified outputs are written.
+% IN, OUT, OPT: same as inputs but updated with default values.
 %              
 % _________________________________________________________________________
 % SEE ALSO:
@@ -101,13 +98,13 @@ function [files_in,files_out,opt] = niak_template_brick(files_in,files_out,opt)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Syntax
-if ~exist('files_in','var')||~exist('files_out','var')||~exist('opt','var')
-    error('niak:brick','syntax: [FILES_IN,FILES_OUT,OPT] = PSOM_TEMPLATE_BRICK(FILES_IN,FILES_OUT,OPT).\n Type ''help psom_template_brick'' for more info.')
+if ~exist('in','var')||~exist('out','var')||~exist('opt','var')
+    error('niak:brick','Bad syntax, type ''help %s'' for more info.',mfilename)
 end
 
 %% Inputs
-if ~ischar(files_in)
-    error('FILES_IN should be a string');
+if ~ischar(in)
+    error('IN should be a string');
 end
     
 %% Options
@@ -125,18 +122,18 @@ defaults  = {'gb_psom_omitted' , 'gb_psom_omitted' };
 files_out = psom_struct_defaults(files_out,fields,defaults);
 
 %% Building default output names
-[path_f,name_f,ext_f] = fileparts(files_in); % parse the folder, file name and extension of the input
+[path_f,name_f,ext_f] = fileparts(in); % parse the folder, file name and extension of the input
 
 if strcmp(opt.folder_out,'') % if the output folder is left empty, use the same folder as the input
     opt.folder_out = path_f;    
 end
 
-if isempty(files_out.corrected_data)
-    files_out.corrected_data = cat(2,opt.folder_out,filesep,name_f,'_c',ext_f);
+if isempty(out.corrected_data)
+    out.corrected_data = cat(2,opt.folder_out,filesep,name_f,'_c',ext_f);
 end
 
-if isempty(files_out.mask)
-    files_out.mask = cat(2,opt.folder_out,filesep,name_f,'_mask',ext_f);
+if isempty(out.mask)
+    out.mask = cat(2,opt.folder_out,filesep,name_f,'_mask',ext_f);
 end
 
 %% If the test flag is true, stop here !
@@ -167,12 +164,12 @@ if opt.flag_verbose
     fprintf('Save outputs ...\n');
 end
 
-if ~strcmp(files_out.corrected_data,'gb_psom_omitted');
-    hdr.file_name = files_out.corrected_data;
+if ~strcmp(out.corrected_data,'gb_psom_omitted');
+    hdr.file_name = out.corrected_data;
     niak_write_vol(hdr,vol);
 end
 
-if ~strcmp(files_out.mask,'gb_psom_omitted');
-    hdr.file_name = files_out.mask;
+if ~strcmp(out.mask,'gb_psom_omitted');
+    hdr.file_name = out.mask;
     niak_write_vol(hdr,mask);
 end
