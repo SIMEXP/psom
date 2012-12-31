@@ -2,64 +2,53 @@ function [graph_deps,list_jobs,files_in,files_out,files_clean] = psom_build_depe
 % Generate the dependency graph of a pipeline.
 %
 % SYNTAX:
-% [GRAPH_DEPS,LIST_JOBS,FILES_IN,FILES_OUT,FILES_CLEAN,DEPS] = NIAK_BUILD_DEPENDENCIES(PIPELINE)
+% [GRAPH_DEPS,LIST_JOBS,FILES_IN,FILES_OUT,FILES_CLEAN] = NIAK_BUILD_DEPENDENCIES(PIPELINE)
 %
 % _________________________________________________________________________
 % INPUTS
 %
 % PIPELINE
-%       (structure) Each field of PIPELINE is a job with an arbitrary name:
+%   (structure) Each field of PIPELINE is a job with an arbitrary name
+%   <JOB_NAME> and the following subfields:
 %
-%       <JOB_NAME> a structure with the following fields:
+%   FILES_IN 
+%      (string, cell of strings or structure whos terminal fields are 
+%      strings or cell of strings) a list of the input files of the job
 %
-%               FILES_IN
-%                   (string, cell of strings or structure whos terminal
-%                   fields are strings or cell of strings)
-%                   a list of the input files of the job
+%   FILES_OUT 
+%      (string, cell of strings or structure whos terminal fields are 
+%      strings or cell of strings) a list of the output files of the job
 %
-%               FILES_OUT
-%                   (string, cell of strings or structure whos terminal
-%                   fields are strings or cell of strings)
-%                   a list of the output files of the job
+%   FILES_CLEAN
+%      (string, cell of strings or structure whos terminal fields are 
+%      strings or cell of strings) a list of the files deleted by the job.
 %
-%               FILES_CLEAN
-%                   (string, cell of strings or structure whos terminal
-%                   fields are strings or cell of strings)
-%                   a list of the files deleted by the job.
+%   DEP
+%      (cell of strings) a list of job names. This will force the 
+%      dependency of the job <JOB_NAME> on these other jobs.
 %
 % FLAG_VERBOSE
 %       (boolean, default true) if the flag is true, then the function
 %       prints some infos during the processing.
 %
 % _________________________________________________________________________
-% OUTPUTS
+% OUTPUTS:
 %
 % GRAPH_DEPS
-%       (sparse matrix)
-%       GRAPH_DEPS(I,J) == 1 if and only if the job LIST_JOBS{J} depends on
-%       the job LIST_JOBS{I}
+%   (sparse matrix) GRAPH_DEPS(I,J) == 1 if and only if the job LIST_JOBS{J} 
+%   depends on the job LIST_JOBS{I}
 %
 % LIST_JOBS
-%       (cell of strings)
-%       The list of all job names
+%   (cell of strings) The list of all job names
 %
-% FILES_IN
-%       (structure) the field names are identical to PIPELINE
+% FILES_IN.<JOB_NAME>
+%   (cell of strings) the list of input files for the job
 %
-%       <JOB_NAME>
-%           (cell of strings) the list of input files for the job
+% FILES_OUT.<JOB_NAME>
+%   (cell of strings) the list of output files for the job
 %
-% FILES_OUT
-%       (structure) the field names are identical to PIPELINE
-%
-%       <JOB_NAME>
-%           (cell of strings) the list of output files for the job
-%
-% FILES_CLEAN
-%       (structure) the field names are identical to PIPELINE
-%
-%       <JOB_NAME>
-%           (cell of strings) the list of files deleted by JOB_NAME.
+% FILES_CLEAN.<JOB_NAME>
+%   (cell of strings) the list of files deleted by JOB_NAME.
 %
 % _________________________________________________________________________
 % SEE ALSO:
@@ -149,6 +138,11 @@ for num_j = 1:nb_jobs
         errmsg = lasterror;
         rethrow(errmsg);
     end
+    if isfield(pipeline.(name_job),'dep')
+        dep.(name_job) = pipeline.(name_job).dep;
+    else
+        dep.(name_job) = {};
+    end
 end
 
 if flag_verbose
@@ -184,11 +178,17 @@ for num_j = 1:nb_jobs
     mask_dep = ismember(num_out,num_in(ind_in==num_j));
     graph_deps(ind_out(mask_dep),num_j) = true;
     
-    %Files_clean
+    % Files_clean
     mask_dep = ismember(num_in,num_clean(ind_clean==num_j));
     graph_deps(ind_in(mask_dep),num_j) = true;
     mask_dep = ismember(num_out,num_clean(ind_clean==num_j));
     graph_deps(ind_out(mask_dep),num_j) = true;
+    
+    % User-specified dependencies
+    if ~isempty(dep.(name_job1))
+        mask_dep = ismember(list_jobs,dep.(name_job1));
+        graph_deps(mask_dep,num_j) = true;
+    end
 end
 
 if flag_verbose

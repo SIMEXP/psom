@@ -43,6 +43,10 @@ function [] = psom_run_pipeline(pipeline,opt)
 %        field needs to contain the exact name of the file
 %        (full path, no wildcards, no '' for default values).
 %
+%    DEP 
+%        (cell of strings) a list of job names. The job <JOB_NAME> 
+%        will depend on these jobs.
+%
 %    OPT
 %        (any matlab variable) options of the job. This field has no
 %        impact on dependencies. OPT can for example be a structure,
@@ -152,7 +156,7 @@ function [] = psom_run_pipeline(pipeline,opt)
 %        A string recapituling when and who created the pipeline, (and
 %        on which machine).
 %
-%    DEPS, LIST_JOBS, FILES_IN, FILES_OUT, GRAPH_DEPS
+%    LIST_JOBS, FILES_IN, FILES_OUT, GRAPH_DEPS
 %        See PSOM_BUILD_DEPENDENCIES for more info.
 %
 % PIPE_history.txt
