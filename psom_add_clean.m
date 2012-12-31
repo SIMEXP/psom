@@ -7,20 +7,24 @@ function pipeline2 = psom_add_clean(pipeline,name_job,files_clean)
 % _________________________________________________________________________
 % INPUTS :
 %
-%   PIPELINE
-%       (structure) a pipeline structure.
+% PIPELINE
+%   (structure) a pipeline structure.
 %
-%   NAME_JOB
-%       (string) the name of the job to add.
+% NAME_JOB
+%   (string) the name of the job to add.
 %
-%   FILES_CLEAN
-%       () the name of the files to clean up.
+% FILES_CLEAN
+%   () A list of files or folders that need to be  cleaned up. The 
+%   files/folders names can be organized as a string, cell of strings or 
+%   nested structures with string or cell of strings as terminal nodes. 
+%   Strings can also be organized in an array with one file name per row 
+%   (padded with blanks, as implemented by the command CHAR).
 %
 % _________________________________________________________________________
 % OUTPUTS:
 %
-%   PIPELINE2
-%       (structure) same as pipeline, with an extra cleaning job in it.
+% PIPELINE2
+%   (structure) same as pipeline, with an extra cleaning job in it.
 %
 % _________________________________________________________________________
 % SEE ALSO: 
@@ -33,8 +37,11 @@ function pipeline2 = psom_add_clean(pipeline,name_job,files_clean)
 %
 % The cleaning of the files is implemented using PSOM_CLEAN
 %
-% Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008.
-% Maintainer : pbellec@bic.mni.mcgill.ca
+% Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008-2010.
+% Centre de recherche de l'institut de Gériatrie de Montréal,
+% Département d'informatique et de recherche opérationnelle,
+% Université de Montréal, 2011-2012.
+% Maintainer : pierre.bellec@criugm.qc.ca
 % See licensing information in the code.
 % Keywords : pipeline
 

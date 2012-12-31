@@ -36,8 +36,8 @@ function [status,msg] = psom_clean(files_clean,opt)
 %
 % Copyright (c) Pierre Bellec, Centre de recherche de l'institut de
 % gériatrie de Montréal, Département d'informatique et de recherche
-% opérationnelle, Université de Montréal, Canada, 2010.
-% Maintainer : pbellec@criugm.qc.ca
+% opérationnelle, Université de Montréal, Canada, 2010-2012
+% Maintainer : pierre.bellec@criugm.qc.ca
 % See licensing information in the code.
 
 % Permission is hereby granted, free of charge, to any person obtaining a copy
