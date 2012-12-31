@@ -63,7 +63,8 @@ list_fields = fieldnames(struct2);
 struct12 = struct1;
 
 for num_f = 1:length(list_fields)
-    
-    struct12.([prefix list_fields{num_f}]) = struct2.(list_fields{num_f});
-    
+    if ~isempty(prefix)&&isfield(struct2.(list_fields{num_f}),'dep')
+        struct2.(list_fields{num_f}).dep = strcat(prefix,struct2.(list_fields{num_f}).dep);
+    end   
+    struct12.([prefix list_fields{num_f}]) = struct2.(list_fields{num_f});        
 end
