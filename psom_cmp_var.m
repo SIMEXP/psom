@@ -1,8 +1,4 @@
 function flag_equal = psom_cmp_var(var1,var2)
-%
-% _________________________________________________________________________
-% SUMMARY PSOM_CMP_VAR
-%
 % Compare two matlab variables, whatever their types may be
 %
 % SYNTAX:
