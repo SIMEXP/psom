@@ -397,7 +397,7 @@ switch opt.mode
         end
         instr_qsub = sprintf('%s%s -N %s %s %s',sub,qsub_logs,opt.name_job,opt.qsub_options,['\"' script '\"']);            
         if ~isempty(logs)
-            instr_qsub = [script_submit ' "' instr_qsub '" ' logs.failed ' ' logs.exit ' ' logs.oqsub ];
+            instr_qsub = [script_submit ' ''' instr_qsub ''' ' logs.failed ' ' logs.exit ' ' logs.oqsub ];
         end
         if opt.flag_debug
             if strcmp(gb_psom_language,'octave')
