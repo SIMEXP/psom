@@ -595,7 +595,11 @@ try
         if (any(mask_todo) || any(mask_running)) && psom_exist(file_pipe_running)
             pause(time_between_checks); % To avoid wasting resources, wait a bit before re-trying to submit jobs
         end
-
+        
+        if strcmp(gb_psom_language,'octave') 
+            waitpid(-1,1);
+        end
+        
         if nb_checks >= nb_checks_per_point
             nb_checks = 0;
             if flag_verbose
