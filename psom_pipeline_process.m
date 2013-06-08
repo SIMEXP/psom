@@ -596,8 +596,13 @@ try
             pause(time_between_checks); % To avoid wasting resources, wait a bit before re-trying to submit jobs
         end
         
-        if strcmp(gb_psom_language,'octave') 
-            waitpid(-1,1);
+        if strcmp(gb_psom_language,'octave') && ismember(opt.mode,{'qsub','msub','condor'})
+            % In octave, due to the way asynchronous processes work, it is necessary to listen to children to kill 
+            % zombies
+            tmp = 1;
+            while tmp ~= -1
+                tmp = waitpid(-1);
+            end
         end
         
         if nb_checks >= nb_checks_per_point
