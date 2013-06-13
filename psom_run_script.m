@@ -71,6 +71,12 @@ function [flag_failed,msg] = psom_run_script(cmd,script,opt,logs)
 %        be the current search path in 'session' mode, and the default 
 %        Octave/Matlab search path in the other modes. 
 %
+%    FLAG_SHORT_JOB_NAMES
+%        (boolean, default true) only the 8 first characters of a job 
+%        name are used to submit to qsub/msub. Most qsub systems truncate
+%        the name of the job anyway, and some systems even refuse to
+%        submit jobs with long names.
+%
 %    FLAG_DEBUG
 %        (boolean, default false) if FLAG_DEBUG is true, the program
 %        prints additional information for debugging purposes.
@@ -165,8 +171,8 @@ if nargin<3
 end
 
 %% Options
-list_fields    = { 'path_search'       , 'file_handle' , 'name_job'    , 'init_matlab'       , 'flag_debug' , 'shell_options'       , 'command_matlab' , 'mode' , 'qsub_options'       };
-list_defaults  = { gb_psom_path_search , []            , 'psom_script' , gb_psom_init_matlab , false        , gb_psom_shell_options , ''               , NaN    , gb_psom_qsub_options };
+list_fields    = { 'flag_short_job_names' , 'path_search'       , 'file_handle' , 'name_job'    , 'init_matlab'       , 'flag_debug' , 'shell_options'       , 'command_matlab' , 'mode' , 'qsub_options'       };
+list_defaults  = { true                   , gb_psom_path_search , []            , 'psom_script' , gb_psom_init_matlab , false        , gb_psom_shell_options , ''               , NaN    , gb_psom_qsub_options };
 opt = psom_struct_defaults(opt,list_fields,list_defaults);
 
 if opt.flag_debug
@@ -395,7 +401,12 @@ switch opt.mode
         else 
             qsub_logs = '';
         end
-        instr_qsub = sprintf('%s%s -N %s %s %s',sub,qsub_logs,opt.name_job,opt.qsub_options,['\"' script '\"']);            
+        if opt.flag_short_job_names
+            name_job = opt.name_job(1:min(length(opt.name_job),8));
+        else
+            name_job = opt.name_job;
+        end
+        instr_qsub = sprintf('%s%s -N %s %s %s',sub,qsub_logs,name_job,opt.qsub_options,['\"' script '\"']);            
         if ~isempty(logs)
             instr_qsub = [script_submit ' "' instr_qsub '" ' logs.failed ' ' logs.exit ' ' logs.oqsub ];
         end

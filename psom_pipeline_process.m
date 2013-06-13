@@ -92,6 +92,12 @@ function [] = psom_pipeline_process(file_pipeline,opt)
 %        (boolean, default false) if FLAG_DEBUG is true, the program
 %        prints additional information for debugging purposes.
 %
+%    FLAG_SHORT_JOB_NAMES
+%        (boolean, default true) only the 8 first characters of a job 
+%        name are used to submit to qsub/msub. Most qsub systems truncate
+%        the name of the job anyway, and some systems even refuse to
+%        submit jobs with long names.
+%
 %    FLAG_VERBOSE
 %        (boolean, default true) if the flag is true, then the function 
 %        prints some infos during the processing.
@@ -149,8 +155,8 @@ end
 
 %% Options
 gb_name_structure = 'opt';
-gb_list_fields    = { 'nb_resub'       , 'flag_verbose' , 'init_matlab'       , 'flag_debug' , 'shell_options'       , 'command_matlab' , 'mode'    , 'mode_pipeline_manager' , 'max_queued' , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
-gb_list_defaults  = { gb_psom_nb_resub , true           , gb_psom_init_matlab , true         , gb_psom_shell_options , ''               , 'session' , ''                      , 0            , gb_psom_qsub_options , []                    , []                    , []               };
+gb_list_fields    = { 'flag_short_job_names' , 'nb_resub'       , 'flag_verbose' , 'init_matlab'       , 'flag_debug' , 'shell_options'       , 'command_matlab' , 'mode'    , 'mode_pipeline_manager' , 'max_queued' , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
+gb_list_defaults  = { true                   , gb_psom_nb_resub , true           , gb_psom_init_matlab , true         , gb_psom_shell_options , ''               , 'session' , ''                      , 0            , gb_psom_qsub_options , []                    , []                    , []               };
 psom_set_defaults
 
 flag_verbose = flag_verbose || flag_debug;
@@ -572,6 +578,7 @@ try
             opt_script.shell_options  = opt.shell_options;
             opt_script.command_matlab = opt.command_matlab;
             opt_script.qsub_options   = opt.qsub_options;
+            opt_script.flag_short_job_names = opt.flag_short_job_names;
             opt_script.file_handle    = hfpl;
             cmd = sprintf('psom_run_job(''%s'')',file_job);
                 

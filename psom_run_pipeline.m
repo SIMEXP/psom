@@ -104,6 +104,12 @@ function [] = psom_run_pipeline(pipeline,opt)
 %        all.q queue. It can also be used to put restrictions on the
 %        minimum avalaible memory, etc.
 %
+%    FLAG_SHORT_JOB_NAMES
+%        (boolean, default true) only the 8 first characters of a job 
+%        name are used to submit to qsub/msub. Most qsub systems truncate
+%        the name of the job anyway, and some systems even refuse to
+%        submit jobs with long names.
+%
 %    COMMAND_MATLAB
 %        (string, default GB_PSOM_COMMAND_MATLAB or
 %        GB_PSOM_COMMAND_OCTAVE depending on the current environment,
@@ -272,8 +278,8 @@ end
 name_pipeline = 'PIPE';
 
 gb_name_structure = 'opt';
-gb_list_fields    = {'nb_resub'       , 'type_restart' , 'flag_pause' , 'init_matlab'       , 'flag_update' , 'flag_debug' , 'path_search'       , 'restart' , 'shell_options'       , 'path_logs' , 'command_matlab' , 'flag_verbose' , 'mode'       , 'mode_pipeline_manager' , 'max_queued'       , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
-gb_list_defaults  = {gb_psom_nb_resub , 'substring'    , true         , gb_psom_init_matlab , true          , false        , gb_psom_path_search , {}        , gb_psom_shell_options , NaN         , ''               , true           , gb_psom_mode , gb_psom_mode_pm         , gb_psom_max_queued , gb_psom_qsub_options , []                    , []                    , []               };
+gb_list_fields    = {'flag_short_job_names' , 'nb_resub'       , 'type_restart' , 'flag_pause' , 'init_matlab'       , 'flag_update' , 'flag_debug' , 'path_search'       , 'restart' , 'shell_options'       , 'path_logs' , 'command_matlab' , 'flag_verbose' , 'mode'       , 'mode_pipeline_manager' , 'max_queued'       , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
+gb_list_defaults  = {true                   , gb_psom_nb_resub , 'substring'    , true         , gb_psom_init_matlab , true          , false        , gb_psom_path_search , {}        , gb_psom_shell_options , NaN         , ''               , true           , gb_psom_mode , gb_psom_mode_pm         , gb_psom_max_queued , gb_psom_qsub_options , []                    , []                    , []               };
 psom_set_defaults
 
 if ~strcmp(opt.path_logs(end),filesep)
@@ -386,6 +392,7 @@ else
     opt_proc.command_matlab        = opt.command_matlab;
     opt_proc.time_between_checks   = opt.time_between_checks;
     opt_proc.nb_checks_per_point   = opt.nb_checks_per_point;
+    opt_proc.flag_short_job_names  = opt.flag_short_job_names;
     opt_proc.flag_debug            = opt.flag_debug;
     opt_proc.flag_verbose          = opt.flag_verbose;
     opt_proc.init_matlab           = opt.init_matlab;
