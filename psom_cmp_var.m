@@ -1,30 +1,31 @@
-function flag_equal = psom_cmp_var(var1,var2)
+function flag_equal = psom_cmp_var(var1,var2,opt)
 % Compare two matlab variables, whatever their types may be
 %
 % SYNTAX:
-% FLAG_EQUAL = PSOM_CMP_VAR(VAR1,VAR2)
+% FLAG_EQUAL = PSOM_CMP_VAR(VAR1,VAR2,OPT)
 %
 % _________________________________________________________________________
 % INPUTS:
 %
-% VAR1
-%       (any type) a matlab variable
-%
-% VAR2
-%       (any type) a matlab variable
+% VAR1 (any type) a matlab variable
+% VAR2 (any type) a matlab variable
+% OPT (boolean) a structure with the following fields:
+%    EPS (float, default system variable EPS) the max tolerable difference
+%       between numerical variables, for them to be declared equal. 
+%    FLAG_SOURCE_ONLY (boolean, default false) if the flag is true, for 
+%       structures, test only equality for fields found in the source.
 %
 % _________________________________________________________________________
 % OUTPUTS:
 %
-% FLAG_EQUAL
-%       (boolean) true if VAR1 and VAR2 are identical, false otherwise.
+% FLAG_EQUAL (boolean) true if VAR1 and VAR2 are identical, false otherwise.
 %
 % _________________________________________________________________________
 % COMMENTS:
 %
 % The actual matlab data types supported here are string (or char),
 % numeric, logical,
-% Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008.
+% Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008-2010.
 % Maintainer : pbellec@bic.mni.mcgill.ca
 % See licensing information in the code.
 % Keywords :
@@ -46,6 +47,14 @@ function flag_equal = psom_cmp_var(var1,var2)
 % LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
+
+%% defaults
+if nargin < 3
+    opt.eps = eps;
+    opt.flag_source_only = false;
+else 
+    opt = psom_struct_defaults(opt,{'eps','flag_source_only'},{eps,false});
+end
 
 %% Get type of variable 1
 
@@ -71,7 +80,7 @@ else
                 mask_nan = isnan(var1);
                 flag_equal = false(size(var1));
                 flag_equal(mask_nan) = isnan(var2(mask_nan));
-                flag_equal(~mask_nan) = var1(~mask_nan) == var2(~mask_nan);
+                flag_equal(~mask_nan) = abs(var1(~mask_nan) - var2(~mask_nan)) <= opt.eps;
                 flag_equal = min(flag_equal);                
             end
 
@@ -101,8 +110,8 @@ else
             end
             
             var1 = var1(:);
-            var2 = var2(:);
-            
+            var2 = var2(:);                        
+                
             if length(var1) > 1
                 %% if there are more than one entry, loop over all entries
                 flag_equal = true;
@@ -116,6 +125,9 @@ else
                 list_fields1 = fieldnames(var1);
                 list_fields2 = fieldnames(var2);
 
+                if opt.flag_source_only
+                    list_fields2 = list_fields2(ismember(list_fields2,list_fields1));
+                end
                 if ~psom_cmp_var(list_fields1,list_fields2)
                     flag_equal = false;
                     return
@@ -123,7 +135,7 @@ else
 
                 %% Compare the values of all fields 
                 flag_equal = true;
-                for num_e = 1:length(list_fields1)
+                for num_e = 1:length(list_fields1)                
                     if ~psom_cmp_var(var1.(list_fields1{num_e}),var2.(list_fields2{num_e}))
                         flag_equal = false;
                         return
