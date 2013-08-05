@@ -52,8 +52,10 @@ function flag_equal = psom_cmp_var(var1,var2,opt)
 if nargin < 3
     opt.eps = eps;
     opt.flag_source_only = false;
-else 
+elseif isfield(opt,'gb_psom_tested')
+else
     opt = psom_struct_defaults(opt,{'eps','flag_source_only'},{eps,false});
+    opt.gb_psom_tested = true; % avoid checking the default options in recursive calls
 end
 
 %% Get type of variable 1
@@ -94,7 +96,7 @@ else
                 var2 = var2(:);
                 flag_equal = true;
                 for num_e = 1:length(var1)
-                    if ~psom_cmp_var(var1{num_e},var2{num_e})
+                    if ~psom_cmp_var(var1{num_e},var2{num_e},opt)
                         flag_equal = false;
                         return
                     end
@@ -116,7 +118,7 @@ else
                 %% if there are more than one entry, loop over all entries
                 flag_equal = true;
                 for num_e = 1:length(var1)
-                    flag_equal = flag_equal&&psom_cmp_var(var1(num_e),var2(num_e));
+                    flag_equal = flag_equal&&psom_cmp_var(var1(num_e),var2(num_e),opt);
                 end
                 return
             else
@@ -128,15 +130,15 @@ else
                 if opt.flag_source_only
                     list_fields2 = list_fields2(ismember(list_fields2,list_fields1));
                 end
-                if ~psom_cmp_var(list_fields1,list_fields2)
+                if (length(list_fields1)~=length(list_fields2)) || (length(unique([list_fields1 list_fields2]))~=length(list_fields1))
                     flag_equal = false;
                     return
                 end
 
                 %% Compare the values of all fields 
                 flag_equal = true;
-                for num_e = 1:length(list_fields1)                
-                    if ~psom_cmp_var(var1.(list_fields1{num_e}),var2.(list_fields2{num_e}))
+                for num_e = 1:length(list_fields1)      
+                    if ~psom_cmp_var(var1.(list_fields1{num_e}),var2.(list_fields1{num_e}),opt)
                         flag_equal = false;
                         return
                     end
