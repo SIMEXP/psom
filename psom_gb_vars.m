@@ -65,7 +65,7 @@ gb_psom_pdf_viewer = 'evince';
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % PSOM version
-gb_psom_version = '1.0'; % PSOM release number
+gb_psom_version = '1.0.1'; % PSOM release number
 
 % Is the environment Octave or Matlab ?
 if exist('OCTAVE_VERSION','builtin')    
