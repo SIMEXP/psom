@@ -82,7 +82,7 @@ else
                 mask_nan = isnan(var1);
                 flag_equal = false(size(var1));
                 flag_equal(mask_nan) = isnan(var2(mask_nan));
-                flag_equal(~mask_nan) = abs(var1(~mask_nan) - var2(~mask_nan)) <= opt.eps;
+                flag_equal(~mask_nan) = (abs(var1(~mask_nan) - var2(~mask_nan)) <= opt.eps)|((var1(~mask_nan)==Inf)&(var2(~mask_nan)==Inf))|((var1(~mask_nan)==-Inf)&(var2(~mask_nan)==-Inf));
                 flag_equal = min(flag_equal);                
             end
 

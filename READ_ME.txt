@@ -1,4 +1,4 @@
-=Pipeline System for Octave and Matlab (PSOM), version 1.0.1=
+=Pipeline System for Octave and Matlab (PSOM), version 1.0.2=
 
 The pipeline system for Octave and Matlab (PSOM) is a lightweight library to manage complex multi-stage data processing. 
 A pipeline is a collection of jobs, i.e. Matlab or Octave codes with a well identified set of options that are using files for inputs and outputs. 
