@@ -55,7 +55,10 @@ gb_psom_init_matlab = '';
 gb_psom_path_search = '';
 
 % where to store temporary files
-gb_psom_tmp = [tempdir filesep]; 
+gb_psom_tmp = tempdir; 
+if ~strcmp(gb_psom_tmp(end),filesep)
+    gb_psom_tmp = [gb_psom_tmp filesep];
+end
 
 % How to open pdf files
 gb_psom_pdf_viewer = 'evince';
