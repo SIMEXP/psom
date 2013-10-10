@@ -225,9 +225,9 @@ end
 switch gb_psom_language
     case 'matlab'
         if ispc
-            opt_matlab = '-automation -nodesktop -r';
+            opt_matlab = '-automation -nodesktop -singleCompThread -r';
         else
-            opt_matlab = '-nosplash -nodesktop -r';
+            opt_matlab = '-nosplash -nodesktop -singleCompThread -r';
         end        
     case 'octave'
         opt_matlab = '--silent --eval';       
