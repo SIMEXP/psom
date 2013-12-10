@@ -112,7 +112,8 @@ for num_j = 1:nb_jobs
             files_in.(name_job) = {};
         end
     catch
-        fprintf('There was a problem with the input files of job %s\n',name_job)
+        fprintf('\n')
+        warning('There was a problem with the input files of job %s\n',name_job)
         errmsg = lasterror;
         rethrow(errmsg);
     end
