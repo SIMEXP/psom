@@ -90,6 +90,8 @@ else
                 if opt.flag_verbose
                     fprintf('The numerical arrays %s and %s do not have the same size.\n',opt.verbose{1},opt.verbose{2})
                 end
+            elseif isempty(var1)
+                flag_equal = true;
             else
                 var1 = var1(:);
                 var2 = var2(:);
