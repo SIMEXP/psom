@@ -660,7 +660,7 @@ if ~flag_OK
         fprintf('\n!!! The input files of some jobs were found missing.\nPress CTRL-C now if you do not wish to run the pipeline or any key to continue anyway...\n');        
         pause        
     else
-        warning('\n!!! The input files of some jobs were found missing.\n');
+        warning('The input files of some jobs were found missing !');
     end
 end
 
