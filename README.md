@@ -19,30 +19,3 @@ To use PSOM, you can have a look at the code of `psom_demo_pipeline`, or read [h
 PSOM is maintained by Pierre [http://simexp-lab.org/brainwiki/doku.php?id=pierrebellec Bellec], "[http://www.unf-montreal.ca/ Unité de Neuroimagerie Fonctionnelle]" (UNF), "[http://www.criugm.qc.ca/ Centre de Recherche de l'Institut de Gériatrie de Montréal]" (CRIUGM), "[http://www.iro.umontreal.ca/ Département d'Informatique et de Recherche Opérationnelle]" (DIRO), [http://www.umontreal.ca/ Université de Montréal]. 
 The project was started by Pierre Bellec in the lab of [http://www.bic.mni.mcgill.ca/~alan/ Alan Evans] at the [http://www.bic.mni.mcgill.ca/ McConnell Brain Imaging Center], [http://www.mni.mcgill.ca/ Montreal Neurological Institute], [http://www.mcgill.ca/ McGill University], Canada. 
 Core ideas have been inspired by the Poor Man's Pipeline (PMP) project developed by Jason Lerch, which was itself based on [http://www.bic.mni.mcgill.ca/~jason/rppl/rppl.html RPPL] by Alberto Jimenez and Alex Zijdenbos.
-
-----
-LICENSE
-
-Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008-10.
-Département d'informatique et de recherche opérationnelle
-Centre de recherche de l'institut de Gériatrie de Montréal
-Université de Montréal, 2010-2013
-Maintainer : pierre.bellec@criugm.qc.ca
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
