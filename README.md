@@ -1,5 +1,5 @@
 ###Overview
-The pipeline system for Octave and Matlab (PSOM) is a lightweight library to manage complex multi-stage data processing. A pipeline is a collection of jobs, i.e. Matlab or Octave codes with a well identified set of options that are using files for inputs and outputs. To use PSOM, the only requirement is to generate a description of a pipeline in the form of a simple Matlab/Octave structure. PSOM offers the following services:
+The pipeline system for Octave and Matlab (PSOM) is a lightweight library to manage complex multi-stage data processing. You can have a look at the [wiki](https://github.com/SIMEXP/psom/wiki) for tutorials and more info. A pipeline is a collection of jobs, i.e. Matlab or Octave codes with a well identified set of options that are using files for inputs and outputs. To use PSOM, the only requirement is to generate a description of a pipeline in the form of a simple Matlab/Octave structure. PSOM offers the following services:
   * Run jobs in parallel using multiple CPUs or within a distributed computing environment.
   * Generate log files and keep track of the pipeline execution. These logs are detailed enough to fully reproduce the analysis.
   * Handle job failures : successful completion of jobs is checked and failed jobs can be restarted.
