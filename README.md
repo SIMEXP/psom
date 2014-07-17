@@ -15,7 +15,7 @@ You can have a look at the [wiki](https://github.com/SIMEXP/psom/wiki) for tutor
 
 ###Installation
 PSOM is currently in stable production stage and has been tested under Linux, Windows and Mac OSX (see the [test page](https://github.com/SIMEXP/psom/wiki/PSOM-tests)). To install PSOM, just download the latest [release](https://github.com/SIMEXP/psom/releases), extract the archive in a folder and add that folder to your matlab or octave search path. 
-You're done ! You may have to adapt the [configuration](https://github.com/SIMEXP/psom/wiki/PSOM-configuration) to your local production environment. To use PSOM, you can have a look at the code of `psom_demo_pipeline`, or read [tutorial](https://github.com/SIMEXP/psom/wiki/How-to-use-PSOM).
+You're done ! You may have to adapt the [configuration](https://github.com/SIMEXP/psom/wiki/PSOM-configuration) to your local production environment. To use PSOM, you can have a look at the code of `psom_demo_pipeline`, or read the [tutorial](https://github.com/SIMEXP/psom/wiki/How-to-use-PSOM).
 
 ###Contributions
 PSOM is maintained by Pierre [Bellec](http://simexp-lab.org/brainwiki/doku.php?id=pierrebellec), "[Unité de Neuroimagerie Fonctionnelle](http://www.unf-montreal.ca/)" (UNF), "[Centre de Recherche de l'Institut de Gériatrie de Montréal](http://www.criugm.qc.ca/)" (CRIUGM), "[Département d'Informatique et de Recherche Opérationnelle](http://www.iro.umontreal.ca/)" (DIRO), [Université de Montréal](http://www.umontreal.ca/). 
