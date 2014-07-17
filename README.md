@@ -5,7 +5,7 @@ For example, in SPM, you can click buttons to apply slice timing correction to a
 
 Scripts are text files generally written in a high-level language that automate the execution of the jobs. However, long scripts including many jobs are sometimes very inefficient: if a brain needs to be extracted independently on 100 subjects and you happen to have 100 computers lying around in your living room, why not run these operations in parallel ? Also, many of the tasks involved in scripting a pipeline are extremely repetitive and boring (which is, again, taking us time away from mine sweeper): these include logging the verbose of the job as well as basic information such as the time of start/end, the name of the machine/user, etc. 
 
-The pipeline system for Octave and Matlab (PSOM) is a small library that was designed to help script pipelines using a high-level popular language for scientific computing called matlab, as well as its open-source, GNU equivalent, called Octave. PSOM offer a number of services:
+The pipeline system for Octave and Matlab (PSOM) is a small library that was designed to help script pipelines using a high-level popular language for scientific computing called matlab, as well as its open-source, GNU equivalent, called Octave. With PSOM, the following services come for free to the user:
   * Automatically detect and execute jobs that can run in parallel, using multiple CPUs or within a distributed computing environment.
   * Generate log files and keep track of the pipeline execution. These logs are detailed enough to fully reproduce the analysis.
   * Handle job failures : successful completion of jobs is checked and failed jobs can be restarted.
