@@ -22,7 +22,7 @@ You're done ! You may have to adapt the [configuration](https://github.com/SIMEX
 ###Contributions
 PSOM is maintained by Pierre [Bellec](http://simexp-lab.org/brainwiki/doku.php?id=pierrebellec), "[Unité de Neuroimagerie Fonctionnelle](http://www.unf-montreal.ca/)" (UNF), "[Centre de Recherche de l'Institut de Gériatrie de Montréal](http://www.criugm.qc.ca/)" (CRIUGM), "[Département d'Informatique et de Recherche Opérationnelle](http://www.iro.umontreal.ca/)" (DIRO), [Université de Montréal](http://www.umontreal.ca/). 
 The project was started by Pierre Bellec in the lab of [Alan Evans](http://www.bic.mni.mcgill.ca/~alan/) at the [McConnell Brain Imaging Center](http://www.bic.mni.mcgill.ca/), [Montreal Neurological Institute](http://www.mni.mcgill.ca/), [McGill University](http://www.mcgill.ca/), Canada. 
-Core ideas have been inspired by the Poor Man's Pipeline (PMP) project developed by Jason Lerch, which was itself based on [RPPL](http://www.bic.mni.mcgill.ca/~jason/rppl/rppl.html) by Alberto Jimenez and Alex Zijdenbos. Other contributors include Mr Sebastien Lavoie-Courchesne and M. Christian Dansereau.
+Core ideas have been inspired by the Poor Man's Pipeline (PMP) project developed by Jason Lerch, which was itself based on [RPPL](http://www.bic.mni.mcgill.ca/~jason/rppl/rppl.html) by Alberto Jimenez and Alex Zijdenbos. Other contributors include Mr Sebastien Lavoie-Courchesne and Mr Christian Dansereau.
 
 ###News
 ####July, 12th, 2014
