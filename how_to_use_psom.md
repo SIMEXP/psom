@@ -1,5 +1,7 @@
-### What is a pipeline 
-This page gives a quick tour of PSOM using a toy example. You can run the code of `psom_demo_pipeline` block by block to replicate this tutorial in a matlab session. What we mean by a "pipeline" is the act of running several operations (or jobs) on a dataset, stored in files, sometimes sequentially, sometimes in parallel. In PSOM, a `job` is a Matlab/Octave command that takes files as inputs and produce files as outputs, along with some optional parameters. A `pipeline` is a just a list of jobs. PSOM builds on a formal description of a pipeline, which can be implemented using standard Octave/matlab objects, namely "structures". The following matlab script is an example of a toy pipeline : 
+# Code a pipeline 
+
+## Syntax
+This page gives a quick tour of PSOM using a toy example. What we mean by a "pipeline" is the act of running several operations (or jobs) on a dataset, stored in files, sometimes sequentially, sometimes in parallel. In PSOM, a `job` is a Matlab/Octave command that takes files as inputs and produce files as outputs, along with some optional parameters. A `pipeline` is a just a list of jobs. PSOM builds on a formal description of a pipeline, which can be implemented using standard Octave/matlab objects, namely "structures". This matlab script is an example of a toy pipeline. You can download the code of `psom_demo_pipeline` and execute it block by block to replicate this tutorial in a matlab session. [Demo Script >](https://raw.githubusercontent.com/SIMEXP/psom/master/psom_demo_pipeline.m)
 
 ```matlab
 psom_gb_vars
@@ -57,7 +59,7 @@ ans = /home/pbellec/svn/psom/trunk/data_demo/cubic.mat
 
 When the job will be processed, the only variables in memory will be `files_in`, `files_out` and `opt`. As a consequence, these are the variables that can be used in the field `command`. Note that it is not necessary to specify any of these fields, which by default are assigned empty values. The only necessary field is `command`.
 
-### Run a pipeline
+## Dependencies
 
 It is now possible to run the pipeline using `psom_run_pipeline`. Note that for example the inputs of the job `sum` are the outputs of the jobs `quadratic` and `cubic`. As a consequence, the jobs `quadratic` and `cubic` need to be completed before the job `sum` can start. The pipeline manager can figure that out by analyzing the input and output file names and it will build a directed graph of dependencies between the jobs (aka flowchart). It is possible to visualize this graph if the bioinformatics toolbox (or the [package](http://www.graphviz.org/ graphviz) is installed : 
 ```matlab
@@ -69,6 +71,7 @@ It is now possible to run the pipeline using `psom_run_pipeline`. Note that for 
 
 >![An example of pipeline dependency graph](https://raw.githubusercontent.com/SIMEXP/psom/master/demo_pipe1.jpg)
 
+## Options
 The only option that is really necessary to run the pipeline is the name of the logs folder (the "memory" of PSOM). That folder does not have to be created beforehand : 
 ```matlab
 >> opt.path_logs = '/home/pbellec/svn/psom/trunk/data_demo/';
@@ -82,6 +85,7 @@ This option sets the environment where the jobs are processed. Here the jobs wil
 >> opt.max_queued = 2;
 ```
 
+## Execution
 Now running the pipeline is straightforward, it is just a call to the pipeline manager. Note that to limit the length of the tutorial, some initial initialization infos `(...)` have not been reproduced. In particular, the pipeline manager has checked that the dependency graph is acyclic and that no output was created twice. It has also created all the folders that will store outputs, and deleted outputs that already existed prior to the pipeline execution. There are still other options for the pipeline manager, some of which will be covered in the next section of the tutorial. See the help of `psom_run_pipeline` for details.
 
 ```matlab
@@ -108,7 +112,9 @@ See report below for job completion status.
 All jobs have been successfully completed.
 ```
 
-### Update a pipeline
+# Update a pipeline
+
+## Change options
 
 A common reason for restarting a pipeline is to change one of the jobs. If you restart the pipeline manager using the same logs folder as the first time, PSOM is going to compare the old and current pipeline and figure out by himself which jobs have changed. It is going to restart those jobs only, along with any job that uses even indirectly the outputs of a restarted job. For example, let's change the `quadratic` job (adding a bug) and restart the pipeline manager : 
 ```matlab
@@ -204,7 +210,7 @@ psom_run_pipeline(pipeline,opt);
 ```
 This time the pipeline is completing without problem. Note that the job ''sum'' is also restarted, because it depends on ''quadratic''.
 
-### Add a job
+## Add a job
 This section deals with restarting the pipeline after adding new jobs. That would occur for example when processing a larger dataset than in the first pass. For example, let's define a new job `cleanup` to the pipeline :
 ```matlab
 pipeline.cleanup.command     = 'delete(files_clean)';
@@ -234,7 +240,7 @@ All jobs have been successfully completed.
 ```
 It is also possible to remove jobs from the pipeline.
 
-### Restart a job
+## Restart a job
 This last section deals with a kind of peculiar and tricky situation. Imagine that you want to change the options of a job, but the inputs of this job were deleted to save space (by the `cleanup` job). If it is still possible to rebuild the inputs using other jobs of the pipeline, PSOM will sort it out for you. Let's force the job the options of `fft`, which job is incidentally using the output of `tseries1`, and restart the pipeline : 
 ```matlab
 >> opt.restart = {'quadratic'};
@@ -264,10 +270,10 @@ All jobs have been successfully completed.
 ```
 PSOM decided to restart `sample` in order to be able to reprocess `quadratic`. That behavior is actually recursive, so even indirect dependencies could have been solved. The jobs `sum` and `cubic` have also been restarted because they have (direct or indirect) dependencies on `sample`.
 
-###Monitor a pipeline
+#Monitor a pipeline
 After a pipeline has been started in a log folder, the pipeline manager is keeping track of all processing, options and logs. Those informations are stored into matlab .mat files (which is actually HDF5), and can be accessed using the command `psom_pipeline_visu`.
 
-#### Display flowchart
+## Display flowchart
 
 The flowchart of the pipeline is stored in the logs and can be visualized this way (requires the bioinformatics toolbox) :
 ```matlab
@@ -276,7 +282,7 @@ The flowchart of the pipeline is stored in the logs and can be visualized this w
 
 ![An example of pipeline dependency graph](https://raw.githubusercontent.com/SIMEXP/psom/master/demo_pipe2.jpg)
 
-#### List the jobs
+## List the jobs
 
 It is possible to list the jobs of the pipeline according to their current status (either `none`, `failed` or `finished`). For example, to see a list of the finished jobs : 
 ```matlab
@@ -291,7 +297,7 @@ sample
 sum
 ```
 
-#### Display log
+## Display log
 As was described in the last section, it is possible to access the logs of any job (unprocessed jobs have an empty log) :
 ```matlab
 >> psom_pipeline_visu(opt.path_logs,'log','sum')
@@ -347,7 +353,7 @@ The output file or directory /home/pbellec/database/demo_psom/sum.mat was succes
 Total time used to process the job : 0.10 sec.
 *********************************************************
 ```
-#### Display computation time
+## Display computation time
 It is also possible to get a summary of the effective computation time for all the jobs or a subpart of the pipeline
 ```matlab
 >> psom_pipeline_visu(opt.path_logs,'time','')
@@ -362,7 +368,7 @@ Total computation time :  0.35 s, 0.01 mn, 0.00 hours, 0.00 days.
 ```
 The last argument can be used to select only a subpart of the pipeline (e.g. 'cubic').
 
-####Monitor history
+##Monitor history
 It is possible to access the pipeline history again (concatenated over all executions, and with updates) using the following command : 
 ```matlab
 >> psom_pipeline_visu(opt.path_logs,'monitor')
@@ -370,6 +376,6 @@ It is possible to access the pipeline history again (concatenated over all execu
 ```
 The result of this command is not listed here, because it recapitulates everything that has been done so far in the tutorial and is therefore quite lengthy.
 
-### Conclusion
+# Conclusion
 
 That is the end of this tutorial, congratulations for making it here ! Beyond the toy pipeline, PSOM is able to handle smoothly pipelines with thousands of jobs involving tens of thousands of files, and distribute those amongst tens of processors. This is an opensource project : it was made to be used, copied and modified freely, so enjoy ! If you find that software useful or if you run into a bug, please do send feedback to the maintainer of this project `pierre.bellec [at] criugm.qc.ca`. 
