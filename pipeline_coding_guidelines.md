@@ -1,9 +1,9 @@
-###Introduction
+#Introduction
 A **pipeline** is a series of **jobs**, i.e. a Matlab/Octave code that takes files as inputs and produces files as outputs. To use PSOM, it is necessary to generate a matlab representation of these jobs using a specific pipeline structure. In order to keep the generation of the pipeline concise, re-usable and readable, some coding guidelines have been developed both for coding the jobs, the modules used by the jobs (aka **bricks**) and finally the pipeline itself.
 
-###Jobs
+#Jobs
 
-####How to set the job parameters
+##How to set the job parameters
 
 There is no strict framework to set the default of the input arguments in
 Octave/Matlab. The following approach has several advantages over a more traditional method consisting in passing each parameter one
@@ -25,7 +25,7 @@ opt = {
 ```
 Note that only three lines of code are used to set all the defaults, and that a warning was automatically issued for the typo `slic` instead of `slice`. Such unlisted fields are simply ignored. Also, the default value `NaN` can be used to indicate a mandatory argument (an error will be issued if this field is absent). This approach will scale up well with a large number of parameters. It also facilitates the addition of extra parameters in future developments while maintaining backwards compatibility. As long as a new parameters is optional, a code written for old specifications will remain functional.
 
-####How to create temporary files
+##How to create temporary files
 
 There are two functions to generate temporary files or folders in PSOM:
 ```matlab
@@ -36,7 +36,7 @@ path_tmp = /tmp/psom_tmp_44068_suffix/
 ```
 PSOM will generate a random name, using the specified suffix. Before attributing the name, PSOM will check that this name is not already used (in which case it will generate another random name). As soon as the name has been selected, an empty file name or directory is automatically created. Moreover, if these commands are called as part of a job, the job name is automatically added in the temporary name. All these features ensure that there will be no conflict of temporary names between jobs, even if the same pipeline is executed multiple times on a single machine. By default, the name of the temporary folder is the default of the system (as defined by the `tempdir` variable). This can be changed using the `gb_psom_tmp` variable defined in `psom_gb_vars.m`.
 
-####Random number generator 
+##Random number generator 
 When running Monte Carlo simulations, it is critical to take a great care setting up the state of the random number generator. There is a PSOM command called `psom_set_rand_seed` which will set the state of the Gaussian and uniform random number generator:
 ```matlab
 >> psom_set_rand_seed(0);
@@ -56,9 +56,9 @@ The way to perform this operation has changed with versions of Matlab, and is no
 
 If the results of the pipeline have to be reproducible, it is possible to add an option `seed_rand` to the job, and use the `psom_set_rand_seed` command to set a fixed seed (ex 0) for each job. However, in some Monte Carlo simulations, the only thing that changes from one job to another is exactly the seed of the random number generator. In that case, it is possible to use `psom_set_rand_seed` once, then generate a list of random (but reproducible) seeds. Each one of these seeds are saved in an individual .mat file, which are then fed into the jobs as an input parameter.
  
-###Bricks
+#Bricks
 
-####The syntax of a brick
+##Syntax
 
 The bricks are a special type of M function which take files as inputs and
 outputs, along with a structure to describe some options. The command used to call a brick always follows the same syntax:
@@ -67,7 +67,7 @@ outputs, along with a structure to describe some options. The command used to ca
 ```
 See the following  [template](https://github.com/SIMEXP/psom/blob/master/psom_template_brick.m) for an example of code.
 
-####Input/output files
+##Input/output files
 `files_in` and `files_out` can be a string array, cells of string array or nested structures where each terminal field is of the preceding type. Examples :
 ```matlab
 files_in1 = '/path/my_file.mnc'
@@ -86,17 +86,17 @@ files_in4.anat = '/path/my_t1_image.mnc';
 
 To facilitate the combination of bricks into another brick or a pipeline, the following behavior is expected to set up default output names and to select a subset of possible inputs/ouputs. If a file name is present, but is an empty string, a default value will be specified if possible. If a field is absent in a structure, or if the file name is `gb_niak_omitted`, then the ouput will not be generated. In the case of an input files, the input values will be estimated if possible.
 
-####Options
+##Options
 `opt` is a structure used to specify arguments. A number of fields are generally present in `opt` :
 * `folder_out` If this field exist and is not empty, all outputs will be generated in this folder. By default, `folder_out` is the same directory as the one where the inputs live.
 * `flag_test` : If this field exist and is non-zero, the brick is not doing anything but updating the default values of `inputs`, `outputs` and `opt` and sending back these values. See below
 * `flag_verbose` :  if this field exist and is non-zero, then the function prints some infos during the processing.
 
-####Running a test
+##Running a test
 The key mechanism of a brick is`opt.flag_test` which allows the programmer to make a test, or dry-run. If that (boolean) option is true, the brick will not do anything but update the default parameters and file names in its three arguments. Using this mechanism, it is possible to use the brick itself to generate an exhaustive list of the brick parameters, and test if a subset of parameters are acceptable to run the brick. In addition, if a change is made to the default parameters of a brick, this change will be apparent to any piece of code that is using a test to set the parameters,
 without a need to change the code.
 
-####Example
+##Example
 
 Building `files_in`, `files_out` and `opt` for the brick `niak_brick_time_filter` (from the [NIAK](https://github.com/SIMEXP/niak) package):
 ```matlab
@@ -141,9 +141,9 @@ opt =
 
 Note how the default output names have been built based on the inputs. An extension has been added to the base name, the same extension as the input is used, and the output folder is the one specified in `opt`. Also note that a number of possible outputs (`beta_high`, `beta_low`, `dc_high`, `dc_low`) have been assigned the tag `gb_niak_omitted`, which means that they will not be generated.
 
-###Pipelines 
+#Pipelines 
 
-####Pipeline description
+##Description
 
 Pipelines are described using a matlab-type structure:
 ```matlab
@@ -178,7 +178,7 @@ pipeline.samp_tseries.opt.nb_roi = 10;
 pipeline.samp_tseries.command = 'tseries = randn([opt.nt opt.nb_roi]); save(files_out,''tseries'');';
 ```
 
-####Pipeline generator
+##Pipeline generator
 
 A pipeline generator is a function that, starting from a minimal description of a file collection and some options, generates a full pipeline. Because a pipeline can potentially create a very large number of outputs, it is difficult to implement a generic system that is as flexible as a brick in terms of output selection. Instead, the organization of the output of the pipeline will follow some canonical, well-structured predefined organization. As a consequence, the pipeline generator only takes two input arguments, files in and opt (similar to those of a job), and does not feature files out. The following example shows how to invoke the CORSICA pipeline, implemented in NIAK:
 ```matlab
@@ -234,7 +234,7 @@ The command psom add job first runs a test with the brick to update the
 default parameters and file names, and then adds the job with the updated
 input/output files and options. By virtue of the “test” mechanism, the brick is itself defining all the defaults. The coder of the pipeline does not actually need to know which parameters are used by the brick. Any modification made to a brick will immediately propagate to all pipelines, without changing one line in the pipeline generator. Moreover, if a mandatory parameter has been omitted by the user, or if a parameter name is not correct, an appropriate error or warning will be generated at this stage, prior to any work actually being performed by the brick. The command psom add clean adds a clean-up job to the pipeline, which deletes the specified list of files. Because the jobs can be specified in any order, it is possible to add a job and its associated clean-up at the same time. 
 
-####Combining pipelines
+##Combining pipelines
 
 In case two pipelines need to be combined (say for example `pipeline2` uses some of the outputs of `pipeline1`), all that needs to be done is to merge all the jobs into one structure. There is a NIAK function which does that : 
 ```matlab
