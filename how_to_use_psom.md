@@ -1,7 +1,7 @@
 # Code a pipeline 
 
 ## Syntax
-This page gives a quick tour of PSOM using a toy example. What we mean by a "pipeline" is the act of running several operations (or jobs) on a dataset, stored in files, sometimes sequentially, sometimes in parallel. In PSOM, a `job` is a Matlab/Octave command that takes files as inputs and produce files as outputs, along with some optional parameters. A `pipeline` is a just a list of jobs. PSOM builds on a formal description of a pipeline, which can be implemented using standard Octave/matlab objects, namely "structures". This matlab script is an example of a toy pipeline. You can download the code of `psom_demo_pipeline` and execute it block by block to replicate this tutorial in a matlab session. [Demo Script >](https://raw.githubusercontent.com/SIMEXP/psom/master/psom_demo_pipeline.m)
+This page gives a quick tour of PSOM using a toy example. What we mean by a "pipeline" is the act of running several operations (or jobs) on a dataset, stored in files, sometimes sequentially, sometimes in parallel. In PSOM, a `job` is a Matlab/Octave command that takes files as inputs and produce files as outputs, along with some optional parameters. A `pipeline` is a just a list of jobs. PSOM builds on a formal description of a pipeline, which can be implemented using standard Octave/matlab objects, namely "structures". This matlab script is an example of a toy pipeline. You can download the code of `psom_demo_pipeline` and execute it block by block to replicate this tutorial in a matlab session. 
 
 ```matlab
 psom_gb_vars
@@ -275,12 +275,12 @@ After a pipeline has been started in a log folder, the pipeline manager is keepi
 
 ## Display flowchart
 
-The flowchart of the pipeline is stored in the logs and can be visualized this way (requires the bioinformatics toolbox) :
+The flowchart of the pipeline is stored in the logs and can be visualized this way (requires the bioinformatics toolbox).
 ```matlab
 >> psom_pipeline_visu(opt.path_logs,'flowchart');
 ```
 
-![An example of pipeline dependency graph](https://raw.githubusercontent.com/SIMEXP/psom/master/demo_pipe2.jpg)
+>![An example of pipeline dependency graph](https://raw.githubusercontent.com/SIMEXP/psom/master/demo_pipe2.jpg)
 
 ## List the jobs
 
