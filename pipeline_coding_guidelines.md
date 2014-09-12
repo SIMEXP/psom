@@ -1,4 +1,3 @@
-#Introduction
 A **pipeline** is a series of **jobs**, i.e. a Matlab/Octave code that takes files as inputs and produces files as outputs. To use PSOM, it is necessary to generate a matlab representation of these jobs using a specific pipeline structure. In order to keep the generation of the pipeline concise, re-usable and readable, some coding guidelines have been developed both for coding the jobs, the modules used by the jobs (aka **bricks**) and finally the pipeline itself.
 
 #Jobs
@@ -27,14 +26,13 @@ Note that only three lines of code are used to set all the defaults, and that a 
 
 ##How to create temporary files
 
-There are two functions to generate temporary files or folders in PSOM:
+There are two functions to generate temporary files or folders in PSOM, `psom_file_tmp` and `psom_path_tmp`. In both cases, PSOM will generate a random name, using a user-specified suffix. Before attributing the name, PSOM will check that this name is not already used (in which case it will generate another random name). As soon as the name has been selected, an empty file name or directory is automatically created. Moreover, if these commands are called as part of a job, the job name is automatically added in the temporary name. All these features ensure that there will be no conflict of temporary names between jobs, even if the same pipeline is executed multiple times on a single machine. By default, the name of the temporary folder is the default of the system (as defined by the `tempdir` variable). This can be changed using the `gb_psom_tmp` variable defined in `psom_gb_vars.m`.
 ```matlab
 >> file_tmp = psom_file_tmp('_suffix')
 file_tmp = /tmp/psom_tmp_359007_suffix
 >> path_tmp = psom_path_tmp ('_suffix')
 path_tmp = /tmp/psom_tmp_44068_suffix/
 ```
-PSOM will generate a random name, using the specified suffix. Before attributing the name, PSOM will check that this name is not already used (in which case it will generate another random name). As soon as the name has been selected, an empty file name or directory is automatically created. Moreover, if these commands are called as part of a job, the job name is automatically added in the temporary name. All these features ensure that there will be no conflict of temporary names between jobs, even if the same pipeline is executed multiple times on a single machine. By default, the name of the temporary folder is the default of the system (as defined by the `tempdir` variable). This can be changed using the `gb_psom_tmp` variable defined in `psom_gb_vars.m`.
 
 ##Random number generator 
 When running Monte Carlo simulations, it is critical to take a great care setting up the state of the random number generator. There is a PSOM command called `psom_set_rand_seed` which will set the state of the Gaussian and uniform random number generator:
