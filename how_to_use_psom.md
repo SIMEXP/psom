@@ -211,15 +211,15 @@ psom_run_pipeline(pipeline,opt);
 This time the pipeline is completing without problem. Note that the job ''sum'' is also restarted, because it depends on ''quadratic''.
 
 ## Add a job
-This section deals with restarting the pipeline after adding new jobs. That would occur for example when processing a larger dataset than in the first pass. For example, let's define a new job `cleanup` to the pipeline :
+This section deals with restarting the pipeline after adding new jobs. That would occur for example when processing a larger dataset than in the first pass. For example, This code defines a new job `cleanup` to the pipeline.
 ```matlab
 pipeline.cleanup.command     = 'delete(files_clean)';
 pipeline.cleanup.files_clean = pipeline.sample.files_out;
 ```
-The job clean-up is using a new type of attributes 'files_clean'. This means that the job `cleanup` will delete a file, here the output of `sample`. Because `quadratic` and `cubic` are using that file, it is necessary to wait that both of these jobs have completed their execution before starting `cleanup`. The new dependency graph is:
-![An example of pipeline dependency graph](https://raw.githubusercontent.com/SIMEXP/psom/master/demo_pipe2.jpg)
+The job clean-up is using a new type of attributes 'files_clean'. This means that the job `cleanup` will delete a file, here the output of `sample`. Because `quadratic` and `cubic` are using that file, it is necessary to wait that both of these jobs have completed their execution before starting `cleanup`. The new dependency graph is shown on the right.
+>![An example of pipeline dependency graph](https://raw.githubusercontent.com/SIMEXP/psom/master/demo_pipe2.jpg)
 
-PSOM will let you add the new job without complaint. Of course the jobs that were finished will not be reprocessed : 
+PSOM will let you add the new job without complaint. Of course the jobs that were finished will not be reprocessed. Note that it is also possible to remove jobs from the pipeline.
 ```matlab
 >> psom_run_pipeline(pipeline,opt);
 (...)
@@ -238,7 +238,7 @@ See report below for job completion status.
 *********************************************
 All jobs have been successfully completed.
 ```
-It is also possible to remove jobs from the pipeline.
+
 
 ## Restart a job
 This last section deals with a kind of peculiar and tricky situation. Imagine that you want to change the options of a job, but the inputs of this job were deleted to save space (by the `cleanup` job). If it is still possible to rebuild the inputs using other jobs of the pipeline, PSOM will sort it out for you. Let's force the job the options of `fft`, which job is incidentally using the output of `tseries1`, and restart the pipeline : 
