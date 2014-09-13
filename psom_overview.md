@@ -21,7 +21,7 @@ You're basically done ! More resources for fine tuning are listed on the right.
 PSOM is maintained by the laboratory of Pierre [Bellec](http://simexp-lab.org/brainwiki/doku.php?id=pierrebellec), "[Unité de Neuroimagerie Fonctionnelle](http://www.unf-montreal.ca/)" (UNF), "[Centre de Recherche de l'Institut de Gériatrie de Montréal](http://www.criugm.qc.ca/)" (CRIUGM), "[Département d'Informatique et de Recherche Opérationnelle](http://www.iro.umontreal.ca/)" (DIRO), [Université de Montréal](http://www.umontreal.ca/). 
 The project was started by Pierre Bellec in the lab of [Alan Evans](http://www.bic.mni.mcgill.ca/~alan/) at [McGill University](http://www.mcgill.ca/), Canada. 
 Core ideas have been inspired by the Poor Man's Pipeline (PMP) project developed by Jason Lerch, which was itself based on [RPPL](http://www.bic.mni.mcgill.ca/~jason/rppl/rppl.html) by Alberto Jimenez and Alex Zijdenbos. Other contributors include Mr Sebastien Lavoie-Courchesne, [Mr Sebastian Urchs](https://github.com/surchs) and Mr [Christian Dansereau](https://github.com/cdansereau).
-><img src="logos_criugm_udm.png" align="left" width=60% alt="CRIUGM"/>
+>![UDM and CRIUGM](logos_criugm_udm.png)
 
 #News
 ##September, 12th, 2014
