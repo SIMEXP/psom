@@ -1,6 +1,5 @@
 #Overview
 The pipeline system for Octave and Matlab (PSOM) is a lightweight open-source library, under [MIT license](http://opensource.org/licenses/MIT), that was designed to help script complex multistage data processing, or "pipelines", using a high-level popular language for scientific computing called [Matlab](http://www.mathworks.com/), as well as its open-source equivalent, called (GNU) [Octave](http://www.gnu.org/software/octave/). 
-><img src="https://raw.githubusercontent.com/SIMEXP/psom/master/logo_psom.png?raw=true" align="left" width=30% alt="PSOM logo"/>
 
 #Features
 With PSOM, the services listed on the right come automatically to the user. Please read the [tutorial](how_to_use_psom.html) and [guidelines](pipeline_coding_guidelines.html) to learn how to script pipelines with PSOM. There is also a [paper](http://www.frontiersin.org/neuroinformatics/10.3389/fninf.2012.00007/abstract) in Frontiers in Neuroinformatics that provides an overview of PSOM features and implementation.
