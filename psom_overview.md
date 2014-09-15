@@ -1,4 +1,3 @@
-#Pipeline system for Octave and Matlab
 The pipeline system for [Octave](http://www.gnu.org/software/octave/) and [Matlab](http://www.mathworks.com/) (PSOM) is a lightweight library designed to help script complex multistage data processing, or "pipelines". PSOM is an open-source software distributed under [MIT license](http://opensource.org/licenses/MIT).
 
 #Features
