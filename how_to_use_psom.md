@@ -1,8 +1,7 @@
 # Code a pipeline 
 
 ## Syntax
-This page gives a quick tour of PSOM using a toy example. What we mean by a "pipeline" is the act of running several operations (or jobs) on a dataset, stored in files, sometimes sequentially, sometimes in parallel. In PSOM, a `job` is a Matlab/Octave command that takes files as inputs and produce files as outputs, along with some optional parameters. A `pipeline` is a just a list of jobs. PSOM builds on a formal description of a pipeline, which can be implemented using standard Octave/matlab objects, namely "structures". This matlab script is an example of a toy pipeline. You can download the code of `psom_demo_pipeline` and execute it block by block to replicate this tutorial in a matlab session. 
-
+A `job` is a Matlab/Octave command that takes files as inputs and produce files as outputs, along with some optional parameters. 
 ```matlab
 psom_gb_vars
 
@@ -11,7 +10,10 @@ command = 'a = randn([opt.nb_samps 1]); save(files_out,''a'')';
 pipeline.sample.command      = command;
 pipeline.sample.files_out    = [gb_psom_path_demo 'sample.mat'];
 pipeline.sample.opt.nb_samps = 10;
+```
 
+A `pipeline` is a just a list of jobs. You can copy/paste the code of [`psom_demo_pipeline`](https://github.com/SIMEXP/psom/blob/master/psom_demo_pipeline.m) and execute it block by block to replicate this tutorial. 
+```matlab
 % Job "quadratic" : Compute a.^2 and save the results
 command = 'load(files_in); b = a.^2; save(files_out,''b'')';
 pipeline.quadratic.command   = command;
@@ -41,23 +43,11 @@ ans =
   opt = [1x1 struct]
 ```
 
-The field `command` describes the matlab/octave command line(s) executed by the job (here generate a random vector and save it in a mat file). The field `opt` could be any variable that is used by the command of the job. It can for instance be a structure where each field is a variable, so the command can virtually use an arbitrary large number of optional parameters.
-```matlab
->> pipeline.sample.opt
-ans =
-    nb_samps = 10    
-```
+ * `command` describes the matlab/octave command line(s) executed by the job. 
+ * `opt` contains any variable that is used by the job.  
+ * `files_in` and `files_out` respectively describe the lists of input and output files, using either a string, a cell of strings or a nested structure whose terminal fields are strings/cell of strings.
 
-The fields `files_in` and `files_out` respectively describe the lists of input and output files. Note that the format is extremely flexible : `files_in` and `files_out` can be a string, a cell of strings or a structure whose fields are of the preceeding type (including structures). Examples : 
-```matlab
->> pipeline.sum.files_in{1}
-ans = /home/pbellec/svn/psom/trunk/data_demo/quadratic.mat
-
->> pipeline.sum.files_in{2}
-ans = /home/pbellec/svn/psom/trunk/data_demo/cubic.mat
-```
-
-When the job will be processed, the only variables in memory will be `files_in`, `files_out` and `opt`. As a consequence, these are the variables that can be used in the field `command`. Note that it is not necessary to specify any of these fields, which by default are assigned empty values. The only necessary field is `command`.
+The only variables available to execute the `command` are `files_in`, `files_out` and `opt`. These variables are assigned by default empty values. 
 
 ## Dependencies
 
