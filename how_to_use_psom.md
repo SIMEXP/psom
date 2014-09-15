@@ -1,4 +1,4 @@
-You can copy/paste the code of [`psom_demo_pipeline`](https://github.com/SIMEXP/psom/blob/master/psom_demo_pipeline.m) and execute it block by block to replicate this tutorial.
+You can copy/paste the code of [`psom_demo_pipeline`](https://github.com/SIMEXP/psom/blob/master/psom_demo_pipeline.m) and execute it block by block to replicate this tutorial. The demo will create a folder 'psom_demo' in the current direction, and generate several files inside of it. To restart the demo from scratch, simply delete this folder.
 
 # Code a pipeline 
 
