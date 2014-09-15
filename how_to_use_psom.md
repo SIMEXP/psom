@@ -5,8 +5,10 @@ You can copy/paste the code of [`psom_demo_pipeline`](https://github.com/SIMEXP/
 ## Syntax
 A `job` is a Matlab/Octave command that takes files as inputs and produce files as outputs, along with some optional parameters. A `pipeline` is a just a list of jobs. Each field of the pipeline is describing one job, including the following subfields. `command` describes the matlab/octave command line(s) executed by the job. `opt` contains any variable that is used by the job (optional). `files_in` and `files_out` respectively describe the lists of input and output files, using either a string, a cell of strings or a nested structure whose terminal fields are strings/cell of strings (optional). 
 ```matlab
+%% An example of (toy) pipeline
+
 % where to generate the outputs of the demo
-path_demo = [pwd filesep 'demo_psom' filesep]; 
+clear, path_demo = [pwd filesep 'demo_psom' filesep]; 
 
 % Job "sample" :    No input, generate a random vector a
 command = 'a = randn([opt.nb_samps 1]); save(files_out,''a'')';
@@ -38,10 +40,8 @@ pipeline.sum.files_out     = [path_demo 'sum.mat'];
 
 The inputs of the job `sum` are the outputs of the jobs `quadratic` and `cubic`. As a consequence, the jobs `quadratic` and `cubic` need to be completed before the job `sum` can start. PSOM can figure that out by analyzing the input and output file names. PSOM builds a directed graph of dependencies between the jobs, which can be visualized if the bioinformatics toolbox (or the [graphviz package](http://www.graphviz.org/) is installed.
 ```matlab
->> psom_visu_dependencies(pipeline)
-      dot - graphviz version 2.26.3 (20100126.1600)
-       Reorganizing inputs/outputs ... 0.03 sec
-       Analyzing job inputs/outputs, percentage completed :  25 50 75 100- 0.04 sec
+%% Visualize the dependency graph
+psom_visu_dependencies(pipeline)
 ```
 
 >![An example of pipeline dependency graph](https://raw.githubusercontent.com/SIMEXP/psom/master/demo_pipe1.jpg)
