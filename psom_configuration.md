@@ -1,63 +1,51 @@
-This page describes how to customize the runtime environment of PSOM pipelines. The only necessary option describes where to save the logs. All other options could be set by default. By changing these options, it is possible to get full advantage of multiple CPUs or even distributed computational resources. 
+#PSOM configuration
+This page describes how to customize the runtime environment of PSOM pipelines, to get full advantage of multiple CPUs or distributed computational resources. 
+>The PSOM configuration parameters are located in a file called `psom_gb_vars.m`. Edit this file directly, or copy it under the name `psom_gb_vars_local.m`, to tailor the default configuration to the local production environment.
 
+##Logs folder
+The only necessary option `path_logs` describes where to save the logs. All other options could be set by default.
 ```matlab
 >> opt.path_logs = '/home/pbellec/svn/psom/trunk/data_demo/';
 ```
 
-#PSOM configuration
-
-##Psom defaults
-All the configuration variables of PSOM are stored in a file called `psom_gb_vars.m`. This file can be edited to tailor the default configuration to the local production environment. In the case where the file `psom_gb_vars` cannot be edited directly, it is possible to copy this file under the name `psom_gb_vars_local.m` and edit this file instead. As long as `psom_gb_vars_local.m` is found in the Matlab/Octave search path, regardless where it is located, it will override the settings found in `psom_gb_vars.m`.
-
-##Jobs
-The runtime environment of jobs can be set using the `opt.mode` option, example :
+##Execution mode for jobs
+The runtime environment of jobs can be set using the `opt.mode`. The default execution mode is `'background'`, which can be changed by setting the variable `gb_psom_mode` in the file `psom_gb_vars.m`. 
 ```matlab
 opt.mode = 'batch';
-```
-Five modes are available: 
-* `'session'` : The jobs are executed in the current Matlab/Octave session, one after the other.
-* `'background'` : That's the default. Each job is executed in an independent Matlab/Octave session. The jobs are executed in the background using using an "asynchronous" system call. 
-* `'batch'` : Each job is executed in an independent Matlab/Octave session. The jobs are executed in the background using the `at` command. 
-* `'qsub'` : The jobs are executed through independent submissions to a 'qsub' system (either torque, SGE or PBS).
-* `'msub'` : The jobs are executed through independent submissions to a 'msub' MOAB system.
-The `'qsub'` and `'msub'` modes are using tools available in supercomputing centers to submit a job for execution on one of multiple machines or cores. By contrast, the `'background'`, `'batch'` and `'session'` modes work locally on your machine. The default execution mode is `'background'`, which can be changed by setting the variable `gb_psom_mode` in the file `psom_gb_vars.m`. The main difference between the `'background'` and the '`batch`' mode is that the former will be interrupted if the Matlab/Octave session is interrupted, while with the latter the pipeline will keep on working even if the use exits Matlab/Octave and unlogs from his/her machine. The `'background'` mode is set by default because it will work on all systems (while `'batch'` sometimes requires changing some of the system's settings). Note that on Linux the [screen](http://www.rackaid.com/resources/linux-screen-tutorial-and-how-to/) command can be used in combination with the `'background'` mode. 
+``` 
+ * `'session'`    : The jobs are executed in the current Matlab/Octave session, one after the other.
+ * `'background'` : That's the default. Each job is executed in an independent Matlab/Octave session. The jobs are executed in the background using using an "asynchronous" system call. 
+ * `'batch'`      : Each job is executed in an independent Matlab/Octave session. The jobs are executed in the background using the `at` command.
+ * `'qsub'`       : The jobs are executed through independent submissions to a 'qsub' system (either torque, SGE or PBS).
+ * `'msub'`       : The jobs are executed through independent submissions to a 'msub' MOAB system.
+>For `batch` mode on OpenSUSE, the system administrator needs to authorize the "at" command. On Mac OSX, to use `batch`, type the following line in a terminal ```batch sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.atrun.plist``` 
 
-Another important option sets the maximal number of jobs that can potentially be processed simultaneously. That is usefull in `'batch'` mode (this maximal number is the number of processors) and maybe in `'qsub'` mode (if the system administrator has set a limit on the number of jobs per user). Example:
+##Number of parallel jobs
+The `max_queued` option sets the maximal number of jobs that can be processed simultaneously. 
 ```matlab
 >> opt.max_queued = 2;
 ```
-The default for this option is `1` in `'batch'` mode, and `Inf` in all other modes. This default can be changed by setting the variable `gb_psom_max_queued` in the file `psom_gb_vars.m`.
+The default for `max_queued` is 2, see `gb_psom_max_queued` in `psom_gb_vars.m`.
+>`max_queued` is useful in `'batch'` mode (it is the number of processors) and maybe in `'qsub'` or `'msub'` mode (if there is a limit on the number of jobs a user can submit simultaneously).
 
 ##Pipeline manager
-The pipeline manager is the part of PSOM that submits the jobs. It is just a long loop that constantly monitors the state of the pipeline, and submits jobs whenever possible. It is sometimes desirable to run the pipeline manager in a different mode than the jobs. For example, if jobs are executed through `qsub`, one may still want to run the pipeline manager in `batch` to avoid wasting a full slot for a process that is hardly using any memory or CPU. The runtime mode of the pipeline manager can be set using a specific option : 
+The pipeline manager is the process responsible to start the jobs, and its execution mode is set with `mode_pipeline_manager`. All the execution modes available for jobs are also available for the pipeline manager. The default is `'session'` (see `gb_psom_mode_pipeline_manager` in `psom_gb_vars.m`). 
 ```matlab
 >> opt.mode_pipeline_manager = 'batch';
 ```
-All the execution modes available for jobs are also available for the pipeline manager. The default is `'session'`. This can be changed by setting the variable `gb_psom_mode_pipeline_manager` in the file `psom_gb_vars.m`.
+>The execution mode of the pipeline manager is often different from the one of the jobs. For example, if jobs run through `qsub`, the pipeline manager can run in `batch` as this process uses minimal memory and CPU.
 
-##Batch mode
-On some systems, the "at" command is not available to regular users for security reasons. That's the case at least on Mac OSX and openSUSE. This command is used by PSOM in the so-called `'batch'` mode (see below). Note that the 'background' mode offers a PSOM experience that is very close to 'batch', and will work "out-of-the-box" on all systems. To enable "at" on Mac OSX, type the following line in a terminal:
-```matlab
-sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.atrun.plist
-```
-On OpenSUSE, please contact your system administrator to open "at" to regular users. 
-
-
-# System configuration
-
-##Octave configuration
-There are other system configuration settings that can be adjusted in some environments. For Octave users, the default verbose mode is using a tool called "more". The PSOM verbose mode works better without "more". To disable "more", simply type on the command line:
-```matlab
-more off
-```
-To make this change permanent, edit the file `.octaverc` in your home directory, and add the line above. 
+##MORE verbose 
+For Octave users, the default verbose mode is using a tool called "more". PSOM works better without "more". To disable "more", simply type `more off` is Octave. 
+>>To make this change permanent, add the line `more off` to the file `~/.octaverc`. 
 
 ##Qsub/Msub options
-The string `opt.qsub_options` is used as an argument when invoking `qsub`. It can be used to specify the queue to submit job, or any other qsub option:
+The string `opt.qsub_options` is used as an argument when invoking `qsub`. It can be used to specify any qsub option.
 ```matlab
 opt.qsub_options = '-q brain';
 ```
-The default is an empty string `''` but this can be changed by setting the variable `gb_psom_qsub_options` in the file `psom_gb_vars.m`. Note that despite its name, `qsub_options` actually applies both to `qsub` and `msub` modes.
+The default is an empty string `''`, see `gb_psom_qsub_options` in `psom_gb_vars.m`. 
+>Note that despite its name, `qsub_options` actually applies both to `qsub` and `msub` modes.
 
 ##Shell options
 In all modes but `'session'`, the jobs are executed in their own matlab sessions started from a shell. It is possible to run a couple of shell commands before matlab is started, for example to modify the shell environment if your job is using some system calls. This is done by specifying for example:
