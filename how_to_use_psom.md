@@ -1,7 +1,12 @@
+You can copy/paste the code of [`psom_demo_pipeline`](https://github.com/SIMEXP/psom/blob/master/psom_demo_pipeline.m) and execute it block by block to replicate this tutorial.
+
 # Code a pipeline 
 
 ## Syntax
-A `job` is a Matlab/Octave command that takes files as inputs and produce files as outputs, along with some optional parameters. A `pipeline` is a just a list of jobs. You can copy/paste the code of [`psom_demo_pipeline`](https://github.com/SIMEXP/psom/blob/master/psom_demo_pipeline.m) and execute it block by block to replicate this tutorial.
+A `job` is a Matlab/Octave command that takes files as inputs and produce files as outputs, along with some optional parameters. A `pipeline` is a just a list of jobs. Each field of the pipeline is describing one job, including the following subfields.  
+* `command` describes the matlab/octave command line(s) executed by the job. This is a necessary field. 
+* `opt` contains any variable that is used by the job. This is an optional field.
+* `files_in` and `files_out` respectively describe the lists of input and output files, using either a string, a cell of strings or a nested structure whose terminal fields are strings/cell of strings. These are optional fields.
 ```matlab
 psom_gb_vars
 
@@ -30,11 +35,6 @@ pipeline.sum.files_in{1}   = pipeline.quadratic.files_out;
 pipeline.sum.files_in{2}   = pipeline.cubic.files_out;
 pipeline.sum.files_out     = [gb_psom_path_demo 'sum.mat'];
 ```
-
-Each field of the pipeline is describing one job. The only variables available to execute the `command` are `files_in`, `files_out` and `opt`. These variables are assigned by default empty values. 
->* `command` describes the matlab/octave command line(s) executed by the job. 
->* `opt` contains any variable that is used by the job.  
->* `files_in` and `files_out` respectively describe the lists of input and output files, using either a string, a cell of strings or a nested structure whose terminal fields are strings/cell of strings.
 
 ## Dependencies
 
