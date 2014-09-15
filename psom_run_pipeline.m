@@ -79,8 +79,7 @@ function [] = psom_run_pipeline(pipeline,opt)
 %        same as OPT.MODE, but applies to the pipeline manager itself.
 %
 %    MAX_QUEUED
-%        (integer, default 1 'batch' modes, Inf in 'session', 'qsub',
-%        'msub' and 'condor' modes)
+%        (integer, default GB_PSOM_MAX_QUEUED defined in PSOM_GB_VARS)
 %        The maximum number of jobs that can be processed
 %        simultaneously. Some qsub systems actually put restrictions
 %        on that. Contact your local system administrator for more info.
