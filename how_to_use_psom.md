@@ -1,7 +1,7 @@
 # Code a pipeline 
 
 ## Syntax
-A `job` is a Matlab/Octave command that takes files as inputs and produce files as outputs, along with some optional parameters. 
+A `job` is a Matlab/Octave command that takes files as inputs and produce files as outputs, along with some optional parameters. A `pipeline` is a just a list of jobs. You can copy/paste the code of [`psom_demo_pipeline`](https://github.com/SIMEXP/psom/blob/master/psom_demo_pipeline.m) and execute it block by block to replicate this tutorial.
 ```matlab
 psom_gb_vars
 
@@ -10,10 +10,7 @@ command = 'a = randn([opt.nb_samps 1]); save(files_out,''a'')';
 pipeline.sample.command      = command;
 pipeline.sample.files_out    = [gb_psom_path_demo 'sample.mat'];
 pipeline.sample.opt.nb_samps = 10;
-```
 
-A `pipeline` is a just a list of jobs. You can copy/paste the code of [`psom_demo_pipeline`](https://github.com/SIMEXP/psom/blob/master/psom_demo_pipeline.m) and execute it block by block to replicate this tutorial. 
-```matlab
 % Job "quadratic" : Compute a.^2 and save the results
 command = 'load(files_in); b = a.^2; save(files_out,''b'')';
 pipeline.quadratic.command   = command;
