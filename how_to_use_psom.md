@@ -35,17 +35,9 @@ pipeline.sum.files_out     = [gb_psom_path_demo 'sum.mat'];
 ```
 
 Each field of the pipeline is describing one job. The only variables available to execute the `command` are `files_in`, `files_out` and `opt`. These variables are assigned by default empty values. 
-```matlab
->> pipeline.sample
-ans = 
-  command = 'a = randn([opt.nb_samps 1]); save(files_out,'a')'
-  files_out = '/home/pbellec/svn/psom/trunk/data_demo/sample.mat'
-  opt = [1x1 struct]
-```
-
- * `command` describes the matlab/octave command line(s) executed by the job. 
- * `opt` contains any variable that is used by the job.  
- * `files_in` and `files_out` respectively describe the lists of input and output files, using either a string, a cell of strings or a nested structure whose terminal fields are strings/cell of strings.
+>* `command` describes the matlab/octave command line(s) executed by the job. 
+>* `opt` contains any variable that is used by the job.  
+>* `files_in` and `files_out` respectively describe the lists of input and output files, using either a string, a cell of strings or a nested structure whose terminal fields are strings/cell of strings.
 
 ## Dependencies
 
