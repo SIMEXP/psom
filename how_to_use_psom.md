@@ -3,39 +3,40 @@ You can copy/paste the code of [`psom_demo_pipeline`](https://github.com/SIMEXP/
 # Code a pipeline 
 
 ## Syntax
-A `job` is a Matlab/Octave command that takes files as inputs and produce files as outputs, along with some optional parameters. A `pipeline` is a just a list of jobs. Each field of the pipeline is describing one job, including the following subfields. `command` describes the matlab/octave command line(s) executed by the job. `opt` contains any variable that is used by the job (optional). `files_in` and `files_out` respectively describe the lists of input and output files, using either a string, a cell of strings or a nested structure whose terminal fields are strings/cell of strings (option). 
+A `job` is a Matlab/Octave command that takes files as inputs and produce files as outputs, along with some optional parameters. A `pipeline` is a just a list of jobs. Each field of the pipeline is describing one job, including the following subfields. `command` describes the matlab/octave command line(s) executed by the job. `opt` contains any variable that is used by the job (optional). `files_in` and `files_out` respectively describe the lists of input and output files, using either a string, a cell of strings or a nested structure whose terminal fields are strings/cell of strings (optional). 
 ```matlab
-psom_gb_vars
+% where to generate the outputs of the demo
+path_demo = [pwd filesep 'demo_psom' filesep]; 
 
 % Job "sample" :    No input, generate a random vector a
 command = 'a = randn([opt.nb_samps 1]); save(files_out,''a'')';
 pipeline.sample.command      = command;
-pipeline.sample.files_out    = [gb_psom_path_demo 'sample.mat'];
+pipeline.sample.files_out    = [path_demo 'sample.mat'];
 pipeline.sample.opt.nb_samps = 10;
 
 % Job "quadratic" : Compute a.^2 and save the results
 command = 'load(files_in); b = a.^2; save(files_out,''b'')';
 pipeline.quadratic.command   = command;
 pipeline.quadratic.files_in  = pipeline.sample.files_out;
-pipeline.quadratic.files_out = [gb_psom_path_demo 'quadratic.mat']; 
+pipeline.quadratic.files_out = [path_demo 'quadratic.mat']; 
 
 % Adding a job "cubic" : Compute a.^3 and save the results
 command = 'load(files_in); c = a.^3; save(files_out,''c'')';
 pipeline.cubic.command       = command;
 pipeline.cubic.files_in      = pipeline.sample.files_out;
-pipeline.cubic.files_out     = [gb_psom_path_demo 'cubic.mat']; 
+pipeline.cubic.files_out     = [path_demo 'cubic.mat']; 
 
 % Adding a job "sum" : Compute a.^2+a.^3 and save the results
 command = 'load(files_in{1}); load(files_in{2}); d = b+c, save(files_out,''d'')';
 pipeline.sum.command       = command;
 pipeline.sum.files_in{1}   = pipeline.quadratic.files_out;
 pipeline.sum.files_in{2}   = pipeline.cubic.files_out;
-pipeline.sum.files_out     = [gb_psom_path_demo 'sum.mat'];
+pipeline.sum.files_out     = [path_demo 'sum.mat'];
 ```
 
 ## Dependencies
 
-It is now possible to run the pipeline using `psom_run_pipeline`. Note that for example the inputs of the job `sum` are the outputs of the jobs `quadratic` and `cubic`. As a consequence, the jobs `quadratic` and `cubic` need to be completed before the job `sum` can start. The pipeline manager can figure that out by analyzing the input and output file names and it will build a directed graph of dependencies between the jobs (aka flowchart). It is possible to visualize this graph if the bioinformatics toolbox (or the [package](http://www.graphviz.org/ graphviz) is installed : 
+The inputs of the job `sum` are the outputs of the jobs `quadratic` and `cubic`. As a consequence, the jobs `quadratic` and `cubic` need to be completed before the job `sum` can start. PSOM can figure that out by analyzing the input and output file names. PSOM builds a directed graph of dependencies between the jobs, which can be visualized if the bioinformatics toolbox (or the [graphviz package](http://www.graphviz.org/) is installed.
 ```matlab
 >> psom_visu_dependencies(pipeline)
       dot - graphviz version 2.26.3 (20100126.1600)
