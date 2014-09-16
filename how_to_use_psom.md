@@ -1,9 +1,9 @@
-You can copy/paste the code of [`psom_demo_pipeline`](https://github.com/SIMEXP/psom/blob/master/psom_demo_pipeline.m) and execute it block by block to replicate this tutorial. The demo will create a folder 'psom_demo' in the current direction, and generate several files inside of it. To restart the demo from scratch, simply delete this folder.
+You can copy/paste the code of [`psom_demo_pipeline`](https://github.com/SIMEXP/psom/blob/master/psom_demo_pipeline.m) and execute it block by block to replicate this tutorial. The demo will create a folder `psom_demo` in the current direction, and generate several files inside of it. To restart the demo from scratch, simply delete this folder. Minor options not covered in this tutorial can be found in the help of [psom_run_pipeline](https://github.com/SIMEXP/psom/blob/master/psom_run_pipeline.m).
 
 # Code a pipeline 
 
 ## Syntax
-A `job` is a Matlab/Octave command that takes files as inputs and produce files as outputs, along with some optional parameters. A `pipeline` is a just a list of jobs. Each field of the pipeline is describing one job, including the following subfields. `command` describes the matlab/octave command line(s) executed by the job. `opt` contains any variable that is used by the job (optional). `files_in` and `files_out` respectively describe the lists of input and output files, using either a string, a cell of strings or a nested structure whose terminal fields are strings/cell of strings (optional). 
+A `job` is a Matlab/Octave command that takes files as inputs and produce files as outputs, along with some optional parameters. A `pipeline` is a just a list of jobs. Each field of the pipeline is describing one job, including the following subfields. `command` describes the matlab/octave command line(s) executed by the job. `opt` (optional) contains any variable that is used by the job. `files_in` and `files_out` (optional) respectively describe the lists of input and output files, using either a string, a cell of strings or a nested structure whose terminal fields are strings/cell of strings. 
 ```matlab
 %% An example of (toy) pipeline
 
@@ -46,222 +46,145 @@ psom_visu_dependencies(pipeline)
 
 >![An example of pipeline dependency graph](https://raw.githubusercontent.com/SIMEXP/psom/master/demo_pipe1.jpg)
 
-## Options
-The only option that is really necessary to run the pipeline is the name of the logs folder (the "memory" of PSOM). That folder does not have to be created beforehand : 
-```matlab
->> opt.path_logs = '/home/pbellec/svn/psom/trunk/data_demo/';
-```
-The pipeline manager will write (and delete) a bunch of files in the logs folder. It is therefore important that the log folder is left intact at any time or otherwise the pipeline manager may experience an unrecoverable crash. There are a couple of additional options : 
-```matlab
->> opt.mode = 'background';
-```
-This option sets the environment where the jobs are processed. Here the jobs will run in independent Matlab/Octave sessions, in the background.  Another important option is `max_queued`, which sets the maximal number of jobs that can be processed simultaneously. See the [PSOM configuration](http://code.google.com/p/psom/wiki/ConfigurationPsom) tutorial for mode details.  
-```matlab
->> opt.max_queued = 2;
-```
-
 ## Execution
-Now running the pipeline is straightforward, it is just a call to the pipeline manager. Note that to limit the length of the tutorial, some initial initialization infos `(...)` have not been reproduced. In particular, the pipeline manager has checked that the dependency graph is acyclic and that no output was created twice. It has also created all the folders that will store outputs, and deleted outputs that already existed prior to the pipeline execution. There are still other options for the pipeline manager, some of which will be covered in the next section of the tutorial. See the help of `psom_run_pipeline` for details.
-
+The only required option to run the pipeline is the `opt.path_logs`, i.e. the name of the logs folder (the "memory" of PSOM). Other options (e.g. `opt.mode`, `opt.max_queued`) are available to specify how to execute the job. In this example, two processes are used in the background, i.e. outside of the current matlab/octave session. See the [PSOM configuration](psom_configuration.html) tutorial for more configuration options.  Finally, a call to `psom_run_pipeline` will execute the pipeline. 
 ```matlab
->> psom_run_pipeline(pipeline,opt)
+opt.path_logs = [path_demo 'logs' filesep]; 
+opt.mode = 'background';
+opt.max_queued = 2;
+psom_run_pipeline(pipeline,opt)
+```
+>```matlab
 (...)
-*****************************************
+*******************************************                                                      
 The pipeline PIPE is now being processed.
-Started on 08-Nov-2011 13:16:55
-user: pbellec, host: berry, system: unix
-*****************************************
-08-Nov-2011 13:16:55 - The job sample    has been submitted to the queue (1 running / 0 failed / 0 finished / 3 left).
-08-Nov-2011 13:17:09 - The job sample    has been successfully completed (0 running / 0 failed / 1 finished / 3 left).
-08-Nov-2011 13:17:09 - The job quadratic has been submitted to the queue (1 running / 0 failed / 1 finished / 2 left).
-08-Nov-2011 13:17:09 - The job cubic     has been submitted to the queue (2 running / 0 failed / 1 finished / 1 left).
-08-Nov-2011 13:17:13 - The job quadratic has been successfully completed (1 running / 0 failed / 2 finished / 1 left).
-08-Nov-2011 13:17:13 - The job cubic     has been successfully completed (0 running / 0 failed / 3 finished / 1 left).
-08-Nov-2011 13:17:13 - The job sum       has been submitted to the queue (1 running / 0 failed / 3 finished / 0 left).
-08-Nov-2011 13:17:16 - The job sum       has been successfully completed (0 running / 0 failed / 4 finished / 0 left).
+Started on 16-Sep-2014 11:34:48
+user: pbellec, host: merisier, system: unix
+*******************************************
+16-Sep-2014 11:34:48 sample    submitted (1 run / 0 fail / 0 done / 3 left)
+16-Sep-2014 11:34:48 sample    completed (0 run / 0 fail / 1 done / 3 left)
+16-Sep-2014 11:34:48 quadratic submitted (1 run / 0 fail / 1 done / 2 left)
+16-Sep-2014 11:34:48 cubic     submitted (2 run / 0 fail / 1 done / 1 left)
+16-Sep-2014 11:34:49 quadratic completed (1 run / 0 fail / 2 done / 1 left)
+16-Sep-2014 11:34:49 cubic     completed (0 run / 0 fail / 3 done / 1 left)
+16-Sep-2014 11:34:49 sum       submitted (1 run / 0 fail / 3 done / 0 left)
+16-Sep-2014 11:34:49 sum       completed (0 run / 0 fail / 4 done / 0 left)
 *********************************************
 The processing of the pipeline is terminated.
 See report below for job completion status.
-08-Nov-2011 13:17:17
+16-Sep-2014 11:34:49
 *********************************************
 All jobs have been successfully completed.
 ```
 
 # Update a pipeline
 
-## Change options
+## Change a job
 
-A common reason for restarting a pipeline is to change one of the jobs. If you restart the pipeline manager using the same logs folder as the first time, PSOM is going to compare the old and current pipeline and figure out by himself which jobs have changed. It is going to restart those jobs only, along with any job that uses even indirectly the outputs of a restarted job. For example, let's change the `quadratic` job (adding a bug) and restart the pipeline manager : 
+If the pipeline is executed again using the same logs folder, PSOM is going to compare the old and current pipeline and figure out by itself which jobs need to be reprocessed. 
 ```matlab
-% Changing the job quadratic to introduce a bug
->> pipeline.quadratic.command = 'BUG!';
-% Restart the pipeline
->> psom run pipeline(pipeline,opt pipe)
+% Change the job quadratic to introduce a bug
+pipeline.quadratic.command = 'BUG!';
+psom_run_pipeline(pipeline,opt)
+```
+>```matlab
 (...)
-*****************************************
-The pipeline PIPE is now being processed.
-Started on 08-Nov-2011 13:37:41
-user: pbellec, host: berry, system: unix
-*****************************************
-08-Nov-2011 13:37:41 - The job quadratic has been submitted to the queue (1 running / 0 failed / 2 finished / 1 left).
-08-Nov-2011 13:37:43 - The job quadratic has failed                      (0 running / 1 failed / 2 finished / 1 left).
-
-*********************************************
-The processing of the pipeline is terminated.
-See report below for job completion status.
-08-Nov-2011 13:37:53
-*********************************************
-The execution of the following job has failed :
-
-    quadratic ; 
-
-More infos can be found in the individual log files. Use the following command to display these logs :
-
-    psom_pipeline_visu('/home/pbellec/database/demo_psom/logs/','log',JOB_NAME)
-
-The following job has not been processed due to a dependence on a failed job or the interruption of the pipeline manager :
-
-    sum ; 
-
+Setting up the to-do list. The following jobs will be executed ...
+    quadratic (changed)
+    sum       (child of a restarted job)
+(...)
+16-Sep-2014 11:46:07 quadratic submitted (1 run / 0 fail / 2 done / 1 left)
+16-Sep-2014 11:46:07 quadratic failed    (0 run / 1 fail / 2 done / 1 left)
+(...)
 All jobs have been processed, but some jobs have failed.
 You may want to restart the pipeline latter if you managed to fix the problems.
 ```
 
-The pipeline manager is recapitulating the list of the jobs that failed, and those that could not be processed. It also kindly points out that it is possible to display the log of the failed job to understand what happened : 
+If a job fails, it is possible to display the log of the failed job to understand what happened.
 ```matlab
->> psom_pipeline_visu(opt.path_logs,'log','quadratic');
-********************************************
-  Log file of job quadratic (status failed) 
-********************************************
+psom_pipeline_visu(opt.path_logs,'log','quadratic'); 
+```
 
-command = BUG!
-files_in = /home/pbellec/database/demo_psom/sample.mat
-files_out = /home/pbellec/database/demo_psom/quadratic.mat
-files_clean = {}(0x0)
-opt = {}(0x0)
-
-******************************
-Log of the (octave) job : quadratic
-Started on 08-Nov-2011 13:40:27
-User: pbellec
-host : berry
-system : unix
-******************************
-
-********************
-The job starts now !
-********************
-
-
-********************
+>```matlab
+(...)
 Something went bad ... the job has FAILED !
 The last error message occured was :
 parse error:
-
   syntax error
-
 >>> BUG!
-       ^
-
-File /home/pbellec/svn/psom/trunk/psom_run_job.m at line 203
-File /home/pbellec/svn/psom/trunk/psom_run_job.m at line 125
-
-****************
-Checking outputs
-****************
-The output file or directory /home/pbellec/database/demo_psom/quadratic.mat has not been generated!
-
-**********************************************
-08-Nov-2011 13:40:27 : The job has FAILED
-Total time used to process the job : 0.05 sec.
-**********************************************
-```
-Of course, `BUG` is not a correct matlab command, what was I thinking ! It is now time to fix the 'quadratic' job :
-```matlab
-command = 'load(files_in); b = a.^2; save(files_out,''b'')';
-pipeline.quadratic.command   = command;
-psom_run_pipeline(pipeline,opt);
+File /home/pbellec/git/psom/psom_run_job.m at line 214
+File /home/pbellec/git/psom/psom_run_job.m at line 128
 (...)
 ```
-This time the pipeline is completing without problem. Note that the job ''sum'' is also restarted, because it depends on ''quadratic''.
+
+If the job `quadratic` is fixed, the pipeline will complete without problem. Note that the job `sum` will also be restarted, because it depends on `quadratic`.
+```matlab
+pipeline.quadratic.command   = ...
+   'load(files_in); b = a.^2; save(files_out,''b'')';
+psom_run_pipeline(pipeline,opt);
+```
+>```matlab
+(...)
+All jobs have been successfully completed.
+```
 
 ## Add a job
-This section deals with restarting the pipeline after adding new jobs. That would occur for example when processing a larger dataset than in the first pass. For example, This code defines a new job `cleanup` to the pipeline.
+It is possible to add new jobs to the pipeline (or remove old jobs).
 ```matlab
 pipeline.cleanup.command     = 'delete(files_clean)';
 pipeline.cleanup.files_clean = pipeline.sample.files_out;
+psom_run_pipeline(pipeline,opt);
 ```
-The job clean-up is using a new type of attributes 'files_clean'. This means that the job `cleanup` will delete a file, here the output of `sample`. Because `quadratic` and `cubic` are using that file, it is necessary to wait that both of these jobs have completed their execution before starting `cleanup`. The new dependency graph is shown on the right.
+>```matlab
+(...)
+Setting up the to-do list. The following jobs will be executed ...
+    cleanup   (new)
+(...)
+16-Sep-2014 14:02:17 cleanup   submitted (1 run / 0 fail / 4 done / 0 left)
+16-Sep-2014 14:02:18 cleanup   completed (0 run / 0 fail / 5 done / 0 left)
+(...)
+All jobs have been successfully completed.
+```
+
+This example introduces a new job subfield,  `files_clean`, which lists the files deleted by a job. As the job `cleanup` will delete a file that is used as an input by `quadratic` and `cubic`, it is necessary to wait that both of these jobs have completed their execution before starting `cleanup`. 
 >![An example of pipeline dependency graph](https://raw.githubusercontent.com/SIMEXP/psom/master/demo_pipe2.jpg)
 
-PSOM will let you add the new job without complaint. Of course the jobs that were finished will not be reprocessed. Note that it is also possible to remove jobs from the pipeline.
-```matlab
->> psom_run_pipeline(pipeline,opt);
-(...)
-*****************************************
-The pipeline PIPE is now being processed.
-Started on 08-Nov-2011 13:48:10
-user: pbellec, host: berry, system: unix
-*****************************************
-08-Nov-2011 13:48:11 - The job cleanup   has been submitted to the queue (1 running / 0 failed / 4 finished / 0 left).
-08-Nov-2011 13:48:13 - The job cleanup   has been successfully completed (0 running / 0 failed / 5 finished / 0 left).
-
-*********************************************
-The processing of the pipeline is terminated.
-See report below for job completion status.
-08-Nov-2011 13:48:23
-*********************************************
-All jobs have been successfully completed.
-```
-
-
 ## Restart a job
-This last section deals with a kind of peculiar and tricky situation. Imagine that you want to change the options of a job, but the inputs of this job were deleted to save space (by the `cleanup` job). If it is still possible to rebuild the inputs using other jobs of the pipeline, PSOM will sort it out for you. Let's force the job the options of `fft`, which job is incidentally using the output of `tseries1`, and restart the pipeline : 
+It is possible to manually force a job (e.g. `quadratic`) to restart with `opt.restart`. Note that the restart mechanism it tolerant to missing files (previously deleted by `cleanup`).
 ```matlab
->> opt.restart = {'quadratic'};
->> psom_run_pipeline(pipeline,opt);
-*****************************************
-The pipeline PIPE is now being processed.
-Started on 08-Nov-2011 13:48:24
-user: pbellec, host: berry, system: unix
-*****************************************
-08-Nov-2011 13:48:24 - The job sample    has been submitted to the queue (1 running / 0 failed / 0 finished / 4 left).
-08-Nov-2011 13:48:26 - The job sample    has been successfully completed (0 running / 0 failed / 1 finished / 4 left).
-08-Nov-2011 13:48:26 - The job quadratic has been submitted to the queue (1 running / 0 failed / 1 finished / 3 left).
-08-Nov-2011 13:48:27 - The job cubic     has been submitted to the queue (2 running / 0 failed / 1 finished / 2 left).
-08-Nov-2011 13:48:30 - The job quadratic has been successfully completed (1 running / 0 failed / 2 finished / 2 left).
-08-Nov-2011 13:48:30 - The job cubic     has been successfully completed (0 running / 0 failed / 3 finished / 2 left).
-08-Nov-2011 13:48:30 - The job sum       has been submitted to the queue (1 running / 0 failed / 3 finished / 1 left).
-08-Nov-2011 13:48:31 - The job cleanup   has been submitted to the queue (2 running / 0 failed / 3 finished / 0 left).
-08-Nov-2011 13:48:34 - The job cleanup   has been successfully completed (1 running / 0 failed / 4 finished / 0 left).
-08-Nov-2011 13:48:34 - The job sum       has been successfully completed (0 running / 0 failed / 5 finished / 0 left).
-
-*********************************************
-The processing of the pipeline is terminated.
-See report below for job completion status.
-08-Nov-2011 13:48:44
-*********************************************
+opt.restart = {'quadratic'};
+psom_run_pipeline(pipeline,opt);
+```
+>```matlab
+(...)
+Setting up the to-do list. The following jobs will be executed ...
+    quadratic (manual restart)
+    sum       (child of a restarted job)
+    cleanup   (child of a restarted job)
+    sample    (produce necessary files)
+    cubic     (child of a restarted job)
+(...)
 All jobs have been successfully completed.
 ```
-PSOM decided to restart `sample` in order to be able to reprocess `quadratic`. That behavior is actually recursive, so even indirect dependencies could have been solved. The jobs `sum` and `cubic` have also been restarted because they have (direct or indirect) dependencies on `sample`.
 
 #Monitor a pipeline
-After a pipeline has been started in a log folder, the pipeline manager is keeping track of all processing, options and logs. Those informations are stored into matlab .mat files (which is actually HDF5), and can be accessed using the command `psom_pipeline_visu`.
+The log folder tracks all processing steps, options and logs into .mat files. Some of these info can be extracted using `psom_pipeline_visu`.
 
 ## Display flowchart
 
-The flowchart of the pipeline is stored in the logs and can be visualized this way (requires the bioinformatics toolbox).
+The flowchart of the pipeline is visualized with the `'flowchart'` option.
 ```matlab
->> psom_pipeline_visu(opt.path_logs,'flowchart');
+psom_pipeline_visu(opt.path_logs,'flowchart');
 ```
-
 >![An example of pipeline dependency graph](https://raw.githubusercontent.com/SIMEXP/psom/master/demo_pipe2.jpg)
 
 ## List the jobs
 
-It is possible to list the jobs of the pipeline according to their current status (either `none`, `failed` or `finished`). For example, to see a list of the finished jobs : 
+The jobs can also be listed based on their current status (either `'none'`, `'failed'` or `'finished'`). 
 ```matlab
->> psom_pipeline_visu(opt.path_logs,'finished')
+psom_pipeline_visu(opt.path_logs,'finished');
+```
+>```matlab
 ***********************
 List of finished job(s)
 ***********************
@@ -273,65 +196,39 @@ sum
 ```
 
 ## Display log
-As was described in the last section, it is possible to access the logs of any job (unprocessed jobs have an empty log) :
+The log of any job can be displayed with the `'log'` argument, followed by the name of the job.
 ```matlab
->> psom_pipeline_visu(opt.path_logs,'log','sum')
+psom_pipeline_visu(opt.path_logs,'log','quadratic');
+```
 
-****************************************
-  Log file of job sum (status finished) 
-****************************************
-
-command = load(files_in{1}); load(files_in{2}); d = b+c, save(files_out,'d')
-files_in =
-
-{
-  [1,1] = /home/pbellec/database/demo_psom/quadratic.mat
-  [1,2] = /home/pbellec/database/demo_psom/cubic.mat
-}
-
-files_out = /home/pbellec/database/demo_psom/sum.mat
-files_clean = {}(0x0)
-opt = {}(0x0)
-
-******************************
-Log of the (octave) job : sum
-Started on 08-Nov-2011 13:48:34
+```matlab
+*****************************
+Log of the (octave) job : quadratic
+Started on 16-Sep-2014 14:41:02
 User: pbellec
-host : berry
+host : merisier
 system : unix
-******************************
-
-********************
+*****************************
 The job starts now !
 ********************
-d =
-
-   0.132715
-   0.805646
-   0.061853
-   5.703437
-   0.067863
-   0.014629
-   3.732021
-   0.118349
-  -0.205880
-  -0.330022
-
 
 ****************
 Checking outputs
 ****************
-The output file or directory /home/pbellec/database/demo_psom/sum.mat was successfully generated!
+The output file or directory /home/pbellec/tmp/demo_psom/quadratic.mat was successfully generated!
 
 *********************************************************
-08-Nov-2011 13:48:34 : The job was successfully completed
-Total time used to process the job : 0.10 sec.
+16-Sep-2014 14:41:02 : The job was successfully completed
+Total time used to process the job : 0.01 sec.
 *********************************************************
 ```
+
 ## Display computation time
-It is also possible to get a summary of the effective computation time for all the jobs or a subpart of the pipeline
+The `'time'` parameter generates a summary of the effective computation time for all of the jobs. Note that the last argument can be used to select only a subpart of the pipeline (e.g. 'cubic').
 ```matlab
->> psom_pipeline_visu(opt.path_logs,'time','')
+psom_pipeline_visu(opt.path_logs,'time','')
+```
+>```matlab
 **********
 cleanup   : 0.08 s, 0.00 mn, 0.00 hours, 0.00 days.
 cubic     : 0.05 s, 0.00 mn, 0.00 hours, 0.00 days.
@@ -341,16 +238,38 @@ sum       : 0.10 s, 0.00 mn, 0.00 hours, 0.00 days.
 **********
 Total computation time :  0.35 s, 0.01 mn, 0.00 hours, 0.00 days.
 ```
-The last argument can be used to select only a subpart of the pipeline (e.g. 'cubic').
 
-##Monitor history
-It is possible to access the pipeline history again (concatenated over all executions, and with updates) using the following command : 
+##History
+It is possible to access the pipeline history (concatenated over all executions, and with updates) using the `'monitor'` parameter. The result of this command is not listed here, because it recapitulates everything that has been done so far in the tutorial and is therefore quite lengthy.
 ```matlab
 >> psom_pipeline_visu(opt.path_logs,'monitor')
 (...)
 ```
-The result of this command is not listed here, because it recapitulates everything that has been done so far in the tutorial and is therefore quite lengthy.
 
-# Conclusion
+# Misc
 
-That is the end of this tutorial, congratulations for making it here ! Beyond the toy pipeline, PSOM is able to handle smoothly pipelines with thousands of jobs involving tens of thousands of files, and distribute those amongst tens of processors. This is an opensource project : it was made to be used, copied and modified freely, so enjoy ! If you find that software useful or if you run into a bug, please do send feedback to the maintainer of this project `pierre.bellec [at] criugm.qc.ca`. 
+##Temporary files
+There are two functions to generate temporary files or folders in PSOM, `psom_file_tmp` and `psom_path_tmp`. In both cases, PSOM will generate a random name, using a user-specified suffix. Before attributing the name, PSOM will check that this name is not already used (in which case it will generate another random name). As soon as the name has been selected, an empty file name or directory is automatically created. Moreover, if these commands are called as part of a job, the job name is automatically added in the temporary name. All these features ensure that there will be no conflict of temporary names between jobs, even if the same pipeline is executed multiple times on a single machine. By default, the name of the temporary folder is the default of the system (as defined by the `tempdir` variable). This can be changed using the `gb_psom_tmp` variable defined in `psom_gb_vars.m`.
+```matlab
+>> file_tmp = psom_file_tmp('_suffix')
+file_tmp = /tmp/psom_tmp_359007_suffix
+>> path_tmp = psom_path_tmp ('_suffix')
+path_tmp = /tmp/psom_tmp_44068_suffix/
+```
+
+##Random number generator 
+When running Monte Carlo simulations, it is critical to take a great care setting up the state of the random number generator. The way to perform this operation has changed with versions of Matlab, and is not currently the same in Matlab and Octave. There is a PSOM command called `psom_set_rand_seed` which will set the state of the Gaussian and uniform random number generator. `psom_set_rand_seed` will work in all versions and languages. If called without an input, the function uses the clock to set the state of the generator. By default, this is what PSOM does for each job. If the results of the pipeline have to be reproducible, use the `psom_set_rand_seed` command to set a fixed seed (e.g. 0) for each job. However, in some Monte Carlo simulations, the only thing that changes from one job to another is exactly the seed of the random number generator. In that case, it is possible to generate a list of seeds once, which are then fed into the jobs as an input parameter for `psom_set_rand_seed`.
+```matlab
+>> psom_set_rand_seed(0);
+>> rand(2)
+ans =
+
+   0.84442   0.42057
+   0.75795   0.25892
+>> psom_set_rand_seed(0);
+>> rand(2)
+ans =
+
+   0.84442   0.42057
+   0.75795   0.25892
+```

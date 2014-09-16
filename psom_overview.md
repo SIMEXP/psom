@@ -9,9 +9,10 @@ PSOM offers generic solutions for the main tasks involved in pipeline scripting.
 > * Handle updates of the pipeline : change options or add jobs and let PSOM figure out what to reprocess !
 
 #Installation
-PSOM 1.0.2 is at a stable, production stage, and has been tested under Linux, Windows and Mac OSX. To install PSOM, click the download button, extract the archive in a folder, and add that folder to your matlab or octave search path. 
+PSOM 1.0.2 is at a stable, production stage, and has been tested under Linux, Windows and Mac OSX. PSOM can handle smoothly pipelines with thousands of jobs involving tens of thousands of files, and distribute those amongst hundreds of processors. To install PSOM, click the download button, extract the archive in a folder, and add that folder to your matlab or octave search path. 
 You're basically done ! Feel free to bundle PSOM in your own projects.
-> * How to [configure](psom_configuration.html) PSOM for your production environment.
+> * You will need either the Matlab biograph or the [graphviz](http://www.graphviz.org/) toolbox in order to visualize dependency graphs.
+> * Check the tutorial to [configure](psom_configuration.html) PSOM for your production environment.
 > * All [releases](https://github.com/SIMEXP/psom/releases) can be found on github.
 > * If a feature is missing, fork [PSOM](https://github.com/SIMEXP/psom) on github !
 

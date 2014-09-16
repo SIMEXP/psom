@@ -3,13 +3,13 @@ This page describes how to customize the runtime environment of PSOM pipelines, 
 >The PSOM configuration parameters are located in a file called `psom_gb_vars.m`. Edit this file directly, or copy it under the name `psom_gb_vars_local.m`, to tailor the default configuration to the local production environment.
 
 ##Logs folder
-The only necessary option `path_logs` describes where to save the logs. All other options could be set by default.
+The parameter `path_logs` describes where to save the logs. All other options can be set by default.
 ```matlab
->> opt.path_logs = '/home/pbellec/svn/psom/trunk/data_demo/';
+opt.path_logs = '/home/pbellec/svn/psom/trunk/data_demo/';
 ```
 
 ##Execution mode for jobs
-The runtime environment of jobs can be set using the `opt.mode`. The default execution mode is `'background'`, which can be changed by setting the variable `gb_psom_mode` in the file `psom_gb_vars.m`. 
+The runtime environment of jobs can be set using the `mode` parameter. The default execution mode is `'background'`, which can be changed by setting the variable `gb_psom_mode` in the file `psom_gb_vars.m`. 
 ```matlab
 opt.mode = 'batch';
 ``` 
@@ -23,7 +23,7 @@ opt.mode = 'batch';
 ##Number of parallel jobs
 The `max_queued` option sets the maximal number of jobs that can be processed simultaneously. 
 ```matlab
->> opt.max_queued = 2;
+opt.max_queued = 2;
 ```
 The default for `max_queued` is 2, see `gb_psom_max_queued` in `psom_gb_vars.m`.
 >`max_queued` is useful in `'batch'` mode (it is the number of processors) and maybe in `'qsub'` or `'msub'` mode (if there is a limit on the number of jobs a user can submit simultaneously).
@@ -31,7 +31,7 @@ The default for `max_queued` is 2, see `gb_psom_max_queued` in `psom_gb_vars.m`.
 ##Pipeline manager
 The pipeline manager is the process responsible to start the jobs, and its execution mode is set with `mode_pipeline_manager`. All the execution modes available for jobs are also available for the pipeline manager. The default is `'session'` (see `gb_psom_mode_pipeline_manager` in `psom_gb_vars.m`). 
 ```matlab
->> opt.mode_pipeline_manager = 'batch';
+opt.mode_pipeline_manager = 'batch';
 ```
 >The execution mode of the pipeline manager is often different from the one of the jobs. For example, if jobs run through `qsub`, the pipeline manager can run in `batch` as this process uses minimal memory and CPU.
 
