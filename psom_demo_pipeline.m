@@ -1,12 +1,10 @@
-% Short tutorial on the pipeline system for Octave and Matlab (PSOM).
+% Demo script for the pipeline system for Octave and Matlab (PSOM).
 %
-% The blocks of code follow the tutorial that can be found at the following 
-% address : 
+% The blocks of code follow the following tutorial: 
 % http://simexp.github.io/psom/how_to_use_psom.html
 %
-% The demo will create a folder 'psom_demo' in the current direction, and generate
-% several files inside of it. To restart the demo from scratch, simply delete 
-% this folder.
+% The demo will create and populate a folder 'psom_demo' in the current direction. 
+% To restart the demo from scratch, simply delete this folder.
 %
 % In matlab, you can run a specific block of code by selecting it and press F9, 
 % or by putting the cursor anywhere in the block and press CTRL+ENTER.
@@ -73,157 +71,57 @@ pipeline.sum.files_out     = [path_demo 'sum.mat'];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Visualize the dependency graph %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%options
 psom_visu_dependencies(pipeline)
 
-
-msg   = 'The demo is about to execute the toy pipeline.';
-msg2  = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2))]);
-fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-if opt.flag_pause
-    pause
-end
-
-% The following line is running the pipeline manager on the toy pipeline
-psom_run_pipeline(pipeline,opt);
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Updating the pipeline (with one bug %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%% Add a bug in 'quadratic'
-msg = 'The demo is about to change the job ''quadratic'' to create a bug, and then restart the pipeline.';
-msg2 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2))]);
-fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-if opt.flag_pause
-    pause
-end
-
-pipeline.quadratic.command = 'BUG!';
-if strcmp(opt.mode,'session')
-    try 
-        % In session modes, bugs generate actual errors 
-        psom_run_pipeline(pipeline,opt);
-    end
-else
-    psom_run_pipeline(pipeline,opt);
-end
-
-% Visualize the log file of the failed job
-msg = 'The demo is about to display the log file of the failed job ''quadratic''.';
-msg2 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2))]);
-fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-if opt.flag_pause
-    pause
-end
-psom_pipeline_visu(opt.path_logs,'log','quadratic');
-
-% fix the bug, restart the pipeline
-msg = 'The demo is about to fix the bug in the job ''quadratic'' and restart the pipeline.';
-msg2 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2))]);
-fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-if opt.flag_pause
-    pause
-end
-
-command = 'load(files_in); b = a.^2; save(files_out,''b'')';
-pipeline.quadratic.command   = command;
-psom_run_pipeline(pipeline,opt);
+%%%%%%%%%%%%%%%%%%%%%%
+%% Run the pipeline %%
+%%%%%%%%%%%%%%%%%%%%%%
+opt.path_logs = [path_demo 'logs' filesep]; % The logs folder
+opt.mode = 'background';                    % Execute jobs in the background
+opt.max_queued = 2;                         % Use two threads
+psom_run_pipeline(pipeline,opt);            % Now, actually run the pipeline
 
 %%%%%%%%%%%%%%%%%%
-%% Adding a job %%
+%% Change a job %%
 %%%%%%%%%%%%%%%%%%
+pipeline.quadratic.command = 'BUG!'; % Change the job quadratic to introduce a bug
+psom_run_pipeline(pipeline,opt)      % Restart the pipeline
 
-msg = 'The demo is about to add new job ''cleanup'', plot the updated dependency graph and restart the pipeline.';
-msg2 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2))]);
-fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-if opt.flag_pause
-    pause
-end
+psom_pipeline_visu(opt.path_logs,'log','quadratic'); % Visualize the log file of the failed job
 
-pipeline.cleanup.command     = 'delete(files_clean)';
-pipeline.cleanup.files_clean = pipeline.sample.files_out;
-if opt.flag_pause
-    psom_visu_dependencies(pipeline);
-end
-psom_run_pipeline(pipeline,opt);
+pipeline.quadratic.command  = 'load(files_in); b = a.^2; save(files_out,''b'')'; % fix the bug 
+psom_run_pipeline(pipeline,opt); % restart the pipeline
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Restarting a job after clean-up %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-msg = 'The demo is about to explicitely restart the ''quadratic'' job and then restart the pipeline.';
-msg2 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2))]);
-fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-if opt.flag_pause
-    pause
-end
+%%%%%%%%%%%%%%%
+%% Add a job %%
+%%%%%%%%%%%%%%%
+pipeline.cleanup.command = 'delete(files_clean)'; % Clean up intermediate files
+pipeline.cleanup.files_clean = pipeline.sample.files_out; % New job field for files deleted by the job: files_clean
+psom_run_pipeline(pipeline,opt); % Restart the pipeline
+psom_visu_dependencies(pipeline); % Visualize the new dependecy graph
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Manually restarting a job %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 opt.restart = {'quadratic'};
 psom_run_pipeline(pipeline,opt);
-opt = rmfield(opt,'restart');
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 %% Monitor a pipeline %%
 %%%%%%%%%%%%%%%%%%%%%%%%
 
-if opt.flag_pause
-    %% Display flowchart
-    msg = 'The demo is about to display the flowchart of the pipeline';
-    msg2 = 'Press CTRL-C to stop here or any key to continue.';
-    stars = repmat('*',[1 max(length(msg),length(msg2))]);
-    fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-    if opt.flag_pause
-        pause
-    end
-    psom_pipeline_visu(opt.path_logs,'flowchart');
-end
+%% Display flowchart
+psom_pipeline_visu(opt.path_logs,'flowchart');
 
-%% List the jobs
-msg = 'The demo is about to display a list of the finished jobs';
-msg2 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2))]);
-fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-if opt.flag_pause
-    pause
-end
-
+%% List the finished jobs
 psom_pipeline_visu(opt.path_logs,'finished');
 
 %% Display log
-msg = 'The demo is about to display the log of the ''sum'' job';
-msg2 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2))]);
-fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-if opt.flag_pause
-    pause
-end
-
-psom_pipeline_visu(opt.path_logs,'log','sum');
+psom_pipeline_visu(opt.path_logs,'log','quadratic');
 
 %% Display Computation time
-msg = 'The demo is about to display the computation time for all jobs of the pipeline';
-msg2 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2))]);
-fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-if opt.flag_pause
-    pause
-end
-
 psom_pipeline_visu(opt.path_logs,'time','');
 
 %% Monitor history
-msg = 'The demo is about to monitor the history of the pipeline';
-msg2 = 'Press CTRL-C to stop here or any key to continue.';
-stars = repmat('*',[1 max(length(msg),length(msg2))]);
-fprintf('\n%s\n%s\n%s\n%s\n\n',stars,msg,msg2,stars);
-if opt.flag_pause
-    pause
-end
-
 psom_pipeline_visu(opt.path_logs,'monitor');
