@@ -45,7 +45,6 @@ The function called `psom_config` will test the process of job submission step-b
 
 #Examples
 
-##All local
 Run PSOM in the current session.
 ```matlab
 opt.path_logs = '~/test_logs/';
@@ -53,7 +52,6 @@ opt.mode = 'session';
 opt.mode_pipeline_manager = 'session';
 ```
 
-##All batch
 Run PSOM in batch mode using 8 cores.
 ```matlab
 opt.path_logs = '~/test_logs/';
@@ -61,8 +59,6 @@ opt.mode = 'batch';
 opt.mode_pipeline_manager = 'batch';
 opt.max_queued = 8;
 ```
-
-##Batch and qsub
 
 Run the pipeline manager in `batch` mode and the jobs through `qsub`, using 100 cores.
 ```matlab
