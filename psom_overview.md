@@ -28,8 +28,8 @@ PSOM is maintained by [Pierre Bellec](http://simexp-lab.org/brainwiki/doku.php?i
 ![UDM and CRIUGM](logos_criugm_udm.png)
 
 #News
-##September, 12th, 2014
-Release of this website.
+September, 12th, 2014
+>Release of this website.
 
-##July, 12th, 2014
-The repository of the PSOM project was moved from google code to github: https://github.com/SIMEXP/psom
+July, 12th, 2014
+>The repository of the PSOM project was moved from google code to github: https://github.com/SIMEXP/psom
