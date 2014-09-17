@@ -39,7 +39,7 @@ opt.mode_pipeline_manager = 'batch';
 For Octave users, the default verbose mode is using a tool called "more". PSOM works better without "more". To disable "more", simply type `more off` is Octave. 
 >>To make this change permanent, add the line `more off` to the file `~/.octaverc`. 
 
-#Testing a configuration
+##Testing a configuration
 The function called `psom_config` will test the process of job submission step-by-step, and generate context-specific error messages, as well as suggestions to fix the configuration. 
 >`psom_run_pipeline` will not necessarily produce informative error messages when the configuration is incorrect, because of some choices made to speed up the execution.
 
@@ -52,7 +52,7 @@ opt.mode = 'session';
 opt.mode_pipeline_manager = 'session';
 ```
 
-Run PSOM in batch mode using 8 cores.
+Run PSOM in `batch` mode using 8 cores.
 ```matlab
 opt.path_logs = '~/test_logs/';
 opt.mode = 'batch';
