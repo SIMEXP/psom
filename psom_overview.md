@@ -16,6 +16,9 @@ You're basically done ! Feel free to bundle PSOM in your own projects.
 > * All [releases](https://github.com/SIMEXP/psom/releases) can be found on github.
 > * If a feature is missing, fork [PSOM](https://github.com/SIMEXP/psom) on github !
 
+# Questions
+If you have a question regarding PSOM, please search the archive of the [forum](http://www.nitrc.org/forum/forum.php?forum_id=1316), or post if the question has not yet been addressed before. 
+
 # Reference
 If you use PSOM in a publication, please consider citing the companion [paper](http://www.frontiersin.org/neuroinformatics/10.3389/fninf.2012.00007/abstract), published in Frontiers in Neuroinformatics.
 >P. Bellec, S. Lavoie-Courchesne, P. Dickinson, J. Lerch, A. Zijdenbos, A. C. Evans. The pipeline system for Octave and Matlab (PSOM): a lightweight scripting framework and execution engine for scientific workflows. Front. Neuroinform. (2012) 6:7 doi: 10.3389/fninf.2012.00007
