@@ -1,4 +1,4 @@
-The pipeline system for [Octave](http://www.gnu.org/software/octave/) and [Matlab](http://www.mathworks.com/) (PSOM) is a lightweight library designed to script complex multistage data processing, or "pipelines". PSOM is an open-source software distributed under [MIT license](http://opensource.org/licenses/MIT).
+The pipeline system for [Octave](http://www.gnu.org/software/octave/) and [Matlab](http://www.mathworks.com/) (PSOM) is a lightweight library designed to script complex multistage data processing, or "pipelines". PSOM is an open-source software distributed under [MIT license](http://opensource.org/licenses/MIT). The latest release 1.0.2 is at a stable, production stage, and has been tested under Linux, Windows and Mac OSX. PSOM can handle smoothly pipelines with thousands of jobs involving tens of thousands of files, and distribute those amongst hundreds of processors. 
 
 Please refer to the [PSOM](website) for the user documentation, and the [github wiki](https://github.com/SIMEXP/psom/wiki) for the documentation for developpers. 
 
@@ -11,7 +11,7 @@ PSOM offers generic solutions for the main tasks involved in pipeline scripting.
 > * Handle updates of the pipeline : change options or add jobs and let PSOM figure out what to reprocess !
 
 #Installation
-PSOM 1.0.2 is at a stable, production stage, and has been tested under Linux, Windows and Mac OSX. PSOM can handle smoothly pipelines with thousands of jobs involving tens of thousands of files, and distribute those amongst hundreds of processors. To install PSOM, click the download button, extract the archive in a folder, and add that folder to your matlab or octave search path. 
+To install PSOM, click the download button, extract the archive in a folder, and add that folder to your matlab or octave search path. 
 You're basically done ! Feel free to bundle PSOM in your own projects.
 > * You will need either the Matlab biograph or the [graphviz](http://www.graphviz.org/) toolbox in order to visualize dependency graphs.
 > * Check the tutorial to [configure](psom_configuration.html) PSOM for your production environment.
