@@ -96,6 +96,6 @@ if ~isdir(path_name)
 else
     % Nothing to do here
     success = 1;
-    mesaage = '';
+    message = '';
     message_id = '';
 end
