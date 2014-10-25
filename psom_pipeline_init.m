@@ -644,6 +644,7 @@ all_out = psom_files2cell(files_out);
 files_necessary = all_in(~ismember(all_in,all_out));
 mask_missing = false(length(files_necessary),1);
 flag_OK = true;
+files_necessary = unique(files_necessary);
 for num_f = 1:length(files_necessary)
     if ~psom_exist(files_necessary{num_f})
         if flag_OK
