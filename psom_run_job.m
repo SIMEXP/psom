@@ -63,6 +63,8 @@ function flag_failed = psom_run_job(file_job)
 global gb_psom_name_job
 psom_gb_vars
 seed = psom_set_rand_seed();
+def_visible = get(0, 'DefaultFigureVisible'); % get current default state for figures
+set(0, 'DefaultFigureVisible','off');
 
 try
     %% Generate file names
@@ -193,7 +195,8 @@ try
             save(file_finished,'tmp')     
         end
     end
-    
+    set(0, 'DefaultFigureVisible',def_visible);
+
 catch
     if flag_psom    
         delete(file_running);
@@ -203,6 +206,7 @@ catch
     end
     errmsg = lasterror;
     rethrow(errmsg)
+    set(0, 'DefaultFigureVisible',def_visible);
 end
 
 %%%%%%%%%%%%%%%%%%
