@@ -106,8 +106,8 @@ end
 
 %% Upload job info
 gb_name_structure = 'job';
-gb_list_fields    = { 'files_in' , 'files_out' , 'files_clean' , 'command','opt' , 'dep' };
-gb_list_defaults  = { {}         , {}          , {}            , NaN      , {}   , {}    };
+gb_list_fields    = { 'files_in' , 'files_out' , 'files_clean' , 'command','opt' , 'dep' , 'ispipeline' };
+gb_list_defaults  = { {}         , {}          , {}            , NaN      , {}   , {}    , false        };
 psom_set_defaults
 
 %% Print general info about the job
