@@ -23,6 +23,7 @@ function status = psom_pipeline_process(file_pipeline,opt)
 %                       UNIX, start in WINDOWS.
 %        'qsub'       : remote execution using qsub (torque, SGE, PBS).
 %        'msub'       : remote execution using msub (MOAB)
+%        'bsub'       : remote execution using bsub (IBM)
 %        'condor'     : remote execution using condor
 %
 %    MODE_PIPELINE_MANAGER
@@ -50,8 +51,8 @@ function status = psom_pipeline_process(file_pipeline,opt)
 %    QSUB_OPTIONS
 %        (string, GB_PSOM_QSUB_OPTIONS defined in PSOM_GB_VARS)
 %        This field can be used to pass any argument when submitting a
-%        job with qsub/msub. For example, '-q all.q@yeatman,all.q@zeus'
-%        will force qsub/msub to only use the yeatman and zeus
+%        job with bsub/msub/qsub. For example, '-q all.q@yeatman,all.q@zeus'
+%        will force bsub/msub/qsub to only use the yeatman and zeus
 %        workstations in the all.q queue. It can also be used to put
 %        restrictions on the minimum avalaible memory, etc.
 %
@@ -191,14 +192,14 @@ if max_queued == 0
         case {'batch','background'}
             opt.max_queued = 1;
             max_queued = 1;
-        case {'session','qsub','msub','condor'}
+        case {'session','qsub','msub','bsub','condor'}
             opt.max_queued = Inf;
             max_queued = Inf;
     end % switch action
 end % default of max_queued
 
 %% Test the the requested mode of execution of jobs exists
-if ~ismember(opt.mode,{'session','batch','background','qsub','msub','condor'})
+if ~ismember(opt.mode,{'session','batch','background','qsub','msub','bsub','condor'})
     error('%s is an unknown mode of pipeline execution. Sorry dude, I must quit ...',opt.mode);
 end
 
@@ -229,7 +230,7 @@ switch opt.mode
             opt.time_cool_down = 0;
             time_cool_down = 0;
         end
-    case {'qsub','msub','condor'}
+    case {'qsub','msub','condor','bsub'}
         if isempty(time_between_checks)
             opt.time_between_checks = 10;
             time_between_checks = 10;
@@ -293,7 +294,7 @@ end
 %% If specified, start the pipeline manager in the background %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if ismember(opt.mode_pipeline_manager,{'batch','background','qsub','msub','condor'})
+if ismember(opt.mode_pipeline_manager,{'batch','background','qsub','msub','bsub','condor'})
     
     % save the options of the pipeline manager
     opt.mode_pipeline_manager = 'session';

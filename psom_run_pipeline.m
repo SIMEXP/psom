@@ -72,6 +72,7 @@ function status = psom_run_pipeline(pipeline,opt)
 %                       UNIX, start in WINDOWS).
 %        'qsub'       : remote execution using qsub (torque, SGE, PBS).
 %        'msub'       : remote execution using msub (MOAB)
+%        'bsub'       : remote execution using bsub (IBM)
 %        'condor'     : remote execution using condor
 %
 %    MODE_PIPELINE_MANAGER
@@ -98,7 +99,7 @@ function status = psom_run_pipeline(pipeline,opt)
 %    QSUB_OPTIONS
 %        (string, GB_PSOM_QSUB_OPTIONS defined in PSOM_GB_VARS)
 %        This field can be used to pass any argument when submitting a
-%        job with qsub. For example, '-q all.q@yeatman,all.q@zeus' will
+%        job with bsub/msub/qsub. For example, '-q all.q@yeatman,all.q@zeus' will
 %        force qsub to only use the yeatman and zeus workstations in the
 %        all.q queue. It can also be used to put restrictions on the
 %        minimum avalaible memory, etc.
@@ -319,7 +320,7 @@ if max_queued == 0
                 opt.max_queued = gb_psom_max_queued;
                 max_queued = gb_psom_max_queued;
             end
-        case {'session','qsub','msub','condor'}
+        case {'session','qsub','msub','condor','bsub'}
             if isempty(gb_psom_max_queued)
                 opt.max_queued = Inf;
                 max_queued = Inf;
@@ -330,7 +331,7 @@ if max_queued == 0
     end % switch action
 end % default of max_queued
 
-if ~ismember(opt.mode,{'session','background','batch','qsub','msub','condor'})
+if ~ismember(opt.mode,{'session','background','batch','qsub','msub','bsub','condor'})
     error('%s is an unknown mode of pipeline execution. Sorry dude, I must quit ...',opt.mode);
 end
 

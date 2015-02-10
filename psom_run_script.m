@@ -33,6 +33,7 @@ function [flag_failed,msg] = psom_run_script(cmd,script,opt,logs)
 %                       UNIX, start in WINDOWS.
 %        'qsub'       : remote execution using qsub (torque, SGE, PBS).
 %        'msub'       : remote execution using msub (MOAB)
+%        'bsub'       : remote execution using bsub (IBM)
 %        'condor'     : remote execution using condor
 %
 %    SHELL_OPTIONS
@@ -44,8 +45,8 @@ function [flag_failed,msg] = psom_run_script(cmd,script,opt,logs)
 %    QSUB_OPTIONS
 %        (string, GB_PSOM_QSUB_OPTIONS defined in PSOM_GB_VARS)
 %        This field can be used to pass any argument when submitting a
-%        job with qsub/msub. For example, '-q all.q@yeatman,all.q@zeus'
-%        will force qsub/msub to only use the yeatman and zeus
+%        job with bsub/qsub/msub. For example, '-q all.q@yeatman,all.q@zeus'
+%        will force bsub/qsub/msub to only use the yeatman and zeus
 %        workstations in the all.q queue. It can also be used to put
 %        restrictions on the minimum avalaible memory, etc.
 %
@@ -204,7 +205,7 @@ if nargin < 4
     logs = [];
 else
     list_fields   = { 'txt' , 'eqsub' , 'oqsub' , 'failed' , 'exit' };
-    if ismember(opt.mode,{'qsub','msub','condor'})
+    if ismember(opt.mode,{'qsub','msub','bsub','condor'})
         list_defaults = { NaN   , NaN     , NaN     , NaN    , ''     };
     else
         list_defaults = { NaN   , ''      , ''      , ''     , ''     };
@@ -213,7 +214,7 @@ else
 end
 
 %% Check that the execution mode exists
-if ~ismember(opt.mode,{'session','background','batch','qsub','msub','condor'})
+if ~ismember(opt.mode,{'session','background','batch','qsub','msub','bsub','condor'})
     error('%s is an unknown mode of command execution. Sorry dude, I must quit ...',opt.mode);
 end
 
@@ -388,10 +389,10 @@ switch opt.mode
         end
         [flag_failed,msg] = system(instr_batch);    
         
-    case {'qsub','msub','condor'}
+    case {'qsub','msub','condor','bsub'}
         script_submit = [gb_psom_path_psom 'psom_submit.sh'];
         switch opt.mode
-            case {'qsub','msub'}
+            case {'qsub','msub','bsub'}
                 sub = opt.mode;
             case 'condor'
                 sub = [gb_psom_path_psom 'psom_condor.sh'];
@@ -406,7 +407,12 @@ switch opt.mode
         else
             name_job = opt.name_job;
         end
-        instr_qsub = sprintf('%s%s -N %s %s %s',sub,qsub_logs,name_job,opt.qsub_options,['\"' script '\"']);            
+        switch opt.mode
+            case 'bsub'
+                instr_qsub = sprintf('%s%s %s %s',sub,qsub_logs,opt.qsub_options,['\"' script '\"']);     
+            otherwise
+                instr_qsub = sprintf('%s%s -N %s %s %s',sub,qsub_logs,name_job,opt.qsub_options,['\"' script '\"']);     
+        end
         if ~isempty(logs)
             instr_qsub = [script_submit ' "' instr_qsub '" ' logs.failed ' ' logs.exit ' ' logs.oqsub ];
         end
