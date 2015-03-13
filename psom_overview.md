@@ -1,7 +1,7 @@
 The pipeline system for [Octave](http://www.gnu.org/software/octave/) and [Matlab](http://www.mathworks.com/) (PSOM) is a lightweight library designed to script complex multistage data processing, or "pipelines". PSOM is an open-source software distributed under [MIT license](http://opensource.org/licenses/MIT). The latest release  1.0.2 is at a stable, production stage, and has been tested under Linux, Windows and Mac OSX. PSOM can handle smoothly pipelines with thousands of jobs involving tens of thousands of files, and distribute those amongst hundreds of processors. 
 
 #Features
-PSOM offers generic solutions for the main tasks involved in pipeline scripting. Please read the [tutorial](how_to_use_psom.html) and [guidelines](pipeline_coding_guidelines.html) to learn how to script pipelines with PSOM. 
+PSOM offers generic solutions for the main tasks involved in pipeline scripting. Please read the [tutorial](how_to_use_psom.html) to learn how to script pipelines with PSOM. There are additional resources on the [PSOM wiki](https://github.com/SIMEXP/psom/wiki).
  
 > * Automatically detect and execute jobs that can run in parallel, using multiple CPUs or within a distributed computing environment.
 > * Generate log files and keep track of the pipeline execution. These logs are detailed enough to fully reproduce the analysis.
