@@ -226,12 +226,12 @@ end
 switch gb_psom_language
     case 'matlab'
         if ispc
-            opt_matlab = '-automation -nodesktop -singleCompThread -r';
+            gb_psom_opt_matlab = '-automation -nodesktop -singleCompThread -r';
         else
-            opt_matlab = '-nosplash -nodesktop -singleCompThread -r';
+            gb_psom_opt_matlab = '-nosplash -nodesktop -singleCompThread -r';
         end        
     case 'octave'
-        opt_matlab = '--silent --eval';       
+        gb_psom_opt_matlab = '--silent --eval';       
 end
 
 %% Set-up the search path for the job
@@ -251,7 +251,7 @@ end
         
 %% Add an appropriate call to Matlab/Octave
 if ~isempty(cmd)            
-    instr_job = sprintf('"%s" %s "%s %s,exit"',opt.command_matlab,opt_matlab,opt.init_matlab,cmd);
+    instr_job = sprintf('"%s" %s "%s %s,exit"',opt.command_matlab,gb_psom_opt_matlab,opt.init_matlab,cmd);
     if ~isempty(logs)
         if opt.flag_debug
             instr_job = sprintf('%s >"%s" 2>&1\n',instr_job,logs.txt);

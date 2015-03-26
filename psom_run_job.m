@@ -72,11 +72,14 @@ try
         error('The job file %s should be a .mat file !',file_job);
     end
 
-    file_jobs     = [path_f filesep 'PIPE_jobs.mat'];
-    file_running  = [path_f filesep name_job '.running'];
-    file_failed   = [path_f filesep name_job '.failed'];
-    file_finished = [path_f filesep name_job '.finished'];
-    file_profile  = [path_f filesep name_job '.profile.mat'];
+    file_jobs      = [path_f filesep 'PIPE_jobs.mat'];
+    file_running   = [path_f filesep name_job '.running'];
+    file_failed    = [path_f filesep name_job '.failed'];
+    file_finished  = [path_f filesep name_job '.finished'];
+    file_profile   = [path_f filesep name_job '.profile.mat'];
+    file_heartbeat = [path_f filesep name_job '.heartbeat.mat'];
+    file_kill      = [path_f filesep name_job '.kill'];
+    
 catch
     name_job = 'manual';
 end
@@ -102,6 +105,21 @@ if flag_psom
     %% Create a running tag for the job
     tmp = datestr(clock);
     save(file_running,'tmp')
+end
+
+%% Start a heartbeat
+pid = getpid;
+[err,msg] = system(sprintf('kill -0 %i')); % check that the running status of the process can be checked using kill
+flag_heartbeat = (err==0)||strcmp('gb_psom_language','octave')
+if flag_heartbeat
+    cmd = sprintf('psom_heartbeat(''%s'',''%s'',%i)',file_hearbeat,file_kill,pid);
+    if strcmp('gb_psom_language','octave')
+        instr_heartbeat = sprintf('"%s" %s "addpath(''%s''), %s,exit"',gb_psom_command_octave,gb_psom_opt_matlab,gb_psom_path_psom,cmd);
+    else 
+        instr_heartbeat = sprintf('"%s" %s "addpath(''%s''), %s,exit"',gb_psom_command_matlab,gb_psom_opt_matlab,gb_psom_path_psom,cmd);
+    end 
+    system([instr_heartbeat '&']);
+    warning('PSOM was not able to implement a heartbeat on that system, and will not be able to detect a job crash, or to terminate the job if the pipeline is stopped');
 end
 
 %% Upload job info
