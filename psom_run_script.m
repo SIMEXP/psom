@@ -221,19 +221,6 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%
 %% Generate the script %%
 %%%%%%%%%%%%%%%%%%%%%%%%%
-
-%% Generate some OS-appropriate options to start Matlab/Octave
-switch gb_psom_language
-    case 'matlab'
-        if ispc
-            gb_psom_opt_matlab = '-automation -nodesktop -singleCompThread -r';
-        else
-            gb_psom_opt_matlab = '-nosplash -nodesktop -singleCompThread -r';
-        end        
-    case 'octave'
-        gb_psom_opt_matlab = '--silent --eval';       
-end
-
 %% Set-up the search path for the job
 if ~strcmp(opt.mode,'session')&&~isempty(cmd)
     if (length(opt.path_search)>4)&&(strcmp(opt.path_search(end-3:end),'.mat'))
