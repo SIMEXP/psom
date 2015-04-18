@@ -79,6 +79,18 @@ else
     gb_psom_language = 'matlab'; 
 end
 
+% Options to start matlab
+switch gb_psom_language
+    case 'matlab'
+        if ispc
+            gb_psom_opt_matlab = '-automation -nodesktop -singleCompThread -r';
+        else
+            gb_psom_opt_matlab = '-nosplash -nodesktop -singleCompThread -r';
+        end        
+    case 'octave'
+        gb_psom_opt_matlab = '--silent --eval';       
+end
+    
 % Get langage version
 if strcmp(gb_psom_language,'octave');
     gb_psom_language_version = OCTAVE_VERSION;
