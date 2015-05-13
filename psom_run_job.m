@@ -72,6 +72,12 @@ global gb_psom_name_job
 psom_gb_vars
 seed = psom_set_rand_seed();
 
+%% Does not allow figure display and reset to default value at end 
+%% of function call
+fig_is_visible = get(0, 'defaultFigureVisible')
+c = onCleanup(@() set(0, 'defaultFigureVisible', fig_is_visible))
+set(0,'defaultFigureVisible','off')
+
 %% Default options
 if nargin < 2
     flag_heartbeat = false;
