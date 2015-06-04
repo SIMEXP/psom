@@ -332,15 +332,13 @@ switch opt.mode
     case 'background'
 
        if ispc
-            cmd_script = ['"' script '"']; % /min instead of /b ?
+            cmd_script = ['"' script '"']; 
        else
             cmd_script = ['. "' script '"'];
        end
-
+       cmd_script = [cmd_script ' 2>&1']; % Redirect the error stream to standard output
+       
        if opt.flag_debug
-           if strcmp(gb_psom_language,'octave')
-               cmd_script = [cmd_script ' 2>&1']; % In octave, the error stream is lost. Redirect it to standard output
-           end
            msg = sprintf('    The script is executed using the command :\n%s\n\n',cmd_script);
            fprintf('%s',msg);
            if ~isempty(opt.file_handle)
