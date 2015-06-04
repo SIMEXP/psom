@@ -257,7 +257,7 @@ hat_qsub_e = sprintf('\n\n*****************\nERROR QSUB\n*****************\n');
 [path_logs,name_pipeline,ext_pl] = fileparts(file_pipeline);
 file_pipe_running   = [ path_logs filesep name_pipeline '.lock'               ];
 file_pipe_log       = [ path_logs filesep name_pipeline '_history.txt'        ];
-file_news_feed      = [ path_logs filesep name_pipeline '_news_feed.csv'        ];
+file_news_feed      = [ path_logs filesep name_pipeline '_news_feed.csv'      ];
 file_manager_opt    = [ path_logs filesep name_pipeline '_manager_opt.mat'    ];
 file_logs           = [ path_logs filesep name_pipeline '_logs.mat'           ];
 file_logs_backup    = [ path_logs filesep name_pipeline '_logs_backup.mat'    ];
@@ -266,6 +266,11 @@ file_status_backup  = [ path_logs filesep name_pipeline '_status_backup.mat'  ];
 file_jobs           = [ path_logs filesep name_pipeline '_jobs.mat'           ];
 file_profile        = [ path_logs filesep name_pipeline '_profile.mat'        ];
 file_profile_backup = [ path_logs filesep name_pipeline '_profile_status.mat' ];
+pipe_logs.txt       = [ path_logs filesep name_pipeline '.log'                ];
+pipe_logs.eqsub     = [ path_logs filesep name_pipeline '.eqsub'              ];
+pipe_logs.oqsub     = [ path_logs filesep name_pipeline '.oqsub'              ];
+pipe_logs.exit      = [ path_logs filesep name_pipeline '.exit'               ];
+pipe_logs.failed    = [ path_logs filesep name_pipeline '.failed'             ];
 
 logs    = load( file_logs    );
 status  = load( file_status  );
@@ -318,7 +323,7 @@ if ismember(opt.mode_pipeline_manager,{'batch','background','qsub','msub','bsub'
     else
         file_shell = [path_tmp filesep 'pipeline_manager.sh'];
     end
-    [flag_failed,errmsg] = psom_run_script(cmd,file_shell,opt_script);
+    [flag_failed,errmsg] = psom_run_script(cmd,file_shell,opt_script,pipe_logs);
     if flag_failed~=0
         if ispc
             % This is windows
