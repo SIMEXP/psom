@@ -35,7 +35,7 @@ gb_psom_shell_options = '';
 gb_psom_mode = 'background'; 
 
 % Options for the execution mode of the pipeline manager
-gb_psom_mode_pm = 'session'; 
+gb_psom_mode_pm = 'background'; 
 
 % Options for the maximal number of jobs
 gb_psom_max_queued = 2;
@@ -68,7 +68,7 @@ gb_psom_pdf_viewer = 'evince';
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % PSOM version
-gb_psom_version = '1.0.2'; % PSOM release number
+gb_psom_version = '1.0.4'; % PSOM release number
 
 % Is the environment Octave or Matlab ?
 if exist('OCTAVE_VERSION','builtin')    
