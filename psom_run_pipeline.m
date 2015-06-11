@@ -144,6 +144,10 @@ function status = psom_run_pipeline(pipeline,opt)
 %            string in OPT.RESTART
 %        'exact' restart jobs whose name is listed in OPT.RESTART.
 %
+%    FLAG_FAIL
+%        (boolean, default false) if true, the pipeline will throw an error 
+%        if any of the job fails. 
+%
 %    There are actually other minor options available, see
 %    PSOM_PIPELINE_INIT and PSOM_PIPELINE_PROCESS for details.
 %
@@ -283,8 +287,8 @@ end
 name_pipeline = 'PIPE';
 
 gb_name_structure = 'opt';
-gb_list_fields    = {'flag_short_job_names' , 'nb_resub'       , 'type_restart' , 'flag_pause' , 'init_matlab'       , 'flag_update' , 'flag_debug' , 'path_search'       , 'restart' , 'shell_options'       , 'path_logs' , 'command_matlab' , 'flag_verbose' , 'mode'       , 'mode_pipeline_manager' , 'max_queued'       , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
-gb_list_defaults  = {true                   , gb_psom_nb_resub , 'substring'    , true         , gb_psom_init_matlab , true          , false        , gb_psom_path_search , {}        , gb_psom_shell_options , NaN         , ''               , true           , gb_psom_mode , gb_psom_mode_pm         , gb_psom_max_queued , gb_psom_qsub_options , []                    , []                    , []               };
+gb_list_fields    = {'flag_fail' , 'flag_short_job_names' , 'nb_resub'       , 'type_restart' , 'flag_pause' , 'init_matlab'       , 'flag_update' , 'flag_debug' , 'path_search'       , 'restart' , 'shell_options'       , 'path_logs' , 'command_matlab' , 'flag_verbose' , 'mode'       , 'mode_pipeline_manager' , 'max_queued'       , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
+gb_list_defaults  = {false       , true                   , gb_psom_nb_resub , 'substring'    , true         , gb_psom_init_matlab , true          , false        , gb_psom_path_search , {}        , gb_psom_shell_options , NaN         , ''               , true           , gb_psom_mode , gb_psom_mode_pm         , gb_psom_max_queued , gb_psom_qsub_options , []                    , []                    , []               };
 psom_set_defaults
 
 if ~strcmp(opt.path_logs(end),filesep)
@@ -402,6 +406,7 @@ else
     opt_proc.flag_verbose          = opt.flag_verbose;
     opt_proc.init_matlab           = opt.init_matlab;
     opt_proc.nb_resub              = opt.nb_resub;
+    opt_proc.flag_fail             = opt.flag_fail;
     
     if flag_debug
         opt_proc

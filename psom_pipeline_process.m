@@ -103,6 +103,10 @@ function status = psom_pipeline_process(file_pipeline,opt)
 %        (boolean, default true) if the flag is true, then the function 
 %        prints some infos during the processing.
 %
+%    FLAG_FAIL
+%        (boolean, default false) if true, the pipeline will throw an error 
+%        if any of the job fails. 
+%
 % _________________________________________________________________________
 % OUTPUTS:
 %
@@ -158,8 +162,8 @@ end
 
 %% Options
 gb_name_structure = 'opt';
-gb_list_fields    = { 'flag_short_job_names' , 'nb_resub'       , 'flag_verbose' , 'init_matlab'       , 'flag_debug' , 'shell_options'       , 'command_matlab' , 'mode'    , 'mode_pipeline_manager' , 'max_queued' , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
-gb_list_defaults  = { true                   , gb_psom_nb_resub , true           , gb_psom_init_matlab , true         , gb_psom_shell_options , ''               , 'session' , ''                      , 0            , gb_psom_qsub_options , []                    , []                    , []               };
+gb_list_fields    = { 'flag_fail' , 'flag_short_job_names' , 'nb_resub'       , 'flag_verbose' , 'init_matlab'       , 'flag_debug' , 'shell_options'       , 'command_matlab' , 'mode'    , 'mode_pipeline_manager' , 'max_queued' , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
+gb_list_defaults  = { false       , true                   , gb_psom_nb_resub , true           , gb_psom_init_matlab , true         , gb_psom_shell_options , ''               , 'session' , ''                      , 0            , gb_psom_qsub_options , []                    , []                    , []               };
 psom_set_defaults
 
 flag_verbose = flag_verbose || flag_debug;
@@ -749,6 +753,10 @@ if exist('file_pipe_running','var')
 end
 
 status = flag_any_fail;
+
+if flag_any_fail && opt.flag_fail 
+    error('some jobs have failed');
+end
 
 %%%%%%%%%%%%%%%%%%
 %% subfunctions %%
