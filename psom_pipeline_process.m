@@ -1,4 +1,4 @@
-function status = psom_pipeline_process(file_pipeline,opt)
+function status_pipe = psom_pipeline_process(file_pipeline,opt)
 % Process a pipeline that has previously been initialized.
 %
 % SYNTAX:
@@ -657,6 +657,7 @@ catch
         fclose(hfpl);
         fclose(hfnf);
     end
+    status_pipe = 1;
     return
 end
 
@@ -752,11 +753,11 @@ if exist('file_pipe_running','var')
     end
 end
 
-status = flag_any_fail;
-
 if flag_any_fail && opt.flag_fail 
     error('some jobs have failed');
 end
+
+status = double(flag_any_fail);
 
 %%%%%%%%%%%%%%%%%%
 %% subfunctions %%
