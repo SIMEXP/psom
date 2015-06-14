@@ -342,7 +342,12 @@ switch opt.mode
            end
            [flag_failed,msg] = system(cmd_script);
        else
-           flag_failed = system([cmd_script ' &']);
+           if strcmp(gb_psom_language,'octave')		
+               system(cmd_script,false,'async');		
+               flag_failed = 0;		
+           else 		
+               flag_failed = system([cmd_script ' &']);		
+           end
            msg = '';
        end
 
