@@ -379,6 +379,9 @@ try
     mask_deps = max(graph_deps,[],1)>0;
     mask_deps = mask_deps(:);
     
+    %% Track refresh times for jobs
+    tab_refresh = -ones(length(list_jobs),6);
+    
     %% Track number of submissions
     nb_sub = zeros([length(list_jobs) 1]);
 
@@ -442,7 +445,7 @@ try
         list_num_running = find(mask_running);
         list_num_running = list_num_running(:)';
         list_jobs_running = list_jobs(list_num_running);
-        new_status_running_jobs = psom_job_status(path_logs,list_jobs_running,opt.mode);        
+        [new_status_running_jobs,tab_refresh(list_num_running,:)] = psom_job_status(path_logs,list_jobs_running,opt.mode,tab_refresh(list_num_running,:));        
         pause(time_cool_down); % pause for a while to let the system finish to write eqsub and oqsub files (useful in 'qsub' mode).
         
         %% Loop over running jobs to check the new status
@@ -592,7 +595,11 @@ try
             opt_script.qsub_options   = opt.qsub_options;
             opt_script.flag_short_job_names = opt.flag_short_job_names;
             opt_script.file_handle    = hfpl;
-            cmd = sprintf('psom_run_job(''%s'')',file_job);
+            if strcmp(opt_script.mode,'session')
+                cmd = sprintf('psom_run_job(''%s'')',file_job);
+            else
+                cmd = sprintf('psom_run_job(''%s'',true)',file_job);
+            end
                 
             if ispc % this is windows
                 script = [path_tmp filesep name_job '.bat'];
@@ -757,7 +764,7 @@ if flag_any_fail && opt.flag_fail
     error('some jobs have failed');
 end
 
-status = double(flag_any_fail);
+status_pipe = double(flag_any_fail);
 
 %%%%%%%%%%%%%%%%%%
 %% subfunctions %%
@@ -797,15 +804,17 @@ end
 %% Clean up the tags and logs associated with a job
 function [] = sub_clean_job(path_logs,name_job)
 
-files{1} = [path_logs filesep name_job '.log'];
-files{2} = [path_logs filesep name_job '.finished'];
-files{3} = [path_logs filesep name_job '.failed'];
-files{4} = [path_logs filesep name_job '.running'];
-files{5} = [path_logs filesep name_job '.exit'];
-files{6} = [path_logs filesep name_job '.eqsub'];
-files{7} = [path_logs filesep name_job '.oqsub'];
-files{8} = [path_logs filesep name_job '.profile.mat'];
-files{9} = [path_logs filesep 'tmp' filesep name_job '.sh'];
+files{1}  = [path_logs filesep name_job '.log'];
+files{2}  = [path_logs filesep name_job '.finished'];
+files{3}  = [path_logs filesep name_job '.failed'];
+files{4}  = [path_logs filesep name_job '.running'];
+files{5}  = [path_logs filesep name_job '.exit'];
+files{6}  = [path_logs filesep name_job '.eqsub'];
+files{7}  = [path_logs filesep name_job '.oqsub'];
+files{8}  = [path_logs filesep name_job '.profile.mat'];
+files{9}  = [path_logs filesep name_job '.heartbeat.mat'];
+files{10} = [path_logs filesep name_job '.kill'];
+files{11} = [path_logs filesep 'tmp' filesep name_job '.sh'];
 
 for num_f = 1:length(files)
     if psom_exist(files{num_f});
