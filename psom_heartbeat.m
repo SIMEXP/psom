@@ -49,9 +49,8 @@ while flag_beat
         [err,msg] = system(sprintf('kill %i',pid)); % kill is not available, try a system call
     end
     flag_beat = err==0;
-    telapsed = toc;
     curr_time = clock;
-    save(file_heart,'telapsed','curr_time');
+    save(file_heart,'curr_time');
     if exist(file_kill,'file')
         if exist('OCTAVE_VERSION','builtin')  
             kill(pid,9)
@@ -60,6 +59,10 @@ while flag_beat
         end 
         exit
     end
-    pause(5)
+    if exist('OCTAVE_VERSION','builtin')  
+        [res,msg] = system('sleep 5');
+    else
+        sleep(5); 
+    end
 end
     

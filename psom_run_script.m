@@ -240,7 +240,7 @@ end
 if ~isempty(cmd)            
     instr_job = sprintf('"%s" %s "%s %s,exit"',opt.command_matlab,gb_psom_opt_matlab,opt.init_matlab,cmd);
     if ~isempty(logs)
-        instr_job = sprintf('%s >"%s" 2>&1\n',instr_job,logs.txt);
+        instr_job = sprintf('%s > "%s" 2>&1\n',instr_job,logs.txt);
     else
         instr_job = sprintf('%s\n',instr_job);
     end
@@ -334,7 +334,7 @@ switch opt.mode
        end
        cmd_script = [cmd_script ' 2>&1']; % Redirect the error stream to standard output
        
-       if opt.flag_debug
+       if opt.flag_debug           
            msg = sprintf('    The script is executed using the command :\n%s\n\n',cmd_script);
            fprintf('%s',msg);
            if ~isempty(opt.file_handle)
@@ -342,11 +342,11 @@ switch opt.mode
            end
            [flag_failed,msg] = system(cmd_script);
        else
-           if strcmp(gb_psom_language,'octave')
-               system(cmd_script,false,'async');
-               flag_failed = 0;
-           else 
-               flag_failed = system([cmd_script ' &']);
+           if strcmp(gb_psom_language,'octave')		
+               system(cmd_script,false,'async');		
+               flag_failed = 0;		
+           else 		
+               flag_failed = system([cmd_script ' &']);		
            end
            msg = '';
        end

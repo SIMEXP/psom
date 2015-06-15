@@ -72,13 +72,13 @@ function status_pipe = psom_pipeline_process(file_pipeline,opt)
 %        number.
 %
 %    TIME_BETWEEN_CHECKS
-%        (real value, default 0 in 'session' mode, 10 otherwise)
-%        The time (in seconds) where the pipeline processing remains
+%        (real value, default 0 in 'session', 'background' and 'batch' modes, 
+%        3 otherwise) The time (in seconds) where the pipeline processing remains
 %        inactive to wait for jobs to complete before attempting to
 %        submit new jobs.
 %
 %    TIME_COOL_DOWN
-%        (real value, default 2 in 'qsub', 'msub' and 'condor' modes, 
+%        (real value, default 0.5 in 'qsub', 'msub' and 'condor' modes, 
 %        0 otherwise)
 %        A small pause time between evaluation of status and flushing of
 %        tags. This is to let qsub the time to write the output/error
@@ -236,16 +236,16 @@ switch opt.mode
         end
     case {'qsub','msub','condor','bsub'}
         if isempty(time_between_checks)
-            opt.time_between_checks = 10;
-            time_between_checks = 10;
+            opt.time_between_checks = 3;
+            time_between_checks = 3;
         end
         if isempty(nb_checks_per_point)
-            opt.nb_checks_per_point = 6;
-            nb_checks_per_point = 6;
+            opt.nb_checks_per_point = 20;
+            nb_checks_per_point = 20;
         end
         if isempty(time_cool_down)
-            opt.time_cool_down = 2;
-            time_cool_down = 2;
+            opt.time_cool_down = 0.5;
+            time_cool_down = 0.5;
         end
 end
 
@@ -379,6 +379,13 @@ try
     mask_deps = max(graph_deps,[],1)>0;
     mask_deps = mask_deps(:);
     
+    %% Track refresh times for jobs
+    % # jobs x 6 (clock info) x 2
+    % the first table is to record the last documented active time for the heartbeat
+    % the second table is to record the time elapsed since a new heartbeat was detected
+    tab_refresh(:,:,1) = -ones(length(list_jobs),6);
+    tab_refresh(:,:,2) = repmat(clock,[length(list_jobs) 1]);
+    
     %% Track number of submissions
     nb_sub = zeros([length(list_jobs) 1]);
 
@@ -442,8 +449,15 @@ try
         list_num_running = find(mask_running);
         list_num_running = list_num_running(:)';
         list_jobs_running = list_jobs(list_num_running);
-        new_status_running_jobs = psom_job_status(path_logs,list_jobs_running,opt.mode);        
-        pause(time_cool_down); % pause for a while to let the system finish to write eqsub and oqsub files (useful in 'qsub' mode).
+        [new_status_running_jobs,tab_refresh(list_num_running,:,:)] = psom_job_status(path_logs,list_jobs_running,opt.mode,tab_refresh(list_num_running,:,:));
+        
+        if time_cool_down>0
+            if exist('OCTAVE_VERSION','builtin')  
+                [res,msg] = system(sprintf('sleep %i',time_cool_down));
+            else
+                pause(time_cool_down); 
+            end
+        end
         
         %% Loop over running jobs to check the new status
         num_l = 0;
@@ -592,7 +606,11 @@ try
             opt_script.qsub_options   = opt.qsub_options;
             opt_script.flag_short_job_names = opt.flag_short_job_names;
             opt_script.file_handle    = hfpl;
-            cmd = sprintf('psom_run_job(''%s'')',file_job);
+            if strcmp(opt_script.mode,'session')
+                cmd = sprintf('psom_run_job(''%s'')',file_job);
+            else
+                cmd = sprintf('psom_run_job(''%s'',true)',file_job);
+            end
                 
             if ispc % this is windows
                 script = [path_tmp filesep name_job '.bat'];
@@ -612,7 +630,11 @@ try
         end % submit jobs
         
         if (any(mask_todo) || any(mask_running)) && psom_exist(file_pipe_running)
-            pause(time_between_checks); % To avoid wasting resources, wait a bit before re-trying to submit jobs
+            if exist('OCTAVE_VERSION','builtin')  
+                [res,msg] = system(sprintf('sleep %i',time_between_checks));
+            else
+                pause(time_between_checks); % To avoid wasting resources, wait a bit before re-trying to submit jobs
+            end
         end
         
         if strcmp(gb_psom_language,'octave') && ismember(opt.mode,{'qsub','msub','condor'})
@@ -757,7 +779,7 @@ if flag_any_fail && opt.flag_fail
     error('some jobs have failed');
 end
 
-status = double(flag_any_fail);
+status_pipe = double(flag_any_fail);
 
 %%%%%%%%%%%%%%%%%%
 %% subfunctions %%
@@ -797,15 +819,17 @@ end
 %% Clean up the tags and logs associated with a job
 function [] = sub_clean_job(path_logs,name_job)
 
-files{1} = [path_logs filesep name_job '.log'];
-files{2} = [path_logs filesep name_job '.finished'];
-files{3} = [path_logs filesep name_job '.failed'];
-files{4} = [path_logs filesep name_job '.running'];
-files{5} = [path_logs filesep name_job '.exit'];
-files{6} = [path_logs filesep name_job '.eqsub'];
-files{7} = [path_logs filesep name_job '.oqsub'];
-files{8} = [path_logs filesep name_job '.profile.mat'];
-files{9} = [path_logs filesep 'tmp' filesep name_job '.sh'];
+files{1}  = [path_logs filesep name_job '.log'];
+files{2}  = [path_logs filesep name_job '.finished'];
+files{3}  = [path_logs filesep name_job '.failed'];
+files{4}  = [path_logs filesep name_job '.running'];
+files{5}  = [path_logs filesep name_job '.exit'];
+files{6}  = [path_logs filesep name_job '.eqsub'];
+files{7}  = [path_logs filesep name_job '.oqsub'];
+files{8}  = [path_logs filesep name_job '.profile.mat'];
+files{9}  = [path_logs filesep name_job '.heartbeat.mat'];
+files{10} = [path_logs filesep name_job '.kill'];
+files{11} = [path_logs filesep 'tmp' filesep name_job '.sh'];
 
 for num_f = 1:length(files)
     if psom_exist(files{num_f});
