@@ -172,20 +172,27 @@ for num_j = 1:nb_jobs
             refresh_time = load(file_heartbeat);
             if isempty(tab_refresh)
                 curr_status{num_j} = 'running';
-            elseif any(tab_refresh(num_j,:)<0)
+            elseif any(tab_refresh(num_j,:,1)<0)
                 % this is the first time an active time is collected
                 % simply update tab_refresh
-                tab_refresh(num_j,:) = refresh_time.curr_time;
+                tab_refresh(num_j,:,1) = refresh_time.curr_time;
                 curr_status{num_j} = 'running';
             else
-                elapsed_time = etime(refresh_time.curr_time,tab_refresh(num_j,:));
-                tab_refresh(num_j,:) = refresh_time.curr_time;
-                if elapsed_time<5
-                    % the job has been idle too long
-                    % mark it as failed
-                    curr_status{num_j} = 'failed';
-                else
+                test_change = etime(refresh_time.curr_time,tab_refresh(num_j,:,1))>1;
+                if test_change
+                    % I heard a heartbeat!    
+                    tab_refresh(num_j,:,1) = refresh_time.curr_time;
+                    tab_refresh(num_j,:,2) = clock;
                     curr_status{num_j} = 'running';
+                else 
+                    % how long has it been without a heartbeat?
+                    elapsed_time = etime(clock,tab_refresh(num_j,:,2));
+                    if elapsed_time > 30
+                        % huho 30 seconds without a heartbeat, he's dead Jim
+                        curr_status{num_j} = 'failed';
+                    else
+                        curr_status{num_j} = 'running';
+                    end
                 end
             end
         else
