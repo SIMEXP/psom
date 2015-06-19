@@ -867,6 +867,8 @@ delete([path_logs filesep '*.running']);
 delete([path_logs filesep '*.failed']);
 delete([path_logs filesep '*.finished']);
 delete([path_logs filesep '*.exit']);
+delete([path_logs filesep '*.kill']);
+delete([path_logs filesep '*.heartbeat.mat']);
 delete([path_logs filesep '*.log']);
 delete([path_logs filesep '*.oqsub']);
 delete([path_logs filesep '*.eqsub']);

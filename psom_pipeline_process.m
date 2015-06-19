@@ -704,7 +704,16 @@ sub_add_line_log(hfpl,sprintf('\n%s\n%s\n%s\n',stars,msg,stars),flag_verbose);
 if exist('file_pipe_running','var')
     if ~exist(file_pipe_running,'file')        
         sub_add_line_log(hfpl,sprintf('The pipeline manager was interrupted because the .lock file was manually deleted.\n'),flag_verbose);
-    end    
+    end  
+   sub_add_line_log(hfpl,'Killing left-overs ...',flag_verbose)
+   list_num_running = find(mask_running);
+   list_num_running = list_num_running(:)';
+   list_jobs_running = list_jobs(list_num_running); 
+   for num_r = 1:length(list_jobs_running)
+       file_kill = [path_logs filesep list_jobs_running{num_r} '.kill'];
+       hf = fopen(file_kill,'w');
+       fclose(hf);
+   end
 end
 
 %% Print a list of failed jobs
