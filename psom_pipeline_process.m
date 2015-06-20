@@ -359,13 +359,10 @@ try
     end
    
     %% Print general info about the pipeline
-    msg_line1 = sprintf('The pipeline %s is now being processed.',name_pipeline);
-    msg_line2 = sprintf('Started on %s',datestr(clock));
-    msg_line3 = sprintf('user: %s, host: %s, system: %s',gb_psom_user,gb_psom_localhost,gb_psom_OS);
-    size_msg = max([size(msg_line1,2),size(msg_line2,2),size(msg_line3,2)]);
-    msg = sprintf('%s\n%s\n%s',msg_line1,msg_line2,msg_line3);
-    stars = repmat('*',[1 size_msg]);    
-    sub_add_line_log(hfpl,sprintf('\n%s\n%s\n%s\n',stars,msg,stars),flag_verbose);
+    msg_line1 = sprintf('Pipeline started on %s',datestr(clock));
+    msg_line2 = sprintf('user: %s, host: %s, system: %s',gb_psom_user,gb_psom_localhost,gb_psom_OS);
+    stars = repmat('*',[1 max(length(msg_line1),length(msg_line2))]);
+    sub_add_line_log(hfpl,sprintf('%s\n%s\n%s\n%s\n',stars,msg_line1,msg_line2,stars),flag_verbose);
     
     %% Load the pipeline
     load(file_pipeline,'list_jobs','graph_deps','files_in');                
@@ -692,13 +689,9 @@ save(file_profile        ,'-struct','profile');
 copyfile(file_profile,file_profile_backup,'f');
 
 %% Print general info about the pipeline
-msg_line1 = sprintf('The processing of the pipeline is terminated.');
-msg_line2 = sprintf('See report below for job completion status.');
-msg_line3 = sprintf('%s',datestr(now));
-size_msg = max([size(msg_line1,2),size(msg_line2,2)]);
-msg = sprintf('%s\n%s\n%s',msg_line1,msg_line2,msg_line3);
-stars = repmat('*',[1 size_msg]);
-sub_add_line_log(hfpl,sprintf('\n%s\n%s\n%s\n',stars,msg,stars),flag_verbose);
+msg_line1 = sprintf('Pipeline terminated on %s',datestr(now));
+stars = repmat('*',[1 length(msg_line1)]);
+sub_add_line_log(hfpl,sprintf('%s\n%s\n',stars,msg_line1),flag_verbose);
 
 %% Report if the lock file was manually removed
 if exist('file_pipe_running','var')

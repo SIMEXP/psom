@@ -148,6 +148,10 @@ function status = psom_run_pipeline(pipeline,opt)
 %        (boolean, default false) if true, the pipeline will throw an error 
 %        if any of the job fails. 
 %
+%    FLAG_VERBOSE
+%        (integer 0, 1 or 2, default 1) No verbose (0), standard 
+%        verbose (1), a lot of verbose, useful for debugging (2).
+%
 %    There are actually other minor options available, see
 %    PSOM_PIPELINE_INIT and PSOM_PIPELINE_PROCESS for details.
 %
@@ -287,9 +291,12 @@ end
 name_pipeline = 'PIPE';
 
 gb_name_structure = 'opt';
-gb_list_fields    = {'flag_fail' , 'flag_short_job_names' , 'nb_resub'       , 'type_restart' , 'flag_pause' , 'init_matlab'       , 'flag_update' , 'flag_debug' , 'path_search'       , 'restart' , 'shell_options'       , 'path_logs' , 'command_matlab' , 'flag_verbose' , 'mode'       , 'mode_pipeline_manager' , 'max_queued'       , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
-gb_list_defaults  = {false       , true                   , gb_psom_nb_resub , 'substring'    , true         , gb_psom_init_matlab , true          , false        , gb_psom_path_search , {}        , gb_psom_shell_options , NaN         , ''               , true           , gb_psom_mode , gb_psom_mode_pm         , gb_psom_max_queued , gb_psom_qsub_options , []                    , []                    , []               };
+gb_list_fields    = {'flag_fail' , 'flag_short_job_names' , 'nb_resub'       , 'type_restart' , 'flag_pause' , 'init_matlab'       , 'flag_update' , 'path_search'       , 'restart' , 'shell_options'       , 'path_logs' , 'command_matlab' , 'flag_verbose' , 'mode'       , 'mode_pipeline_manager' , 'max_queued'       , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
+gb_list_defaults  = {false       , true                   , gb_psom_nb_resub , 'substring'    , true         , gb_psom_init_matlab , true          , gb_psom_path_search , {}        , gb_psom_shell_options , NaN         , ''               , 1              , gb_psom_mode , gb_psom_mode_pm         , gb_psom_max_queued , gb_psom_qsub_options , []                    , []                    , []               };
 psom_set_defaults
+
+opt.flag_debug = opt.flag_verbose>1;
+flag_debug = opt.flag_debug;
 
 if ~strcmp(opt.path_logs(end),filesep)
     opt.path_logs = [opt.path_logs filesep];
