@@ -169,15 +169,15 @@ for num_j = 1:nb_jobs
 
         %% Try to access refresh times
         if flag_heartbeat
-            refresh_time = load(file_heartbeat);
             if isempty(tab_refresh)
                 curr_status{num_j} = 'running';
             elseif any(tab_refresh(num_j,:,1)<0)
                 % this is the first time an active time is collected
                 % simply update tab_refresh
-                tab_refresh(num_j,:,1) = refresh_time.curr_time;
+                tab_refresh(num_j,:,1) = 0;
                 curr_status{num_j} = 'running';
             else
+                refresh_time = load(file_heartbeat);
                 test_change = etime(refresh_time.curr_time,tab_refresh(num_j,:,1))>1;
                 if test_change
                     % I heard a heartbeat!    
