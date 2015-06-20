@@ -783,7 +783,7 @@ if flag_any_fail && opt.flag_fail
     error('some jobs have failed');
 end
 
-status_pipe = double(flag_any_fail);
+status_pipe = double(flag_any_fail)
 
 %%%%%%%%%%%%%%%%%%
 %% subfunctions %%
