@@ -72,7 +72,7 @@ function status_pipe = psom_pipeline_process(file_pipeline,opt)
 %        number.
 %
 %    TIME_BETWEEN_CHECKS
-%        (real value, default 0 in 'session', 'background' and 'batch' modes, 
+%        (real value, default 0 in 'session', 0.5 in 'background' and 'batch' modes, 
 %        3 otherwise) The time (in seconds) where the pipeline processing remains
 %        inactive to wait for jobs to complete before attempting to
 %        submit new jobs.
@@ -85,9 +85,10 @@ function status_pipe = psom_pipeline_process(file_pipeline,opt)
 %        log files.
 %
 %    NB_CHECKS_PER_POINT
-%        (integer,default 6) After NB_CHECKS_PER_POINT successive checks
-%        where the pipeline processor did not find anything to do, it
-%        will issue a '.' verbose to show it is not dead.
+%        (integer,default depends on OPT.MODE, but ammounts to 1 point per mn) 
+%        After NB_CHECKS_PER_POINT successive checks where the pipeline processor 
+%        did not find anything to do, it will issue a '.' verbose to show it is 
+%        not dead.
 %
 %    FLAG_DEBUG
 %        (boolean, default false) if FLAG_DEBUG is true, the program
@@ -225,12 +226,12 @@ switch opt.mode
         end
     case {'batch','background'}
         if isempty(time_between_checks)
-            opt.time_between_checks = 10;
-            time_between_checks = 10;
+            opt.time_between_checks = .5;
+            time_between_checks = .5;
         end
         if isempty(nb_checks_per_point)
-            opt.nb_checks_per_point = 6;
-            nb_checks_per_point = 6;
+            opt.nb_checks_per_point = 120;
+            nb_checks_per_point = 120;
         end
         if isempty(time_cool_down)
             opt.time_cool_down = 0;
