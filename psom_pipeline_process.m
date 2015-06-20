@@ -110,7 +110,9 @@ function status_pipe = psom_pipeline_process(file_pipeline,opt)
 % _________________________________________________________________________
 % OUTPUTS:
 %
-% STATUS (integer) 0 if all jobs have been successfully completed, 1 if there were errors.
+% STATUS (integer) if the pipeline manager runs in 'session' mode, STATUS is 
+% 0 if all jobs have been successfully completed, 1 if there were errors.
+% In all other modes, STATUS is NaN.
 %
 % _________________________________________________________________________
 % SEE ALSO:
@@ -336,6 +338,7 @@ if ismember(opt.mode_pipeline_manager,{'batch','background','qsub','msub','bsub'
             error('Something went bad when sending the pipeline in the background. The error message was : %s',errmsg)
         end
     end        
+    status_pipe = NaN; % Cannot retrieve a meaningful status when running the pipeline in the background
     return
     
 end
@@ -783,7 +786,7 @@ if flag_any_fail && opt.flag_fail
     error('some jobs have failed');
 end
 
-status_pipe = double(flag_any_fail)
+status_pipe = double(flag_any_fail);
 
 %%%%%%%%%%%%%%%%%%
 %% subfunctions %%

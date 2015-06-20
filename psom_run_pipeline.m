@@ -158,7 +158,9 @@ function status = psom_run_pipeline(pipeline,opt)
 % _________________________________________________________________________
 % OUTPUTS:
 %
-% STATUS (integer) 0 if all jobs have been successfully completed, 1 if there were errors.
+% STATUS (integer) if the pipeline manager runs in 'session' mode, STATUS is 
+% 0 if all jobs have been successfully completed, 1 if there were errors.
+% In all other modes, STATUS is NaN.
 %
 % _________________________________________________________________________
 % THE LOGS FOLDER:
