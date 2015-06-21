@@ -177,8 +177,16 @@ for num_j = 1:nb_jobs
                 tab_refresh(num_j,:,1) = 0;
                 curr_status{num_j} = 'running';
             else
-                refresh_time = load(file_heartbeat);
-                test_change = etime(refresh_time.curr_time,tab_refresh(num_j,:,1))>1;
+                try
+                    refresh_time = load(file_heartbeat);
+                    test_change = etime(refresh_time.curr_time,tab_refresh(num_j,:,1))>1;
+                catch
+                    % The heartbeat is unreadable
+                    % Assume this is a race condition
+                    % Consider no heartbeat was detected
+                    test_change = false;
+                end
+
                 if test_change
                     % I heard a heartbeat!    
                     tab_refresh(num_j,:,1) = refresh_time.curr_time;
