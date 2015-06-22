@@ -434,7 +434,8 @@ try
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% The pipeline manager really starts here %%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+    flag_nothing_happened = true;
+    list_event = []; % list of running jobs
     while (any(mask_todo) || any(mask_running)) && psom_exist(file_pipe_running)
 
         %% Update logs & status
@@ -444,14 +445,32 @@ try
         copyfile(file_status,file_status_backup,'f');
         save(file_profile        ,'-struct','profile');
         copyfile(file_profile,file_profile_backup,'f');
-        flag_nothing_happened = true;
         
         %% Update the status of running jobs
-        list_num_running = find(mask_running);
-        list_num_running = list_num_running(:)';
-        list_jobs_running = list_jobs(list_num_running);
-        [new_status_running_jobs,tab_refresh(list_num_running,:,:)] = psom_job_status(path_logs,list_jobs_running,opt.mode,tab_refresh(list_num_running,:,:));
+        if isempty(list_event)
+            list_num_running = find(mask_running);
+            list_num_running = list_num_running(:)';
+            list_jobs_running = list_jobs(list_num_running);
+            [new_status_running_jobs,tab_refresh(list_num_running,:,:)] = psom_job_status(path_logs,list_jobs_running,opt.mode,tab_refresh(list_num_running,:,:));
+            
+            %% Detect events
+            flag_changed = ~ismember(new_status_running_jobs,{'submitted','running'});
+            list_event = list_num_running(flag_changed);
+            new_status_running_jobs = new_status_running_jobs(flag_changed); 
+        end
         
+        % if nothing happened before but an event occured...
+        if flag_nothing_happened&&~isempty(list_event) 
+            %% Reset the 'dot counter'
+            flag_nothing_happened = false;
+            nb_checks = 0;
+            if nb_points>0
+                sub_add_line_log(hfpl,sprintf('\n'),flag_verbose);
+            end
+            nb_points = 0;
+        end
+        
+        %% Give some time to generate the eqsub/oqsub files 
         if time_cool_down>0
             if exist('OCTAVE_VERSION','builtin')  
                 [res,msg] = system(sprintf('sleep %i',time_cool_down));
@@ -460,103 +479,83 @@ try
             end
         end
         
-        %% Loop over running jobs to check the new status
-        num_l = 0;
-        for num_j = list_num_running
-            num_l = num_l+1;
+        %% Update the status of one of the jobs
+        flag_nothing_happened = isempty(list_event);
+        if ~flag_nothing_happened
+            num_l = 1;
+            num_j = list_event(num_l);
             name_job = list_jobs{num_j};
-            flag_changed = ~strcmp(status.(name_job),new_status_running_jobs{num_l});
-            
-            if flag_changed
+            status.(name_job) = new_status_running_jobs{num_l};
                 
-                if flag_nothing_happened % if nothing happened before...
-                    %% Reset the 'dot counter'
-                    flag_nothing_happened = false;
-                    nb_checks = 0;
-                    if nb_points>0
-                        sub_add_line_log(hfpl,sprintf('\n'),flag_verbose);
-                    end
-                    nb_points = 0;
+            if strcmp(status.(name_job),'exit') % the script crashed ('exit' tag)
+                sub_add_line_log(hfpl,sprintf('%s - The script of job %s terminated without generating any tag, I guess we will count that one as failed.\n',datestr(clock),name_job),flag_verbose);;
+                status.(name_job) = 'failed';
+                nb_failed = nb_failed + 1;
+            end
+                
+            if strcmp(status.(name_job),'failed')||strcmp(status.(name_job),'finished')
+                %% for finished or failed jobs, transfer the individual
+                %% test log files to the matlab global logs structure
+                nb_queued = nb_queued - 1;
+                text_log    = sub_read_txt([path_logs filesep name_job '.log']);
+                text_qsub_o = sub_read_txt([path_logs filesep name_job '.oqsub']);
+                text_qsub_e = sub_read_txt([path_logs filesep name_job '.eqsub']);                    
+                if isempty(text_qsub_o)&&isempty(text_qsub_e)
+                    logs.(name_job) = text_log;                        
+                else
+                    logs.(name_job) = [text_log hat_qsub_o text_qsub_o hat_qsub_e text_qsub_e];
                 end
-                
-                % update status of the job in the status file                
-                status.(name_job) = new_status_running_jobs{num_l};
-                
-                if strcmp(status.(name_job),'exit') % the script crashed ('exit' tag)
-                    sub_add_line_log(hfpl,sprintf('%s - The script of job %s terminated without generating any tag, I guess we will count that one as failed.\n',datestr(clock),name_job),flag_verbose);;
-                    status.(name_job) = 'failed';
-                    nb_failed = nb_failed + 1;
+                %% Update profile for the jobs
+                file_profile_job = [path_logs filesep name_job '.profile.mat'];
+                if psom_exist(file_profile_job)
+                    profile.(name_job) = load(file_profile_job);
                 end
+                profile.(name_job).nb_submit = nb_sub(num_j);
+                sub_clean_job(path_logs,name_job); % clean up all tags & log                    
+            end
                 
-                if strcmp(status.(name_job),'failed')||strcmp(status.(name_job),'finished')
-                    %% for finished or failed jobs, transfer the individual
-                    %% test log files to the matlab global logs structure
-                    nb_queued = nb_queued - 1;
-                    text_log    = sub_read_txt([path_logs filesep name_job '.log']);
-                    text_qsub_o = sub_read_txt([path_logs filesep name_job '.oqsub']);
-                    text_qsub_e = sub_read_txt([path_logs filesep name_job '.eqsub']);                    
-                    if isempty(text_qsub_o)&&isempty(text_qsub_e)
-                        logs.(name_job) = text_log;                        
-                    else
-                        logs.(name_job) = [text_log hat_qsub_o text_qsub_o hat_qsub_e text_qsub_e];
-                    end
-                    %% Update profile for the jobs
-                    file_profile_job = [path_logs filesep name_job '.profile.mat'];
-                    if psom_exist(file_profile_job)
-                        profile.(name_job) = load(file_profile_job);
-                    end
-                    profile.(name_job).nb_submit = nb_sub(num_j);
-                    sub_clean_job(path_logs,name_job); % clean up all tags & log                    
-                end
-                
-                switch status.(name_job)
+            switch status.(name_job)
                     
-                    case 'failed' % the job has failed, too bad !
+                case 'failed' % the job has failed, too bad !
 
-                        if nb_sub(num_j) > nb_resub % Enough attempts to submit the jobs have been made, it failed !
-                            nb_failed = nb_failed + 1;   
-                            msg = sprintf('%s %s%s failed   ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
-                            sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
-                            sub_add_line_log(hfnf,sprintf('%s , failed\n',name_job),false);
-                            mask_child = false([1 length(mask_todo)]);
-                            mask_child(num_j) = true;
-                            mask_child = sub_find_children(mask_child,graph_deps);
-                            mask_todo(mask_child) = false; % Remove the children of the failed job from the to-do list
-                        else % Try to submit the job one more time (at least)
-                            mask_todo(num_j) = true;
-                            status.(name_job) = 'none';
-                            new_status_running_jobs{num_l} = 'none';
-                            nb_todo = nb_todo+1;
-                            msg = sprintf('%s %s%s reset    ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
-                            sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
-                        end
-
-                    case 'finished'
-
-                        nb_finished = nb_finished + 1;                        
-                        msg = sprintf('%s %s%s completed',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
+                    if nb_sub(num_j) > nb_resub % Enough attempts to submit the jobs have been made, it failed !
+                        nb_failed = nb_failed + 1;   
+                        msg = sprintf('%s %s%s failed   ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
                         sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
-                        sub_add_line_log(hfnf,sprintf('%s , finished\n',name_job),false);
-                        graph_deps(num_j,:) = 0; % update dependencies
+                        sub_add_line_log(hfnf,sprintf('%s , failed\n',name_job),false);
+                        mask_child = false([1 length(mask_todo)]);
+                        mask_child(num_j) = true;
+                        mask_child = sub_find_children(mask_child,graph_deps);
+                        mask_todo(mask_child) = false; % Remove the children of the failed job from the to-do list
+                    else % Try to submit the job one more time (at least)
+                        mask_todo(num_j) = true;
+                        status.(name_job) = 'none';
+                        new_status_running_jobs{num_l} = 'none';
+                        nb_todo = nb_todo+1;
+                        msg = sprintf('%s %s%s reset    ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
+                        sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
+                    end
 
-                end
-                
-            end % if flag changed
-        end % loop over running jobs
-        
-        if ~flag_nothing_happened % if something happened ...
+                case 'finished'
+                    nb_finished = nb_finished + 1;                        
+                    msg = sprintf('%s %s%s completed',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
+                    sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
+                    sub_add_line_log(hfnf,sprintf('%s , finished\n',name_job),false);
+                    graph_deps(num_j,:) = 0; % update dependencies
+            end
             
             %% update the to-do list
-            mask_done(mask_running) = ismember(new_status_running_jobs,{'finished','failed','exit'});
-            mask_todo(mask_running) = mask_todo(mask_running)&~mask_done(mask_running);
+            mask_done(num_j) = ismember(new_status_running_jobs{num_l},{'finished','failed','exit'});
+            mask_todo(num_j) = mask_todo(num_j)&~mask_done(num_j);
             
             %% Update the dependency mask
             mask_deps = max(graph_deps,[],1)>0;
             mask_deps = mask_deps(:);
             
-            %% Finally update the list of currently running jobs
-            mask_running(mask_running) = mask_running(mask_running)&~mask_done(mask_running);
-            
+            %% Remove the updated job from the list of running jobs
+            mask_running(num_j) = false;
+            list_event = list_event(2:end);
+            new_status_running_jobs = new_status_running_jobs(2:end);
         end
         
         %% Time to (try to) submit jobs !!
@@ -630,7 +629,7 @@ try
             end            
         end % submit jobs
         
-        if (any(mask_todo) || any(mask_running)) && psom_exist(file_pipe_running)
+        if flag_nothing_happened && (any(mask_todo) || any(mask_running)) && psom_exist(file_pipe_running)
             if exist('OCTAVE_VERSION','builtin')  
                 [res,msg] = system(sprintf('sleep %i',time_between_checks));
             else
