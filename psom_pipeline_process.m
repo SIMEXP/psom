@@ -100,6 +100,14 @@ function status_pipe = psom_pipeline_process(file_pipeline,opt)
 %        the name of the job anyway, and some systems even refuse to
 %        submit jobs with long names.
 %
+%    FLAG_SPAWN
+%        (boolean, default false) if FLAG_RESPAWN is true, the pipeline process
+%        will not stop until PIPE.lock is removed. It will constantly screen for
+%        new jobs in the 'spawn' subfolder of the logs folder, in the form of a .mat
+%        file where each variable is a job. No dependency mechanism is available for 
+%        for spawn jobs. The mat files will only be read if another file with the same 
+%        name but a .ready extension is present. 
+% 
 %    FLAG_VERBOSE
 %        (boolean, default true) if the flag is true, then the function 
 %        prints some infos during the processing.
@@ -165,8 +173,8 @@ end
 
 %% Options
 gb_name_structure = 'opt';
-gb_list_fields    = { 'flag_fail' , 'flag_short_job_names' , 'nb_resub'       , 'flag_verbose' , 'init_matlab'       , 'flag_debug' , 'shell_options'       , 'command_matlab' , 'mode'    , 'mode_pipeline_manager' , 'max_queued' , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
-gb_list_defaults  = { false       , true                   , gb_psom_nb_resub , true           , gb_psom_init_matlab , true         , gb_psom_shell_options , ''               , 'session' , ''                      , 0            , gb_psom_qsub_options , []                    , []                    , []               };
+gb_list_fields    = { 'flag_spawn' , 'flag_fail' , 'flag_short_job_names' , 'nb_resub'       , 'flag_verbose' , 'init_matlab'       , 'flag_debug' , 'shell_options'       , 'command_matlab' , 'mode'    , 'mode_pipeline_manager' , 'max_queued' , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
+gb_list_defaults  = { false        , false       , true                   , gb_psom_nb_resub , true           , gb_psom_init_matlab , true         , gb_psom_shell_options , ''               , 'session' , ''                      , 0            , gb_psom_qsub_options , []                    , []                    , []               };
 psom_set_defaults
 
 flag_verbose = flag_verbose || flag_debug;
