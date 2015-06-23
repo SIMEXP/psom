@@ -731,35 +731,25 @@ flag_any_fail = ~isempty(list_num_failed);
 
 if flag_any_fail
     if length(list_num_failed) == 1
-        sub_add_line_log(hfpl,sprintf('The execution of the following job has failed :\n\n    '),flag_verbose);
+        sub_add_line_log(hfpl,sprintf('1 job has failed.\n',length(list_num_failed)),flag_verbose);
     else
-        sub_add_line_log(hfpl,sprintf('The execution of the following jobs have failed :\n\n    '),flag_verbose);
+        sub_add_line_log(hfpl,sprintf('%i jobs have failed.\n',length(list_num_failed)),flag_verbose);
     end
-    for num_j = list_num_failed
-        name_job = list_jobs{num_j};        
-        sub_add_line_log(hfpl,sprintf('%s ; ',name_job),flag_verbose);
-    end    
-    sub_add_line_log(hfpl,sprintf('\n\n'),flag_verbose);
-    sub_add_line_log(hfpl,sprintf('More infos can be found in the individual log files. Use the following command to display these logs :\n\n    psom_pipeline_visu(''%s'',''log'',JOB_NAME)\n\n',path_logs),flag_verbose);
+    sub_add_line_log(hfpl,sprintf('Use psom_pipeline_visu to access logs, e.g.:\n\n    psom_pipeline_visu(''%s'',''log'',''%s'')\n\n',path_logs,list_jobs{list_num_failed(1)}),flag_verbose);
 end
 
 %% Print a list of jobs that could not be processed
 if ~isempty(list_num_none)
     if length(list_num_none) == 1
-        sub_add_line_log(hfpl,sprintf('The following job has not been processed due to a dependence on a failed job or the interruption of the pipeline manager :\n\n    '),flag_verbose);
+        sub_add_line_log(hfpl,sprintf('1 job could not be processed due to a dependency on a failed job or the interruption of the pipeline manager.\n'),flag_verbose);
     else
-        sub_add_line_log(hfpl,sprintf('The following jobs have not been processed due to a dependence on a failed job or the interruption of the pipeline manager :\n\n    '),flag_verbose);
+        sub_add_line_log(hfpl,sprintf('%i jobs could not be processed due to a dependency on a failed job or the interruption of the pipeline manager.\n', length(list_num_none)),flag_verbose);
     end
-    for num_j = list_num_none
-        name_job = list_jobs{num_j};
-        sub_add_line_log(hfpl,sprintf('%s ; ',name_job),flag_verbose);
-    end    
-    sub_add_line_log(hfpl,sprintf('\n\n'),flag_verbose);
 end
 
 %% Give a final one-line summary of the processing
 if flag_any_fail    
-    sub_add_line_log(hfpl,sprintf('All jobs have been processed, but some jobs have failed.\nYou may want to restart the pipeline latter if you managed to fix the problems.\n'),flag_verbose);
+    sub_add_line_log(hfpl,sprintf('Some jobs have failed.\n'),flag_verbose);
 else
     if isempty(list_num_none)
         sub_add_line_log(hfpl,sprintf('All jobs have been successfully completed.\n'),flag_verbose);
