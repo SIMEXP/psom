@@ -286,7 +286,7 @@ pipe_logs.eqsub     = [ path_logs filesep name_pipeline '.eqsub'              ];
 pipe_logs.oqsub     = [ path_logs filesep name_pipeline '.oqsub'              ];
 pipe_logs.exit      = [ path_logs filesep name_pipeline '.exit'               ];
 pipe_logs.failed    = [ path_logs filesep name_pipeline '.failed'             ];
-
+path_spawn          = [ path_logs filesep 'spawn' filesep ];
 logs    = load( file_logs    );
 status  = load( file_status  );
 profile = load( file_profile );
@@ -444,8 +444,38 @@ try
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     flag_nothing_happened = true;
     list_event = []; % list of running jobs
-    while (any(mask_todo) || any(mask_running)) && psom_exist(file_pipe_running)
+    test_loop = true;
+    while test_loop
 
+        %% Check for new spawns
+        if opt.flag_spawn
+            list_ready = dir([path_spawn '*.ready']);
+            list_ready = { list_ready.name };
+            if ~isempty(list_ready)
+                for num_r = 1:length(list_ready)
+                    [path_tmp,base_spawn] = fileparts(list_ready{num_r});
+                    file_spawn = [path_spawn base_spawn '.mat'];
+                    if ~psom_exist(file_spawn)
+                        error('I could not find %s for spawning',file_spawn)
+                    end
+                    spawn = load(file_spawn);
+                    list_new_jobs = fieldnames(spawn);
+                    if any(ismember(list_jobs,list_new_jobs))
+                        error('Spawn jobs cannot have the same name as existing jobs in %s',file_spawn)
+                    end
+                    list_jobs    = [ list_jobs ; list_new_jobs ];
+                    mask_done    = [ mask_done ; false(length(list_new_jobs),1)];
+                    mask_todo    = [ mask_todo ; true(length(list_new_jobs),1)];
+                    mask_running = [ mask_running ; false(length(list_new_jobs),1)];
+                    mask_deps    = [ mask_deps ; false(length(list_new_jobs),1)];
+                    graph_deps_old = graph_deps;
+                    graph_deps = sparse(length(list_jobs),length(list_jobs));
+                    graph_deps(1:size(graph_deps_old,1),1:size(graph_deps_old,1)) = graph_deps_old;
+                    clear graph_deps_old
+                end
+            end
+        end
+        
         %% Update logs & status
         save(file_logs           ,'-struct','logs');
         copyfile(file_logs,file_logs_backup,'f');        
@@ -665,6 +695,11 @@ try
             nb_checks = nb_checks+1;
         end
         
+        if opt.flag_spawn
+            test_loop = psom_exist(file_pipe_running);
+        else
+            test_loop = (any(mask_todo) || any(mask_running)) && psom_exist(file_pipe_running);
+        end
     end % While there are jobs to do
     
 catch
