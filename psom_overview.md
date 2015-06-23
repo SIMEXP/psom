@@ -32,7 +32,7 @@ PSOM is maintained by [Pierre Bellec](http://simexp-lab.org/brainwiki/doku.php?i
 
 #News
 June, 22nd, 2015
-> A new [pre-release of PSOM](https://github.com/SIMEXP/psom/releases/tag/v1.2.0) (version 1.2.0) is now available. More info [here](https://github.com/SIMEXP/psom/releases/tag/v1.2.0).
+> A new [pre-release of PSOM](https://github.com/SIMEXP/psom/archive/v1.2.0.zip) (version 1.2.0) is now available. More info [here](https://github.com/SIMEXP/psom/releases/tag/v1.2.0).
 
 September, 12th, 2014
 >Release of this website.
