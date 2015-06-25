@@ -453,7 +453,7 @@ try
             list_ready = { list_ready.name };
             if ~isempty(list_ready)
                 for num_r = 1:length(list_ready)
-                    [path_tmp,base_spawn] = fileparts(list_ready{num_r});
+                    [tmp,base_spawn] = fileparts(list_ready{num_r});
                     file_spawn = [path_spawn base_spawn '.mat'];
                     if ~psom_exist(file_spawn)
                         error('I could not find %s for spawning',file_spawn)
@@ -463,7 +463,11 @@ try
                     if any(ismember(list_jobs,list_new_jobs))
                         error('Spawn jobs cannot have the same name as existing jobs in %s',file_spawn)
                     end
+                    nb_todo = nb_todo+length(list_new_jobs);
+                    tab_refresh(end+1:end+length(list_new_jobs),:,1) = -ones(length(list_new_jobs),6);
+                    tab_refresh(end+1:end+length(list_new_jobs),:,2) = repmat(clock,[length(list_new_jobs) 1]);
                     list_jobs    = [ list_jobs ; list_new_jobs ];
+                    nb_sub       = [ nb_sub ; zeros(length(list_new_jobs),1)];
                     mask_done    = [ mask_done ; false(length(list_new_jobs),1)];
                     mask_todo    = [ mask_todo ; true(length(list_new_jobs),1)];
                     mask_running = [ mask_running ; false(length(list_new_jobs),1)];
@@ -472,6 +476,8 @@ try
                     graph_deps = sparse(length(list_jobs),length(list_jobs));
                     graph_deps(1:size(graph_deps_old,1),1:size(graph_deps_old,1)) = graph_deps_old;
                     clear graph_deps_old
+                    save(file_jobs,'-struct','-append','spawn')
+                    psom_clean({file_spawn,[path_spawn list_ready{num_r}]});
                 end
             end
         end
