@@ -297,8 +297,8 @@ end
 name_pipeline = 'PIPE';
 
 gb_name_structure = 'opt';
-gb_list_fields    = {'flag_fail' , 'flag_short_job_names' , 'nb_resub'       , 'type_restart' , 'flag_pause' , 'init_matlab'       , 'flag_update' , 'path_search'       , 'restart' , 'shell_options'       , 'path_logs' , 'command_matlab' , 'flag_verbose' , 'mode'       , 'mode_pipeline_manager' , 'max_queued'       , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
-gb_list_defaults  = {false       , true                   , gb_psom_nb_resub , 'substring'    , false        , gb_psom_init_matlab , true          , gb_psom_path_search , {}        , gb_psom_shell_options , NaN         , ''               , 1              , gb_psom_mode , gb_psom_mode_pm         , gb_psom_max_queued , gb_psom_qsub_options , []                    , []                    , []               };
+gb_list_fields    = {'flag_spawn' , 'flag_fail' , 'flag_short_job_names' , 'nb_resub'       , 'type_restart' , 'flag_pause' , 'init_matlab'       , 'flag_update' , 'path_search'       , 'restart' , 'shell_options'       , 'path_logs' , 'command_matlab' , 'flag_verbose' , 'mode'       , 'mode_pipeline_manager' , 'max_queued'       , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
+gb_list_defaults  = {false        , false       , true                   , gb_psom_nb_resub , 'substring'    , false        , gb_psom_init_matlab , true          , gb_psom_path_search , {}        , gb_psom_shell_options , NaN         , ''               , 1              , gb_psom_mode , gb_psom_mode_pm         , gb_psom_max_queued , gb_psom_qsub_options , []                    , []                    , []               };
 psom_set_defaults
 
 opt.flag_debug = opt.flag_verbose>1;
@@ -416,6 +416,7 @@ else
     opt_proc.nb_checks_per_point   = opt.nb_checks_per_point;
     opt_proc.flag_short_job_names  = opt.flag_short_job_names;
     opt_proc.flag_debug            = opt.flag_debug;
+    opt_proc.flag_spawn            = opt.flag_spawn;
     opt_proc.flag_verbose          = opt.flag_verbose;
     opt_proc.init_matlab           = opt.init_matlab;
     opt_proc.nb_resub              = opt.nb_resub;

@@ -100,6 +100,14 @@ function status_pipe = psom_pipeline_process(file_pipeline,opt)
 %        the name of the job anyway, and some systems even refuse to
 %        submit jobs with long names.
 %
+%    FLAG_SPAWN
+%        (boolean, default false) if FLAG_RESPAWN is true, the pipeline process
+%        will not stop until PIPE.lock is removed. It will constantly screen for
+%        new jobs in the 'spawn' subfolder of the logs folder, in the form of a .mat
+%        file where each variable is a job. No dependency mechanism is available for 
+%        for spawn jobs. The mat files will only be read if another file with the same 
+%        name but a .ready extension is present. 
+% 
 %    FLAG_VERBOSE
 %        (boolean, default true) if the flag is true, then the function 
 %        prints some infos during the processing.
@@ -165,8 +173,8 @@ end
 
 %% Options
 gb_name_structure = 'opt';
-gb_list_fields    = { 'flag_fail' , 'flag_short_job_names' , 'nb_resub'       , 'flag_verbose' , 'init_matlab'       , 'flag_debug' , 'shell_options'       , 'command_matlab' , 'mode'    , 'mode_pipeline_manager' , 'max_queued' , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
-gb_list_defaults  = { false       , true                   , gb_psom_nb_resub , true           , gb_psom_init_matlab , true         , gb_psom_shell_options , ''               , 'session' , ''                      , 0            , gb_psom_qsub_options , []                    , []                    , []               };
+gb_list_fields    = { 'flag_spawn' , 'flag_fail' , 'flag_short_job_names' , 'nb_resub'       , 'flag_verbose' , 'init_matlab'       , 'flag_debug' , 'shell_options'       , 'command_matlab' , 'mode'    , 'mode_pipeline_manager' , 'max_queued' , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
+gb_list_defaults  = { false        , false       , true                   , gb_psom_nb_resub , true           , gb_psom_init_matlab , true         , gb_psom_shell_options , ''               , 'session' , ''                      , 0            , gb_psom_qsub_options , []                    , []                    , []               };
 psom_set_defaults
 
 flag_verbose = flag_verbose || flag_debug;
@@ -278,7 +286,7 @@ pipe_logs.eqsub     = [ path_logs filesep name_pipeline '.eqsub'              ];
 pipe_logs.oqsub     = [ path_logs filesep name_pipeline '.oqsub'              ];
 pipe_logs.exit      = [ path_logs filesep name_pipeline '.exit'               ];
 pipe_logs.failed    = [ path_logs filesep name_pipeline '.failed'             ];
-
+path_spawn          = [ path_logs filesep 'spawn' filesep ];
 logs    = load( file_logs    );
 status  = load( file_status  );
 profile = load( file_profile );
@@ -436,8 +444,44 @@ try
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     flag_nothing_happened = true;
     list_event = []; % list of running jobs
-    while (any(mask_todo) || any(mask_running)) && psom_exist(file_pipe_running)
+    test_loop = true;
+    while test_loop
 
+        %% Check for new spawns
+        if opt.flag_spawn
+            list_ready = dir([path_spawn '*.ready']);
+            list_ready = { list_ready.name };
+            if ~isempty(list_ready)
+                for num_r = 1:length(list_ready)
+                    [tmp,base_spawn] = fileparts(list_ready{num_r});
+                    file_spawn = [path_spawn base_spawn '.mat'];
+                    if ~psom_exist(file_spawn)
+                        error('I could not find %s for spawning',file_spawn)
+                    end
+                    spawn = load(file_spawn);
+                    list_new_jobs = fieldnames(spawn);
+                    if any(ismember(list_jobs,list_new_jobs))
+                        error('Spawn jobs cannot have the same name as existing jobs in %s',file_spawn)
+                    end
+                    nb_todo = nb_todo+length(list_new_jobs);
+                    tab_refresh(end+1:end+length(list_new_jobs),:,1) = -ones(length(list_new_jobs),6);
+                    tab_refresh(end+1:end+length(list_new_jobs),:,2) = repmat(clock,[length(list_new_jobs) 1]);
+                    list_jobs    = [ list_jobs ; list_new_jobs ];
+                    nb_sub       = [ nb_sub ; zeros(length(list_new_jobs),1)];
+                    mask_done    = [ mask_done ; false(length(list_new_jobs),1)];
+                    mask_todo    = [ mask_todo ; true(length(list_new_jobs),1)];
+                    mask_running = [ mask_running ; false(length(list_new_jobs),1)];
+                    mask_deps    = [ mask_deps ; false(length(list_new_jobs),1)];
+                    graph_deps_old = graph_deps;
+                    graph_deps = sparse(length(list_jobs),length(list_jobs));
+                    graph_deps(1:size(graph_deps_old,1),1:size(graph_deps_old,1)) = graph_deps_old;
+                    clear graph_deps_old
+                    save(file_jobs,'-struct','-append','spawn')
+                    psom_clean({file_spawn,[path_spawn list_ready{num_r}]});
+                end
+            end
+        end
+        
         %% Update logs & status
         save(file_logs           ,'-struct','logs');
         copyfile(file_logs,file_logs_backup,'f');        
@@ -657,6 +701,11 @@ try
             nb_checks = nb_checks+1;
         end
         
+        if opt.flag_spawn
+            test_loop = psom_exist(file_pipe_running);
+        else
+            test_loop = (any(mask_todo) || any(mask_running)) && psom_exist(file_pipe_running);
+        end
     end % While there are jobs to do
     
 catch
