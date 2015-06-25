@@ -1,8 +1,8 @@
-function flag_failed = psom_run_job(file_job,flag_heartbeat)
+function flag_failed = psom_run_job(file_job)
 % Run a PSOM job. 
 %
 % SYNTAX:
-% FLAG_FAILED = PSOM_RUN_JOB(FILE_JOB , FLAG_HEARTBEAT)
+% FLAG_FAILED = PSOM_RUN_JOB(FILE_JOB)
 %_________________________________________________________________________
 % INPUTS:
 %
@@ -11,14 +11,6 @@ function flag_failed = psom_run_job(file_job,flag_heartbeat)
 %    COMMAND, FILES_IN, FILES_OUT, FILES_CLEAN, OPT fields. This job can 
 %    also be specified through a mat file, where the job attributes are 
 %   saved as variables.
-%
-% FLAG_HEARTBEAT
-%    (boolean, default false) if the flag is true, then a new subprocess 
-%    will be started, using matlab or octave, that will generate 
-%    a <NAME_JOB>.heartbeat.mat file updated every 5 seconds. This subprocess
-%    will also detect the presence of a <NAME_JOB>.kill file and, if detected,
-%    will kill the main process. This mechanism is only available when
-%    PSOM_RUN_JOB is called by PSOM_RUN_PIPELINE. 
 %
 %_________________________________________________________________________
 % OUTPUTS:
@@ -78,11 +70,6 @@ fig_is_visible = get(0, 'defaultFigureVisible');
 c = onCleanup(@() set(0, 'defaultFigureVisible', fig_is_visible));
 set(0,'defaultFigureVisible','off')
 
-%% Default options
-if nargin < 2
-    flag_heartbeat = false;
-end 
-
 %% name of the job
 if ischar(file_job)
     [path_f,name_job,ext_f] = fileparts(file_job);
@@ -103,8 +90,6 @@ if flag_char && strcmp(ext_f,'.mat')
     file_failed    = [path_f filesep name_job '.failed'];
     file_finished  = [path_f filesep name_job '.finished'];
     file_profile   = [path_f filesep name_job '.profile.mat'];
-    file_heartbeat = [path_f filesep name_job '.heartbeat.mat'];
-    file_kill      = [path_f filesep name_job '.kill'];
 end 
 
 try
@@ -128,18 +113,6 @@ if flag_psom
     %% Create a running tag for the job
     tmp = datestr(clock);
     save(file_running,'tmp')
-end
-
-%% Start a heartbeat
-if flag_psom && flag_heartbeat
-    main_pid = getpid;
-    cmd = sprintf('psom_heartbeat(''%s'',''%s'',%i)',file_heartbeat,file_kill,main_pid);
-    if strcmp(gb_psom_language,'octave')
-        instr_heartbeat = sprintf('"%s" %s "addpath(''%s''), %s,exit"',gb_psom_command_octave,gb_psom_opt_matlab,gb_psom_path_psom,cmd);
-    else 
-        instr_heartbeat = sprintf('"%s" %s "addpath(''%s''), %s,exit"',gb_psom_command_matlab,gb_psom_opt_matlab,gb_psom_path_psom,cmd);
-    end 
-    system([instr_heartbeat '&']);
 end
 
 %% Upload job info
