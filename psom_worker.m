@@ -1,6 +1,7 @@
 function status_pipe = psom_pipeline_process(file_pipeline,opt)
-% Process a pipeline that has previously been initialized.
+% Executes jobs.
 %
+% status = psom_worker(file_pipeline,opt)
 % SYNTAX:
 % STATUS = PSOM_PIPELINE_PROCESS(FILE_PIPELINE,OPT)
 %
