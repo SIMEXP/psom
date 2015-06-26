@@ -738,21 +738,7 @@ save(file_pipe_running,'str_now');
 if flag_verbose>1
     fprintf('    Saving the individual ''jobs'' file %s ...\n',file_jobs);
 end
-
-if psom_exist(file_jobs)
-    pipeline_all = psom_merge_pipeline(pipeline_old,pipeline);
-    if strcmp(gb_psom_language,'octave')
-        sub_save_struct_fields(file_jobs,pipeline_all);
-    else        
-        save(file_jobs,'-struct','pipeline_all');
-    end
-else
-    if strcmp(gb_psom_language,'octave')
-        sub_save_struct_fields(file_jobs,pipeline);
-    else
-        save(file_jobs,'-struct','pipeline');
-    end
-end
+save(file_jobs,'-struct','pipeline');
 
 %% Save the dependencies
 if flag_verbose>1
@@ -784,16 +770,7 @@ for num_j = 1:nb_jobs
     name_job = list_jobs{num_j};
     all_status.(name_job) = job_status{num_j};
 end
-
-if psom_exist(file_status)
-    all_status = psom_merge_pipeline(all_status_old,all_status);
-end
-if strcmp(gb_psom_language,'octave')
-    sub_save_struct_fields(file_status,all_status);
-else
-    save(file_status,'-struct','all_status');
-end
-
+save(file_status,'-struct','all_status');
 copyfile(file_status,file_status_backup,'f');
 
 %% Save the logs 
@@ -816,16 +793,7 @@ for num_j = 1:nb_jobs
         all_logs.(name_job) = '';        
     end
 end
-
-if psom_exist(file_logs)
-    all_logs = psom_merge_pipeline(all_logs_old,all_logs);
-end
-if strcmp(gb_psom_language,'octave')
-    sub_save_struct_fields(file_logs,all_logs);
-else
-    save(file_logs,'-struct','all_logs');
-end
-
+save(file_logs,'-struct','all_logs');
 copyfile(file_logs,file_logs_backup,'f'); 
 
 %% Save the profile
@@ -845,16 +813,7 @@ for num_j = 1:nb_jobs
         profile.(name_job) = '';
     end
 end
-
-if psom_exist(file_profile)
-    profile = psom_merge_pipeline(profile_old,profile);
-end
-if strcmp(gb_psom_language,'octave')
-    sub_save_struct_fields(file_profile,profile);
-else
-    save(file_profile,'-struct','profile');
-end
-
+save(file_profile,'-struct','profile');
 copyfile(file_profile,file_profile_backup,'f');
 
 %% Clean up the log folders from old tag and log files
@@ -871,7 +830,11 @@ list_ext = { 'running' , 'failed' , 'finished' , 'exit' , 'kill' , ...
 for num_ext = 1:length(list_ext)
     list_files = dir([path_logs filesep '*.' list_ext{num_ext}]);
     if ~isempty(list_files)
-        psom_clean({list_files.name},struct('flag_verbose',false));
+        list_files_p = cell(size(list_files));
+        for num_f = 1:length(list_files)
+            list_files_p{num_f} = [path_logs list_files{num_f}];
+        end
+        psom_clean(list_files_p,struct('flag_verbose',false));
     end
 end
 
