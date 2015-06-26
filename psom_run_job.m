@@ -78,7 +78,7 @@ end
 %% Generate file names
 if ~isempty(path_logs)
     file_profile = [path_logs filesep name_job '_profile.mat'];
-    file_logs = [path_logs filesep name_job '.logs'];
+    file_log = [path_logs filesep name_job '.log'];
 end 
 
 %% Upload job info
@@ -91,10 +91,10 @@ try
     %% Print general info about the job
     start_time = clock;
     if ~isempty(path_logs)
-        if psom_exist(file_logs)
-            delete(file_logs);
+        if psom_exist(file_log)
+            delete(file_log);
         end
-        diary(file_logs)
+        diary(file_log)
     end
     msg = sprintf('Log of the (%s) job : %s\nStarted on %s\nUser: %s\nhost : %s\nsystem : %s',gb_psom_language,name_job,datestr(clock),gb_psom_user,gb_psom_localhost,gb_psom_OS);
     stars = repmat('*',[1 30]);
