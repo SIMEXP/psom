@@ -1,47 +1,31 @@
-function flag_failed = psom_run_job(file_job)
+function flag_failed = psom_run_job(job,path_logs,name_job)
 % Run a PSOM job. 
 %
-% SYNTAX:
-% FLAG_FAILED = PSOM_RUN_JOB(FILE_JOB)
-%_________________________________________________________________________
-% INPUTS:
+% SYNTAX: flag_failed = psom_run_job(job,path_logs,name_job)
 %
-% JOB
-%    (string or structure) JOB is a structure defining a PSOM job (with
-%    COMMAND, FILES_IN, FILES_OUT, FILES_CLEAN, OPT fields. This job can 
-%    also be specified through a mat file, where the job attributes are 
-%   saved as variables.
+% JOB (string) JOB is a structure defining a PSOM job (with
+%   COMMAND, FILES_IN, FILES_OUT, FILES_CLEAN, OPT fields). 
+% PATH_LOGS (string, default '') the name of a folder for the logs.
+% NAME_JOB (string, default 'manual') a name for the job
+% FLAG_FAILED (boolean) FLAG_FAILED is true if the job has failed. This 
+%   happens if the command of the job generated an error, or if one of 
+%   the output files of the job was not successfully generated.
 %
-%_________________________________________________________________________
-% OUTPUTS:
-%
-% FLAG_FAILED
-%    (boolean) FLAG_FAILED is true if the job has failed. This happens if 
-%    the command of the job generated an error, or if one of the output 
-%    files of the job was not successfully generated.
-%
-% _________________________________________________________________________
-% COMMENTS:
-%
-% This function will start by deleting all the output files if they exist 
-% before running the job. It will also create all the necessary output 
-% folders.
-%
-% When running a job, this function will create a global variable named
-% "gb_psom_name_job". This can be accessed by the command executed by the
-% job. This may be useful for example to build unique temporary file names.
+% NOTE 1: When running a job, this function will create a global variable named
+%   "gb_psom_name_job". This can be accessed by the command executed by the
+%   job. This may be useful for example to build unique temporary file names.
 % 
-% When called by the pipeline manager, this function will generate tag files 
-% to code for the status of the job (running, finished or failed).
+% NOTE 2: If PATH_LOGS is specified, this function will generate a log file and 
+% a profile file (with extensions .log and _profile.mat, respectively).
 %
+% See licensing information in the code.
+
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008-2010.
 % Departement d'informatique et de recherche operationnelle
 % Centre de recherche de l'institut de Geriatrie de Montreal
-% Universite de Montreal, 2010-2011.
+% Universite de Montreal, 2010-2015.
 % Maintainer : pierre.bellec@criugm.qc.ca
-% See licensing information in the code.
-% Keywords : pipeline
-
+%
 % Permission is hereby granted, free of charge, to any person obtaining a copy
 % of this software and associated documentation files (the "Software"), to deal
 % in the Software without restriction, including without limitation the rights
@@ -68,81 +52,64 @@ seed = psom_set_rand_seed();
 %% of function call
 fig_is_visible = get(0, 'defaultFigureVisible');
 c = onCleanup(@() set(0, 'defaultFigureVisible', fig_is_visible));
-set(0,'defaultFigureVisible','off')
+set(0,'defaultFigureVisible','off');
 
 %% name of the job
-if ischar(file_job)
-    [path_f,name_job,ext_f] = fileparts(file_job);
-    if isempty(path_f)
-        path_f = '.';
-    end
-    flag_char = true;
-else 
+if nargin < 3
     name_job = 'manual';
-    flag_char = false;
-end 
+elseif ~ischar(name_job)
+        error('NAME_JOB should be a string.')
+end
 gb_psom_name_job = name_job;
 
+%% Logs path
+if nargin<2
+    path_logs = '';
+end
+
+if ~ischar(path_logs)
+    error('PATH_LOGS should be a string')
+end
+
+if ~isempty(path_logs)&&~strcmp(path_logs(end),filesep)
+    path_logs = [path_logs filesep];
+end
+
 %% Generate file names
-if flag_char && strcmp(ext_f,'.mat')
-    file_jobs      = [path_f filesep 'PIPE_jobs.mat'];
-    file_running   = [path_f filesep name_job '.running'];
-    file_failed    = [path_f filesep name_job '.failed'];
-    file_finished  = [path_f filesep name_job '.finished'];
-    file_profile   = [path_f filesep name_job '.profile.mat'];
+if ~isempty(path_logs)
+    file_profile = [path_logs filesep name_job '_profile.mat'];
+    file_logs = [path_logs filesep name_job '.logs'];
 end 
 
-try
-    pipe = load(file_jobs,name_job); % This is launched through the pipeline manager
-    job = pipe.(name_job);
-    flag_psom = true;
-catch
-    if ischar(file_job)
-        job = load(file_job);
-    else
-        job = file_job;
-    end
-    flag_psom = false;
-end
-
-if flag_psom
-    if exist(file_running,'file')||exist(file_failed,'file')||exist(file_finished,'file')
-        error('Already found a tag on that job. Sorry dude, I must quit ...');
-    end
-    
-    %% Create a running tag for the job
-    tmp = datestr(clock);
-    save(file_running,'tmp')
-end
-
 %% Upload job info
-gb_name_structure = 'job';
-gb_list_fields    = { 'files_in' , 'files_out' , 'files_clean' , 'command','opt' , 'dep' , 'ispipeline' };
-gb_list_defaults  = { {}         , {}          , {}            , NaN      , {}   , {}    , false        };
-psom_set_defaults
-
-%% Print general info about the job
-start_time = clock;
-msg = sprintf('Log of the (%s) job : %s\nStarted on %s\nUser: %s\nhost : %s\nsystem : %s',gb_psom_language,name_job,datestr(clock),gb_psom_user,gb_psom_localhost,gb_psom_OS);
-stars = repmat('*',[1 30]);
-fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
+job = psom_struct_defaults( job , ...
+   { 'files_in' , 'files_out' , 'files_clean' , 'command','opt' , 'dep' , 'ispipeline' }, ...
+   { {}         , {}          , {}            , NaN      , {}   , {}    , false        });
 
 %% The job starts now !
-try
-    msg = sprintf('The job starts now !');
-    stars = repmat('*',[1 size(msg,2)]);
-    fprintf('%s\n%s\n',msg,stars);
+try 
+    %% Print general info about the job
+    start_time = clock;
+    if ~isempty(path_logs)
+        if psom_exist(file_logs)
+            delete(file_logs);
+        end
+        diary(file_logs)
+    end
+    msg = sprintf('Log of the (%s) job : %s\nStarted on %s\nUser: %s\nhost : %s\nsystem : %s',gb_psom_language,name_job,datestr(clock),gb_psom_user,gb_psom_localhost,gb_psom_OS);
+    stars = repmat('*',[1 30]);
+    fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
 
     flag_failed = false;
    
     try
-        sub_eval(command,files_in,files_out,files_clean,opt)
+        sub_eval(job.command,job.files_in,job.files_out,job.files_clean,job.opt)
         end_time = clock;
     catch
         end_time = clock;
         flag_failed = true;
         errmsg = lasterror;
-        fprintf('\n\n%s\nSomething went bad ... the job has FAILED !\nThe last error message occured was :\n%s\n',stars,errmsg.message);
+        fprintf('\n\nSomething went bad ... the job has FAILED !\nThe last error message occured was :\n%s\n',errmsg.message);
         if isfield(errmsg,'stack')
             for num_e = 1:length(errmsg.stack)
                 fprintf('File %s at line %i\n',errmsg.stack(num_e).file,errmsg.stack(num_e).line);
@@ -151,12 +118,12 @@ try
     end
     
     %% Checking outputs
-    msg = sprintf('Checking outputs');
-    stars = repmat('*',[1 size(msg,2)]);
-    fprintf('\n%s\n%s\n%s\n',stars,msg,stars);
+    list_files = psom_files2cell(job.files_out);
 
-    list_files = psom_files2cell(files_out);
-
+    if ~isempty(list_files)
+        fprintf('\n\n')
+    end
+    
     for num_f = 1:length(list_files)
         if ~psom_exist(list_files{num_f})
             if size(list_files{num_f},1)>1
@@ -186,34 +153,27 @@ try
     fprintf('\n%s\n%s\n%s\n%s\n',stars,msg1,msg2,stars);
     
     %% Create a tag file for output status
-    if flag_psom   
-        %% Check for double tag files
-        if exist(file_failed)
-            flag_failed = true;
-            fprintf('Huho the job just finished but I found a FAILED tag. There must be something weird going on with the pipeline manager. Anyway, I will let the FAILED tag just in case ...');
-        end     
-
+    if ~isempty(path_logs)        
         %% Create a profile
         save(file_profile,'start_time','end_time','elapsed_time','seed');
-        
-        %% Finishing the job
-        delete(file_running); 
-        if flag_failed
-            save(file_failed,'tmp')       
-        else
-            save(file_finished,'tmp')     
+        diary off
+    end
+catch
+    end_time = clock;
+    flag_failed = true;
+    errmsg = lasterror;
+    fprintf('\n\n%s\nSomething went bad ... the job has FAILED !\nThe last error message occured was :\n%s\n',stars,errmsg.message);
+    if isfield(errmsg,'stack')
+        for num_e = 1:length(errmsg.stack)
+            fprintf('File %s at line %i\n',errmsg.stack(num_e).file,errmsg.stack(num_e).line);
         end
     end
-    
-catch
-    if flag_psom    
-        delete(file_running);
-        msg1 = sprintf('The job has FAILED');
-        tmp = datestr(clock);
-        save(file_failed,'tmp');
+    if ~isempty(path_logs)
+        end_time = clock;
+        elapsed_time = etime(end_time,start_time);
+        save(file_profile,'start_time','end_time','elapsed_time','seed');
+        diary off
     end
-    errmsg = lasterror;
-    rethrow(errmsg)
 end
 
 %%%%%%%%%%%%%%%%%%
