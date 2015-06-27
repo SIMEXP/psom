@@ -62,7 +62,11 @@ end
 flag = psom_struct_defaults( flag , ...
        { 'heartbeat' , 'spawn' } , ...
        { false       , false   });
-       
+     
+%% Create folder for worker
+if ~psom_exist(path_worker)
+    psom_mkdir(path_worker);
+end  
 %% Generating file names
 file_heartbeat = [path_worker filesep 'heartbeat.mat'];
 file_kill      = [path_worker filesep 'worker.kill'];
@@ -95,31 +99,38 @@ end
 % interrupting the pipeline of if an error occurs
 try    
     %% Open the news feed file
-    hfnf = fopen(file_news_feed,'w');
+    if strcmp(gb_psom_language,'matlab');
+        hf_news = fopen(file_news_feed,'w');
+    else
+        hf_news = file_news_feed;
+        if psom_exist(file_news_feed)
+            psom_clean(file_news_feed);
+        end
+    end
+    
+    %% Initialize and start the execution loop
     test_loop = true;
     num_job = 0;
     flag_any_fail = false;
+    
     while test_loop
 
         %% Check for new spawns
         if flag.spawn
-            list_ready = dir([path_spawn '*.ready']);
+            list_ready = dir([path_worker '*.ready']);
             list_ready = { list_ready.name };
             if ~isempty(list_ready)
                 for num_r = 1:length(list_ready)
                     [tmp,base_spawn] = fileparts(list_ready{num_r});
-                    file_spawn = [path_spawn base_spawn '.mat'];
+                    file_spawn = [path_worker base_spawn '.mat'];
                     if ~psom_exist(file_spawn)
                         error('I could not find %s for spawning',file_spawn)
                     end
                     spawn = load(file_spawn);
                     list_new_jobs = fieldnames(spawn);
-                    if any(ismember(list_jobs,list_new_jobs))
-                        error('Spawn jobs cannot have the same name as existing jobs in %s',file_spawn)
-                    end
                     list_jobs = [ list_jobs ; list_new_jobs ];
                     pipeline = psom_merge_pipeline(pipeline,spawn);
-                    psom_clean({file_spawn,[path_spawn list_ready{num_r}]});
+                    psom_clean({file_spawn,[path_worker list_ready{num_r}]});
                 end
             end
         end
@@ -130,17 +141,17 @@ try
             name_job = list_jobs{num_job};
             
             %% Add to the news feed
-            fprintf(hfnf,'%s , submitted\n',name_job);
+            sub_add_line_log(hf_news,sprintf('%s , submitted\n',name_job));
             
             %% Execute the job in a "shelled" environment
             flag_failed = psom_run_job(pipeline.(name_job),path_worker,name_job);    
             
             %% Update the news feed
             if flag_failed
-                fprintf(hfnf,'%s , failed\n',name_job);
+                sub_add_line_log(hf_news,sprintf('%s , failed\n',name_job));
                 flag_any_fail = true;
             else
-                fprintf(hfnf,'%s , finished\n',name_job);
+                sub_add_line_log(hf_news,sprintf('%s , finished\n',name_job));
             end
         end 
         
@@ -158,6 +169,15 @@ try
         end
     end % While there are jobs to do
     
+    %% Close the news feed
+    sub_add_line_log(hf_news,'PIPE , terminated\n');
+    if strcmp(gb_psom_language,'matlab')
+        fclose(hf_news);
+    end
+    
+    %% Return a 1 status if any job has failed
+    status_pipe = double(flag_any_fail);
+    
 catch
     
     errmsg = lasterror;        
@@ -169,13 +189,20 @@ catch
     end
     
     %% Close the log file
-    fprintf(hfnf,'PIPE , crashed\n');
-    fclose(hfnf)
+    sub_add_line_log(hf_news,'PIPE , crashed\n');
+    if strcmp(gb_psom_language,'matlab')
+        fclose(hf_news);
+    end
     status_pipe = 1;
     return
 end
 
-%% Close the news feed
-fprintf(hfnf,'PIPE , terminated\n');
-fclose(hfnf);
-status_pipe = double(flag_any_fail);
+function [] = sub_add_line_log(file_write,str_write);
+
+if ischar(file_write)
+    hf = fopen(file_write,'a');
+    fprintf(hf,'%s',str_write);
+    fclose(hf);
+else
+    fprintf(file_write,'%s',str_write);
+end

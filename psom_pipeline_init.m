@@ -845,6 +845,13 @@ if exist([path_logs 'tmp'],'dir')
     end            
 end
 
+if exist([path_logs 'worker'],'dir')
+    [status,msg] = psom_clean([path_logs 'worker'],struct('flag_verbose',false));
+    if status
+        warning('Could not remove the folder %s. Check for permissions.',[path_logs 'worker']);
+    end            
+end
+
 %% Done !
 if flag_verbose>1
     fprintf('\nThe pipeline has been successfully initialized !\n')
