@@ -1,8 +1,7 @@
 function status = psom_run_pipeline(pipeline,opt)
 % Run a pipeline using the Pipeline System for Octave and Matlab (PSOM).
 %
-% SYNTAX:
-% STATUS = PSOM_RUN_PIPELINE(PIPELINE,OPT)
+% SYNTAX: status = psom_run_pipeline( pipeline , opt )
 %
 % _________________________________________________________________________
 % INPUTS:
@@ -15,8 +14,8 @@ function status = psom_run_pipeline(pipeline,opt)
 %
 %    COMMAND
 %        (string) the name of the command applied for this job.
-%        This command can use the variables FILES_IN, FILES_OUT and OPT
-%        associated with the job (see below).
+%        This command can use the variables FILES_IN, FILES_OUT, FILES_CLEAN 
+%        and OPT associated with the job (see below).
 %        Examples :
 %         'niak_brick_something(files_in,files_out,opt);'
 %         'my_function(opt)'
@@ -45,7 +44,7 @@ function status = psom_run_pipeline(pipeline,opt)
 %
 %    DEP 
 %        (cell of strings) a list of job names. The job <JOB_NAME> 
-%        will depend on these jobs.
+%        will have a dependency set on these jobs.
 %
 %    OPT
 %        (any matlab variable) options of the job. This field has no
