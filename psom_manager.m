@@ -78,7 +78,9 @@ opt = psom_struct_defaults( opt , ...
 psom_set_defaults
 
 %% File names
-file_pipeline     = [path_logs 'PIPE_jobs.mat'];
+file_pipeline     = [path_logs 'PIPE.mat'];
+file_jobs         = [path_logs 'PIPE_jobs.mat'];
+file_status       = [path_logs 'PIPE_status.mat'];
 file_pipe_running = [path_logs 'PIPE.lock'];
 file_heartbeat    = [path_logs 'heartbeat.mat'];
 file_kill         = [path_logs 'PIPE.kill'];
@@ -103,8 +105,8 @@ end
 system([instr_heartbeat '&']);
     
 %% Check for the existence of the pipeline
-if ~exist(file_pipeline,'file') % Does the pipeline exist ?
-    error('Could not find the pipeline file %s. Please use psom_run_pipeline instead of psom_manager directly.',file_pipeline);
+if ~exist(file_jobs,'file') % Does the pipeline exist ?
+    error('Could not find the pipeline file %s. Please use psom_run_pipeline instead of psom_manager directly.',file_jobs);
 end
 
 %% Create a running tag on the pipeline (if not done during the initialization phase)
@@ -134,21 +136,39 @@ try
     fprintf('%s\n%s\n%s\n%s\n',stars,msg_line1,msg_line2,stars);
     
     %% Load the pipeline
-    pipeline = load(file_pipeline);
-    list_jobs = fieldnames(pipeline);
+    load(file_pipeline,'list_jobs','graph_deps');
+    status = load(file_status );
+    pipeline = load(file_jobs);
     nb_jobs = length(list_jobs);
+    
+    %% Initialize the mask of finished jobs
+    mask_finished = false([length(list_jobs) 1]);
+    for num_j = 1:length(list_jobs)
+        mask_finished(num_j) = strcmp(status.(list_jobs{num_j}),'finished');
+    end
+    nb_finished = sum(mask_finished); % The number of finished jobs                         
+    graph_deps(mask_finished,:) = 0;
+    mask_deps = max(graph_deps,[],1)>0;
+    mask_deps = mask_deps(:);
+    
+    %% Initialize the to-do list
+    mask_todo = false([length(list_jobs) 1]);
+    for num_j = 1:length(list_jobs)
+        mask_todo(num_j) = strcmp(status.(list_jobs{num_j}),'none');
+        if ~mask_todo(num_j)
+            sub_add_line_log(hf_news,sprintf('%s , finished\n',list_jobs{num_j}),false);
+        end
+    end    
+    nb_todo   = sum(mask_todo);    % The number of jobs to do
     
     %% Initialize miscallenaous variables
     psom_plan     = zeros(nb_jobs,1);          % a summary of which worker is running which job
     mask_running  = false(nb_jobs,1);          % A binary mask of running jobs
     mask_failed   = false(nb_jobs,1);          % A binary mask of failed jobs
-    mask_finished = false(nb_jobs,1);          % A binary mask of finished jobs
-    mask_todo     = true(nb_jobs,1);           % A binary mask of jobs that remain to do
-    nb_running    = 0;                         % The number of running jobs
     nb_failed     = 0;                         % The number of failed jobs
-    nb_finished   = 0;                         % The number of finished jobs
-    nb_todo       = 0;                         % The number of jobs to do
-    worker_ready = false(opt.max_queued,1);   % A binary list of workers ready to take jobs
+    nb_running    = 0;                         % The number of running jobs
+    nb_checks     = 0;                         % The number of checks before printing a point
+    worker_ready = false(opt.max_queued,1);    % A binary list of workers ready to take jobs
     nb_char_news  = zeros(opt.max_queued,1);   % A list of the number of characters read from the news per worker
     nb_run_worker = zeros(opt.max_queued,1);   % A list of the number of running job per worker
     news_worker   = repmat({''},[opt.max_queued,1]);
@@ -197,6 +217,9 @@ try
                             nb_failed = nb_failed+1;
                             mask_running(mask_job) = false;
                             mask_failed(mask_job) = true;
+                            % Remove the children of the failed job from the to-do list
+                            mask_child = sub_find_children(mask_job,graph_deps);
+                            mask_todo(mask_child) = false; 
                             psom_plan(mask_job) = 0;
                         case 'finished'
                             nb_run_worker(num_w) = nb_run_worker(num_w)-1;
@@ -204,12 +227,15 @@ try
                             nb_finished = nb_finished+1;
                             mask_running(mask_job) = false;
                             mask_finished(mask_job) = true;
+                            graph_deps(mask_job,:) = false;
                             psom_plan(mask_job) = 0;
                     end
                     %% Add to the news feed
-                    sub_add_line_log(hf_news,sprintf('%s , %s\n',event_worker{num_e,1},event_worker{num_e,2}));
+                    sub_add_line_log(hf_news,sprintf('%s , %s\n',event_worker{num_e,1},event_worker{num_e,2}),false);
                     msg = sprintf('%s %s%s failed   ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
-                    fprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_running,nb_failed,nb_finished,nb_todo);
+                    if opt.flag_verbose
+                        fprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_running,nb_failed,nb_finished,nb_todo);
+                    end
                 end
             end    
         end
@@ -262,7 +288,6 @@ try
             if flag_verbose
                 fprintf('.');
             end
-            sub_add_line_log(hfpl,sprintf('.'),flag_verbose);
             nb_points = nb_points+1;
         else
             nb_checks = nb_checks+1;
@@ -273,10 +298,10 @@ try
 catch
     
     errmsg = lasterror;        
-    sub_add_line_log(hfpl,sprintf('\n\n******************\nSomething went bad ... the pipeline has FAILED !\nThe last error message occured was :\n%s\n',errmsg.message),flag_verbose);
+    fprintf('\n\n******************\nSomething went bad ... the pipeline has FAILED !\nThe last error message occured was :\n%s\n',errmsg.message);
     if isfield(errmsg,'stack')
         for num_e = 1:length(errmsg.stack)
-            sub_add_line_log(hfpl,sprintf('File %s at line %i\n',errmsg.stack(num_e).file,errmsg.stack(num_e).line),flag_verbose);
+            fprintf('File %s at line %i\n',errmsg.stack(num_e).file,errmsg.stack(num_e).line);
         end
     end
     if exist('file_pipe_running','var')
@@ -287,94 +312,64 @@ catch
     
     %% Close the log file
     if strcmp(gb_psom_language,'matlab')
-        fclose(hfpl);
-        fclose(hfnf);
+        fclose(hf_news);
     end
     status_pipe = 1;
     return
 end
 
-%% Update the final status
-save(file_logs           ,'-struct','logs');
-copyfile(file_logs,file_logs_backup,'f');
-save(file_status         ,'-struct','status');
-copyfile(file_status,file_status_backup,'f');
-save(file_profile        ,'-struct','profile');
-copyfile(file_profile,file_profile_backup,'f');
-
 %% Print general info about the pipeline
 msg_line1 = sprintf('Pipeline terminated on %s',datestr(now));
 stars = repmat('*',[1 length(msg_line1)]);
-sub_add_line_log(hfpl,sprintf('%s\n%s\n',stars,msg_line1),flag_verbose);
+if opt.flag_verbose
+    fprintf('%s\n%s\n',stars,msg_line1);
+end
 
 %% Report if the lock file was manually removed
 if exist('file_pipe_running','var')
-    if ~exist(file_pipe_running,'file')        
-        sub_add_line_log(hfpl,sprintf('The pipeline manager was interrupted because the .lock file was manually deleted.\n'),flag_verbose);
-    end
-    if any(mask_running)
-        list_num_running = find(mask_running);
-        sub_add_line_log(hfpl,'Killing left-overs ...\n',flag_verbose)
-        list_num_running = list_num_running(:)';
-        list_jobs_running = list_jobs(list_num_running); 
-        for num_r = 1:length(list_jobs_running)
-            file_kill = [path_logs filesep list_jobs_running{num_r} '.kill'];
-            hf = fopen(file_kill,'w');
-            fclose(hf);
-        end
-    end
+    fprintf('The pipeline manager was interrupted because the .lock file was manually deleted.\n');
+end
+
+%% Stopping workers
+fprintf('Stopping workers ...\n');
+for num_w = 1:opt.max_queued
+    file_kill = sprintf('%spsom%i%sworker.kill',path_worker,num_w,filesep);
+    hf = fopen(file_kill,'w');
+    fclose(hf);
 end
 
 %% Print a list of failed jobs
-mask_failed = false([length(list_jobs) 1]);
-for num_j = 1:length(list_jobs)
-    mask_failed(num_j) = strcmp(status.(list_jobs{num_j}),'failed');
-end
-mask_todo = false([length(list_jobs) 1]);
-for num_j = 1:length(list_jobs)
-    mask_todo(num_j) = strcmp(status.(list_jobs{num_j}),'none');
-end
 list_num_failed = find(mask_failed);
 list_num_failed = list_num_failed(:)';
-list_num_none = find(mask_todo);
-list_num_none = list_num_none(:)';
 flag_any_fail = ~isempty(list_num_failed);
 
 if flag_any_fail
     if length(list_num_failed) == 1
-        sub_add_line_log(hfpl,sprintf('1 job has failed.\n',length(list_num_failed)),flag_verbose);
+        fprintf('1 job has failed.\n',length(list_num_failed));
     else
-        sub_add_line_log(hfpl,sprintf('%i jobs have failed.\n',length(list_num_failed)),flag_verbose);
+        fprintf('%i jobs have failed.\n',length(list_num_failed));
     end
-    sub_add_line_log(hfpl,sprintf('Use psom_pipeline_visu to access logs, e.g.:\n\n    psom_pipeline_visu(''%s'',''log'',''%s'')\n\n',path_logs,list_jobs{list_num_failed(1)}),flag_verbose);
+    fprintf('Use psom_pipeline_visu to access logs, e.g.:\n\n    psom_pipeline_visu(''%s'',''log'',''%s'')\n\n',path_logs,list_jobs{list_num_failed(1)});
 end
 
 %% Print a list of jobs that could not be processed
+list_num_none = find(mask_todo);
+list_num_none = list_num_none(:)';
 if ~isempty(list_num_none)
     if length(list_num_none) == 1
-        sub_add_line_log(hfpl,sprintf('1 job could not be processed due to a dependency on a failed job or the interruption of the pipeline manager.\n'),flag_verbose);
+        fprintf('1 job could not be processed due to a dependency on a failed job or the interruption of the pipeline manager.\n');
     else
-        sub_add_line_log(hfpl,sprintf('%i jobs could not be processed due to a dependency on a failed job or the interruption of the pipeline manager.\n', length(list_num_none)),flag_verbose);
+        fprintf('%i jobs could not be processed due to a dependency on a failed job or the interruption of the pipeline manager.\n', length(list_num_none));
     end
 end
 
 %% Give a final one-line summary of the processing
 if flag_any_fail    
-    sub_add_line_log(hfpl,sprintf('Some jobs have failed.\n'),flag_verbose);
+    fprintf('Some jobs have failed.\n');
 else
     if isempty(list_num_none)
-        sub_add_line_log(hfpl,sprintf('All jobs have been successfully completed.\n'),flag_verbose);
+        fprintf('All jobs have been successfully completed.\n');
     end
-end
-
-if ~strcmp(opt.mode_pipeline_manager,'session')&& strcmp(gb_psom_language,'octave')   
-    sub_add_line_log(hfpl,sprintf('Press CTRL-C to go back to Octave.\n'),flag_verbose);
-end
-
-%% Close the log file
-if strcmp(gb_psom_language,'matlab')
-    fclose(hfpl);
-    fclose(hfnf);
 end
 
 if exist('file_pipe_running','var')
@@ -383,6 +378,10 @@ if exist('file_pipe_running','var')
     end
 end
 
+%% Close the log file
+if strcmp(gb_psom_language,'matlab')
+    fclose(hf_news);
+end
 status_pipe = double(flag_any_fail);
 
 %%%%%%%%%%%%%%%%%%
@@ -409,37 +408,6 @@ if any(mask_child)
     mask_child = mask_child | sub_find_children(mask_child_strict,graph_deps);
 end
 
-%% Read a text file
-function str_txt = sub_read_txt(file_name)
-
-hf = fopen(file_name,'r');
-if hf == -1
-    str_txt = '';
-else
-    str_txt = fread(hf,Inf,'uint8=>char')';
-    fclose(hf);    
-end
-
-%% Clean up the tags and logs associated with a job
-function [] = sub_clean_job(path_logs,name_job)
-
-files{1}  = [path_logs filesep name_job '.log'];
-files{2}  = [path_logs filesep name_job '.finished'];
-files{3}  = [path_logs filesep name_job '.failed'];
-files{4}  = [path_logs filesep name_job '.running'];
-files{5}  = [path_logs filesep name_job '.exit'];
-files{6}  = [path_logs filesep name_job '.eqsub'];
-files{7}  = [path_logs filesep name_job '.oqsub'];
-files{8}  = [path_logs filesep name_job '.profile.mat'];
-files{9}  = [path_logs filesep name_job '.heartbeat.mat'];
-files{10} = [path_logs filesep name_job '.kill'];
-files{11} = [path_logs filesep 'tmp' filesep name_job '.sh'];
-
-for num_f = 1:length(files)
-    if psom_exist(files{num_f});
-        delete(files{num_f});
-    end
-end
 
 function [] = sub_add_line_log(file_write,str_write,flag_verbose);
 
@@ -488,4 +456,3 @@ for num_e = 1:nb_lines
     events{num_e,1} = news_line{num_e}(1:pos-1);
     events{num_e,2} = news_line{num_e}(pos+3:end);
 end
-    
