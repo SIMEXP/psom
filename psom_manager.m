@@ -16,8 +16,7 @@ function status_pipe = psom_manager(path_logs,opt)
 %   MAX_QUEUED
 %
 %   FLAG_VERBOSE
-%      (integer 0, 1 or 2, default 1) No verbose (0), standard 
-%      verbose (1), a lot of verbose, useful for debugging (2).
+%      (integer 0, 1 or 2, default 1) No verbose (0), verbose (1).
 %
 % _________________________________________________________________________
 % OUTPUTS:
@@ -73,9 +72,13 @@ if nargin < 2
     opt = struct;
 end
 opt = psom_struct_defaults( opt , ...
-   {  'flag_verbose' , 'time_between_checks' , 'nb_checks_per_point' , 'max_queued' , 'max_buffer' };
-   {  1              , NaN                   , NaN                   , NaN          , 10           };
-psom_set_defaults
+   {  'flag_verbose' , 'time_between_checks' , 'nb_checks_per_point' , 'max_queued' , 'max_buffer' }, ...
+   {  1              , NaN                   , NaN                   , NaN          , 10           });
+
+%% Logs folder
+if ~strcmp(path_logs(end),filesep)
+    path_logs = [ path_logs filesep];
+end
 
 %% File names
 file_pipeline     = [path_logs 'PIPE.mat'];
@@ -90,8 +93,8 @@ path_worker       = [path_logs 'worker' filesep];
 for num_w = 1:opt.max_queued
     file_worker_news{num_w}  = sprintf('%spsom%i%snews_feed.csv',path_worker,num_w,filesep);
     file_worker_heart{num_w} = sprintf('%spsom%i%sheartbeat.mat',path_worker,num_w,filesep);
-    file_worker_job{num_w}   = sprintf('%spsom%i%new_jobs.mat',path_worker,num_w,filesep);
-    file_worker_ready{num_w} = sprintf('%spsom%i%new_jobs.ready',path_worker,num_w,filesep);
+    file_worker_job{num_w}   = sprintf('%spsom%i%snew_jobs.mat',path_worker,num_w,filesep);
+    file_worker_ready{num_w} = sprintf('%spsom%i%snew_jobs.ready',path_worker,num_w,filesep);
 end
           
 %% Start heartbeat
@@ -120,17 +123,19 @@ end
 try    
     
     %% Open the news feed file
-    if strcmp(gb_psom_language,'matlab');
+    if strcmp(gb_psom_language,'matlab')
         hf_news = fopen(file_news_feed,'w');
     else
-        hf_news = file_news_feed;
         if psom_exist(file_news_feed)
             psom_clean(file_news_feed);
         end
+        hf_news = file_news_feed;
+        hf = fopen(hf_news,'w');
+        fclose(hf);
     end
        
     %% Print general info about the pipeline
-    msg_line1 = sprintf('Deamon started on %s',datestr(clock));
+    msg_line1 = sprintf('Pipeline started on %s',datestr(clock));
     msg_line2 = sprintf('user: %s, host: %s, system: %s',gb_psom_user,gb_psom_localhost,gb_psom_OS);
     stars = repmat('*',[1 max(length(msg_line1),length(msg_line2))]);
     fprintf('%s\n%s\n%s\n%s\n',stars,msg_line1,msg_line2,stars);
@@ -145,6 +150,9 @@ try
     mask_finished = false([length(list_jobs) 1]);
     for num_j = 1:length(list_jobs)
         mask_finished(num_j) = strcmp(status.(list_jobs{num_j}),'finished');
+        if mask_finished(num_j)
+            sub_add_line_log(hf_news,sprintf('%s , finished\n',list_jobs{num_j}),false);
+        end
     end
     nb_finished = sum(mask_finished); % The number of finished jobs                         
     graph_deps(mask_finished,:) = 0;
@@ -155,9 +163,6 @@ try
     mask_todo = false([length(list_jobs) 1]);
     for num_j = 1:length(list_jobs)
         mask_todo(num_j) = strcmp(status.(list_jobs{num_j}),'none');
-        if ~mask_todo(num_j)
-            sub_add_line_log(hf_news,sprintf('%s , finished\n',list_jobs{num_j}),false);
-        end
     end    
     nb_todo   = sum(mask_todo);    % The number of jobs to do
     
@@ -180,20 +185,19 @@ try
     end
     
     %% Start submitting jobs
-    test_loop = true;
-    while test_loop
+    while (any(mask_todo) || any(mask_running)) && psom_exist(file_pipe_running)
 
         %% Check the state of workers
         %% and read the news
         flag_nothing_happened = true;
         for num_w = 1:opt.max_queued
-            worker_ready(num_w) = psom_exist(file_worker_heart{num_w})&&~psom_exit(file_worker_job{num_w});
+            worker_ready(num_w) = psom_exist(file_worker_heart{num_w})&&~psom_exist(file_worker_job{num_w});
             if worker_ready(num_w)
             
                 %% Parse news_feed.csv for one worker
                 [str_read,nb_char_news(num_w)] = sub_tail(file_worker_news{num_w},nb_char_news(num_w));
                 news_worker{num_w} = [news_worker{num_w} str_read];
-                [event_worker,news_worker{num_w}] = sub_parse(news_worker{num_w});
+                [event_worker,news_worker{num_w}] = sub_parse_news(news_worker{num_w});
                 
                 %% Check if something happened
                 if length(event_worker)>1
@@ -203,14 +207,11 @@ try
                 %% Some verbose for the events
                 for num_e = 1:length(event_worker)
                     %% Update status
-                    mask_job = strcmp(list_jobs,event_worker{1});
-                    switch envent_worker{2}
+                    mask_job = strcmp(list_jobs,event_worker{num_e,1});
+                    name_job = list_jobs{mask_job};
+                    switch event_worker{num_e,2}
                         case 'submitted'
-                            nb_run_worker(num_w) = nb_run_worker(num_w)+1;
-                            nb_running = nb_running+1;
-                            nb_todo = nb_todo-1;
-                            mask_todo(mask_job) = false;
-                            mask_running(mask_job) = true;
+                            msg = sprintf('%s %s%s running  ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
                         case 'failed'
                             nb_run_worker(num_w) = nb_run_worker(num_w)-1;
                             nb_running = nb_running-1;
@@ -221,6 +222,7 @@ try
                             mask_child = sub_find_children(mask_job,graph_deps);
                             mask_todo(mask_child) = false; 
                             psom_plan(mask_job) = 0;
+                            msg = sprintf('%s %s%s failed   ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
                         case 'finished'
                             nb_run_worker(num_w) = nb_run_worker(num_w)-1;
                             nb_running = nb_running-1;
@@ -229,10 +231,10 @@ try
                             mask_finished(mask_job) = true;
                             graph_deps(mask_job,:) = false;
                             psom_plan(mask_job) = 0;
+                            msg = sprintf('%s %s%s finished ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
                     end
                     %% Add to the news feed
                     sub_add_line_log(hf_news,sprintf('%s , %s\n',event_worker{num_e,1},event_worker{num_e,2}),false);
-                    msg = sprintf('%s %s%s failed   ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
                     if opt.flag_verbose
                         fprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_running,nb_failed,nb_finished,nb_todo);
                     end
@@ -241,9 +243,11 @@ try
         end
                
         %% Update the dependency mask
-        mask_deps = max(graph_deps,[],1)>0;
-        mask_deps = mask_deps(:);
-          
+        if ~flag_nothing_happened
+            mask_deps = max(graph_deps,[],1)>0;
+            mask_deps = mask_deps(:);
+        end
+        
         %% Time to (try to) submit jobs !!
         list_num_to_run = find(mask_todo&~mask_deps);
         nb_ready = length(list_num_to_run);
@@ -270,22 +274,19 @@ try
         
         %% Mark new submissions as ready to process
         for num_w = 1:opt.max_queued
-            if mask_new_submit(ind)
+            if mask_new_submit(num_w)
+                flag_nothing_happened = false;
                 save(file_worker_ready{num_w},'tag');
             end
         end
         
         if flag_nothing_happened && (any(mask_todo) || any(mask_running)) && psom_exist(file_pipe_running)
-            if exist('OCTAVE_VERSION','builtin')  
-                [res,msg] = system(sprintf('sleep %i',time_between_checks));
-            else
-                pause(time_between_checks); % To avoid wasting resources, wait a bit before re-trying to submit jobs
-            end
+            sub_sleep(opt.time_between_checks)
         end
         
-        if nb_checks >= nb_checks_per_point
+        if nb_checks >= opt.nb_checks_per_point
             nb_checks = 0;
-            if flag_verbose
+            if opt.flag_verbose
                 fprintf('.');
             end
             nb_points = nb_points+1;
@@ -326,16 +327,19 @@ if opt.flag_verbose
 end
 
 %% Report if the lock file was manually removed
-if exist('file_pipe_running','var')
+if exist('file_pipe_running','var')&&~psom_exist(file_pipe_running)
     fprintf('The pipeline manager was interrupted because the .lock file was manually deleted.\n');
 end
 
 %% Stopping workers
 fprintf('Stopping workers ...\n');
 for num_w = 1:opt.max_queued
-    file_kill = sprintf('%spsom%i%sworker.kill',path_worker,num_w,filesep);
-    hf = fopen(file_kill,'w');
-    fclose(hf);
+    path_worker_psom = sprintf('%spsom%i%s',path_worker,num_w,filesep);
+    if psom_exist(path_worker_psom)
+        file_kill = [path_worker_psom 'worker.kill'];
+        hf = fopen(file_kill,'w');
+        fclose(hf);
+    end
 end
 
 %% Print a list of failed jobs
@@ -440,6 +444,11 @@ nb_chars = ftell(hf);
 fclose(hf);
 
 function [events,news] = sub_parse_news(news)
+if isempty(news)
+    events = {};
+    return
+end
+
 % Parse the news feed
 news_line = psom_string2lines(news);
 if strcmp(news(end),char(10))||strcmp(news(end),char(13))
@@ -452,7 +461,7 @@ end
 nb_lines = length(news_line);
 events = cell(nb_lines,2);
 for num_e = 1:nb_lines
-    pos = strfind(news_line,' , ');
+    pos = strfind(news_line{num_e},' , ');
     events{num_e,1} = news_line{num_e}(1:pos-1);
     events{num_e,2} = news_line{num_e}(pos+3:end);
 end
