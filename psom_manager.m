@@ -164,7 +164,7 @@ try
     for num_j = 1:length(list_jobs)
         mask_todo(num_j) = strcmp(status.(list_jobs{num_j}),'none');
     end    
-    nb_todo   = sum(mask_todo);    % The number of jobs to do
+    nb_todo = sum(mask_todo);    % The number of jobs to do
     
     %% Initialize miscallenaous variables
     psom_plan     = zeros(nb_jobs,1);          % a summary of which worker is running which job
@@ -219,7 +219,7 @@ try
                             mask_running(mask_job) = false;
                             mask_failed(mask_job) = true;
                             % Remove the children of the failed job from the to-do list
-                            mask_child = sub_find_children(mask_job,graph_deps);
+                            mask_child = sub_find_children(mask_job',graph_deps);
                             mask_todo(mask_child) = false; 
                             psom_plan(mask_job) = 0;
                             msg = sprintf('%s %s%s failed   ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
@@ -282,18 +282,17 @@ try
         
         if flag_nothing_happened && (any(mask_todo) || any(mask_running)) && psom_exist(file_pipe_running)
             sub_sleep(opt.time_between_checks)
-        end
-        
-        if nb_checks >= opt.nb_checks_per_point
-            nb_checks = 0;
-            if opt.flag_verbose
-                fprintf('.');
+         
+            if (nb_checks >= opt.nb_checks_per_point)
+                nb_checks = 0;
+                if opt.flag_verbose
+                    fprintf('.');
+                end
+                nb_points = nb_points+1;
+            else
+                nb_checks = nb_checks+1;
             end
-            nb_points = nb_points+1;
-        else
-            nb_checks = nb_checks+1;
         end
-        
     end % While there are jobs to do
     
 catch
@@ -353,27 +352,26 @@ if flag_any_fail
     else
         fprintf('%i jobs have failed.\n',length(list_num_failed));
     end
-    fprintf('Use psom_pipeline_visu to access logs, e.g.:\n\n    psom_pipeline_visu(''%s'',''log'',''%s'')\n\n',path_logs,list_jobs{list_num_failed(1)});
 end
 
 %% Print a list of jobs that could not be processed
-list_num_none = find(mask_todo);
+list_num_none = find(~mask_finished&~mask_failed);
 list_num_none = list_num_none(:)';
 if ~isempty(list_num_none)
     if length(list_num_none) == 1
-        fprintf('1 job could not be processed due to a dependency on a failed job or the interruption of the pipeline manager.\n');
+        fprintf('1 job could not be processed due to failures or interruption.\n');
     else
-        fprintf('%i jobs could not be processed due to a dependency on a failed job or the interruption of the pipeline manager.\n', length(list_num_none));
+        fprintf('%i jobs could not be processed due to failures or interruption.\n', length(list_num_none));
     end
 end
 
+%% Suggest using psom_pipeline_visu
+if flag_any_fail
+    fprintf('Use psom_pipeline_visu to access logs, e.g.:\n\n   psom_pipeline_visu(''%s'',''log'',''%s'')\n',path_logs,list_jobs{list_num_failed(1)});
+end
 %% Give a final one-line summary of the processing
-if flag_any_fail    
-    fprintf('Some jobs have failed.\n');
-else
-    if isempty(list_num_none)
-        fprintf('All jobs have been successfully completed.\n');
-    end
+if flag_any_fail&&isempty(list_num_none)
+    fprintf('All jobs have been successfully completed.\n');
 end
 
 if exist('file_pipe_running','var')
