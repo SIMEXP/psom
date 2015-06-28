@@ -74,6 +74,18 @@ file_news_feed = [path_worker filesep 'news_feed.csv'];
 file_pipe      = [path_worker filesep 'PIPE_jobs.mat'];
 file_lock      = [path_worker filesep 'PIPE.lock'];
 
+%% Open the news feed file
+if strcmp(gb_psom_language,'matlab');
+    hf_news = fopen(file_news_feed,'w');
+else
+    if psom_exist(file_news_feed)
+        psom_clean(file_news_feed);
+    end
+    hf_news = file_news_feed;
+    hf = fopen(hf_news,'w');
+    fclose(hf);
+end
+    
 %% Start a heartbeat
 if flag.heartbeat
     main_pid = getpid;
@@ -98,16 +110,6 @@ end
 % a try/catch block is used to crash gracefully if the user is
 % interrupting the pipeline of if an error occurs
 try    
-    %% Open the news feed file
-    if strcmp(gb_psom_language,'matlab');
-        hf_news = fopen(file_news_feed,'w');
-    else
-        hf_news = file_news_feed;
-        if psom_exist(file_news_feed)
-            psom_clean(file_news_feed);
-        end
-    end
-    
     %% Initialize and start the execution loop
     test_loop = true;
     num_job = 0;
