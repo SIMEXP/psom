@@ -135,9 +135,16 @@ opt = psom_struct_defaults( opt , ...
 psom_set_defaults
 
 %% File names
-file_pipeline     = [path_logs 'PIPE_jobs.mat'];
+file_pipeline     = [path_logs 'PIPE.mat'];
+file_jobs         = [path_logs 'PIPE_jobs.mat'];
 file_pipe_running = [path_logs 'PIPE.lock'];
+file_heartbeat    = [path_logs 'heartbeat.mat'];
+file_kill         = [path_logs 'PIPE.kill'];
 path_worker       = [path_logs 'worker' filesep];
+for num_w = 1:opt.max_queued
+    file_worker_heart{num_w} = sprintf('%spsom%i%sheartbeat.mat',path_worker,num_w,filesep);
+    file_worker_kill{num_w}  = sprintf('%spsom%i%sworker.kill',path_worker,num_w,filesep);
+end
 
 %% Check for the existence of the pipeline
 if ~exist(file_pipeline,'file') % Does the pipeline exist ?
@@ -153,11 +160,6 @@ end
 % a try/catch block is used to clean temporary file if the user is
 % interrupting the pipeline of if an error occurs
 try    
-    
-    %% open the log file
-    if psom_exist(file_deamon)
-        psom_clean(file_deamon,struct('flag_verbose',opt.flag_verbose==2))
-    end
        
     %% Print general info about the pipeline
     msg_line1 = sprintf('Deamon started on %s',datestr(clock));
@@ -174,432 +176,160 @@ try
     
     %% Initialize miscallenaous variables
     nb_resub    = 0;                   % Number of resubmission               
-    nb_queued   = 0;                   % Number of queued jobs
     nb_checks   = 0;                   % Number of checks to print a points
     nb_points   = 0;                   % Number of printed points
+    flag_pipe_running = false;         % Is the pipeline started?
+    flag_pipe_finished = false;        % Is the pipeline finished?
+    flag_worker_alive = repmat(NaN,[opt.max_queued+2 1]); % Is the worker alive? two last entries are for the PM and the GC
     
     %% Create logs folder for each worker
     for num_w = 1:opt.max_queued
-        path_worker_w = sprintf('path_worker%i',num_w);
+        path_worker_w = sprintf('%spsom%i%s',path_worker,num_w,filesep);
         psom_mkdir(path_worker_w)
     end
     
-    %% Start the pipeline manager 
-    %% Execute the job in a "shelled" environment
-    file_job        = [path_logs filesep name_job '.mat'];
-    opt_logs.txt    = [path_logs filesep name_job '.log'];
-    opt_logs.eqsub  = [path_logs filesep name_job '.eqsub'];
-    opt_logs.oqsub  = [path_logs filesep name_job '.oqsub'];
-    opt_logs.failed = [path_logs filesep name_job '.failed'];
-    opt_logs.exit   = [path_logs filesep name_job '.exit'];
+    %% General options to submit scripts
     opt_script.path_search    = file_pipeline;
-    opt_script.name_job       = 'psom_manager';
     opt_script.mode           = opt.mode;
     opt_script.init_matlab    = opt.init_matlab;
-    opt_script.flag_debug     = opt.flag_debug;        
+    opt_script.flag_debug     = opt.flag_verbose == 2;        
     opt_script.shell_options  = opt.shell_options;
     opt_script.command_matlab = opt.command_matlab;
     opt_script.qsub_options   = opt.qsub_options;
-    cmd = sprintf('psom_run_job(''%s'',true)',file_job);    
-    if ispc % this is windows
-        script = [path_tmp filesep name_job '.bat'];
-    else
-        script = [path_tmp filesep name_job '.sh'];
-    end
-        
-    [flag_failed,errmsg] = psom_run_script(cmd,script,opt_script,opt_logs);
-    if flag_failed~=0
-        msg = fprintf('\n    The execution of the job %s failed.\n The feedback was : %s\n',name_job,errmsg);
-        sub_add_line_log(hfpl,msg,true);
-        error('Something went bad with the execution of the job.')
-    elseif flag_debug
-        msg = fprintf('\n    The feedback from the execution of job %s was : %s\n',name_job,errmsg);
-        sub_add_line_log(hfpl,msg,true);
-    end    
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %% The pipeline manager really starts here %%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    flag_nothing_happened = true;
-    list_event = []; % list of running jobs
-    test_loop = true;
-    while test_loop
-
-        %% Check for new spawns
-        if opt.flag_spawn
-            list_ready = dir([path_spawn '*.ready']);
-            list_ready = { list_ready.name };
-            if ~isempty(list_ready)
-                for num_r = 1:length(list_ready)
-                    [tmp,base_spawn] = fileparts(list_ready{num_r});
-                    file_spawn = [path_spawn base_spawn '.mat'];
-                    if ~psom_exist(file_spawn)
-                        error('I could not find %s for spawning',file_spawn)
-                    end
-                    spawn = load(file_spawn);
-                    list_new_jobs = fieldnames(spawn);
-                    if any(ismember(list_jobs,list_new_jobs))
-                        error('Spawn jobs cannot have the same name as existing jobs in %s',file_spawn)
-                    end
-                    nb_todo = nb_todo+length(list_new_jobs);
-                    tab_refresh(end+1:end+length(list_new_jobs),:,1) = -ones(length(list_new_jobs),6);
-                    tab_refresh(end+1:end+length(list_new_jobs),:,2) = repmat(clock,[length(list_new_jobs) 1]);
-                    list_jobs    = [ list_jobs ; list_new_jobs ];
-                    nb_sub       = [ nb_sub ; zeros(length(list_new_jobs),1)];
-                    mask_done    = [ mask_done ; false(length(list_new_jobs),1)];
-                    mask_todo    = [ mask_todo ; true(length(list_new_jobs),1)];
-                    mask_running = [ mask_running ; false(length(list_new_jobs),1)];
-                    mask_deps    = [ mask_deps ; false(length(list_new_jobs),1)];
-                    graph_deps_old = graph_deps;
-                    graph_deps = sparse(length(list_jobs),length(list_jobs));
-                    graph_deps(1:size(graph_deps_old,1),1:size(graph_deps_old,1)) = graph_deps_old;
-                    clear graph_deps_old
-                    save(file_jobs,'-struct','-append','spawn')
-                    psom_clean({file_spawn,[path_spawn list_ready{num_r}]});
-                end
-            end
+    %% Options for submission of the pipeline manager
+    opt_logs_pipe.txt    = [path_logs 'PIPE_history.txt'];
+    opt_logs_pipe.eqsub  = [path_logs 'PIPE.eqsub'];
+    opt_logs_pipe.oqsub  = [path_logs 'PIPE.oqsub'];
+    opt_logs_pipe.failed = [path_logs 'PIPE.failed'];
+    opt_logs_pipe.exit   = [path_logs 'PIPE.exit'];   
+    opt_pipe = opt_script;
+    opt_pipe.name_job = 'psom_manager';   
+    cmd_pipe = sprintf('opt.max_queued = %i; opt.time_between_checks = %1.2f; opt.nb_checks_point = %i; psom_manager(''%s'',opt);',opt.max_queued,opt.time_between_checks,opt.nb_checks_per_point,path_logs);    
+    if ispc % this is windows
+        script_pipe = [path_tmp filesep 'psom_manager.bat'];
+    else
+        script_pipe = [path_tmp filesep 'psom_manager.sh'];
+    end
+    
+    %% Options for submission of the workers
+    for num_w = 1:opt.max_queued
+        opt_logs_worker(num_w).txt    = sprintf('%spsom%i%sworker.log',path_worker);
+        opt_logs_worker(num_w).eqsub  = sprintf('%spsom%i%sworker.eqsub',path_worker);
+        opt_logs_worker(num_w).oqsub  = sprintf('%spsom%i%sworker.oqsub',path_worker);
+        opt_logs_worker(num_w).failed = sprintf('%spsom%i%sworker.failed',path_worker);
+        opt_logs_worker(num_w).exit   = sprintf('%spsom%i%sworker.exit',path_worker);   
+        opt_worker = opt_script;
+        opt_worker.name_job = sprintf('psom%i',num_w);   
+        cmd_worker = sprintf('flag.heartbeat = true; flag.spawn = true; psom_worker(''%s'',flag);',path_worker_w{num_w});
+        if ispc % this is windows
+            script_worker = [path_tmp filesep opt_worker.name_job '.bat'];
+        else
+            script_worker = [path_tmp filesep opt_worker.name_job '.sh'];
         end
+    end
+    
+    %% Start submitting jobs
+    while ~flag_pipe_finished 
+    
+        %% Start the pipeline manager
+        flag_pipe_running = psom_exist(file_pipe_running);
+        if ~flag_pipe_running || (~flag_worker_alive(end-1)&&(nb_resub < opt.nb_resub)
+            [flag_failed,msg] = sub_run_script(cmd_pipe,script_pipe,opt_pipe,opt_logs_pipe,opt.flag_verbose);
+            if flag_pipe_running
+                nb_resub = nb_resub+1;
+                tab_refresh(end-1,:,1) = -1;
+                flag_worker_alive(end-1) = NaN;
+            end
+            %% Wait for the pipeline manager to start
+            while ~psom_exist(file_pipe_running)
+                fprintf('Waiting for the pipeline manager to start...')
+                sub_sleep(opt.time_between_checks)
+            end
+            flag_pipe_running = true;
+        end
+    
+        %% Check the heartbeats
+        for num_w = 1:(opt.max_queued+2)
         
-        %% Update logs & status
-        save(file_logs           ,'-struct','logs');
-        copyfile(file_logs,file_logs_backup,'f');        
-        save(file_status         ,'-struct','status');
-        copyfile(file_status,file_status_backup,'f');
-        save(file_profile        ,'-struct','profile');
-        copyfile(file_profile,file_profile_backup,'f');
-        
-        %% Update the status of running jobs
-        if isempty(list_event)
-            list_num_running = find(mask_running);
-            list_num_running = list_num_running(:)';
-            list_jobs_running = list_jobs(list_num_running);
-            [new_status_running_jobs,tab_refresh(list_num_running,:,:)] = psom_job_status(path_logs,list_jobs_running,opt.mode,tab_refresh(list_num_running,:,:));
+            %% Check for the presence of the heartbeat
+            if num_w <= opt.max_queued
+                flag_heartbeat = psom_exist(file_worker_heart{num_w});
+            elseif num_w == opt.max_queued+1
+                flag_heartbeat = psom_exist(file_heartbeat);
+            elseif num_w == opt.max_queued+2
+                flag_heartbeat = psom_exist(file_heartbeat);
+            end
             
-            %% Detect events
-            flag_changed = ~ismember(new_status_running_jobs,{'submitted','running'});
-            list_event = list_num_running(flag_changed);
-            new_status_running_jobs = new_status_running_jobs(flag_changed); 
-        end
-        
-        % if nothing happened before but an event occured...
-        if flag_nothing_happened&&~isempty(list_event) 
-            %% Reset the 'dot counter'
-            flag_nothing_happened = false;
-            nb_checks = 0;
-            if nb_points>0
-                sub_add_line_log(hfpl,sprintf('\n'),flag_verbose);
-            end
-            nb_points = 0;
-        end
-        
-        %% Give some time to generate the eqsub/oqsub files 
-        if time_cool_down>0
-            if exist('OCTAVE_VERSION','builtin')  
-                [res,msg] = system(sprintf('sleep %i',time_cool_down));
-            else
-                pause(time_cool_down); 
-            end
-        end
-        
-        %% Update the status of one of the jobs
-        flag_nothing_happened = isempty(list_event);
-        if ~flag_nothing_happened
-            num_l = 1;
-            num_j = list_event(num_l);
-            name_job = list_jobs{num_j};
-            status.(name_job) = new_status_running_jobs{num_l};
-                
-            if strcmp(status.(name_job),'exit') % the script crashed ('exit' tag)
-                sub_add_line_log(hfpl,sprintf('%s - The script of job %s terminated without generating any tag, I guess we will count that one as failed.\n',datestr(clock),name_job),flag_verbose);;
-                status.(name_job) = 'failed';
-                nb_failed = nb_failed + 1;
-            end
-                
-            if strcmp(status.(name_job),'failed')||strcmp(status.(name_job),'finished')
-                %% for finished or failed jobs, transfer the individual
-                %% test log files to the matlab global logs structure
-                nb_queued = nb_queued - 1;
-                text_log    = sub_read_txt([path_logs filesep name_job '.log']);
-                text_qsub_o = sub_read_txt([path_logs filesep name_job '.oqsub']);
-                text_qsub_e = sub_read_txt([path_logs filesep name_job '.eqsub']);                    
-                if isempty(text_qsub_o)&&isempty(text_qsub_e)
-                    logs.(name_job) = text_log;                        
+            if flag_heartbeat
+                if any(tab_refresh(num_w,:,1)<0)
+                    % this is the first time an active time is collected
+                    % simply update tab_refresh
+                    tab_refresh(num_w,:,1) = 0;
                 else
-                    logs.(name_job) = [text_log hat_qsub_o text_qsub_o hat_qsub_e text_qsub_e];
-                end
-                %% Update profile for the jobs
-                file_profile_job = [path_logs filesep name_job '.profile.mat'];
-                if psom_exist(file_profile_job)
-                    profile.(name_job) = load(file_profile_job);
-                end
-                profile.(name_job).nb_submit = nb_sub(num_j);
-                sub_clean_job(path_logs,name_job); % clean up all tags & log                    
-            end
-                
-            switch status.(name_job)
-                    
-                case 'failed' % the job has failed, too bad !
-
-                    if nb_sub(num_j) > nb_resub % Enough attempts to submit the jobs have been made, it failed !
-                        nb_failed = nb_failed + 1;   
-                        msg = sprintf('%s %s%s failed   ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
-                        sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
-                        sub_add_line_log(hfnf,sprintf('%s , failed\n',name_job),false);
-                        mask_child = false([1 length(mask_todo)]);
-                        mask_child(num_j) = true;
-                        mask_child = sub_find_children(mask_child,graph_deps);
-                        mask_todo(mask_child) = false; % Remove the children of the failed job from the to-do list
-                    else % Try to submit the job one more time (at least)
-                        mask_todo(num_j) = true;
-                        status.(name_job) = 'none';
-                        new_status_running_jobs{num_l} = 'none';
-                        nb_todo = nb_todo+1;
-                        msg = sprintf('%s %s%s reset    ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
-                        sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
+                    try
+                        refresh_time = load(file_heartbeat);
+                        test_change = etime(refresh_time.curr_time,tab_refresh(num_w,:,1))>1;
+                    catch
+                        % The heartbeat is unreadable
+                        % Assume this is a race condition
+                        % Consider no heartbeat was detected
+                        test_change = false;
                     end
 
-                case 'finished'
-                    nb_finished = nb_finished + 1;                        
-                    msg = sprintf('%s %s%s completed',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
-                    sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
-                    sub_add_line_log(hfnf,sprintf('%s , finished\n',name_job),false);
-                    graph_deps(num_j,:) = 0; % update dependencies
-            end
-            
-            %% update the to-do list
-            mask_done(num_j) = ismember(new_status_running_jobs{num_l},{'finished','failed','exit'});
-            mask_todo(num_j) = mask_todo(num_j)&~mask_done(num_j);
-            
-            %% Update the dependency mask
-            mask_deps = max(graph_deps,[],1)>0;
-            mask_deps = mask_deps(:);
-            
-            %% Remove the updated job from the list of running jobs
-            mask_running(num_j) = false;
-            list_event = list_event(2:end);
-            new_status_running_jobs = new_status_running_jobs(2:end);
-        end
-        
-        %% Time to (try to) submit jobs !!
-        list_num_to_run = find(mask_todo&~mask_deps);
-        num_jr = 1;
-        
-        while (nb_queued < max_queued) && (num_jr <= length(list_num_to_run))
-            
-            if flag_nothing_happened % if nothing happened before...
-                %% Reset the 'dot counter'
-                flag_nothing_happened = false;
-                nb_checks = 0;
-                if nb_points>0                    
-                    sub_add_line_log(hfpl,sprintf('\n'),flag_verbose);
+                    if test_change
+                        % I heard a heartbeat!    
+                        tab_refresh(num_w,:,1) = refresh_time.curr_time;
+                        tab_refresh(num_w,:,2) = clock;
+                        flag_worker_alive(num_w) = true;
+                    else 
+                        % how long has it been without a heartbeat?
+                        elapsed_time = etime(clock,tab_refresh(num_w,:,2));
+                        if elapsed_time > 30
+                            % huho 30 seconds without a heartbeat, he's dead Jim
+                            flag_worker_alive(num_w) = false;
+                        else
+                            flag_worker_alive(num_w) = true;
+                        end
                 end
-                nb_points = 0;
-            end
-            
-            %% Pick up a job to run
-            num_job = list_num_to_run(num_jr);
-            num_jr = num_jr + 1;
-            name_job = list_jobs{num_job};
-            
-            mask_todo(num_job) = false;
-            mask_running(num_job) = true;
-            nb_queued = nb_queued + 1;
-            nb_todo = nb_todo - 1;
-            nb_sub(num_job) = nb_sub(num_job)+1;
-            status.(name_job) = 'submitted';
-            msg = sprintf('%s %s%s submitted',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));            
-            sub_add_line_log(hfpl,sprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_queued,nb_failed,nb_finished,nb_todo),flag_verbose);
-            sub_add_line_log(hfnf,sprintf('%s , submitted\n',name_job),false);
-            
-            %% Execute the job in a "shelled" environment
-            file_job        = [path_logs filesep name_job '.mat'];
-            opt_logs.txt    = [path_logs filesep name_job '.log'];
-            opt_logs.eqsub  = [path_logs filesep name_job '.eqsub'];
-            opt_logs.oqsub  = [path_logs filesep name_job '.oqsub'];
-            opt_logs.failed = [path_logs filesep name_job '.failed'];
-            opt_logs.exit   = [path_logs filesep name_job '.exit'];
-            opt_script.path_search    = file_pipeline;
-            opt_script.name_job       = name_job;
-            opt_script.mode           = opt.mode;
-            opt_script.init_matlab    = opt.init_matlab;
-            opt_script.flag_debug     = opt.flag_debug;        
-            opt_script.shell_options  = opt.shell_options;
-            opt_script.command_matlab = opt.command_matlab;
-            opt_script.qsub_options   = opt.qsub_options;
-            opt_script.flag_short_job_names = opt.flag_short_job_names;
-            opt_script.file_handle    = hfpl;
-            if strcmp(opt_script.mode,'session')
-                cmd = sprintf('psom_run_job(''%s'')',file_job);
-            else
-                cmd = sprintf('psom_run_job(''%s'',true)',file_job);
-            end
-                
-            if ispc % this is windows
-                script = [path_tmp filesep name_job '.bat'];
-            else
-                script = [path_tmp filesep name_job '.sh'];
-            end
-                
-            [flag_failed,errmsg] = psom_run_script(cmd,script,opt_script,opt_logs);
-            if flag_failed~=0
-                msg = fprintf('\n    The execution of the job %s failed.\n The feedback was : %s\n',name_job,errmsg);
-                sub_add_line_log(hfpl,msg,true);
-                error('Something went bad with the execution of the job.')
-            elseif flag_debug
-                msg = fprintf('\n    The feedback from the execution of job %s was : %s\n',name_job,errmsg);
-                sub_add_line_log(hfpl,msg,true);
-            end            
-        end % submit jobs
-        
-        if flag_nothing_happened && (any(mask_todo) || any(mask_running)) && psom_exist(file_pipe_running)
-            if exist('OCTAVE_VERSION','builtin')  
-                [res,msg] = system(sprintf('sleep %i',time_between_checks));
-            else
-                pause(time_between_checks); % To avoid wasting resources, wait a bit before re-trying to submit jobs
             end
         end
         
-        if strcmp(gb_psom_language,'octave') && ismember(opt.mode,{'qsub','msub','condor'})
-            % In octave, due to the way asynchronous processes work, it is necessary to listen to children to kill 
-            % zombies
-            tmp = 1;
-            while tmp ~= -1
-                tmp = waitpid(-1);
+        %% Now start workers
+        for num_w = 1:opt.max_queued
+            if isnan(flag_worker_alive(num_w)) || (~flag_worker_alive(num_w)&&(nb_resub<opt.nb_resub))
+                opt_script.name_job = sprintf('psom%i',num_w);
+                cmd = sprintf('flag.heartbeat = true; flag.spawn = true; psom_worker(''%s'',flag);',path_worker_w{num_w});
+                if ~isnan(flag_worker_alive(num_w)
+                    tab_refresh(num_w,:,1) = -1;
+                    flag_worker_alive(num_w) = NaN;
+                    nb_resub = nb_resub+1;
+                end
             end
         end
-        
-        if nb_checks >= nb_checks_per_point
-            nb_checks = 0;
-            if flag_verbose
-                fprintf('.');
-            end
-            sub_add_line_log(hfpl,sprintf('.'),flag_verbose);
-            nb_points = nb_points+1;
-        else
-            nb_checks = nb_checks+1;
-        end
-        
-        if opt.flag_spawn
-            test_loop = psom_exist(file_pipe_running);
-        else
-            test_loop = (any(mask_todo) || any(mask_running)) && psom_exist(file_pipe_running);
-        end
-    end % While there are jobs to do
+        psom_sleep(opt.time_between_checks*10)
+        flag_pipe_finished = ~isnan(flag_worker_alive(end-1))&&~psom_exist(file_pipe_running);
+    end
     
 catch
     
     errmsg = lasterror;        
-    sub_add_line_log(hfpl,sprintf('\n\n******************\nSomething went bad ... the pipeline has FAILED !\nThe last error message occured was :\n%s\n',errmsg.message),flag_verbose);
+    fprintf('\n\n******************\nSomething went bad ... the PSOM deamon has FAILED !\nThe last error message occured was :\n%s\n',errmsg.message);
     if isfield(errmsg,'stack')
         for num_e = 1:length(errmsg.stack)
-            sub_add_line_log(hfpl,sprintf('File %s at line %i\n',errmsg.stack(num_e).file,errmsg.stack(num_e).line),flag_verbose);
+            fprintf('File %s at line %i\n',errmsg.stack(num_e).file,errmsg.stack(num_e).line);
         end
-    end
-    if exist('file_pipe_running','var')
-        if exist(file_pipe_running,'file')
-            delete(file_pipe_running); % remove the 'running' tag
-        end
-    end
-    
-    %% Close the log file
-    if strcmp(gb_psom_language,'matlab')
-        fclose(hfpl);
-        fclose(hfnf);
     end
     status_pipe = 1;
     return
 end
 
-%% Update the final status
-save(file_logs           ,'-struct','logs');
-copyfile(file_logs,file_logs_backup,'f');
-save(file_status         ,'-struct','status');
-copyfile(file_status,file_status_backup,'f');
-save(file_profile        ,'-struct','profile');
-copyfile(file_profile,file_profile_backup,'f');
-
 %% Print general info about the pipeline
-msg_line1 = sprintf('Pipeline terminated on %s',datestr(now));
+msg_line1 = sprintf('Deamon terminated on %s',datestr(now));
 stars = repmat('*',[1 length(msg_line1)]);
-sub_add_line_log(hfpl,sprintf('%s\n%s\n',stars,msg_line1),flag_verbose);
+fprintf('%s\n%s\n',stars,msg_line1);
 
-%% Report if the lock file was manually removed
-if exist('file_pipe_running','var')
-    if ~exist(file_pipe_running,'file')        
-        sub_add_line_log(hfpl,sprintf('The pipeline manager was interrupted because the .lock file was manually deleted.\n'),flag_verbose);
-    end
-    if any(mask_running)
-        list_num_running = find(mask_running);
-        sub_add_line_log(hfpl,'Killing left-overs ...\n',flag_verbose)
-        list_num_running = list_num_running(:)';
-        list_jobs_running = list_jobs(list_num_running); 
-        for num_r = 1:length(list_jobs_running)
-            file_kill = [path_logs filesep list_jobs_running{num_r} '.kill'];
-            hf = fopen(file_kill,'w');
-            fclose(hf);
-        end
-    end
-end
-
-%% Print a list of failed jobs
-mask_failed = false([length(list_jobs) 1]);
-for num_j = 1:length(list_jobs)
-    mask_failed(num_j) = strcmp(status.(list_jobs{num_j}),'failed');
-end
-mask_todo = false([length(list_jobs) 1]);
-for num_j = 1:length(list_jobs)
-    mask_todo(num_j) = strcmp(status.(list_jobs{num_j}),'none');
-end
-list_num_failed = find(mask_failed);
-list_num_failed = list_num_failed(:)';
-list_num_none = find(mask_todo);
-list_num_none = list_num_none(:)';
-flag_any_fail = ~isempty(list_num_failed);
-
-if flag_any_fail
-    if length(list_num_failed) == 1
-        sub_add_line_log(hfpl,sprintf('1 job has failed.\n',length(list_num_failed)),flag_verbose);
-    else
-        sub_add_line_log(hfpl,sprintf('%i jobs have failed.\n',length(list_num_failed)),flag_verbose);
-    end
-    sub_add_line_log(hfpl,sprintf('Use psom_pipeline_visu to access logs, e.g.:\n\n    psom_pipeline_visu(''%s'',''log'',''%s'')\n\n',path_logs,list_jobs{list_num_failed(1)}),flag_verbose);
-end
-
-%% Print a list of jobs that could not be processed
-if ~isempty(list_num_none)
-    if length(list_num_none) == 1
-        sub_add_line_log(hfpl,sprintf('1 job could not be processed due to a dependency on a failed job or the interruption of the pipeline manager.\n'),flag_verbose);
-    else
-        sub_add_line_log(hfpl,sprintf('%i jobs could not be processed due to a dependency on a failed job or the interruption of the pipeline manager.\n', length(list_num_none)),flag_verbose);
-    end
-end
-
-%% Give a final one-line summary of the processing
-if flag_any_fail    
-    sub_add_line_log(hfpl,sprintf('Some jobs have failed.\n'),flag_verbose);
-else
-    if isempty(list_num_none)
-        sub_add_line_log(hfpl,sprintf('All jobs have been successfully completed.\n'),flag_verbose);
-    end
-end
-
-if ~strcmp(opt.mode_pipeline_manager,'session')&& strcmp(gb_psom_language,'octave')   
-    sub_add_line_log(hfpl,sprintf('Press CTRL-C to go back to Octave.\n'),flag_verbose);
-end
-
-%% Close the log file
-if strcmp(gb_psom_language,'matlab')
-    fclose(hfpl);
-    fclose(hfnf);
-end
-
-if exist('file_pipe_running','var')
-    if exist(file_pipe_running,'file')
-        delete(file_pipe_running); % remove the 'running' tag
-    end
-end
-
-status_pipe = double(flag_any_fail);
+status_pipe = 0;
 
 %%%%%%%%%%%%%%%%%%
 %% subfunctions %%
@@ -610,7 +340,7 @@ function mask_child = sub_find_children(mask,graph_deps)
 % GRAPH_DEPS(J,K) == 1 if and only if JOB K depends on JOB J. GRAPH_DEPS =
 % 0 otherwise. This (ugly but reasonably fast) recursive code will work
 % only if the directed graph defined by GRAPH_DEPS is acyclic.
-% MASK_CHILD(NUM_J) == 1 if the job NUM_J is a children of one of the job
+% MASK_CHILD(num_w) == 1 if the job num_w is a children of one of the job
 % in the boolean mask MASK and the job is in MASK_TODO.
 % This last restriction is used to speed up computation.
 
@@ -678,3 +408,12 @@ if exist('OCTAVE_VERSION','builtin')
 else
     pause(time_sleep); 
 end
+
+function [] = sub_run_script(cmd,script,opt,opt_logs,flag_verbose);
+[flag_failed,errmsg] = psom_run_script(cmd,script,opt,opt_logs);
+if flag_failed~=0
+    fprintf('\n    The execution of the job %s failed.\n The feedback was : %s\n',name_job,errmsg);
+    error('Something went bad with the execution of the job.')
+elseif flag_verbose == 2
+    fprintf('\n    The feedback from the execution of job %s was : %s\n',name_job,errmsg);
+end    
