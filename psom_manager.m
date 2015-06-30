@@ -330,17 +330,6 @@ if exist('file_pipe_running','var')&&~psom_exist(file_pipe_running)
     fprintf('The pipeline manager was interrupted because the .lock file was manually deleted.\n');
 end
 
-%% Stopping workers
-fprintf('Stopping workers ...\n');
-for num_w = 1:opt.max_queued
-    path_worker_psom = sprintf('%spsom%i%s',path_worker,num_w,filesep);
-    if psom_exist(path_worker_psom)
-        file_kill = [path_worker_psom 'worker.kill'];
-        hf = fopen(file_kill,'w');
-        fclose(hf);
-    end
-end
-
 %% Print a list of failed jobs
 list_num_failed = find(mask_failed);
 list_num_failed = list_num_failed(:)';
@@ -374,9 +363,21 @@ if flag_any_fail&&isempty(list_num_none)
     fprintf('All jobs have been successfully completed.\n');
 end
 
+%% Terminate the pipeline
 if exist('file_pipe_running','var')
     if exist(file_pipe_running,'file')
         delete(file_pipe_running); % remove the 'running' tag
+    end
+end
+
+%% Stop workers
+fprintf('Stop workers ...\n');
+for num_w = 1:opt.max_queued
+    path_worker_psom = sprintf('%spsom%i%s',path_worker,num_w,filesep);
+    if psom_exist(path_worker_psom)
+        file_kill = [path_worker_psom 'worker.kill'];
+        hf = fopen(file_kill,'w');
+        fclose(hf);
     end
 end
 
