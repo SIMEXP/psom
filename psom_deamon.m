@@ -130,9 +130,12 @@ if nargin < 2
     opt = struct;
 end
 opt = psom_struct_defaults( opt , ...
-   {  'nb_resub' , 'flag_verbose' , 'init_matlab' , 'shell_options' , 'command_matlab' , 'mode' , 'max_queued' , 'qsub_options' , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
-   {  NaN        , 1              , NaN           , NaN             , NaN              , NaN    , NaN          , NaN            , NaN                   , NaN                   , NaN              };
-psom_set_defaults
+   {  'nb_resub' , 'flag_verbose' , 'init_matlab' , 'shell_options' , 'command_matlab' , 'mode' , 'max_queued' , 'qsub_options' , 'time_between_checks' , 'nb_checks_per_point' }, ...
+   {  NaN        , 1              , NaN           , NaN             , NaN              , NaN    , NaN          , NaN            , NaN                   , NaN                   });
+
+if ~strcmp(path_logs(end),filesep)
+    path_logs = [path_logs filesep];
+end
 
 %% File names
 file_pipeline     = [path_logs 'PIPE.mat'];
@@ -140,11 +143,13 @@ file_jobs         = [path_logs 'PIPE_jobs.mat'];
 file_pipe_running = [path_logs 'PIPE.lock'];
 file_heartbeat    = [path_logs 'heartbeat.mat'];
 file_kill         = [path_logs 'PIPE.kill'];
+path_tmp          = [path_logs 'tmp' filesep];
 path_worker       = [path_logs 'worker' filesep];
 for num_w = 1:opt.max_queued
     file_worker_heart{num_w} = sprintf('%spsom%i%sheartbeat.mat',path_worker,num_w,filesep);
     file_worker_kill{num_w}  = sprintf('%spsom%i%sworker.kill',path_worker,num_w,filesep);
 end
+psom_mkdir(path_tmp);
 
 %% Check for the existence of the pipeline
 if ~exist(file_pipeline,'file') % Does the pipeline exist ?
@@ -183,9 +188,10 @@ try
     flag_worker_alive = repmat(NaN,[opt.max_queued+2 1]); % Is the worker alive? two last entries are for the PM and the GC
     
     %% Create logs folder for each worker
+    path_worker_w = cell(opt.max_queued,1);
     for num_w = 1:opt.max_queued
-        path_worker_w = sprintf('%spsom%i%s',path_worker,num_w,filesep);
-        psom_mkdir(path_worker_w)
+        path_worker_w{num_w} = sprintf('%spsom%i%s',path_worker,num_w,filesep);
+        psom_mkdir(path_worker_w);
     end
     
     %% General options to submit scripts
@@ -196,6 +202,7 @@ try
     opt_script.shell_options  = opt.shell_options;
     opt_script.command_matlab = opt.command_matlab;
     opt_script.qsub_options   = opt.qsub_options;
+    opt_script.name_job       = ''; % to be specified
     
     %% Options for submission of the pipeline manager
     opt_logs_pipe.txt    = [path_logs 'PIPE_history.txt'];
@@ -205,7 +212,7 @@ try
     opt_logs_pipe.exit   = [path_logs 'PIPE.exit'];   
     opt_pipe = opt_script;
     opt_pipe.name_job = 'psom_manager';   
-    cmd_pipe = sprintf('opt.max_queued = %i; opt.time_between_checks = %1.2f; opt.nb_checks_point = %i; psom_manager(''%s'',opt);',opt.max_queued,opt.time_between_checks,opt.nb_checks_per_point,path_logs);    
+    cmd_pipe = sprintf('opt.max_queued = %i; opt.time_between_checks = %1.2f; opt.nb_checks_per_point = %i; psom_manager(''%s'',opt);',opt.max_queued,opt.time_between_checks,opt.nb_checks_per_point,path_logs);    
     if ispc % this is windows
         script_pipe = [path_tmp filesep 'psom_manager.bat'];
     else
@@ -219,13 +226,13 @@ try
         opt_logs_worker(num_w).oqsub  = sprintf('%spsom%i%sworker.oqsub',path_worker);
         opt_logs_worker(num_w).failed = sprintf('%spsom%i%sworker.failed',path_worker);
         opt_logs_worker(num_w).exit   = sprintf('%spsom%i%sworker.exit',path_worker);   
-        opt_worker = opt_script;
-        opt_worker.name_job = sprintf('psom%i',num_w);   
-        cmd_worker = sprintf('flag.heartbeat = true; flag.spawn = true; psom_worker(''%s'',flag);',path_worker_w{num_w});
+        opt_worker(num_w) = opt_script;
+        opt_worker(num_w).name_job = sprintf('psom%i',num_w);   
+        cmd_worker{num_w} = sprintf('flag.heartbeat = true; flag.spawn = true; psom_worker(''%s'',flag);',path_worker_w{num_w});
         if ispc % this is windows
-            script_worker = [path_tmp filesep opt_worker.name_job '.bat'];
+            script_worker{num_w} = [path_tmp filesep opt_worker.name_job '.bat'];
         else
-            script_worker = [path_tmp filesep opt_worker.name_job '.sh'];
+            script_worker{num_w} = [path_tmp filesep opt_worker.name_job '.sh'];
         end
     end
     
@@ -234,7 +241,7 @@ try
     
         %% Start the pipeline manager
         flag_pipe_running = psom_exist(file_pipe_running);
-        if ~flag_pipe_running || (~flag_worker_alive(end-1)&&(nb_resub < opt.nb_resub)
+        if ~flag_pipe_running || isnan(flag_worker_alive(end-1)) || (~flag_worker_alive(end-1)&&(nb_resub < opt.nb_resub))
             [flag_failed,msg] = sub_run_script(cmd_pipe,script_pipe,opt_pipe,opt_logs_pipe,opt.flag_verbose);
             if flag_pipe_running
                 nb_resub = nb_resub+1;
@@ -291,6 +298,7 @@ try
                         else
                             flag_worker_alive(num_w) = true;
                         end
+                    end
                 end
             end
         end
@@ -300,14 +308,14 @@ try
             if isnan(flag_worker_alive(num_w)) || (~flag_worker_alive(num_w)&&(nb_resub<opt.nb_resub))
                 opt_script.name_job = sprintf('psom%i',num_w);
                 cmd = sprintf('flag.heartbeat = true; flag.spawn = true; psom_worker(''%s'',flag);',path_worker_w{num_w});
-                if ~isnan(flag_worker_alive(num_w)
+                if ~isnan(flag_worker_alive(num_w))
                     tab_refresh(num_w,:,1) = -1;
                     flag_worker_alive(num_w) = NaN;
                     nb_resub = nb_resub+1;
                 end
             end
         end
-        psom_sleep(opt.time_between_checks*10)
+        sub_sleep(opt.time_between_checks*10)
         flag_pipe_finished = ~isnan(flag_worker_alive(end-1))&&~psom_exist(file_pipe_running);
     end
     
@@ -409,7 +417,7 @@ else
     pause(time_sleep); 
 end
 
-function [] = sub_run_script(cmd,script,opt,opt_logs,flag_verbose);
+function [flag_failed,errmsg] = sub_run_script(cmd,script,opt,opt_logs,flag_verbose);
 [flag_failed,errmsg] = psom_run_script(cmd,script,opt,opt_logs);
 if flag_failed~=0
     fprintf('\n    The execution of the job %s failed.\n The feedback was : %s\n',name_job,errmsg);

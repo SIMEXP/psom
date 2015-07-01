@@ -288,7 +288,7 @@ try
                 if opt.flag_verbose
                     fprintf('.');
                 end
-                nb_points = nb_points+1;
+                nb_checks = nb_checks+1;
             else
                 nb_checks = nb_checks+1;
             end
