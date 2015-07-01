@@ -61,14 +61,6 @@ function status_pipe = psom_deamon(path_logs,opt)
 %      separation) that will be executed at the begining of any 
 %      matlab/Octave job.
 %
-%   PATH_SEARCH
-%      (string, default GB_PSOM_PATH_SEARCH in the file PSOM_GB_VARS). 
-%      If PATH_SEARCH is empty, the current path is used. If 
-%      PATH_SEARCH equals 'gb_psom_omitted', then PSOM will not attempt 
-%      to set the search path, i.e. the search path for every job will 
-%      be the current search path in 'session' mode, and the default 
-%      Octave/Matlab search path in the other modes. 
-%
 %   FLAG_VERBOSE
 %      (integer 0, 1 or 2, default 1) No verbose (0), standard 
 %      verbose (1), a lot of verbose, useful for debugging (2).
@@ -137,6 +129,8 @@ if ~strcmp(path_logs(end),filesep)
     path_logs = [path_logs filesep];
 end
 
+opt.nb_resub = opt.nb_resub + opt.max_queued;
+
 %% File names
 file_pipeline     = [path_logs 'PIPE.mat'];
 file_jobs         = [path_logs 'PIPE_jobs.mat'];
@@ -154,12 +148,6 @@ psom_mkdir(path_tmp);
 %% Check for the existence of the pipeline
 if ~exist(file_pipeline,'file') % Does the pipeline exist ?
     error('Could not find the pipeline file %s. Please use psom_run_pipeline instead of psom_deamon directly.',file_pipeline);
-end
-
-%% Create a running tag on the pipeline (if not done during the initialization phase)
-if ~psom_exist(file_pipe_running)
-    str_now = datestr(clock);
-    save(file_pipe_running,'str_now');
 end
 
 % a try/catch block is used to clean temporary file if the user is
@@ -183,15 +171,19 @@ try
     nb_resub    = 0;                   % Number of resubmission               
     nb_checks   = 0;                   % Number of checks to print a points
     nb_points   = 0;                   % Number of printed points
-    flag_pipe_running = false;         % Is the pipeline started?
+    flag_pipe_running  = false;        % Is the pipeline started?
     flag_pipe_finished = false;        % Is the pipeline finished?
-    flag_worker_alive = repmat(NaN,[opt.max_queued+2 1]); % Is the worker alive? two last entries are for the PM and the GC
+    flag_worker_alive  = false([opt.max_queued+2 1]); % Is the worker alive? two last entries are for the PM and the GC
+    flag_worker_wait   = false([opt.max_queued+2 1]); % Is the worker alive? two last entries are for the PM and the GC
     
     %% Create logs folder for each worker
     path_worker_w = cell(opt.max_queued,1);
     for num_w = 1:opt.max_queued
         path_worker_w{num_w} = sprintf('%spsom%i%s',path_worker,num_w,filesep);
-        psom_mkdir(path_worker_w);
+        if psom_exist(path_worker_w{num_w})
+            psom_clean(path_worker_w{num_w},struct('flag_verbose',false));
+        end
+        psom_mkdir(path_worker_w{num_w});
     end
     
     %% General options to submit scripts
@@ -221,11 +213,11 @@ try
     
     %% Options for submission of the workers
     for num_w = 1:opt.max_queued
-        opt_logs_worker(num_w).txt    = sprintf('%spsom%i%sworker.log',path_worker);
-        opt_logs_worker(num_w).eqsub  = sprintf('%spsom%i%sworker.eqsub',path_worker);
-        opt_logs_worker(num_w).oqsub  = sprintf('%spsom%i%sworker.oqsub',path_worker);
-        opt_logs_worker(num_w).failed = sprintf('%spsom%i%sworker.failed',path_worker);
-        opt_logs_worker(num_w).exit   = sprintf('%spsom%i%sworker.exit',path_worker);   
+        opt_logs_worker(num_w).txt    = sprintf('%spsom%i%sworker.log',path_worker,num_w,filesep);
+        opt_logs_worker(num_w).eqsub  = sprintf('%spsom%i%sworker.eqsub',path_worker,num_w,filesep);
+        opt_logs_worker(num_w).oqsub  = sprintf('%spsom%i%sworker.oqsub',path_worker,num_w,filesep);
+        opt_logs_worker(num_w).failed = sprintf('%spsom%i%sworker.failed',path_worker,num_w,filesep);
+        opt_logs_worker(num_w).exit   = sprintf('%spsom%i%sworker.exit',path_worker,num_w,filesep);   
         opt_worker(num_w) = opt_script;
         opt_worker(num_w).name_job = sprintf('psom%i',num_w);   
         cmd_worker{num_w} = sprintf('flag.heartbeat = true; flag.spawn = true; psom_worker(''%s'',flag);',path_worker_w{num_w});
@@ -241,16 +233,20 @@ try
     
         %% Start the pipeline manager
         flag_pipe_running = psom_exist(file_pipe_running);
-        if ~flag_pipe_running || isnan(flag_worker_alive(end-1)) || (~flag_worker_alive(end-1)&&(nb_resub < opt.nb_resub))
+        if ~flag_pipe_running || (~flag_worker_alive(end-1)&&(nb_resub < opt.nb_resub))
             [flag_failed,msg] = sub_run_script(cmd_pipe,script_pipe,opt_pipe,opt_logs_pipe,opt.flag_verbose);
+            fprintf('Starting the pipeline manager...\n')
             if flag_pipe_running
                 nb_resub = nb_resub+1;
-                tab_refresh(end-1,:,1) = -1;
-                flag_worker_alive(end-1) = NaN;
+                tab_refresh(end-1,:,1)   = -1;
+                flag_worker_alive(end-1) = false;
+                flag_worker_wait(end-1)  = true;
             end
             %% Wait for the pipeline manager to start
+            if ~psom_exist(file_pipe_running)
+                fprintf('Waiting for the pipeline manager to start...\n')
+            end
             while ~psom_exist(file_pipe_running)
-                fprintf('Waiting for the pipeline manager to start...')
                 sub_sleep(opt.time_between_checks)
             end
             flag_pipe_running = true;
@@ -289,14 +285,17 @@ try
                         tab_refresh(num_w,:,1) = refresh_time.curr_time;
                         tab_refresh(num_w,:,2) = clock;
                         flag_worker_alive(num_w) = true;
+                        flag_worker_wait(num_w) = false;
                     else 
-                        % how long has it been without a heartbeat?
+                        % how mlong has it been without a heartbeat?
                         elapsed_time = etime(clock,tab_refresh(num_w,:,2));
                         if elapsed_time > 30
                             % huho 30 seconds without a heartbeat, he's dead Jim
                             flag_worker_alive(num_w) = false;
+                            flag_worker_wait(num_w) = false;
                         else
                             flag_worker_alive(num_w) = true;
+                            flag_worker_wait(num_w) = false;
                         end
                     end
                 end
@@ -305,14 +304,13 @@ try
         
         %% Now start workers
         for num_w = 1:opt.max_queued
-            if isnan(flag_worker_alive(num_w)) || (~flag_worker_alive(num_w)&&(nb_resub<opt.nb_resub))
-                opt_script.name_job = sprintf('psom%i',num_w);
-                cmd = sprintf('flag.heartbeat = true; flag.spawn = true; psom_worker(''%s'',flag);',path_worker_w{num_w});
-                if ~isnan(flag_worker_alive(num_w))
-                    tab_refresh(num_w,:,1) = -1;
-                    flag_worker_alive(num_w) = NaN;
-                    nb_resub = nb_resub+1;
-                end
+            if ~flag_worker_wait(num_w)&&(~flag_worker_alive(num_w)&&(nb_resub<opt.nb_resub))
+                fprintf('Starting worker number %i...\n',num_w)
+                [flag_failed,msg] = sub_run_script(cmd_worker{num_w},script_worker{num_w},opt_worker(num_w),opt_logs_worker(num_w),opt.flag_verbose);
+                flag_worker_alive(num_w) = false;
+                flag_worker_wait(num_w) = true;
+                tab_refresh(num_w,:,1) = -1;
+                nb_resub = nb_resub+1;
             end
         end
         sub_sleep(opt.time_between_checks*10)
