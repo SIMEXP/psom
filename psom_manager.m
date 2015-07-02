@@ -15,6 +15,8 @@ function status_pipe = psom_manager(path_logs,opt)
 %
 %   MAX_QUEUED
 %
+%   MAX_BUFFER
+%
 %   FLAG_VERBOSE
 %      (integer 0, 1 or 2, default 1) No verbose (0), verbose (1).
 %
@@ -73,7 +75,7 @@ if nargin < 2
 end
 opt = psom_struct_defaults( opt , ...
    {  'flag_verbose' , 'time_between_checks' , 'nb_checks_per_point' , 'max_queued' , 'max_buffer' }, ...
-   {  1              , NaN                   , NaN                   , NaN          , 10           });
+   {  1              , NaN                   , NaN                   , NaN          , 5            });
 
 %% Logs folder
 if ~strcmp(path_logs(end),filesep)
@@ -205,12 +207,15 @@ try
                 end
                 
                 %% Some verbose for the events
-                for num_e = 1:length(event_worker)
+                for num_e = 1:size(event_worker,1)
                     %% Update status
                     mask_job = strcmp(list_jobs,event_worker{num_e,1});
                     name_job = list_jobs{mask_job};
                     switch event_worker{num_e,2}
                         case 'submitted'
+                            nb_running = nb_running+1;
+                            nb_run_worker(num_w) = nb_run_worker(num_w)+1;
+                            nb_todo = nb_todo-1;
                             msg = sprintf('%s %s%s running  ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
                         case 'failed'
                             nb_run_worker(num_w) = nb_run_worker(num_w)-1;
@@ -263,12 +268,9 @@ try
             save(file_worker_job{ind},'-append','-struct','pipe_sub');
             mask_new_submit(ind) = true;
             slots_worker(ind) = slots_worker(ind)+1;
-            nb_running = nb_running+1;
-            nb_run_worker(ind) = nb_run_worker(ind)+1;
             mask_running(list_num_to_run(curr_job)) = true;
             mask_todo(list_num_to_run(curr_job)) = false;
             psom_plan(list_num_to_run(curr_job)) = ind;
-            nb_todo = nb_todo-1;
             curr_job = curr_job+1;
         end
         
