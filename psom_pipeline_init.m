@@ -258,6 +258,10 @@ gb_list_defaults  = { gb_psom_path_search , false        , true          , {}   
 psom_set_defaults
 name_pipeline = 'PIPE';
 
+if ~strcmp(path_logs(end),filesep)
+    path_logs = [path_logs filesep];
+end
+
 if isempty(path_search)
     path_search = path;
     opt.path_search = path_search;
@@ -281,16 +285,16 @@ if flag_verbose
 end
 
 %% Generate file names 
-file_pipeline       = [path_logs filesep name_pipeline '.mat'                ];
-file_jobs           = [path_logs filesep name_pipeline '_jobs.mat'           ];
-file_logs           = [path_logs,filesep name_pipeline '_logs.mat'           ];
-file_logs_backup    = [path_logs,filesep name_pipeline '_logs_backup.mat'    ];
-file_news_feed      = [path_logs,filesep name_pipeline '_news_feed.csv'      ];
-file_status         = [path_logs,filesep name_pipeline '_status.mat'         ];
-file_status_backup  = [path_logs,filesep name_pipeline '_status_backup.mat'  ];
-file_profile        = [path_logs,filesep name_pipeline '_profile.mat'        ];
-file_profile_backup = [path_logs,filesep name_pipeline '_profile_backup.mat' ];
-file_pipe_running   = [path_logs,filesep name_pipeline '.lock'               ];
+file_pipeline       = [path_logs name_pipeline '.mat'                ];
+file_jobs           = [path_logs name_pipeline '_jobs.mat'           ];
+file_logs           = [path_logs name_pipeline '_logs.mat'           ];
+file_logs_backup    = [path_logs name_pipeline '_logs_backup.mat'    ];
+file_news_feed      = [path_logs name_pipeline '_news_feed.csv'      ];
+file_status         = [path_logs name_pipeline '_status.mat'         ];
+file_status_backup  = [path_logs name_pipeline '_status_backup.mat'  ];
+file_profile        = [path_logs name_pipeline '_profile.mat'        ];
+file_profile_backup = [path_logs name_pipeline '_profile_backup.mat' ];
+file_pipe_running   = [path_logs name_pipeline '.lock'               ];
 
 list_jobs = fieldnames(pipeline);
 nb_jobs = length(list_jobs);
@@ -829,6 +833,7 @@ list_ext = { 'running' , 'failed' , 'finished' , 'exit' , 'kill' , ...
 
 for num_ext = 1:length(list_ext)
     list_files = dir([path_logs filesep '*.' list_ext{num_ext}]);
+    list_files = {list_files.name};
     if ~isempty(list_files)
         list_files_p = cell(size(list_files));
         for num_f = 1:length(list_files)
