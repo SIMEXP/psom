@@ -146,18 +146,18 @@ while ~flag_exit
         flag_found = false;
         name_job = list_jobs{list_todo(num_t)};
         for num_s = 1:length(path_search)
-            file_logs = [path_search{num_s} name_job '.log'];
-            file_profile = [path_search{num_s} name_job '_profile.mat'];
-            if psom_exist(file_logs)&&psom_exist(file_profile)
+            file_logs_job = [path_search{num_s} name_job '.log'];
+            file_profile_job = [path_search{num_s} name_job '_profile.mat'];
+            if psom_exist(file_logs_job)&&psom_exist(file_profile_job)
                 flag_found = true;
-                logs.(name_job) = sub_read_txt(file_logs);
+                logs.(name_job) = sub_read_txt(file_logs_job);
                 new_logs.(name_job) = logs.(name_job);
-                tmp = load(file_profile);
+                tmp = load(file_profile_job);
                 tmp.worker = num_s;
                 prof.(name_job)  = tmp;
                 new_prof.(name_job) = prof.(name_job);
-                psom_clean(file_logs,struct('flag_verbose',false));
-                psom_clean(file_profile,struct('flag_verbose',false));
+                psom_clean(file_logs_job,struct('flag_verbose',false));
+                psom_clean(file_profile_job,struct('flag_verbose',false));
                 if opt.flag_verbose
                     fprintf('Collecting logs of job %s\n',name_job)
                 end
