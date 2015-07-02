@@ -79,7 +79,7 @@ if opt.max_queued == 0
     path_search{1} = path_logs;    
 else
     for num_w = 1:opt.max_queued
-        path_search{num_w} = sprintf('%spsom%i%s',path_worker,num_w,filesep)
+        path_search{num_w} = sprintf('%spsom%i%s',path_worker,num_w,filesep);
     end
 end   
    
@@ -107,6 +107,7 @@ flag_run = false;
 flag_exit = false;
 flag_started = false;
 nb_char_news = 0;
+nb_checks = 0;
 news = [];
 while ~flag_exit
 
@@ -117,35 +118,36 @@ while ~flag_exit
     if psom_exist(file_news)
             
        %% Parse news_feed.csv for one worker
-       [str_read,nb_char_news(num_w)] = sub_tail(file_news,nb_char_news(num_w));
+       [str_read,nb_char_news] = sub_tail(file_news,nb_char_news);
        news = [news str_read];
        [events,news] = sub_parse_news(news);
                
        %% Some verbose for the events
-       for num_e = 1:size(event_worker,1)
+       for num_e = 1:size(events,1)
            %% Update status
-           mask_job = strcmp(list_jobs,event_worker{num_e,1});
+           mask_job = strcmp(list_jobs,events{num_e,1});
            name_job = list_jobs{mask_job};
            if any(mask_job)
-               status.(name_job) = event_worker{num_e,2};
-               status_cell(mask_job) = event_worker(num_e,2);
-               new_status.(name_job) = event_worker{num_e,2};
+               status.(name_job) = events{num_e,2};
+               status_cell(mask_job) = events(num_e,2);
+               new_status.(name_job) = events{num_e,2};
            end
        end            
     end
     
     %% Check what jobs need cleaning up
     mask_finished = ismember(status_cell,{'failed','finished'});
-    mask_todo = mask_finished&&~mask_done;
+    mask_todo = mask_finished&~mask_done;
     
     %% Collect garbage
-    list_todo = find(mask_todo)
+    list_todo = find(mask_todo);
+    flag_nothing_happened = any(mask_todo);
     for num_t = 1:length(list_todo)
         flag_found = false;
         name_job = list_jobs{list_todo(num_t)};
         for num_s = 1:length(path_search)
             file_logs = [path_search{num_s} name_job '.log'];
-            file_profile = [path_search{num_s} name_job '_profile.mat']
+            file_profile = [path_search{num_s} name_job '_profile.mat'];
             if psom_exist(file_logs)&&psom_exist(file_profile)
                 flag_found = true;
                 logs.(name_job) = sub_read_txt(file_logs);
@@ -157,12 +159,12 @@ while ~flag_exit
                 psom_clean(file_logs,struct('flag_verbose',false));
                 psom_clean(file_profile,struct('flag_verbose',false));
                 if opt.flag_verbose
-                    'Collecting logs of job %s\n',name_job)
+                    fprintf('Collecting logs of job %s\n',name_job)
                 end
             end
-            if ~flag_found
-                warning('Could not find logs for job %s\n',name_job)
-            end
+        end
+        if ~flag_found
+            warning('Could not find logs for job %s\n',name_job)
         end
     end
     
@@ -174,6 +176,21 @@ while ~flag_exit
     save(file_profile,'-struct','-append','new_prof');
     copyfile(file_profile,file_profile_backup,'f');
 
+    %% Wait if necessary
+    if flag_nothing_happened && psom_exist(file_pipe_running)
+        sub_sleep(opt.time_between_checks)
+         
+        if (nb_checks >= opt.nb_checks_per_point)
+            nb_checks = 0;
+            if opt.flag_verbose
+                fprintf('.');
+            end
+            nb_checks = nb_checks+1;
+        else
+            nb_checks = nb_checks+1;
+        end
+    end
+        
     %% Test if it is time to quit
     flag_exit = flag_started&&flag_last_run;
     if flag_run
@@ -195,6 +212,15 @@ else
     str_txt = fread(hf,Inf,'uint8=>char')';
     fclose(hf);    
 end
+
+%% An octave version of tail
+function [str_read,nb_chars] = sub_tail(file_read,nb_chars)
+% Read the tail of a text file
+hf = fopen(file_read,'r');
+fseek(hf,nb_chars,'bof');
+str_read = fread(hf, Inf , 'uint8=>char')';
+nb_chars = ftell(hf);
+fclose(hf);
 
 %% Parse the news      
 function [events,news] = sub_parse_news(news)
