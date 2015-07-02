@@ -66,7 +66,7 @@ psom_gb_vars
 
 %% SYNTAX
 if ~exist('path_logs','var')
-    error('Syntax: [] = psom_deamon(path_logs,opt)')
+    error('Syntax: [] = psom_manager(path_logs,opt)')
 end
 
 %% Options
