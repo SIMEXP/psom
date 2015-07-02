@@ -10,8 +10,7 @@ function status_pipe = psom_deamon(path_logs,opt)
 %   (structure) with the following fields :
 %
 %   MODE
-%      (string, default GB_PSOM_MODE defined in PSOM_GB_VARS)
-%      how to start the workers:
+%      (string) how to start the workers:
 %      'background' : background execution, not-unlogin-proofed 
 %                     (asynchronous system call).
 %      'batch'      : background execution, unlogin-proofed ('at' in 
@@ -22,44 +21,40 @@ function status_pipe = psom_deamon(path_logs,opt)
 %      'condor'     : remote execution using condor
 %
 %   MAX_QUEUED
-%      (integer, default GB_PSOM_MAX_QUEUED defined in PSOM_GB_VARS)
-%      The maximum number of jobs that can be processed
+%      (integer) The maximum number of jobs that can be processed
 %      simultaneously. Some qsub systems actually put restrictions
 %      on that. Contact your local system administrator for more info.
 %
+%   MAX_BUFFER
+%       (integer) the maximum number of jobs submitted to a worker at a 
+%       given time.
+%
 %   NB_RESUB
-%      (integer, default 0 in 'session', 'batch' and 'background' modes,
-%      1 otherwise) The number of times a worker will be resubmitted if it 
+%      (integer) The number of times a worker will be resubmitted if it 
 %      fails.
 %
 %   SHELL_OPTIONS
-%      (string, default GB_PSOM_SHELL_OPTIONS defined in PSOM_GB_VARS)
-%      some commands that will be added at the begining of the shell
-%      script submitted to batch or qsub. This can be used to set
+%      (string) some commands that will be added at the begining of the 
+%      shell script submitted to batch or qsub. This can be used to set
 %      important variables, or source an initialization script.
 %
 %   QSUB_OPTIONS
-%      (string, GB_PSOM_QSUB_OPTIONS defined in PSOM_GB_VARS)
-%      This field can be used to pass any argument when submitting a
+%      (string) This field can be used to pass any argument when submitting a
 %      job with bsub/msub/qsub. For example, '-q all.q@yeatman,all.q@zeus' will
 %      force qsub to only use the yeatman and zeus workstations in the
 %      all.q queue. It can also be used to put restrictions on the
 %      minimum avalaible memory, etc.
 %
 %   COMMAND_MATLAB
-%      (string, default GB_PSOM_COMMAND_MATLAB or
-%      GB_PSOM_COMMAND_OCTAVE depending on the current environment,
-%      defined in PSOM_GB_VARS)
-%      how to invoke matlab (or OCTAVE).
+%      (string) how to invoke matlab (or OCTAVE).
 %      You may want to update that to add the full path of the command.
 %      The defaut for this field can be set using the variable
 %      GB_PSOM_COMMAND_MATLAB/OCTAVE in the file PSOM_GB_VARS.
 %
 %   INIT_MATLAB
-%      (string, GB_PSOM_INIT_MATLAB defined in PSOM_GB_VARS) a matlab 
-%      command (multiple commands can actually be passed using comma 
-%      separation) that will be executed at the begining of any 
-%      matlab/Octave job.
+%      (string) a matlab command (multiple commands can actually be 
+%      passed using comma separation) that will be executed at the begining 
+%      of any matlab/Octave job.
 %
 %   FLAG_VERBOSE
 %      (integer 0, 1 or 2, default 1) No verbose (0), standard 
@@ -122,8 +117,8 @@ if nargin < 2
     opt = struct;
 end
 opt = psom_struct_defaults( opt , ...
-   {  'nb_resub' , 'flag_verbose' , 'init_matlab' , 'shell_options' , 'command_matlab' , 'mode' , 'max_queued' , 'qsub_options' , 'time_between_checks' , 'nb_checks_per_point' }, ...
-   {  NaN        , 1              , NaN           , NaN             , NaN              , NaN    , NaN          , NaN            , NaN                   , NaN                   });
+   {  'nb_resub' , 'flag_verbose' , 'init_matlab' , 'shell_options' , 'command_matlab' , 'mode' , 'max_queued' , 'max_buffer' , 'qsub_options' , 'time_between_checks' , 'nb_checks_per_point' }, ...
+   {  NaN        , 1              , NaN           , NaN             , NaN              , NaN    , NaN          , NaN          , NaN            , NaN                   , NaN                   });
 
 if ~strcmp(path_logs(end),filesep)
     path_logs = [path_logs filesep];
@@ -204,7 +199,7 @@ try
     opt_logs_pipe.exit   = [path_logs 'PIPE.exit'];   
     opt_pipe = opt_script;
     opt_pipe.name_job = 'psom_manager';   
-    cmd_pipe = sprintf('opt.max_queued = %i; opt.time_between_checks = %1.2f; opt.nb_checks_per_point = %i; psom_manager(''%s'',opt);',opt.max_queued,opt.time_between_checks,opt.nb_checks_per_point,path_logs);    
+    cmd_pipe = sprintf('opt.max_buffer = %i; opt.max_queued = %i; opt.time_between_checks = %1.2f; opt.nb_checks_per_point = %i; psom_manager(''%s'',opt);',opt.max_buffer,opt.max_queued,opt.time_between_checks,opt.nb_checks_per_point,path_logs);    
     if ispc % this is windows
         script_pipe = [path_tmp filesep 'psom_manager.bat'];
     else
@@ -243,9 +238,6 @@ try
                 flag_worker_wait(end-1)  = true;
             end
             %% Wait for the pipeline manager to start
-            if ~psom_exist(file_pipe_running)
-                fprintf('Waiting for the pipeline manager to start...\n')
-            end
             while ~psom_exist(file_pipe_running)
                 sub_sleep(opt.time_between_checks)
             end
@@ -304,10 +296,9 @@ try
         
         %% Now start workers
         for num_w = 1:opt.max_queued
-            if ~flag_worker_wait(num_w)&&(~flag_worker_alive(num_w)&&(nb_resub<opt.nb_resub))
+            if ~flag_worker_wait(num_w)&&(~flag_worker_alive(num_w)&&(nb_resub<=opt.nb_resub))
                 fprintf('Starting worker number %i...\n',num_w)
                 [flag_failed,msg] = sub_run_script(cmd_worker{num_w},script_worker{num_w},opt_worker(num_w),opt_logs_worker(num_w),opt.flag_verbose);
-                flag_worker_alive(num_w) = false;
                 flag_worker_wait(num_w) = true;
                 tab_refresh(num_w,:,1) = -1;
                 nb_resub = nb_resub+1;
