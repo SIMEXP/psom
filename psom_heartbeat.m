@@ -40,6 +40,7 @@ function [] = psom_heartbeat(file_heart,file_kill,pid)
 % THE SOFTWARE.
 tic;
 flag_beat = true;
+path_heart = fileparts(file_kill);
 while flag_beat
     if exist('OCTAVE_VERSION','builtin')  
         [err,msg] = kill(pid,0); % use the kill octave command
@@ -49,12 +50,17 @@ while flag_beat
     flag_beat = err==0;
     curr_time = clock;
     save(file_heart,'curr_time');
-    if exist(file_kill,'file')
-        if exist('OCTAVE_VERSION','builtin')  
+    if exist(file_kill,'file')||~psom_exist(path_heart)
+        if exist(file_kill,'file')
             psom_clean(file_kill);
+        end
+        if exist(file_heart,'file')
+            psom_clean(file_heart);
+        end
+            
+        if exist('OCTAVE_VERSION','builtin')  
             kill(pid,9)
         else
-            psom_clean(file_kill);
             system(sprintf('kill -9 %i',pid));
         end 
         exit
