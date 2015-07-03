@@ -124,8 +124,6 @@ if ~strcmp(path_logs(end),filesep)
     path_logs = [path_logs filesep];
 end
 
-opt.nb_resub = opt.nb_resub + opt.max_queued;
-
 %% File names
 file_pipeline     = [path_logs 'PIPE.mat'];
 file_jobs         = [path_logs 'PIPE_jobs.mat'];
@@ -134,6 +132,7 @@ file_heartbeat    = [path_logs 'heartbeat.mat'];
 file_kill         = [path_logs 'PIPE.kill'];
 path_tmp          = [path_logs 'tmp' filesep];
 path_worker       = [path_logs 'worker' filesep];
+path_garbage      = [path_logs 'garbage' filesep];
 for num_w = 1:opt.max_queued
     file_worker_heart{num_w} = sprintf('%spsom%i%sheartbeat.mat',path_worker,num_w,filesep);
     file_worker_kill{num_w}  = sprintf('%spsom%i%sworker.kill',path_worker,num_w,filesep);
@@ -168,8 +167,9 @@ try
     nb_points   = 0;                   % Number of printed points
     flag_pipe_running  = false;        % Is the pipeline started?
     flag_pipe_finished = false;        % Is the pipeline finished?
-    flag_worker_alive  = false([opt.max_queued+2 1]); % Is the worker alive? two last entries are for the PM and the GC
-    flag_worker_wait   = false([opt.max_queued+2 1]); % Is the worker alive? two last entries are for the PM and the GC
+    flag_started = false([opt.max_queued+2 1]); % Has the worker ever started? two last entries are for the PM and the GC
+    flag_alive   = false([opt.max_queued+2 1]); % Is the worker alive? two last entries are for the PM and the GC
+    flag_wait    = false([opt.max_queued+2 1]); % Are we waiting for the worker to start? two last entries are for the PM and the GC
     
     %% Create logs folder for each worker
     path_worker_w = cell(opt.max_queued,1);
@@ -206,6 +206,21 @@ try
         script_pipe = [path_tmp filesep 'psom_manager.sh'];
     end
     
+    %% Options for submission of the garbage collector
+    opt_logs_garb.txt    = [path_garbage 'garbage_history.txt'];
+    opt_logs_garb.eqsub  = [path_garbage 'garbage.eqsub'];
+    opt_logs_garb.oqsub  = [path_garbage 'garbage.oqsub'];
+    opt_logs_garb.failed = [path_garbage 'garbage.failed'];
+    opt_logs_garb.exit   = [path_garbage 'garbage.exit'];   
+    opt_garb = opt_script;
+    opt_garb.name_job = 'psom_garbage';   
+    cmd_garb = sprintf('opt.max_queued = %i; opt.time_between_checks = %1.2f; opt.nb_checks_per_point = %i; psom_garbage(''%s'',opt);',opt.max_queued,opt.time_between_checks,opt.nb_checks_per_point,path_logs);    
+    if ispc % this is windows
+        script_garb = [path_tmp filesep 'psom_garbage.bat'];
+    else
+        script_garb = [path_tmp filesep 'psom_garbage.sh'];
+    end
+    
     %% Options for submission of the workers
     for num_w = 1:opt.max_queued
         opt_logs_worker(num_w).txt    = sprintf('%spsom%i%sworker.log',path_worker,num_w,filesep);
@@ -228,20 +243,37 @@ try
     
         %% Start the pipeline manager
         flag_pipe_running = psom_exist(file_pipe_running);
-        if ~flag_pipe_running || (~flag_worker_alive(end-1)&&(nb_resub < opt.nb_resub))
+        if ~flag_alive(end-1)&&(~flag_started(end-1)||(nb_resub < opt.nb_resub))
             [flag_failed,msg] = sub_run_script(cmd_pipe,script_pipe,opt_pipe,opt_logs_pipe,opt.flag_verbose);
             fprintf('Starting the pipeline manager...\n')
-            if flag_pipe_running
+            if flag_started(end-1)
                 nb_resub = nb_resub+1;
                 tab_refresh(end-1,:,1)   = -1;
-                flag_worker_alive(end-1) = false;
-                flag_worker_wait(end-1)  = true;
+                flag_alive(end-1) = false;
+                flag_wait(end-1)  = true;
             end
             %% Wait for the pipeline manager to start
             while ~psom_exist(file_pipe_running)
                 sub_sleep(opt.time_between_checks)
             end
             flag_pipe_running = true;
+            flag_started(end-1) = true;
+        end
+        
+        %% Start the garbage collector
+        if ~flag_wait(end)&&~flag_alive(end)&&(~flag_started(end)||(nb_resub < opt.nb_resub))
+            if psom_exist(path_garbage)
+                psom_clean(path_garbage,struct('flag_verbose',false));
+            end
+            psom_mkdir(path_garbage);
+            [flag_failed,msg] = sub_run_script(cmd_garb,script_garb,opt_garb,opt_logs_garb,opt.flag_verbose);
+            fprintf('Starting the garbage collector...\n')
+            if flag_started(end)
+                nb_resub = nb_resub+1;
+                tab_refresh(end-1,:,1)   = -1;
+                flag_alive(end-1) = false;
+                flag_wait(end-1)  = true;
+            end
         end
     
         %% Check the heartbeats
@@ -261,6 +293,7 @@ try
                     % this is the first time an active time is collected
                     % simply update tab_refresh
                     tab_refresh(num_w,:,1) = 0;
+                    flag_started(num_w) = true;
                 else
                     try
                         refresh_time = load(file_heartbeat);
@@ -276,18 +309,20 @@ try
                         % I heard a heartbeat!    
                         tab_refresh(num_w,:,1) = refresh_time.curr_time;
                         tab_refresh(num_w,:,2) = clock;
-                        flag_worker_alive(num_w) = true;
-                        flag_worker_wait(num_w) = false;
+                        flag_alive(num_w) = true;
+                        flag_wait(num_w) = false;
                     else 
-                        % how mlong has it been without a heartbeat?
+                        % I did not hear a heartbeat
+                        % how long has it been?
                         elapsed_time = etime(clock,tab_refresh(num_w,:,2));
                         if elapsed_time > 30
                             % huho 30 seconds without a heartbeat, he's dead Jim
-                            flag_worker_alive(num_w) = false;
-                            flag_worker_wait(num_w) = false;
+                            flag_alive(num_w) = false;
+                            flag_wait(num_w) = false;
                         else
-                            flag_worker_alive(num_w) = true;
-                            flag_worker_wait(num_w) = false;
+                            % Not that long, just go on
+                            flag_alive(num_w) = true;
+                            flag_wait(num_w) = false;
                         end
                     end
                 end
@@ -296,16 +331,18 @@ try
         
         %% Now start workers
         for num_w = 1:opt.max_queued
-            if ~flag_worker_wait(num_w)&&(~flag_worker_alive(num_w)&&(nb_resub<=opt.nb_resub))
+            if ~flag_wait(num_w)&&~flag_alive(num_w)&&(~flag_started(num_w)||(nb_resub<=opt.nb_resub))
                 fprintf('Starting worker number %i...\n',num_w)
                 [flag_failed,msg] = sub_run_script(cmd_worker{num_w},script_worker{num_w},opt_worker(num_w),opt_logs_worker(num_w),opt.flag_verbose);
-                flag_worker_wait(num_w) = true;
+                flag_wait(num_w) = true;
                 tab_refresh(num_w,:,1) = -1;
-                nb_resub = nb_resub+1;
+                if flag_started(num_w)
+                    nb_resub = nb_resub+1;
+                end
             end
         end
         sub_sleep(opt.time_between_checks*10)
-        flag_pipe_finished = ~isnan(flag_worker_alive(end-1))&&~psom_exist(file_pipe_running);
+        flag_pipe_finished = ~isnan(flag_alive(end-1))&&~psom_exist(file_pipe_running);
     end
     
 catch

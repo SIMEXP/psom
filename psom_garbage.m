@@ -245,3 +245,12 @@ for num_e = 1:nb_lines
     events{num_e,1} = news_line{num_e}(1:pos-1);
     events{num_e,2} = news_line{num_e}(pos+3:end);
 end
+
+%% Work around thee 'pause' bug in octave
+function [] = sub_sleep(time_sleep)
+
+if exist('OCTAVE_VERSION','builtin')  
+    [res,msg] = system(sprintf('sleep %1.3f',time_sleep));
+else
+    pause(time_sleep); 
+end
