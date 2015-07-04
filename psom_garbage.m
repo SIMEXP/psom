@@ -100,8 +100,10 @@ status = load(file_status);
 list_jobs = fieldnames(status);
 status_cell = struct2cell(status);
 mask_done = false(size(list_jobs));
+mask_warning = false(size(list_jobs));
 
 %% Collect garbage
+flag_point = false;
 flag_last_run = false;
 flag_run = false;
 flag_exit = false;
@@ -158,23 +160,25 @@ while ~flag_exit
                 new_prof.(name_job) = prof.(name_job);
                 psom_clean(file_logs_job,struct('flag_verbose',false));
                 psom_clean(file_profile_job,struct('flag_verbose',false));
+                mask_done(list_todo(num_t)) = true;
                 if opt.flag_verbose
-                    fprintf('Collecting logs of job %s\n',name_job)
+                    fprintf('\nCollecting logs of job %s',name_job)
                 end
             end
         end
-        if ~flag_found
-            warning('Could not find logs for job %s\n',name_job)
+        if ~flag_found&&~mask_warning(list_todo(num_t))
+            mask_warning(list_todo(num_t)) = true;
+            warning('Could not find logs for job %s',name_job)
         end
     end
     
     %% Update the status/logs/profile
     save(file_logs,'-struct','-append','new_logs');
-    copyfile(file_logs,file_logs_backup,'f');
+    save(file_logs_backup,'-struct','-append','new_logs');
     save(file_status,'-struct','-append','new_status');
-    copyfile(file_status,file_status_backup,'f');
+    save(file_status_backup,'-struct','-append','new_status');
     save(file_profile,'-struct','-append','new_prof');
-    copyfile(file_profile,file_profile_backup,'f');
+    save(file_profile_backup,'-struct','-append','new_prof');
 
     %% Wait if necessary
     if flag_nothing_happened && psom_exist(file_pipe_running)
@@ -183,12 +187,19 @@ while ~flag_exit
         if (nb_checks >= opt.nb_checks_per_point)
             nb_checks = 0;
             if opt.flag_verbose
-                fprintf('.');
+                if flag_point
+                    fprintf('.');
+                else 
+                    fprintf('\n.');
+                end
             end
+            flag_point = true;
             nb_checks = nb_checks+1;
         else
             nb_checks = nb_checks+1;
         end
+    else 
+        flag_point = false;
     end
         
     %% Test if it is time to quit
