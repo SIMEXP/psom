@@ -1,5 +1,5 @@
 function status = psom_run_pipeline(pipeline,opt)
-% Run a pipeline using the Pipeline System for Octave and Matlab (PSOM).
+% Run a pipeline.
 %
 % SYNTAX: status = psom_run_pipeline( pipeline , opt )
 %
@@ -297,22 +297,18 @@ end
 %% Options
 name_pipeline = 'PIPE';
 
-gb_name_structure = 'opt';
-gb_list_fields    = {'max_buffer' , 'flag_spawn' , 'flag_fail' , 'flag_short_job_names' , 'nb_resub'       , 'type_restart' , 'flag_pause' , 'init_matlab'       , 'flag_update' , 'path_search'       , 'restart' , 'shell_options'       , 'path_logs' , 'command_matlab' , 'flag_verbose' , 'mode'       , 'mode_pipeline_manager' , 'max_queued'       , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
-gb_list_defaults  = {5            , false        , false       , true                   , gb_psom_nb_resub , 'substring'    , false        , gb_psom_init_matlab , true          , gb_psom_path_search , {}        , gb_psom_shell_options , NaN         , ''               , 1              , gb_psom_mode , gb_psom_mode_pm         , gb_psom_max_queued , gb_psom_qsub_options , []                    , []                    , []               };
-psom_set_defaults
+opt = psom_struct_defaults( opt , ... 
+   {'max_buffer' , 'flag_spawn' , 'flag_fail' , 'flag_short_job_names' , 'nb_resub'       , 'type_restart' , 'flag_pause' , 'init_matlab'       , 'flag_update' , 'path_search'       , 'restart' , 'shell_options'       , 'path_logs' , 'command_matlab' , 'flag_verbose' , 'mode'       , 'mode_pipeline_manager' , 'max_queued'       , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' }, ...
+   {5            , false        , false       , true                   , gb_psom_nb_resub , 'substring'    , false        , gb_psom_init_matlab , true          , gb_psom_path_search , {}        , gb_psom_shell_options , NaN         , ''               , 1              , gb_psom_mode , gb_psom_mode_pm         , gb_psom_max_queued , gb_psom_qsub_options , []                    , []                    , []               });
 
 opt.flag_debug = opt.flag_verbose>1;
-flag_debug = opt.flag_debug;
 
 if ~strcmp(opt.path_logs(end),filesep)
     opt.path_logs = [opt.path_logs filesep];
-    path_logs = opt.path_logs;
 end
 
-if isempty(path_search)
-    path_search = path;
-    opt.path_search = path_search;
+if isempty(opt.path_search)
+    opt.path_search = path;
 end
 
 if isempty(opt.command_matlab)
@@ -328,23 +324,19 @@ if strcmp(opt.mode,'session')
     max_queued = 1;
 end
 
-if max_queued == 0
+if opt.max_queued == 0
     switch opt.mode
         case {'batch','background'}
             if isempty(gb_psom_max_queued)
                 opt.max_queued = 1;
-                max_queued = 1;
             else
                 opt.max_queued = gb_psom_max_queued;
-                max_queued = gb_psom_max_queued;
             end
         case {'session','qsub','msub','condor','bsub'}
             if isempty(gb_psom_max_queued)
                 opt.max_queued = Inf;
-                max_queued = Inf;
             else
                 opt.max_queued = gb_psom_max_queued;
-                max_queued = gb_psom_max_queued;
             end
     end % switch action
 end % default of max_queued
@@ -355,18 +347,18 @@ end
 
 switch opt.mode
     case 'session'
-        if isempty(time_between_checks)
-            time_between_checks = 0;
+        if isempty(opt.time_between_checks)
+            opt.time_between_checks = 0;
         end
-        if isempty(nb_checks_per_point)
-            nb_checks_per_point = Inf;
+        if isempty(opt.nb_checks_per_point)
+            opt.nb_checks_per_point = Inf;
         end
     otherwise
-        if isempty(time_between_checks)
-            time_between_checks = 0;
+        if isempty(opt.time_between_checks)
+            opt.time_between_checks = 0.5;
         end
-        if isempty(nb_checks_per_point)
-            nb_checks_per_point = 60;
+        if isempty(opt.nb_checks_per_point)
+            opt.nb_checks_per_point = 60;
         end
 end
 
@@ -375,13 +367,13 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Check for a 'lock' tag
-file_pipe_running = cat(2,path_logs,filesep,name_pipeline,'.lock');
-file_logs = cat(2,path_logs,filesep,name_pipeline,'_history.txt');
+file_pipe_running = cat(2,opt.path_logs,filesep,name_pipeline,'.lock');
+file_logs = cat(2,opt.path_logs,filesep,name_pipeline,'_history.txt');
 if exist(file_pipe_running,'file') % Is the pipeline running ?
 
     fprintf('\nA lock file %s has been found on the pipeline !\nIf the pipeline crashed, press CTRL-C now, delete manually the lock and restart the pipeline.\nOtherwise press any key to monitor the current pipeline execution.\n\n',file_pipe_running)
     pause
-    psom_pipeline_visu(path_logs,'monitor');
+    psom_pipeline_visu(opt.path_logs,'monitor');
     return
 end
 
@@ -401,12 +393,12 @@ if ~flag_start
 end
     
 %% Run the pipeline manager
-file_pipeline = cat(2,path_logs,filesep,name_pipeline,'.mat');
+file_pipeline = cat(2,opt.path_logs,filesep,name_pipeline,'.mat');
 if strcmp(opt.mode_pipeline_manager,'session')
 else
     
     %% Create a folder for the PSOM deamon
-    path_deamon = [path_logs 'deamon' filesep];
+    path_deamon = [opt.path_logs 'deamon' filesep];
     if psom_exist(path_deamon)
         psom_clean(path_deamon,struct('flag_verbose',false));
     end
@@ -428,7 +420,7 @@ else
     save(file_opt_deamon,'-struct','opt_d');
     
     %% Options to submit scripts
-    opt_script.path_search    = [path_logs 'PIPE.mat'];
+    opt_script.path_search    = [opt.path_logs 'PIPE.mat'];
     opt_script.mode           = opt.mode_pipeline_manager;
     opt_script.init_matlab    = opt.init_matlab;
     opt_script.flag_debug     = opt.flag_verbose == 2;        
@@ -443,7 +435,7 @@ else
     opt_logs.oqsub  = [path_deamon 'deamon.oqsub'];
     opt_logs.failed = [path_deamon 'deamon.failed'];
     opt_logs.exit   = [path_deamon 'deamon.exit'];   
-    cmd_deamon = sprintf('opt = load(''%s''); psom_deamon(''%s'',opt);',file_opt_deamon,path_logs);    
+    cmd_deamon = sprintf('opt = load(''%s''); psom_deamon(''%s'',opt);',file_opt_deamon,opt.path_logs);    
     if ispc % this is windows
         script_deamon = [path_deamon filesep 'psom_deamon.bat'];
     else
@@ -453,8 +445,8 @@ else
 end
 
 %% If not in session mode, monitor the output of the pipeline
-if flag_verbose&&~strcmp(opt.mode_pipeline_manager,'session')
-    psom_pipeline_visu(path_logs,'monitor',0);
+if opt.flag_verbose&&~strcmp(opt.mode_pipeline_manager,'session')
+    psom_pipeline_visu(opt.path_logs,'monitor',0);
 end
 
 function [flag_failed,errmsg] = sub_run_script(cmd,script,opt,opt_logs,flag_verbose);
