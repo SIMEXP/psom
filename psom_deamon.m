@@ -56,6 +56,10 @@ function status_pipe = psom_deamon(path_logs,opt)
 %      passed using comma separation) that will be executed at the begining 
 %      of any matlab/Octave job.
 %
+%   TIME_BETWEEN_CHECKS
+%
+%   NB_CHECKS_PER_POINT
+%
 %   FLAG_VERBOSE
 %      (integer 0, 1 or 2, default 1) No verbose (0), standard 
 %      verbose (1), a lot of verbose, useful for debugging (2).

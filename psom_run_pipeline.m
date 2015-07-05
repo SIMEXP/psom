@@ -84,6 +84,8 @@ function status = psom_run_pipeline(pipeline,opt)
 %        simultaneously. Some qsub systems actually put restrictions
 %        on that. Contact your local system administrator for more info.
 %
+%    MAX_BUFFER
+%
 %    NB_RESUB
 %        (integer, default 0 in 'session', 'batch' and 'background' modes,
 %        1 otherwise) The number of times a job will be resubmitted if it 
@@ -296,8 +298,8 @@ end
 name_pipeline = 'PIPE';
 
 gb_name_structure = 'opt';
-gb_list_fields    = {'flag_spawn' , 'flag_fail' , 'flag_short_job_names' , 'nb_resub'       , 'type_restart' , 'flag_pause' , 'init_matlab'       , 'flag_update' , 'path_search'       , 'restart' , 'shell_options'       , 'path_logs' , 'command_matlab' , 'flag_verbose' , 'mode'       , 'mode_pipeline_manager' , 'max_queued'       , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
-gb_list_defaults  = {false        , false       , true                   , gb_psom_nb_resub , 'substring'    , false        , gb_psom_init_matlab , true          , gb_psom_path_search , {}        , gb_psom_shell_options , NaN         , ''               , 1              , gb_psom_mode , gb_psom_mode_pm         , gb_psom_max_queued , gb_psom_qsub_options , []                    , []                    , []               };
+gb_list_fields    = {'max_buffer' , 'flag_spawn' , 'flag_fail' , 'flag_short_job_names' , 'nb_resub'       , 'type_restart' , 'flag_pause' , 'init_matlab'       , 'flag_update' , 'path_search'       , 'restart' , 'shell_options'       , 'path_logs' , 'command_matlab' , 'flag_verbose' , 'mode'       , 'mode_pipeline_manager' , 'max_queued'       , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
+gb_list_defaults  = {5            , false        , false       , true                   , gb_psom_nb_resub , 'substring'    , false        , gb_psom_init_matlab , true          , gb_psom_path_search , {}        , gb_psom_shell_options , NaN         , ''               , 1              , gb_psom_mode , gb_psom_mode_pm         , gb_psom_max_queued , gb_psom_qsub_options , []                    , []                    , []               };
 psom_set_defaults
 
 opt.flag_debug = opt.flag_verbose>1;
@@ -380,67 +382,86 @@ if exist(file_pipe_running,'file') % Is the pipeline running ?
     fprintf('\nA lock file %s has been found on the pipeline !\nIf the pipeline crashed, press CTRL-C now, delete manually the lock and restart the pipeline.\nOtherwise press any key to monitor the current pipeline execution.\n\n',file_pipe_running)
     pause
     psom_pipeline_visu(path_logs,'monitor');
-
-else
-
-    %% Initialize the logs folder
-    opt_init.path_logs      = opt.path_logs;
-    opt_init.path_search    = opt.path_search;
-    opt_init.command_matlab = opt.command_matlab;
-    opt_init.flag_verbose   = opt.flag_verbose;
-    opt_init.restart        = opt.restart;
-    opt_init.flag_update    = opt.flag_update;    
-    opt_init.flag_pause     = opt.flag_pause;
-    opt_init.type_restart   = opt.type_restart;
-    
-    if flag_debug
-        opt_init
-    end
-
-    [tmp,flag_start] = psom_pipeline_init(pipeline,opt_init);   
-    if ~flag_start
-        return
-    end
-    
-    %% Run the pipeline manager
-    file_pipeline = cat(2,path_logs,filesep,name_pipeline,'.mat');
-
-    opt_proc.mode                  = opt.mode;
-    opt_proc.mode_pipeline_manager = opt.mode_pipeline_manager;
-    opt_proc.max_queued            = opt.max_queued;
-    opt_proc.qsub_options          = opt.qsub_options;
-    opt_proc.shell_options         = shell_options;
-    opt_proc.command_matlab        = opt.command_matlab;
-    opt_proc.time_between_checks   = opt.time_between_checks;
-    opt_proc.nb_checks_per_point   = opt.nb_checks_per_point;
-    opt_proc.flag_short_job_names  = opt.flag_short_job_names;
-    opt_proc.flag_debug            = opt.flag_debug;
-    opt_proc.flag_spawn            = opt.flag_spawn;
-    opt_proc.flag_verbose          = opt.flag_verbose;
-    opt_proc.init_matlab           = opt.init_matlab;
-    opt_proc.nb_resub              = opt.nb_resub;
-    opt_proc.flag_fail             = opt.flag_fail;
-    
-    if flag_debug
-        opt_proc
-    end
-    
-    % Read the number of characters that are currently in the history
-    if flag_verbose&&~strcmp(opt.mode_pipeline_manager,'session')
-        hf = fopen(file_logs,'r');
-        if hf~=-1
-            str_logs = fread(hf,Inf,'uint8=>char')';
-            nb_chars = ftell(hf);
-            fclose(hf);
-        else
-            nb_chars = 0;
-        end
-    end
-
-    status = psom_pipeline_process(file_pipeline,opt_proc);
-
-    %% If not in session mode, monitor the output of the pipeline
-    if flag_verbose&&~strcmp(opt.mode_pipeline_manager,'session')
-        psom_pipeline_visu(path_logs,'monitor',nb_chars);
-    end
+    return
 end
+
+%% Initialize the logs folder
+opt_init.path_logs      = opt.path_logs;
+opt_init.path_search    = opt.path_search;
+opt_init.command_matlab = opt.command_matlab;
+opt_init.flag_verbose   = opt.flag_verbose;
+opt_init.restart        = opt.restart;
+opt_init.flag_update    = opt.flag_update;    
+opt_init.flag_pause     = opt.flag_pause;
+opt_init.type_restart   = opt.type_restart;
+
+[tmp,flag_start] = psom_pipeline_init(pipeline,opt_init);   
+if ~flag_start
+    return
+end
+    
+%% Run the pipeline manager
+file_pipeline = cat(2,path_logs,filesep,name_pipeline,'.mat');
+if strcmp(opt.mode_pipeline_manager,'session')
+else
+    
+    %% Create a folder for the PSOM deamon
+    path_deamon = [path_logs 'deamon' filesep];
+    if psom_exist(path_deamon)
+        psom_clean(path_deamon,struct('flag_verbose',false));
+    end
+    psom_mkdir(path_deamon);
+    
+    %% The options for the deamon
+    opt_d.mode           = opt.mode;
+    opt_d.max_queued     = opt.max_queued;
+    opt_d.max_buffer     = opt.max_buffer;
+    opt_d.nb_resub       = opt.nb_resub;
+    opt_d.shell_options  = opt.shell_options;
+    opt_d.qsub_options   = opt.qsub_options;
+    opt_d.command_matlab = opt.command_matlab;
+    opt_d.init_matlab    = opt.init_matlab;
+    opt_d.flag_verbose   = opt.flag_verbose;
+    opt_d.time_between_checks = opt.time_between_checks;
+    opt_d.nb_checks_per_point = opt.nb_checks_per_point;
+    file_opt_deamon = [path_deamon 'opt_deamon.mat'];
+    save(file_opt_deamon,'-struct','opt_d');
+    
+    %% Options to submit scripts
+    opt_script.path_search    = [path_logs 'PIPE.mat'];
+    opt_script.mode           = opt.mode_pipeline_manager;
+    opt_script.init_matlab    = opt.init_matlab;
+    opt_script.flag_debug     = opt.flag_verbose == 2;        
+    opt_script.shell_options  = opt.shell_options;
+    opt_script.command_matlab = opt.command_matlab;
+    opt_script.qsub_options   = opt.qsub_options;
+    opt_script.name_job       = 'psom_deamon';   
+    
+    %% Options for submission of the pipeline manager
+    opt_logs.txt    = [path_deamon 'deamon.log'];
+    opt_logs.eqsub  = [path_deamon 'deamon.eqsub'];
+    opt_logs.oqsub  = [path_deamon 'deamon.oqsub'];
+    opt_logs.failed = [path_deamon 'deamon.failed'];
+    opt_logs.exit   = [path_deamon 'deamon.exit'];   
+    cmd_deamon = sprintf('opt = load(''%s''); psom_deamon(''%s'',opt);',file_opt_deamon,path_logs);    
+    if ispc % this is windows
+        script_deamon = [path_deamon filesep 'psom_deamon.bat'];
+    else
+        script_deamon = [path_deamon filesep 'psom_deamon.sh'];
+    end
+    [flag_failed,msg] = sub_run_script(cmd_deamon,script_deamon,opt_script,opt_logs,opt.flag_verbose);
+end
+
+%% If not in session mode, monitor the output of the pipeline
+if flag_verbose&&~strcmp(opt.mode_pipeline_manager,'session')
+    psom_pipeline_visu(path_logs,'monitor',0);
+end
+
+function [flag_failed,errmsg] = sub_run_script(cmd,script,opt,opt_logs,flag_verbose);
+[flag_failed,errmsg] = psom_run_script(cmd,script,opt,opt_logs);
+if flag_failed~=0
+    fprintf('\n    The execution of the job %s failed.\n The feedback was : %s\n',name_job,errmsg);
+    error('Something went bad with the execution of the job.')
+elseif flag_verbose == 2
+    fprintf('\n    The feedback from the execution of job %s was : %s\n',name_job,errmsg);
+end    
