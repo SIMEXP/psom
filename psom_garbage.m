@@ -61,6 +61,7 @@ if ~strcmp(path_logs(end),filesep)
 end
 
 %% File names
+path_garbage = [path_logs 'garbage' filesep];
 file_status         = [path_logs 'PIPE_status.mat'];
 file_status_backup  = [path_logs 'PIPE_status_backup.mat'];
 file_logs           = [path_logs 'PIPE_logs.mat'];
@@ -68,8 +69,8 @@ file_logs_backup    = [path_logs 'PIPE_logs_backup.mat'];
 file_profile        = [path_logs 'PIPE_profile.mat'];
 file_profile_backup = [path_logs 'PIPE_profile_backup.mat'];
 file_pipe_running   = [path_logs 'PIPE.lock'];
-file_heartbeat      = [path_logs 'garbarge_heartbeat.mat'];
-file_kill           = [path_logs 'garbage.kill'];
+file_heartbeat      = [path_garbage 'heartbeat.mat'];
+file_kill           = [path_garbage 'garbage.kill'];
 path_worker         = [path_logs 'worker' filesep];
 file_news           = [path_logs 'news_feed.csv'];
 
@@ -123,7 +124,7 @@ while ~flag_exit
        [str_read,nb_char_news] = sub_tail(file_news,nb_char_news);
        news = [news str_read];
        [events,news] = sub_parse_news(news);
-               
+              
        %% Some verbose for the events
        for num_e = 1:size(events,1)
            %% Update status
@@ -143,7 +144,7 @@ while ~flag_exit
     
     %% Collect garbage
     list_todo = find(mask_todo);
-    flag_nothing_happened = any(mask_todo);
+    flag_nothing_happened = ~any(mask_todo);
     for num_t = 1:length(list_todo)
         flag_found = false;
         name_job = list_jobs{list_todo(num_t)};
@@ -183,7 +184,7 @@ while ~flag_exit
     %% Wait if necessary
     if flag_nothing_happened && psom_exist(file_pipe_running)
         sub_sleep(opt.time_between_checks)
-         
+        
         if (nb_checks >= opt.nb_checks_per_point)
             nb_checks = 0;
             if opt.flag_verbose
@@ -210,7 +211,10 @@ while ~flag_exit
     end
     flag_run = psom_exist(file_pipe_running);
 end
-      
+if opt.flag_verbose
+    fprintf('\nPipeline exited');
+end
+ 
 %% SUBFUNCTIONS
 
 %% Read a text file
