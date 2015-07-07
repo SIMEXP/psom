@@ -73,6 +73,13 @@ file_kill      = [path_worker filesep 'worker.kill'];
 file_news_feed = [path_worker filesep 'news_feed.csv'];
 file_pipe      = [path_worker filesep 'PIPE_jobs.mat'];
 file_lock      = [path_worker filesep 'PIPE.lock'];
+file_status         = [path_worker 'PIPE_status.mat'];
+file_status_backup  = [path_worker 'PIPE_status_backup.mat'];
+file_logs           = [path_worker 'PIPE_logs.mat'];
+file_logs_backup    = [path_worker 'PIPE_logs_backup.mat'];
+file_profile        = [path_worker 'PIPE_profile.mat'];
+file_profile_backup = [path_worker 'PIPE_profile_backup.mat'];
+
 
 %% Open the news feed file
 if strcmp(gb_psom_language,'matlab');
@@ -98,13 +105,21 @@ if flag.heartbeat
     system([instr_heartbeat '&']);
 end
 
+%% Create a lock file, if not in spawn mode
+if ~flag.spawn
+    start_time = clock;
+    save(file_lock,'start_time');
+end
+
 %% Load jobs
 if psom_exist( file_pipe )
     pipeline = load(file_pipe);
     list_jobs = fieldnames(pipeline);
+    flag_session = true;
 else
     pipeline = struct;
     list_jobs = {};
+    flag_session = false;
 end
 
 % a try/catch block is used to crash gracefully if the user is
@@ -152,8 +167,25 @@ try
             if flag_failed
                 sub_add_line_log(hf_news,sprintf('%s , failed\n',name_job));
                 flag_any_fail = true;
+                new_status = struct(name_job,'failed');
             else
                 sub_add_line_log(hf_news,sprintf('%s , finished\n',name_job));
+                new_status = struct(name_job,'finished');
+            end
+            
+            if ~flag.spawn
+                new_logs = struct(name_job,sub_read_txt([path_worker name_job '.log']));
+                tmp = load([path_worker name_job '_profile.mat']);
+                tmp.worker = 0;
+                new_prof.(name_job) = tmp;
+                
+                %% Update the status/logs/profile
+                save(file_logs,'-struct','-append','new_logs');
+                save(file_logs_backup,'-struct','-append','new_logs');
+                save(file_status,'-struct','-append','new_status');
+                save(file_status_backup,'-struct','-append','new_status');
+                save(file_profile,'-struct','-append','new_prof');
+                save(file_profile_backup,'-struct','-append','new_prof');
             end
         end 
         
@@ -175,6 +207,11 @@ try
     sub_add_line_log(hf_news,'PIPE , terminated\n');
     if strcmp(gb_psom_language,'matlab')
         fclose(hf_news);
+    end
+    
+    %% Remove the lock
+    if ~flag.spawn
+        psom_clean(file_lock)
     end
     
     %% Return a 1 status if any job has failed
@@ -199,6 +236,20 @@ catch
     return
 end
 
+%% SUBFUNCTIONS
+
+%% Read a text file
+function str_txt = sub_read_txt(file_name)
+
+hf = fopen(file_name,'r');
+if hf == -1
+    str_txt = '';
+else
+    str_txt = fread(hf,Inf,'uint8=>char')';
+    fclose(hf);    
+end
+
+%% Add one line to the news_feed
 function [] = sub_add_line_log(file_write,str_write);
 
 if ischar(file_write)

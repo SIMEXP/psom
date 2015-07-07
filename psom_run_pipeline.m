@@ -394,16 +394,18 @@ end
     
 %% Run the pipeline manager
 file_pipeline = cat(2,opt.path_logs,filesep,name_pipeline,'.mat');
-if 0==0
+%% Create a folder for the PSOM deamon
+path_deamon = [opt.path_logs 'deamon' filesep];
+if psom_exist(path_deamon)
+    psom_clean(path_deamon,struct('flag_verbose',false));
+end
+psom_mkdir(path_deamon);
     
-    %% Create a folder for the PSOM deamon
-    path_deamon = [opt.path_logs 'deamon' filesep];
-    if psom_exist(path_deamon)
-        psom_clean(path_deamon,struct('flag_verbose',false));
-    end
-    psom_mkdir(path_deamon);
-    
-    %% The options for the deamon
+%% The options for the deamon
+if strcmp(opt.mode,'session')
+    opt_d.heartbeat = true;
+    opt_d.spawn = false;
+else
     opt_d.mode           = opt.mode;
     opt_d.mode_pipeline_manager = opt.mode_pipeline_manager;
     opt_d.max_queued     = opt.max_queued;
@@ -416,33 +418,38 @@ if 0==0
     opt_d.flag_verbose   = opt.flag_verbose;
     opt_d.time_between_checks = opt.time_between_checks;
     opt_d.nb_checks_per_point = opt.nb_checks_per_point;
-    file_opt_deamon = [path_deamon 'opt_deamon.mat'];
-    save(file_opt_deamon,'-struct','opt_d');
-    
-    %% Options to submit scripts
-    opt_script.path_search    = [opt.path_logs 'PIPE.mat'];
-    opt_script.mode           = opt.mode_pipeline_manager;
-    opt_script.init_matlab    = opt.init_matlab;
-    opt_script.flag_debug     = opt.flag_verbose == 2;        
-    opt_script.shell_options  = opt.shell_options;
-    opt_script.command_matlab = opt.command_matlab;
-    opt_script.qsub_options   = opt.qsub_options;
-    opt_script.name_job       = 'psom_deamon';   
-    
-    %% Options for submission of the pipeline manager
-    opt_logs.txt    = [path_deamon 'deamon.log'];
-    opt_logs.eqsub  = [path_deamon 'deamon.eqsub'];
-    opt_logs.oqsub  = [path_deamon 'deamon.oqsub'];
-    opt_logs.failed = [path_deamon 'deamon.failed'];
-    opt_logs.exit   = [path_deamon 'deamon.exit'];   
-    cmd_deamon = sprintf('opt = load(''%s''); psom_deamon(''%s'',opt);',file_opt_deamon,opt.path_logs);    
-    if ispc % this is windows
-        script_deamon = [path_deamon filesep 'psom_deamon.bat'];
-    else
-        script_deamon = [path_deamon filesep 'psom_deamon.sh'];
-    end
-    [flag_failed,msg] = psom_run_script(cmd_deamon,script_deamon,opt_script,opt_logs,opt.flag_verbose);
 end
+file_opt_deamon = [path_deamon 'opt_deamon.mat'];
+save(file_opt_deamon,'-struct','opt_d');
+    
+%% Options to submit scripts
+opt_script.path_search    = [opt.path_logs 'PIPE.mat'];
+opt_script.mode           = opt.mode_pipeline_manager;
+opt_script.init_matlab    = opt.init_matlab;
+opt_script.flag_debug     = opt.flag_verbose == 2;        
+opt_script.shell_options  = opt.shell_options;
+opt_script.command_matlab = opt.command_matlab;
+opt_script.qsub_options   = opt.qsub_options;
+opt_script.name_job       = 'psom_deamon';   
+    
+%% Options for submission of the pipeline manager
+opt_logs.txt    = [path_deamon 'deamon.log'];
+opt_logs.eqsub  = [path_deamon 'deamon.eqsub'];
+opt_logs.oqsub  = [path_deamon 'deamon.oqsub'];
+opt_logs.failed = [path_deamon 'deamon.failed'];
+opt_logs.exit   = [path_deamon 'deamon.exit'];
+if strcmp(opt.mode,'session') 
+    cmd_deamon = sprintf('flag = load(''%s''); psom_worker(''%s'',flag);',file_opt_deamon,opt.path_logs);    
+else
+    cmd_deamon = sprintf('opt = load(''%s''); psom_deamon(''%s'',opt);',file_opt_deamon,opt.path_logs);    
+end
+
+if ispc % this is windows
+    script_deamon = [path_deamon filesep 'psom_deamon.bat'];
+else
+    script_deamon = [path_deamon filesep 'psom_deamon.sh'];
+end
+[flag_failed,msg] = psom_run_script(cmd_deamon,script_deamon,opt_script,opt_logs,opt.flag_verbose);
 
 %% If not in session mode, monitor the output of the pipeline
 if opt.flag_verbose&&~strcmp(opt.mode_pipeline_manager,'session')

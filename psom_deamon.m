@@ -133,7 +133,6 @@ end
 
 %% File names
 file_pipeline     = [path_logs 'PIPE.mat'];
-file_jobs         = [path_logs 'PIPE_jobs.mat'];
 file_pipe_running = [path_logs 'PIPE.lock'];
 file_kill         = [path_logs 'PIPE.kill'];
 path_tmp          = [path_logs 'tmp' filesep];
