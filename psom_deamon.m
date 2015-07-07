@@ -137,9 +137,12 @@ path_tmp          = [path_logs 'tmp' filesep];
 path_worker       = [path_logs 'worker' filesep];
 path_garbage      = [path_logs 'garbage' filesep];
 for num_w = 1:opt.max_queued
-    file_worker_heart{num_w} = sprintf('%spsom%i%sheartbeat.mat',path_worker,num_w,filesep);
+    name_worker{num_w} = sprintf('psom%i',num_w);
+    file_worker_heart{num_w} = [path_worker name_worker{num_w} filesep 'heartbeat.mat'];
 end
+name_worker{opt.max_queued+1} = 'psom_manager';
 file_worker_heart{opt.max_queued+1} = [path_logs 'heartbeat.mat'];
+name_worker{opt.max_queued+2} = 'psom_garbage';
 file_worker_heart{opt.max_queued+2} = [path_garbage 'heartbeat.mat'];
 psom_mkdir(path_tmp);
 
@@ -248,7 +251,7 @@ try
         %% Start the pipeline manager
         flag_pipe_running = psom_exist(file_pipe_running);
         if ~flag_alive(end-1)&&(~flag_started(end-1)||(nb_resub < opt.nb_resub))
-            [flag_failed,msg] = sub_run_script(cmd_pipe,script_pipe,opt_pipe,opt_logs_pipe,opt.flag_verbose);
+            [flag_failed,msg] = psom_run_script(cmd_pipe,script_pipe,opt_pipe,opt_logs_pipe,opt.flag_verbose);
             fprintf('Starting the pipeline manager...\n')
             if flag_started(end-1)
                 nb_resub = nb_resub+1;
@@ -270,7 +273,7 @@ try
                 psom_clean(path_garbage,struct('flag_verbose',false));
             end
             psom_mkdir(path_garbage);
-            [flag_failed,msg] = sub_run_script(cmd_garb,script_garb,opt_garb,opt_logs_garb,opt.flag_verbose);
+            [flag_failed,msg] = psom_run_script(cmd_garb,script_garb,opt_garb,opt_logs_garb,opt.flag_verbose);
             tab_refresh(end,:,1)   = -1;
             flag_alive(end) = false;
             flag_wait(end)  = true;
@@ -288,20 +291,30 @@ try
             %% Check for the presence of the heartbeat
             flag_heartbeat = psom_exist(file_worker_heart{num_w});
             
-            if flag_heartbeat
+            if ~flag_heartbeat
+                if opt.flag_verbose == 2
+                    fprintf('No heartbeat for process %s\n',name_worker{num_w})
+                end
+            else
                 if any(tab_refresh(num_w,:,1)<0)
                     % this is the first time an active time is collected
                     % simply update tab_refresh
                     tab_refresh(num_w,:,1) = 0;
                     flag_started(num_w) = true;
+                    if opt.flag_verbose == 2
+                        fprintf('First time heartbeat for process %s\n',name_worker{num_w})
+                    end
                 else
                     try
-                        refresh_time = load(file_heartbeat);
+                        refresh_time = load(file_worker_heart{num_w});
                         test_change = etime(refresh_time.curr_time,tab_refresh(num_w,:,1))>1;
                     catch
                         % The heartbeat is unreadable
                         % Assume this is a race condition
                         % Consider no heartbeat was detected
+                        if opt.flag_verbose == 2
+                            fprintf('There was a problem reading the heartbeat of process %s.\n',name_worker{num_w})
+                        end
                         test_change = false;
                     end
 
@@ -311,17 +324,19 @@ try
                         tab_refresh(num_w,:,2) = clock;
                         flag_alive(num_w) = true;
                         flag_wait(num_w) = false;
+                        if opt.flag_verbose == 2
+                            fprintf('I heard a heartbeat for process %s\n',name_worker{num_w})
+                        end
                     else 
                         % I did not hear a heartbeat
                         % how long has it been?
                         elapsed_time = etime(clock,tab_refresh(num_w,:,2));
+                        if opt.flag_verbose == 2
+                            fprintf('No heartbeat in %1.2fs for process %s\n',elapsed_time,name_worker{num_w})
+                        end
                         if elapsed_time > 30
-                            if (num_w <= opt.max_queued)&&opt.flag_verbose
-                                fprintf('No heartbeat for worker %i, counted as dead.\n',num_w) 
-                            elseif (num_w == opt.max_queued+1)&&opt.flag_verbose
-                                fprintf('No heartbeat for the pipeline manager, counted as dead.\n')
-                            elseif (num_w == opt.max_queued+2)&&opt.flag_verbose
-                                fprintf('No heartbeat for the garbage collector, counted as dead.\n')
+                            if opt.flag_verbose
+                                fprintf('No heartbeat for process %s, counted as dead.\n',name_worker{num_w});
                             end 
                             % huho 30 seconds without a heartbeat, he's dead Jim
                             flag_alive(num_w) = false;
@@ -340,7 +355,7 @@ try
         for num_w = 1:opt.max_queued
             if ~flag_wait(num_w)&&~flag_alive(num_w)&&(~flag_started(num_w)||(nb_resub<=opt.nb_resub))
                 fprintf('Starting worker number %i...\n',num_w)
-                [flag_failed,msg] = sub_run_script(cmd_worker{num_w},script_worker{num_w},opt_worker(num_w),opt_logs_worker(num_w),opt.flag_verbose);
+                [flag_failed,msg] = psom_run_script(cmd_worker{num_w},script_worker{num_w},opt_worker(num_w),opt_logs_worker(num_w),opt.flag_verbose);
                 flag_wait(num_w) = true;
                 tab_refresh(num_w,:,1) = -1;
                 if flag_started(num_w)
@@ -448,13 +463,4 @@ if exist('OCTAVE_VERSION','builtin')
     [res,msg] = system(sprintf('sleep %1.3f',time_sleep));
 else
     pause(time_sleep); 
-end
-
-function [flag_failed,errmsg] = sub_run_script(cmd,script,opt,opt_logs,flag_verbose);
-[flag_failed,errmsg] = psom_run_script(cmd,script,opt,opt_logs);
-if flag_failed~=0
-    fprintf('\n    The execution of the job %s failed.\n The feedback was : %s\n',name_job,errmsg);
-    error('Something went bad with the execution of the job.')
-elseif flag_verbose == 2
-    fprintf('\n    The feedback from the execution of job %s was : %s\n',name_job,errmsg);
-end    
+end 

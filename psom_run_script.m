@@ -341,17 +341,15 @@ switch opt.mode
            if ~isempty(opt.file_handle)
                fprintf(opt.file_handle,'%s',msg);
            end
-           [flag_failed,msg] = system(cmd_script);
-       else
-           if strcmp(gb_psom_language,'octave')
-               system(cmd_script,false,'async');
-               flag_failed = 0;
-           else 
-               flag_failed = system([cmd_script ' &']);
-           end
-           msg = '';
        end
-
+       if strcmp(gb_psom_language,'octave')
+           system(cmd_script,false,'async');
+           flag_failed = 0;
+       else 
+           flag_failed = system([cmd_script ' &']);
+       end
+       msg = '';
+       
     case 'batch'
 
         if ispc
@@ -418,6 +416,16 @@ switch opt.mode
             msg = '';
         end
 end
+
+if (flag_failed~=0)&&exist('errmsg','var')
+    fprintf('\n    The execution of the job %s failed.\n The feedback was : %s\n',opt.name_job,errmsg);
+elseif (flag_failed==0)&&exist('errmsg','var')&&opt.flag_debug
+    fprintf('\n    The feedback from the execution of job %s was : %s\n',opt.name_job,errmsg);
+end
+
+if (flag_failed~=0)
+    error('Something went bad with the execution of the job.')
+end    
 
 %%%%%% Subfunctions %%%%%%
 

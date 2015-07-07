@@ -441,19 +441,10 @@ else
     else
         script_deamon = [path_deamon filesep 'psom_deamon.sh'];
     end
-    [flag_failed,msg] = sub_run_script(cmd_deamon,script_deamon,opt_script,opt_logs,opt.flag_verbose);
+    [flag_failed,msg] = psom_run_script(cmd_deamon,script_deamon,opt_script,opt_logs,opt.flag_verbose);
 end
 
 %% If not in session mode, monitor the output of the pipeline
 if opt.flag_verbose&&~strcmp(opt.mode_pipeline_manager,'session')
     psom_pipeline_visu(opt.path_logs,'monitor',0);
 end
-
-function [flag_failed,errmsg] = sub_run_script(cmd,script,opt,opt_logs,flag_verbose);
-[flag_failed,errmsg] = psom_run_script(cmd,script,opt,opt_logs);
-if flag_failed~=0
-    fprintf('\n    The execution of the job %s failed.\n The feedback was : %s\n',name_job,errmsg);
-    error('Something went bad with the execution of the job.')
-elseif flag_verbose == 2
-    fprintf('\n    The feedback from the execution of job %s was : %s\n',name_job,errmsg);
-end    
