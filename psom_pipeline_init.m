@@ -951,7 +951,7 @@ if psom_exist(file_name)
         pipeline_str = load(file_name);
     catch
         [path_f,name_f,ext_f] = fileparts(file_name);
-        file_backup = [path_f name_f '_backup' ext_f];
+        file_backup = [path_f filesep name_f '_backup' ext_f];
         warning('There was something wrong when loading the file %s, I''ll try loading the backup instead',file_name)
         pipeline_str = load(file_backup);
         copyfile(file_backup,file_name,'f');

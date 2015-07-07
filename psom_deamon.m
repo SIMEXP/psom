@@ -20,6 +20,9 @@ function status_pipe = psom_deamon(path_logs,opt)
 %      'bsub'       : remote execution using bsub (IBM)
 %      'condor'     : remote execution using condor
 %
+%   MODE_PIPELINE_MANAGER
+%      (string) same as OPT.MODE, but applies to the pipeline manager itself.
+%
 %   MAX_QUEUED
 %      (integer) The maximum number of jobs that can be processed
 %      simultaneously. Some qsub systems actually put restrictions
@@ -121,8 +124,8 @@ if nargin < 2
     opt = struct;
 end
 opt = psom_struct_defaults( opt , ...
-   {  'nb_resub' , 'flag_verbose' , 'init_matlab' , 'shell_options' , 'command_matlab' , 'mode' , 'max_queued' , 'max_buffer' , 'qsub_options' , 'time_between_checks' , 'nb_checks_per_point' }, ...
-   {  NaN        , 1              , NaN           , NaN             , NaN              , NaN    , NaN          , NaN          , NaN            , NaN                   , NaN                   });
+   {  'mode_pipeline_manager' , 'nb_resub' , 'flag_verbose' , 'init_matlab' , 'shell_options' , 'command_matlab' , 'mode' , 'max_queued' , 'max_buffer' , 'qsub_options' , 'time_between_checks' , 'nb_checks_per_point' }, ...
+   {  NaN                     , NaN        , 1              , NaN           , NaN             , NaN              , NaN    , NaN          , NaN          , NaN            , NaN                   , NaN                   });
 
 if ~strcmp(path_logs(end),filesep)
     path_logs = [path_logs filesep];
@@ -172,6 +175,7 @@ try
     nb_resub    = 0;                   % Number of resubmission               
     nb_checks   = 0;                   % Number of checks to print a points
     nb_points   = 0;                   % Number of printed points
+    nb_chars_logs = 0;                 % Number of characters printed from the pipeline history                
     flag_pipe_running  = false;        % Is the pipeline started?
     flag_pipe_finished = false;        % Is the pipeline finished?
     flag_started = false([opt.max_queued+2 1]); % Has the worker ever started? two last entries are for the PM and the GC
@@ -236,12 +240,12 @@ try
         opt_logs_worker(num_w).failed = sprintf('%spsom%i%sworker.failed',path_worker,num_w,filesep);
         opt_logs_worker(num_w).exit   = sprintf('%spsom%i%sworker.exit',path_worker,num_w,filesep);   
         opt_worker(num_w) = opt_script;
-        opt_worker(num_w).name_job = sprintf('psom%i',num_w);   
+        opt_worker(num_w).name_job = name_worker{num_w};
         cmd_worker{num_w} = sprintf('flag.heartbeat = true; flag.spawn = true; psom_worker(''%s'',flag);',path_worker_w{num_w});
         if ispc % this is windows
-            script_worker{num_w} = [path_tmp filesep opt_worker.name_job '.bat'];
+            script_worker{num_w} = [path_tmp filesep opt_worker(num_w).name_job '.bat'];
         else
-            script_worker{num_w} = [path_tmp filesep opt_worker.name_job '.sh'];
+            script_worker{num_w} = [path_tmp filesep opt_worker(num_w).name_job '.sh'];
         end
     end
     
@@ -363,7 +367,14 @@ try
                 end
             end
         end
-        sub_sleep(opt.time_between_checks*10)
+        if ~strcmp(opt.mode_pipeline_manager,'session')
+            sub_sleep(opt.time_between_checks*10)
+        else
+            if opt.flag_verbose
+                nb_chars_logs = psom_pipeline_visu(path_logs,'monitor',nb_chars_logs);
+            end
+            sub_sleep(opt.time_between_checks)
+        end
         flag_pipe_finished = ~psom_exist(file_pipe_running);
     end
     

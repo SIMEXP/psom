@@ -121,9 +121,9 @@ function res = psom_pipeline_visu(path_logs,action,opt_action,flag_visu)
 %
 % Copyright (c) Pierre Bellec, 
 % Montreal Neurological Institute, 2008-2010
-% Département d'informatique et de recherche opérationnelle
-% Centre de recherche de l'institut de Gériatrie de Montréal
-% Université de Montréal, 2011
+% Dpartement d'informatique et de recherche oprationnelle
+% Centre de recherche de l'institut de Griatrie de Montral
+% Universit de Montral, 2011
 % Maintainer : pierre.bellec@criugm.qc.ca
 % See licensing information in the code.
 % Keywords : pipeline
@@ -236,15 +236,10 @@ switch action
         file_monitor = [path_logs filesep name_pipeline '_history.txt'];
         file_pipe_running = [path_logs filesep name_pipeline '.lock'];
 
-        if exist(file_pipe_running,'file')
-            msg = 'The pipeline is currently running';
-        else
-            msg = 'The pipeline is NOT currently running';
+        if ~psom_exist(file_pipe_running)
+            fprintf('The pipeline is NOT currently running\n');
         end
-
-        stars = repmat('*',size(msg));
-        fprintf('\n\n%s\n%s\n%s\n\n',stars,msg,stars);
-
+        
         while ~psom_exist(file_monitor) && psom_exist(file_pipe_running) % the pipeline started but the log file has not yet been created
 
             fprintf('I could not find any log file. This pipeline has not been started (yet?). Press CTRL-C to cancel.\n');
@@ -252,8 +247,11 @@ switch action
 
         end
         
-        sub_tail(file_monitor,file_pipe_running,opt_action);
-        res = [];
+        if nargin<3
+            res = sub_tail(file_monitor,file_pipe_running,opt_action);
+        else 
+            res = sub_read_update(file_monitor,opt_action);
+        end
         
     case 'time'
 
@@ -440,7 +438,17 @@ end
 %% sub-functions %%
 %%%%%%%%%%%%%%%%%%%
 
-function [] = sub_tail(file_read,file_running,nb_chars)
+function nb_chars = sub_read_update(file_read,nb_chars)
+
+% prints out update on FILE_READ 
+hf = fopen(file_read,'r');
+fseek(hf,nb_chars,'bof');
+str_read = fread(hf, Inf , 'uint8=>char')';
+nb_chars = ftell(hf);
+fclose(hf);    
+fprintf('%s',str_read);            
+
+function nb_chars = sub_tail(file_read,file_running)
 
 % prints out the content of the text file FILE_READ with constant updates
 % as long as the file FILE_RUNNING exists. 

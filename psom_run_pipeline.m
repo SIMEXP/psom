@@ -394,8 +394,7 @@ end
     
 %% Run the pipeline manager
 file_pipeline = cat(2,opt.path_logs,filesep,name_pipeline,'.mat');
-if strcmp(opt.mode_pipeline_manager,'session')
-else
+if 0==0
     
     %% Create a folder for the PSOM deamon
     path_deamon = [opt.path_logs 'deamon' filesep];
@@ -406,6 +405,7 @@ else
     
     %% The options for the deamon
     opt_d.mode           = opt.mode;
+    opt_d.mode_pipeline_manager = opt.mode_pipeline_manager;
     opt_d.max_queued     = opt.max_queued;
     opt_d.max_buffer     = opt.max_buffer;
     opt_d.nb_resub       = opt.nb_resub;
@@ -446,5 +446,8 @@ end
 
 %% If not in session mode, monitor the output of the pipeline
 if opt.flag_verbose&&~strcmp(opt.mode_pipeline_manager,'session')
-    psom_pipeline_visu(opt.path_logs,'monitor',0);
+    nb_chars = 0;
+    while (nb_chars==0)||psom_exist(file_pipe_running)
+        nb_chars = psom_pipeline_visu(opt.path_logs,'monitor',nb_chars);
+    end
 end

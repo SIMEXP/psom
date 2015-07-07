@@ -301,26 +301,16 @@ switch opt.mode
 
     case 'session'
 
-        try
-            if ~isempty(logs)
-                diary(logs.txt);
-                sub_eval(cmd);
-                diary off;
-            else
-                sub_eval(cmd);
-            end
-            flag_failed = false;
-            msg = '';
-        catch
-            flag_failed = true;
-            errmsg = lasterror;
-            msg = errmsg.message;
-            if isfield(errmsg,'stack')
-                for num_e = 1:length(errmsg.stack)
-                    msg = sprintf('%s\nFile %s at line %i\n',msg,errmsg.stack(num_e).file,errmsg.stack(num_e).line);
-                end           
-            end
+        if ~isempty(logs)
+            diary(logs.txt);
+            sub_eval(cmd);
+            diary off;
+        else
+            sub_eval(cmd);
         end
+        flag_failed = false;
+        msg = '';
+        
         if ~isempty(logs.exit)
             save(logs.exit,'flag_failed')
         end
@@ -418,7 +408,12 @@ switch opt.mode
 end
 
 if (flag_failed~=0)&&exist('errmsg','var')
-    fprintf('\n    The execution of the job %s failed.\n The feedback was : %s\n',opt.name_job,errmsg);
+    fprintf('\n    The execution of the job %s failed.\n The feedback was:\n',opt.name_job);
+    if isfield(errmsg,'stack')
+        for num_e = 1:length(errmsg.stack)
+            fprintf('File %s at line %i\n',errmsg.stack(num_e).file,errmsg.stack(num_e).line);
+        end
+    end
 elseif (flag_failed==0)&&exist('errmsg','var')&&opt.flag_debug
     fprintf('\n    The feedback from the execution of job %s was : %s\n',opt.name_job,errmsg);
 end
