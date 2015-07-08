@@ -92,7 +92,21 @@ else
     hf = fopen(hf_news,'w');
     fclose(hf);
 end
-    
+
+%% Clean-up old submissions
+list_ready = dir([path_worker '*.ready']);
+list_ready = { list_ready.name };
+psom_clean(list_ready{num_r});
+if ~isempty(list_ready)
+    for num_r = 1:length(list_ready)
+        [tmp,base_spawn] = fileparts(list_ready{num_r});
+        file_spawn = [path_worker base_spawn '.mat'];
+        if psom_exist(file_spawn)
+            psom_clean(file_spawn);
+        end
+    end
+end
+
 %% Start a heartbeat
 if flag.heartbeat
     main_pid = getpid;

@@ -97,6 +97,7 @@ for num_w = 1:opt.max_queued
     file_worker_heart{num_w} = sprintf('%spsom%i%sheartbeat.mat',path_worker,num_w,filesep);
     file_worker_job{num_w}   = sprintf('%spsom%i%snew_jobs.mat',path_worker,num_w,filesep);
     file_worker_ready{num_w} = sprintf('%spsom%i%snew_jobs.ready',path_worker,num_w,filesep);
+    file_worker_reset{num_w} = sprintf('%spsom%i%sworker.reset',path_worker,num_w,filesep);
 end
           
 %% Start heartbeat
@@ -176,8 +177,9 @@ try
     nb_running    = 0;                         % The number of running jobs
     nb_checks     = 0;                         % The number of checks before printing a point
     worker_ready = false(opt.max_queued,1);    % A binary list of workers ready to take jobs
+    worker_reset = false(opt.max_queued,1);    % A binary list of workers that have been reset
     nb_char_news  = zeros(opt.max_queued,1);   % A list of the number of characters read from the news per worker
-    nb_run_worker = zeros(opt.max_queued,1);   % A list of the number of running job per worker
+    nb_run_worker = zeros(opt.max_queued,1);   % A list of the number of running job per worker   
     news_worker   = repmat({''},[opt.max_queued,1]);
 
     %% Find the longest job name
@@ -189,6 +191,20 @@ try
     %% Start submitting jobs
     while (any(mask_todo) || any(mask_running)) && psom_exist(file_pipe_running)
 
+        %% Check for workers that have been reset
+        for num_w = 1:opt.max_queued
+            worker_reset(num_w) = psom_exist(file_worker_reset{num_w});
+            if worker_reset(num_w)
+                psom_clean(file_worker_reset{num_w});
+                mask_running(psom_plan==num_w) = false;
+                mask_todo(psom_plan==num_w) = true;
+                nb_running = nb_running - sum(psom_plan==num_w);
+                nb_todo = nb_todo + sum(psom_plan==num_w);
+                nb_run_worker(num_w) = 0;
+                psom_plan(psom_plan==num_w) = 0;
+            end 
+        end
+        
         %% Check the state of workers
         %% and read the news
         flag_nothing_happened = true;

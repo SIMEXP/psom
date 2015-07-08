@@ -141,6 +141,7 @@ path_garbage      = [path_logs 'garbage' filesep];
 for num_w = 1:opt.max_queued
     name_worker{num_w} = sprintf('psom%i',num_w);
     file_worker_heart{num_w} = [path_worker name_worker{num_w} filesep 'heartbeat.mat'];
+    file_worker_reset{num_w} = [path_worker name_worker{num_w} filesep 'worker.reset'];
 end
 name_worker{opt.max_queued+1} = 'psom_manager';
 file_worker_heart{opt.max_queued+1} = [path_logs 'heartbeat.mat'];
@@ -363,6 +364,8 @@ try
                 tab_refresh(num_w,:,1) = -1;
                 if flag_started(num_w)
                     nb_resub = nb_resub+1;
+                    time_reset = clock;
+                    save(file_worker_reset{num_w},'time_reset')
                 end
             end
         end
