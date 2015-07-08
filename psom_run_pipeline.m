@@ -366,9 +366,12 @@ end
 %% The pipeline processing starts now  %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Check for a 'lock' tag
+%% file names
 file_pipe_running = cat(2,opt.path_logs,filesep,name_pipeline,'.lock');
 file_logs = cat(2,opt.path_logs,filesep,name_pipeline,'_history.txt');
+file_status = cat(2,opt.path_logs,filesep,name_pipeline,'_status.mat');
+
+%% Check for a 'lock' tag
 if exist(file_pipe_running,'file') % Is the pipeline running ?
 
     fprintf('\nA lock file %s has been found on the pipeline !\nIf the pipeline crashed, press CTRL-C now, delete manually the lock and restart the pipeline.\nOtherwise press any key to monitor the current pipeline execution.\n\n',file_pipe_running)
@@ -433,7 +436,11 @@ opt_script.qsub_options   = opt.qsub_options;
 opt_script.name_job       = 'psom_deamon';   
     
 %% Options for submission of the pipeline manager
-opt_logs.txt    = [path_deamon 'deamon.log'];
+if strcmp(opt.mode,'session')
+    opt_logs.txt = file_logs;
+else
+    opt_logs.txt = [path_deamon 'deamon.log'];
+end
 opt_logs.eqsub  = [path_deamon 'deamon.eqsub'];
 opt_logs.oqsub  = [path_deamon 'deamon.oqsub'];
 opt_logs.failed = [path_deamon 'deamon.failed'];
@@ -458,3 +465,8 @@ if opt.flag_verbose&&~strcmp(opt.mode_pipeline_manager,'session')
         nb_chars = psom_pipeline_visu(opt.path_logs,'monitor',nb_chars);
     end
 end
+
+%% check the status of the pipeline
+status = load(file_status);
+status = struct2cell(status);
+status = any(strcmp(status,'failed'));

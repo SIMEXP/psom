@@ -40,10 +40,12 @@
 echo Submitting the job with the following command:
 echo $1
 eval $1
-if [ $? -ne 0 ]
+CODE_EXIT=$?
+if [ $CODE_EXIT -ne 0 ]
 then
-    echo The submission of the job through $1 failed
+    echo The submission of the job failed.
     touch $2
     touch $3
     touch $4
+    exit $CODE_EXIT
 fi

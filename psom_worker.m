@@ -174,10 +174,14 @@ try
             end
             
             if ~flag.spawn
-                new_logs = struct(name_job,sub_read_txt([path_worker name_job '.log']));
-                tmp = load([path_worker name_job '_profile.mat']);
+                file_log_job = [path_worker name_job '.log'];
+                file_prof_job = [path_worker name_job '_profile.mat'];
+                new_logs = struct(name_job,sub_read_txt(file_log_job));
+                tmp = load(file_prof_job);
                 tmp.worker = 0;
                 new_prof.(name_job) = tmp;
+                psom_clean(file_log_job);
+                psom_clean(file_prof_job);
                 
                 %% Update the status/logs/profile
                 save(file_logs,'-struct','-append','new_logs');
