@@ -160,7 +160,7 @@ try
        
     %% Print general info about the pipeline
     if opt.flag_verbose
-        fprintf('Deamon started on %s',datestr(clock));
+        fprintf('Deamon started on %s\n',datestr(clock));
     end
     
     %% Track refresh times for workers
