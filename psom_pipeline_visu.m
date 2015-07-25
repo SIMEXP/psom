@@ -388,8 +388,12 @@ switch action
         time_end = time_end(mask);
         changes = [ones([length(time_start) 1]) ; -ones([length(time_start) 1])];
         [all_time,order] = sort([time_start;time_end]);
+        all_time = [all_time(:)'-eps ; all_time(:)'];
+        all_time = all_time(:);
         changes = changes(order);
         nb_jobs_running = cumsum(changes);
+        nb_jobs_running = [ [ 0 nb_jobs_running(1:end-1)'] ; nb_jobs_running'];
+        nb_jobs_running = nb_jobs_running(:);
         if flag_visu
             if ~exist('opt_action','var')||isempty(opt_action)
                 plot((all_time-all_time(1))/(60*60),nb_jobs_running);
@@ -397,6 +401,7 @@ switch action
                 plot((all_time-all_time(1))/(60*60),nb_jobs_running,opt_action);
             end
             ha = gca;
+            axis([0 (all_time(end)-all_time(1))/3600 0 max(nb_jobs_running)+1]);
             set(get(ha,'xlabel'),'string','time elapsed (hrs)')
             set(get(ha,'ylabel'),'string','# jobs running')
         end
