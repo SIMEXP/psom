@@ -367,14 +367,10 @@ try
                 end
             end
         end
-        if ~strcmp(opt.mode_pipeline_manager,'session')
-            sub_sleep(opt.time_between_checks*10)
-        else
-            if opt.flag_verbose
-                nb_chars_logs = psom_pipeline_visu(path_logs,'monitor',nb_chars_logs);
-            end
-            sub_sleep(opt.time_between_checks)
+        if opt.flag_verbose&&strcmp(opt.mode_pipeline_manager,'session')
+            nb_chars_logs = psom_pipeline_visu(path_logs,'monitor',nb_chars_logs);      
         end
+        sub_sleep(opt.time_between_checks)
         flag_pipe_finished = ~psom_exist(file_pipe_running);
     end
     
@@ -392,10 +388,10 @@ catch
 end
 
 %% Print general info about the pipeline
-msg_line1 = sprintf('Deamon terminated on %s',datestr(now));
-stars = repmat('*',[1 length(msg_line1)]);
-fprintf('%s\n%s\n',stars,msg_line1);
-
+if opt.flag_verbose&&strcmp(opt.mode_pipeline_manager,'session')
+    nb_chars_logs = psom_pipeline_visu(path_logs,'monitor',nb_chars_logs);
+end
+fprintf('Deamon terminated on %s\n',datestr(now));
 status_pipe = 0;
 
 %%%%%%%%%%%%%%%%%%
