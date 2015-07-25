@@ -54,10 +54,7 @@ while flag_beat
         if exist(file_kill,'file')
             psom_clean(file_kill);
         end
-        if exist(file_heart,'file')
-            psom_clean(file_heart);
-        end
-            
+        
         if exist('OCTAVE_VERSION','builtin')  
             kill(pid,9)
         else

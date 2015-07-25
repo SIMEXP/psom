@@ -87,9 +87,8 @@ function status = psom_run_pipeline(pipeline,opt)
 %    MAX_BUFFER
 %
 %    NB_RESUB
-%        (integer, default 0 in 'session', 'batch' and 'background' modes,
-%        1 otherwise) The number of times a job will be resubmitted if it 
-%        fails.
+%        (integer, default 0 in 'session', opt.max_queued otherwise) 
+%        The number of times a worker will be resubmitted if it fails.
 %
 %    SHELL_OPTIONS
 %        (string, default GB_PSOM_SHELL_OPTIONS defined in PSOM_GB_VARS)
@@ -353,12 +352,18 @@ switch opt.mode
         if isempty(opt.nb_checks_per_point)
             opt.nb_checks_per_point = Inf;
         end
+        if isempty(opt.nb_resub)
+            opt.nb_resub = 0;
+        end
     otherwise
         if isempty(opt.time_between_checks)
             opt.time_between_checks = 0.5;
         end
         if isempty(opt.nb_checks_per_point)
             opt.nb_checks_per_point = 60;
+        end
+        if isempty(opt.nb_resub)
+            opt.nb_resub = opt.max_queued;
         end
 end
 

@@ -159,10 +159,9 @@ end
 try    
        
     %% Print general info about the pipeline
-    msg_line1 = sprintf('Deamon started on %s',datestr(clock));
-    msg_line2 = sprintf('user: %s, host: %s, system: %s',gb_psom_user,gb_psom_localhost,gb_psom_OS);
-    stars = repmat('*',[1 max(length(msg_line1),length(msg_line2))]);
-    fprintf('%s\n%s\n%s\n%s\n',stars,msg_line1,msg_line2,stars);
+    if opt.flag_verbose
+        fprintf('Deamon started on %s',datestr(clock));
+    end
     
     %% Track refresh times for workers
     % (#workers + manager + garbage collector) x 6 (clock info) x 2
@@ -254,19 +253,18 @@ try
     
         %% Start the pipeline manager
         flag_pipe_running = psom_exist(file_pipe_running);
-        if ~flag_alive(end-1)&&(~flag_started(end-1)||(nb_resub < opt.nb_resub))
+        if ~flag_alive(end-1)&&(nb_resub < opt.nb_resub)
             [flag_failed,msg] = psom_run_script(cmd_pipe,script_pipe,opt_pipe,opt_logs_pipe,opt.flag_verbose);
             fprintf('Starting the pipeline manager...\n')
             if flag_started(end-1)
                 nb_resub = nb_resub+1;
-                tab_refresh(end-1,:,1)   = -1;
-                flag_alive(end-1) = false;
-                flag_wait(end-1)  = true;
+                tab_refresh(end-1,:,1) = -1;
             end
             %% Wait for the pipeline manager to start
             while ~psom_exist(file_pipe_running)
                 sub_sleep(opt.time_between_checks)
             end
+            flag_alive(end-1) = true;
             flag_pipe_running = true;
             flag_started(end-1) = true;
         end
