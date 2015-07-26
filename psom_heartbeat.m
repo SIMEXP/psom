@@ -49,7 +49,9 @@ while flag_beat
     end
     flag_beat = err==0;
     curr_time = clock;
-    save(file_heart,'curr_time');
+    try
+        save(file_heart,'curr_time');
+    end
     if exist(file_kill,'file')||~psom_exist(path_heart)
         if exist(file_kill,'file')
             psom_clean(file_kill);
