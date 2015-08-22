@@ -196,9 +196,9 @@ try
             worker_reset(num_w) = psom_exist(file_worker_reset{num_w});
             if worker_reset(num_w)
                 psom_clean(file_worker_reset{num_w});
+                nb_running = nb_running - sum(mask_running(psom_plan==num_w));
                 mask_running(psom_plan==num_w) = false;
                 mask_todo(psom_plan==num_w) = true;
-                nb_running = nb_running - sum(psom_plan==num_w);
                 nb_todo = nb_todo + sum(psom_plan==num_w);
                 nb_run_worker(num_w) = 0;
                 psom_plan(psom_plan==num_w) = 0;
