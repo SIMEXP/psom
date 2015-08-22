@@ -176,8 +176,7 @@ try
     nb_failed     = 0;                         % The number of failed jobs
     nb_running    = 0;                         % The number of running jobs
     nb_checks     = 0;                         % The number of checks before printing a point
-    worker_ready = false(opt.max_queued,1);    % A binary list of workers ready to take jobs
-    worker_reset = false(opt.max_queued,1);    % A binary list of workers that have been reset
+    worker_reset  = false(opt.max_queued,1);    % A binary list of workers that have been reset
     nb_char_news  = zeros(opt.max_queued,1);   % A list of the number of characters read from the news per worker
     nb_run_worker = zeros(opt.max_queued,1);   % A list of the number of running job per worker   
     news_worker   = repmat({''},[opt.max_queued,1]);
@@ -195,6 +194,9 @@ try
         for num_w = 1:opt.max_queued
             worker_reset(num_w) = psom_exist(file_worker_reset{num_w});
             if worker_reset(num_w)
+                if opt.flag_verbose == 2
+                    fprintf('Worker %i has been reset.\n');
+                end
                 psom_clean(file_worker_reset{num_w});
                 nb_running = nb_running - sum(mask_running(psom_plan==num_w));
                 mask_running(psom_plan==num_w) = false;
@@ -209,9 +211,11 @@ try
         %% and read the news
         flag_nothing_happened = true;
         for num_w = 1:opt.max_queued
-            worker_ready(num_w) = psom_exist(file_worker_heart{num_w})&&~psom_exist(file_worker_job{num_w});
-            if worker_ready(num_w)
-            
+            if psom_exist(file_worker_heart{num_w})
+                if nb_run_worker(num_w)==Inf
+                    nb_run_worker(num_w) = 0;
+                end
+                
                 %% Parse news_feed.csv for one worker
                 [str_read,nb_char_news(num_w)] = sub_tail(file_worker_news{num_w},nb_char_news(num_w));
                 news_worker{num_w} = [news_worker{num_w} str_read];
@@ -230,7 +234,6 @@ try
                     switch event_worker{num_e,2}
                         case 'submitted'
                             nb_running = nb_running+1;
-                            nb_run_worker(num_w) = nb_run_worker(num_w)+1;
                             nb_todo = nb_todo-1;
                             msg = sprintf('%s %s%s running  ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
                         case 'failed'
@@ -260,6 +263,8 @@ try
                         fprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_running,nb_failed,nb_finished,nb_todo);
                     end
                 end
+            else
+                nb_run_worker(num_w) = Inf; % The worker is not ready. Mark infinite number of jobs running to ensure no new submission will occur.
             end    
         end
                
@@ -271,19 +276,16 @@ try
         
         %% Time to (try to) submit jobs !!
         list_num_to_run = find(mask_todo&~mask_deps);
-        nb_ready = length(list_num_to_run);
-        slots_worker = nb_run_worker;
-        slots_worker(~worker_ready) = Inf;
         mask_new_submit = false(opt.max_queued,1);
         tag = [];
         curr_job = 1;
-        while (min(slots_worker)<opt.max_buffer)&&(curr_job<=length(list_num_to_run))
-            [val,ind] = min(slots_worker);
+        while (min(nb_run_worker)<opt.max_buffer)&&(curr_job<=length(list_num_to_run))
+            [val,ind] = min(nb_run_worker);
             pipe_sub = struct;
             pipe_sub.(list_jobs{list_num_to_run(curr_job)}) = pipeline.(list_jobs{list_num_to_run(curr_job)});
             save(file_worker_job{ind},'-append','-struct','pipe_sub');
             mask_new_submit(ind) = true;
-            slots_worker(ind) = slots_worker(ind)+1;
+            nb_run_worker(ind) = nb_run_worker(ind)+1;
             mask_running(list_num_to_run(curr_job)) = true;
             mask_todo(list_num_to_run(curr_job)) = false;
             psom_plan(list_num_to_run(curr_job)) = ind;
