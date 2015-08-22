@@ -468,6 +468,11 @@ if opt.flag_verbose&&~strcmp(opt.mode_pipeline_manager,'session')
     nb_chars = 0;
     while (nb_chars==0)||psom_exist(file_pipe_running)
         nb_chars = psom_pipeline_visu(opt.path_logs,'monitor',nb_chars);
+        if exist('OCTAVE_VERSION','builtin')  
+            [res,msg] = system('sleep 0.2');
+        else
+            sleep(0.2); 
+        end
     end
 end
 
