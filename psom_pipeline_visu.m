@@ -394,15 +394,26 @@ switch action
         nb_jobs_running = cumsum(changes);
         nb_jobs_running = [ [ 0 nb_jobs_running(1:end-1)'] ; nb_jobs_running'];
         nb_jobs_running = nb_jobs_running(:);
+        % decide on the unit
+        if (all_time-all_time(1))>3600
+            unit_plot = 'hr';
+            factor_norm = 3600;
+        elseif (all_time-all_time(1))>300
+            unit_plot = 'mn';
+            factor_norm = 60;
+        else 
+            unit_plot = 's';
+            factor_norm = 1;
+        end
         if flag_visu
             if ~exist('opt_action','var')||isempty(opt_action)
-                plot((all_time-all_time(1))/(60*60),nb_jobs_running);
+                plot((all_time-all_time(1))/factor_norm,nb_jobs_running);
             else
-                plot((all_time-all_time(1))/(60*60),nb_jobs_running,opt_action);
+                plot((all_time-all_time(1))/factor_norm,nb_jobs_running,opt_action);
             end
             ha = gca;
-            axis([0 (all_time(end)-all_time(1))/3600 0 max(nb_jobs_running)+1]);
-            set(get(ha,'xlabel'),'string','time elapsed (hrs)')
+            axis([0 (all_time(end)-all_time(1))/factor_norm 0 max(nb_jobs_running)+1]);
+            set(get(ha,'xlabel'),'string',['time elapsed (' unit_plot ')'])
             set(get(ha,'ylabel'),'string','# jobs running')
         end
         res.nb_jobs_running = nb_jobs_running;
