@@ -231,8 +231,10 @@ try
                     %% Update status
                     mask_job = strcmp(list_jobs,event_worker{num_e,1});
                     if ~any(mask_job)
-                        fprintf('Could not parse the following event:\n')
-                        event_worker(num_e,:)
+                        if opt.flag_verbose == 2
+                            fprintf('Could not parse the following event:\n')
+                            event_worker(num_e,:)
+                        end
                         continue
                     end
                     name_job = list_jobs{mask_job};
