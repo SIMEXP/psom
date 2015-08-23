@@ -233,6 +233,7 @@ try
                     if ~any(mask_job)
                         fprintf('Could not parse the following event:\n')
                         event_worker(num_e,:)
+                        continue
                     end
                     name_job = list_jobs{mask_job};
                     switch event_worker{num_e,2}
