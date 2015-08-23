@@ -230,6 +230,10 @@ try
                 for num_e = 1:size(event_worker,1)
                     %% Update status
                     mask_job = strcmp(list_jobs,event_worker{num_e,1});
+                    if ~any(mask_job)
+                        fprintf('Could not parse the following event:\n')
+                        event_worker(num_e,:)
+                    end
                     name_job = list_jobs{mask_job};
                     switch event_worker{num_e,2}
                         case 'submitted'
