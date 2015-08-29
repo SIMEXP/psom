@@ -240,7 +240,7 @@ try
         opt_logs_worker(num_w).exit   = sprintf('%spsom%i%sworker.exit',path_worker,num_w,filesep);   
         opt_worker(num_w) = opt_script;
         opt_worker(num_w).name_job = name_worker{num_w};
-        cmd_worker{num_w} = sprintf('flag.heartbeat = true; flag.spawn = true; psom_worker(''%s'',flag);',path_worker_w{num_w});
+        cmd_worker{num_w} = sprintf('flag.heartbeat = true; flag.spawn = true; psom_worker(''%s'',flag,''%s'');',path_worker_w{num_w},path_logs);
         if ispc % this is windows
             script_worker{num_w} = [path_tmp filesep opt_worker(num_w).name_job '.bat'];
         else

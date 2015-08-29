@@ -1,4 +1,4 @@
-function status_pipe = psom_worker(path_worker,flag)
+function status_pipe = psom_worker(path_worker,flag,path_logs)
 % Execute jobs.
 %
 % status = psom_worker( path_worker , [flag_heartbeat] )
@@ -12,6 +12,7 @@ function status_pipe = psom_worker(path_worker,flag)
 % FLAG.SPAWN (boolean, default false) if FLAG_RESPAWN is true, the pipeline process
 %   will not stop until PIPE.lock is removed. It will constantly screen for
 %   new jobs in the form of a .mat file where each variable is a job. 
+% PATH_LOGS (string)
 %
 % See licensing information in the code.
 
@@ -55,6 +56,14 @@ if ~strcmp(path_worker(end),filesep)
     path_worker = [path_worker filesep];
 end
 
+if nargin < 3
+    path_logs = path_worker;
+end
+
+if ~strcmp(path_logs(end),filesep)
+    path_logs = [path_logs filesep];
+end
+
 %% Options
 if nargin < 2
     flag = struct;
@@ -72,14 +81,13 @@ file_heartbeat = [path_worker filesep 'heartbeat.mat'];
 file_kill      = [path_worker filesep 'worker.kill'];
 file_news_feed = [path_worker filesep 'news_feed.csv'];
 file_pipe      = [path_worker filesep 'PIPE_jobs.mat'];
-file_lock      = [path_worker filesep 'PIPE.lock'];
-file_status         = [path_worker 'PIPE_status.mat'];
-file_status_backup  = [path_worker 'PIPE_status_backup.mat'];
-file_logs           = [path_worker 'PIPE_logs.mat'];
-file_logs_backup    = [path_worker 'PIPE_logs_backup.mat'];
-file_profile        = [path_worker 'PIPE_profile.mat'];
-file_profile_backup = [path_worker 'PIPE_profile_backup.mat'];
-
+file_lock      = [path_logs filesep 'PIPE.lock'];
+file_status         = [path_logs 'PIPE_status.mat'];
+file_status_backup  = [path_logs 'PIPE_status_backup.mat'];
+file_logs           = [path_logs 'PIPE_logs.mat'];
+file_logs_backup    = [path_logs 'PIPE_logs_backup.mat'];
+file_profile        = [path_logs 'PIPE_profile.mat'];
+file_profile_backup = [path_logs 'PIPE_profile_backup.mat'];
 
 %% Open the news feed file
 if strcmp(gb_psom_language,'matlab');
@@ -208,8 +216,8 @@ try
         end 
         
         if flag.spawn
-            test_loop = true;
-            if num_job == length(list_jobs)
+            test_loop = psom_exist(file_lock);
+            if (num_job == length(list_jobs))&&test_loop
                 if exist('OCTAVE_VERSION','builtin')  
                     [res,msg] = system('sleep 0.1');
                 else

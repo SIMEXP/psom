@@ -390,29 +390,18 @@ if flag_any_fail&&isempty(list_num_none)
     fprintf('All jobs have been successfully completed.\n');
 end
 
+%% Close the log file
+if strcmp(gb_psom_language,'matlab')
+    fclose(hf_news);
+end
+status_pipe = double(flag_any_fail);
+
 %% Terminate the pipeline
 if exist('file_pipe_running','var')
     if exist(file_pipe_running,'file')
         delete(file_pipe_running); % remove the 'running' tag
     end
 end
-
-%% Stop workers
-fprintf('Stop workers ...\n');
-for num_w = 1:opt.max_queued
-    path_worker_psom = sprintf('%spsom%i%s',path_worker,num_w,filesep);
-    if psom_exist(path_worker_psom)
-        file_kill = [path_worker_psom 'worker.kill'];
-        hf = fopen(file_kill,'w');
-        fclose(hf);
-    end
-end
-
-%% Close the log file
-if strcmp(gb_psom_language,'matlab')
-    fclose(hf_news);
-end
-status_pipe = double(flag_any_fail);
 
 %%%%%%%%%%%%%%%%%%
 %% subfunctions %%
