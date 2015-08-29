@@ -385,8 +385,9 @@ end
 if flag_any_fail
     fprintf('Use psom_pipeline_visu to access logs, e.g.:\n\n   psom_pipeline_visu(''%s'',''log'',''%s'')\n',path_logs,list_jobs{list_num_failed(1)});
 end
+
 %% Give a final one-line summary of the processing
-if flag_any_fail&&isempty(list_num_none)
+if ~flag_any_fail&&isempty(list_num_none)
     fprintf('All jobs have been successfully completed.\n');
 end
 
