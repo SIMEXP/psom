@@ -293,6 +293,10 @@ if ~exist('pipeline','var')||~exist('opt','var')
     error('SYNTAX: [] = PSOM_RUN_PIPELINE(FILE_PIPELINE,OPT). Type ''help psom_run_pipeline'' for more info.')
 end
 
+%% Constants
+% Time to wait after the pipeline exited
+wait_exit = 1;
+
 %% Options
 name_pipeline = 'PIPE';
 
@@ -305,7 +309,7 @@ opt.flag_debug = opt.flag_verbose>1;
 if ~strcmp(opt.path_logs(end),filesep)
     opt.path_logs = [opt.path_logs filesep];
 end
-psom_mkdir(opt.path_logs)
+psom_mkdir(opt.path_logs);
 
 if isempty(opt.path_search)
     opt.path_search = path;
@@ -480,14 +484,20 @@ end
 [flag_failed,msg] = psom_run_script(cmd_deamon,script_deamon,opt_script,opt_logs,opt.flag_verbose);
 
 %% If not in session mode, monitor the output of the pipeline
+flag_exit = false;
 if opt.flag_verbose&&~strcmp(opt.mode_pipeline_manager,'session')
     nb_chars = 0;
-    while (nb_chars==0)||psom_exist(file_pipe_running)
+    nb_chars_old = 0;
+    while (nb_chars==0)||~flag_exit
+        flag_exit = ~psom_exist(file_pipe_running);
+        nb_chars_old = nb_chars;
         nb_chars = psom_pipeline_visu(opt.path_logs,'monitor',nb_chars);
-        if exist('OCTAVE_VERSION','builtin')  
-            [res,msg] = system('sleep 0.2');
-        else
-            sleep(0.2); 
+        if nb_chars == nb_chars_old        
+            if exist('OCTAVE_VERSION','builtin')  
+                [res,msg] = system('sleep 0.2');
+            else
+                sleep(0.2); 
+            end
         end
     end
 end

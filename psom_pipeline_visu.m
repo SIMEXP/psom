@@ -236,15 +236,17 @@ switch action
         file_monitor = [path_logs filesep name_pipeline '_history.txt'];
         file_pipe_running = [path_logs filesep name_pipeline '.lock'];
 
-        if ~psom_exist(file_pipe_running)
+        if ~psom_exist(file_pipe_running) && (nargin<3)
             fprintf('The pipeline is NOT currently running\n');
         end
         
         while ~psom_exist(file_monitor) && psom_exist(file_pipe_running) % the pipeline started but the log file has not yet been created
-
             fprintf('I could not find any log file. This pipeline has not been started (yet?). Press CTRL-C to cancel.\n');
-            pause(1)
-
+            if exist('OCTAVE_VERSION','builtin')  
+                [res,msg] = system('sleep 1');
+            else
+                sleep(1); 
+            end
         end
         
         if nargin<3
