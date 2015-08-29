@@ -305,6 +305,7 @@ opt.flag_debug = opt.flag_verbose>1;
 if ~strcmp(opt.path_logs(end),filesep)
     opt.path_logs = [opt.path_logs filesep];
 end
+psom_mkdir(opt.path_logs)
 
 if isempty(opt.path_search)
     opt.path_search = path;
@@ -340,6 +341,9 @@ if opt.max_queued == 0
     end % switch action
 end % default of max_queued
 
+% Limit the number of workers based on the number of jobs in the pipeline
+opt.max_queued = min(opt.max_queued,length(fieldnames(pipeline)));
+
 if ~ismember(opt.mode,{'session','background','batch','qsub','msub','bsub','condor'})
     error('%s is an unknown mode of pipeline execution. Sorry dude, I must quit ...',opt.mode);
 end
@@ -367,6 +371,18 @@ switch opt.mode
         end
 end
 
+if opt.flag_verbose == 2
+    fprintf('PSOM deamon is running in mode: ''%s''\n',opt.mode_pipeline_manager);
+    fprintf('Jobs are running in mode: ''%s''\n',opt.mode_pipeline_manager);
+    fprintf('Number of workers: %i\n',opt.max_queued);
+    fprintf('Max number of buffered jobs: %i\n',opt.max_buffer)
+    fprintf('Number of resubmissions: %i\n',opt.nb_resub)
+    fprintf('Options for qsub: %s\n',opt.qsub_options)
+    fprintf('Options for the shell: %s\n',opt.shell_options)
+    fprintf('Command to start matlab/octave: %s\n',opt.command_matlab)
+    fprintf('Search path for matlab/octave: %s\n',opt.path_search)
+end
+    
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% The pipeline processing starts now  %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -408,7 +424,7 @@ if psom_exist(path_deamon)
     psom_clean(path_deamon,struct('flag_verbose',false));
 end
 psom_mkdir(path_deamon);
-    
+
 %% The options for the deamon
 if strcmp(opt.mode,'session')
     opt_d.heartbeat = true;
