@@ -145,7 +145,7 @@ try
     
     %% Load the pipeline
     load(file_pipeline,'list_jobs','graph_deps');
-    status = load(file_status );
+    status = load(file_status);
     pipeline = load(file_jobs);
     nb_jobs = length(list_jobs);
     
@@ -179,8 +179,8 @@ try
     worker_reset  = false(opt.max_queued,1);    % A binary list of workers that have been reset
     nb_char_news  = zeros(opt.max_queued,1);   % A list of the number of characters read from the news per worker
     nb_run_worker = zeros(opt.max_queued,1);   % A list of the number of running job per worker   
-    news_worker   = repmat({''},[opt.max_queued,1]);
-
+    news_worker   = repmat({''},[opt.max_queued,1]); % a list to store the news of all workers
+    flag_point    = false; % A flag to indicate if a . was verbosed last
     %% Find the longest job name
     lmax = 0;
     for num_j = 1:length(list_jobs)
@@ -224,6 +224,10 @@ try
                 %% Check if something happened
                 if length(event_worker)>1
                     flag_nothing_happened = false;
+                    if flag_point 
+                        fprintf('\n')
+                    end
+                    flag_point = false;                    
                 end
                 
                 %% Some verbose for the events
@@ -314,6 +318,7 @@ try
                 nb_checks = 0;
                 if opt.flag_verbose
                     fprintf('.');
+                    flag_point = true;
                 end
                 nb_checks = nb_checks+1;
             else
