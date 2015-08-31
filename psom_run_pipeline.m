@@ -154,7 +154,8 @@ function status = psom_run_pipeline(pipeline,opt)
 %
 %    FLAG_VERBOSE
 %        (integer 0, 1 or 2, default 1) No verbose (0), standard 
-%        verbose (1), a lot of verbose, useful for debugging (2).
+%        verbose (1), a lot of verbose, useful for setting up the configuration (2), 
+%        way too much verbose, only for debugging (3).
 %
 %    There are actually other minor options available, see
 %    PSOM_PIPELINE_INIT and PSOM_PIPELINE_PROCESS for details.

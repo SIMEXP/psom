@@ -186,7 +186,7 @@ try
     for num_j = 1:length(list_jobs)
         lmax = max(lmax,length(list_jobs{num_j}));
     end
-    
+
     %% Start submitting jobs
     while (any(mask_todo) || any(mask_running)) && psom_exist(file_pipe_running)
 
@@ -233,19 +233,17 @@ try
                 %% Some verbose for the events
                 for num_e = 1:size(event_worker,1)
                     %% Update status
-                    mask_job = strcmp(list_jobs,event_worker{num_e,1});
-                    if ~any(mask_job)
-                        if opt.flag_verbose == 2
-                            fprintf('Could not parse the following event:\n')
-                            event_worker(num_e,:)
-                        end
-                        continue
+                    name_job = event_worker{num_e,1};
+                    if strcmp(name_job,'PIPE')
+                        continue % That is the signal that the pipeline has terminated
                     end
-                    name_job = list_jobs{mask_job};
+                    mask_job = strcmp(list_jobs,name_job);
                     switch event_worker{num_e,2}
                         case 'registered'
                             if opt.flag_verbose == 2
                                 msg = sprintf('%s %s%s registered ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
+                            else
+                                msg = ''; % empty message will not be printed
                             end
                         case 'running'
                             nb_running = nb_running+1;
@@ -271,10 +269,12 @@ try
                             graph_deps(mask_job,:) = false;
                             psom_plan(mask_job) = 0;
                             msg = sprintf('%s %s%s finished  ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
+                        otherwise 
+                            error('%s is an unkown status',event_worker{num_e,2})
                     end
                     %% Add to the news feed
                     sub_add_line_log(hf_news,sprintf('%s , %s\n',event_worker{num_e,1},event_worker{num_e,2}),false);
-                    if opt.flag_verbose
+                    if opt.flag_verbose && ~isempty(msg)
                         fprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_running,nb_failed,nb_finished,nb_todo);
                     end
                 end
@@ -292,25 +292,41 @@ try
         %% Time to (try to) submit jobs !!
         list_num_to_run = find(mask_todo&~mask_deps);
         mask_new_submit = false(opt.max_queued,1);
+        nb_to_submit = length(list_num_to_run);
         tag = [];
-        curr_job = 1;
-        while (min(nb_sch_worker)<opt.max_buffer)&&(curr_job<=length(list_num_to_run))
+        curr_job = 0;
+        pipe_sub = cell(opt.max_queued,1);
+        while (min(nb_sch_worker)<=opt.max_buffer)&&(curr_job<length(list_num_to_run))
+            curr_job = curr_job+1;
             [val,ind] = min(nb_sch_worker);
-            pipe_sub = struct;
-            pipe_sub.(list_jobs{list_num_to_run(curr_job)}) = pipeline.(list_jobs{list_num_to_run(curr_job)});
-            save(file_worker_job{ind},'-append','-struct','pipe_sub');
+            name_job = list_jobs{list_num_to_run(curr_job)};
+            pipe_sub{ind}.(name_job) = pipeline.(name_job);
             mask_new_submit(ind) = true;
             nb_sch_worker(ind) = nb_sch_worker(ind)+1;
             mask_running(list_num_to_run(curr_job)) = true;
             mask_todo(list_num_to_run(curr_job)) = false;
             psom_plan(list_num_to_run(curr_job)) = ind;
-            curr_job = curr_job+1;
+            if opt.flag_verbose == 2
+                msg = sprintf('%s %s%s submitted  ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
+                fprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_running,nb_failed,nb_finished,nb_todo);
+            end
         end
-        
+        if opt.flag_verbose == 3
+            if ~any(nb_sch_worker~=Inf)
+                max_sch_worker = 0;
+                min_sch_worker = 0;
+            else
+                max_sch_worker = max(nb_sch_worker(nb_sch_worker~=Inf));
+                min_sch_worker = min(nb_sch_worker(nb_sch_worker~=Inf));
+            end
+            fprintf('%i/%i jobs submitted, # jobs per worker: %i (max) %i (min) %i (unavailable)\n',curr_job,nb_to_submit,max_sch_worker,min_sch_worker,sum(nb_sch_worker==Inf))
+        end
         %% Mark new submissions as ready to process
         for num_w = 1:opt.max_queued
             if mask_new_submit(num_w)
                 flag_nothing_happened = false;
+                tmp = pipe_sub{num_w};
+                save(file_worker_job{num_w},'-struct','tmp');
                 save(file_worker_ready{num_w},'tag');
             end
         end
