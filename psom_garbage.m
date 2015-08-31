@@ -156,9 +156,7 @@ while ~flag_exit
                 logs.(name_job) = sub_read_txt(file_logs_job);
                 new_logs.(name_job) = logs.(name_job);
                 tmp = load(file_profile_job);
-                tmp.worker = num_s;
-                prof.(name_job)  = tmp;
-                new_prof.(name_job) = prof.(name_job);
+                new_prof.(name_job) = tmp;
                 psom_clean(file_logs_job,struct('flag_verbose',false));
                 psom_clean(file_profile_job,struct('flag_verbose',false));
                 mask_done(list_todo(num_t)) = true;

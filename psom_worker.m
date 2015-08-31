@@ -1,4 +1,4 @@
-function status_pipe = psom_worker(path_worker,flag,path_logs)
+function status_pipe = psom_worker(path_worker,flag,path_logs,num_worker)
 % Execute jobs.
 %
 % status = psom_worker( path_worker , [flag_heartbeat] )
@@ -13,6 +13,7 @@ function status_pipe = psom_worker(path_worker,flag,path_logs)
 %   will not stop until PIPE.lock is removed. It will constantly screen for
 %   new jobs in the form of a .mat file where each variable is a job. 
 % PATH_LOGS (string)
+% NUM_WORKER (integer, default 1)
 %
 % See licensing information in the code.
 
@@ -58,6 +59,10 @@ end
 
 if nargin < 3
     path_logs = path_worker;
+end
+
+if nargin < 4
+    num_worker = 1;
 end
 
 if ~strcmp(path_logs(end),filesep)
@@ -151,6 +156,7 @@ try
     test_loop = true;
     num_job = 0;
     flag_any_fail = false;
+    time_scheduled = struct();
     
     while test_loop
 
@@ -167,6 +173,11 @@ try
                     end
                     spawn = load(file_spawn);
                     list_new_jobs = fieldnames(spawn);
+                    %% Add to the news feed
+                    for nn = 1:length(list_new_jobs)
+                        sub_add_line_log(hf_news,sprintf('%s , submitted\n',list_new_jobs{nn}));
+                        time_scheduled.(list_new_jobs{nn}) = clock;
+                    end
                     list_jobs = [ list_jobs ; list_new_jobs ];
                     pipeline = psom_merge_pipeline(pipeline,spawn);
                     psom_clean({file_spawn,[path_worker list_ready{num_r}]});
@@ -180,7 +191,7 @@ try
             name_job = list_jobs{num_job};
             
             %% Add to the news feed
-            sub_add_line_log(hf_news,sprintf('%s , submitted\n',name_job));
+            sub_add_line_log(hf_news,sprintf('%s , running\n',name_job));
             
             %% Execute the job in a "shelled" environment
             flag_failed = psom_run_job(pipeline.(name_job),path_worker,name_job);    
@@ -195,23 +206,35 @@ try
                 new_status = struct(name_job,'finished');
             end
             
+            %% Update profile info
+            file_prof_job = [path_worker name_job '_profile.mat'];
+            new_prof = struct();
+            
+            %% Update logs & profile
             if ~flag.spawn
-                file_log_job = [path_worker name_job '.log'];
-                file_prof_job = [path_worker name_job '_profile.mat'];
-                new_logs = struct(name_job,sub_read_txt(file_log_job));
+                %% Update profile info
                 tmp = load(file_prof_job);
-                tmp.worker = 0;
                 new_prof.(name_job) = tmp;
+                new_prof.(name_job).time_scheduled = time_scheduled.(name_job);
+                new_prof.(name_job).worker = num_worker;
+            
+                %% Update logs
+                file_log_job = [path_worker name_job '.log'];
+                new_logs = struct(name_job,sub_read_txt(file_log_job));
                 psom_clean(file_log_job);
                 psom_clean(file_prof_job);
                 
-                %% Update the status/logs/profile
+                %% Save the status/logs/profile
                 save(file_logs,'-struct','-append','new_logs');
                 save(file_logs_backup,'-struct','-append','new_logs');
                 save(file_status,'-struct','-append','new_status');
                 save(file_status_backup,'-struct','-append','new_status');
                 save(file_profile,'-struct','-append','new_prof');
                 save(file_profile_backup,'-struct','-append','new_prof');
+            else
+                new_prof.time_scheduled = time_scheduled.(name_job);
+                new_prof.worker = num_worker;
+                save(file_prof_job,'-struct','-append','new_prof');
             end
         end 
         
