@@ -384,7 +384,9 @@ if opt.flag_verbose == 2
     fprintf('Options for qsub: %s\n',opt.qsub_options)
     fprintf('Options for the shell: %s\n',opt.shell_options)
     fprintf('Command to start matlab/octave: %s\n',opt.command_matlab)
-    fprintf('Search path for matlab/octave: %s\n',opt.path_search)
+    fprintf('Search path for matlab/octave: %s (...)\n',opt.path_search(1:200))
+    fprintf('Time between checks: %1.1f\n',opt.time_between_checks)
+    fprintf('Number of checks per point: %i\n',opt.nb_checks_per_point)
 end
     
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
