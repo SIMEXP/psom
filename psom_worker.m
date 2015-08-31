@@ -175,7 +175,7 @@ try
                     list_new_jobs = fieldnames(spawn);
                     %% Add to the news feed
                     for nn = 1:length(list_new_jobs)
-                        sub_add_line_log(hf_news,sprintf('%s , submitted\n',list_new_jobs{nn}));
+                        sub_add_line_log(hf_news,sprintf('%s , registered\n',list_new_jobs{nn}));
                         time_scheduled.(list_new_jobs{nn}) = clock;
                     end
                     list_jobs = [ list_jobs ; list_new_jobs ];

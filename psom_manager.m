@@ -243,8 +243,10 @@ try
                     end
                     name_job = list_jobs{mask_job};
                     switch event_worker{num_e,2}
-                        case 'submitted'
-                            msg = sprintf('%s %s%s submitted ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
+                        case 'registered'
+                            if opt.flag_verbose == 2
+                                msg = sprintf('%s %s%s registered ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
+                            end
                         case 'running'
                             nb_running = nb_running+1;
                             nb_todo = nb_todo-1;
