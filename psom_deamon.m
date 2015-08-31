@@ -212,7 +212,7 @@ try
     opt_logs_pipe.exit   = [path_logs 'PIPE.exit'];   
     opt_pipe = opt_script;
     opt_pipe.name_job = 'psom_manager';   
-    cmd_pipe = sprintf('opt.max_buffer = %i; opt.max_queued = %i; opt.time_between_checks = %1.2f; opt.nb_checks_per_point = %i; psom_manager(''%s'',opt);',opt.max_buffer,opt.max_queued,opt.time_between_checks,opt.nb_checks_per_point,path_logs);    
+    cmd_pipe = sprintf('opt.flag_verbose = %i; opt.max_buffer = %i; opt.max_queued = %i; opt.time_between_checks = %1.2f; opt.nb_checks_per_point = %i; psom_manager(''%s'',opt);',opt.flag_verbose,opt.max_buffer,opt.max_queued,opt.time_between_checks,opt.nb_checks_per_point,path_logs);    
     if ispc % this is windows
         script_pipe = [path_tmp filesep 'psom_manager.bat'];
     else
