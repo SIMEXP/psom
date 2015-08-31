@@ -131,6 +131,9 @@ if ~strcmp(path_logs(end),filesep)
     path_logs = [path_logs filesep];
 end
 
+%% Constants
+time_death = 60; % Time before a worker is considered dead
+
 %% File names
 file_pipeline     = [path_logs 'PIPE.mat'];
 file_pipe_running = [path_logs 'PIPE.lock'];
@@ -240,7 +243,7 @@ try
         opt_logs_worker(num_w).exit   = sprintf('%spsom%i%sworker.exit',path_worker,num_w,filesep);   
         opt_worker(num_w) = opt_script;
         opt_worker(num_w).name_job = name_worker{num_w};
-        cmd_worker{num_w} = sprintf('flag.heartbeat = true; flag.spawn = true; psom_worker(''%s'',flag,''%s'');',path_worker_w{num_w},path_logs);
+        cmd_worker{num_w} = sprintf('flag.heartbeat = true; flag.spawn = true; psom_worker(''%s'',flag,''%s'',%i);',path_worker_w{num_w},path_logs,num_w);
         if ispc % this is windows
             script_worker{num_w} = [path_tmp filesep opt_worker(num_w).name_job '.bat'];
         else
@@ -336,7 +339,7 @@ try
                         if opt.flag_verbose == 2
                             fprintf('No heartbeat in %1.2fs for process %s\n',elapsed_time,name_worker{num_w})
                         end
-                        if elapsed_time > 30
+                        if elapsed_time > time_death
                             if opt.flag_verbose
                                 fprintf('No heartbeat for process %s, counted as dead.\n',name_worker{num_w});
                             end 
@@ -397,73 +400,6 @@ status_pipe = 0;
 %%%%%%%%%%%%%%%%%%
 %% subfunctions %%
 %%%%%%%%%%%%%%%%%%
-
-%% Find the children of a job
-function mask_child = sub_find_children(mask,graph_deps)
-% GRAPH_DEPS(J,K) == 1 if and only if JOB K depends on JOB J. GRAPH_DEPS =
-% 0 otherwise. This (ugly but reasonably fast) recursive code will work
-% only if the directed graph defined by GRAPH_DEPS is acyclic.
-% MASK_CHILD(num_w) == 1 if the job num_w is a children of one of the job
-% in the boolean mask MASK and the job is in MASK_TODO.
-% This last restriction is used to speed up computation.
-
-if max(double(mask))>0
-    mask_child = max(graph_deps(mask,:),[],1)>0;    
-    mask_child_strict = mask_child & ~mask;
-else
-    mask_child = false(size(mask));
-end
-
-if any(mask_child)
-    mask_child = mask_child | sub_find_children(mask_child_strict,graph_deps);
-end
-
-%% Read a text file
-function str_txt = sub_read_txt(file_name)
-
-hf = fopen(file_name,'r');
-if hf == -1
-    str_txt = '';
-else
-    str_txt = fread(hf,Inf,'uint8=>char')';
-    fclose(hf);    
-end
-
-%% Clean up the tags and logs associated with a job
-function [] = sub_clean_job(path_logs,name_job)
-
-files{1}  = [path_logs filesep name_job '.log'];
-files{2}  = [path_logs filesep name_job '.finished'];
-files{3}  = [path_logs filesep name_job '.failed'];
-files{4}  = [path_logs filesep name_job '.running'];
-files{5}  = [path_logs filesep name_job '.exit'];
-files{6}  = [path_logs filesep name_job '.eqsub'];
-files{7}  = [path_logs filesep name_job '.oqsub'];
-files{8}  = [path_logs filesep name_job '.profile.mat'];
-files{9}  = [path_logs filesep name_job '.heartbeat.mat'];
-files{10} = [path_logs filesep name_job '.kill'];
-files{11} = [path_logs filesep 'tmp' filesep name_job '.sh'];
-
-for num_f = 1:length(files)
-    if psom_exist(files{num_f});
-        delete(files{num_f});
-    end
-end
-
-function [] = sub_add_line_log(file_write,str_write,flag_verbose);
-
-if flag_verbose
-    fprintf('%s',str_write)
-end
-
-if ischar(file_write)
-    hf = fopen(file_write,'a');
-    fprintf(hf,'%s',str_write);
-    fclose(hf);
-else
-    fprintf(file_write,'%s',str_write);
-end
-
 function [] = sub_sleep(time_sleep)
 
 if exist('OCTAVE_VERSION','builtin')  
