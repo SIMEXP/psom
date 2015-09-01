@@ -176,7 +176,8 @@ try
     nb_failed     = 0;                         % The number of failed jobs
     nb_running    = 0;                         % The number of running jobs
     nb_checks     = 0;                         % The number of checks before printing a point
-    worker_reset  = false(opt.max_queued,1);    % A binary list of workers that have been reset
+    worker_reset  = false(opt.max_queued,1);   % A binary list of workers that have been reset
+    worker_ready  = false(opt.max_queued,1);   % A binary list of workers that are ready to receive jobs
     nb_char_news  = zeros(opt.max_queued,1);   % A list of the number of characters read from the news per worker
     nb_sch_worker = zeros(opt.max_queued,1);   % A list of the number of jobs scheduled for execution per worker   
     news_worker   = repmat({''},[opt.max_queued,1]); % a list to store the news of all workers
@@ -211,6 +212,7 @@ try
         %% and read the news
         flag_nothing_happened = true;
         for num_w = 1:opt.max_queued
+            worker_ready(num_w) = psom_exist(file_worker_heart{num_w})&&~psom_exist(file_worker_job{num_w});
             if psom_exist(file_worker_heart{num_w})
                 if nb_sch_worker(num_w)==Inf
                     nb_sch_worker(num_w) = 0;
@@ -291,22 +293,26 @@ try
         
         %% Time to (try to) submit jobs !!
         list_num_to_run = find(mask_todo&~mask_deps);
+        list_jobs(list_num_to_run)
         mask_new_submit = false(opt.max_queued,1);
         nb_to_submit = length(list_num_to_run);
         tag = [];
         curr_job = 0;
         pipe_sub = cell(opt.max_queued,1);
-        while (min(nb_sch_worker)<=opt.max_buffer)&&(curr_job<length(list_num_to_run))
+        nb_sch_worker_r = nb_sch_worker;
+        nb_sch_worker_r(~worker_ready) = Inf;
+        while (min(nb_sch_worker_r)<=opt.max_buffer)&&(curr_job<length(list_num_to_run))
             curr_job = curr_job+1;
-            [val,ind] = min(nb_sch_worker);
+            [val,ind] = min(nb_sch_worker_r);
             name_job = list_jobs{list_num_to_run(curr_job)};
             pipe_sub{ind}.(name_job) = pipeline.(name_job);
             mask_new_submit(ind) = true;
             nb_sch_worker(ind) = nb_sch_worker(ind)+1;
+            nb_sch_worker_r(ind) = nb_sch_worker_r(ind)+1;
             mask_running(list_num_to_run(curr_job)) = true;
             mask_todo(list_num_to_run(curr_job)) = false;
             psom_plan(list_num_to_run(curr_job)) = ind;
-            if opt.flag_verbose == 2
+            if opt.flag_verbose >= 2
                 msg = sprintf('%s %s%s submitted  ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
                 fprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_running,nb_failed,nb_finished,nb_todo);
             end
