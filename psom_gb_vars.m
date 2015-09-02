@@ -60,8 +60,20 @@ if ~strcmp(gb_psom_tmp(end),filesep)
     gb_psom_tmp = [gb_psom_tmp filesep];
 end
 
-% How to open pdf files
-gb_psom_pdf_viewer = 'evince';
+% How to open pdf files, will choos the firte one to exist 
+pdf_viewers = {'xpdf', 'evince', 'okular'};
+nb_v = length(pdf_viewers);
+
+for i = 1:nb_v
+
+    cmd = [ pdf_viewers{i} ' --help >/dev/null 2>&1'];
+    [retcode, text] = system(cmd) ;
+    if retcode ~= 127
+        gb_psom_pdf_viewer = pdf_viewers{i};
+        break
+    end
+
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% The following variables should not be changed %%
