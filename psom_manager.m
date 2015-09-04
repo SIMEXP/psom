@@ -293,7 +293,6 @@ try
         
         %% Time to (try to) submit jobs !!
         list_num_to_run = find(mask_todo&~mask_deps);
-        list_jobs(list_num_to_run)
         mask_new_submit = false(opt.max_queued,1);
         nb_to_submit = length(list_num_to_run);
         tag = [];
