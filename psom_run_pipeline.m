@@ -64,7 +64,7 @@ function status = psom_run_pipeline(pipeline,opt)
 %    MODE
 %        (string, default GB_PSOM_MODE defined in PSOM_GB_VARS)
 %        how to execute the jobs :
-%        'session'    : current Matlab session.
+%        'session'    : same as 'background', with MAX_QUEUED=1.
 %        'background' : background execution, not-unlogin-proofed 
 %                       (asynchronous system call).
 %        'batch'      : background execution, unlogin-proofed ('at' in 
@@ -327,6 +327,7 @@ end
 if strcmp(opt.mode,'session')
     opt.max_queued = 1;
     max_queued = 1;
+    opt.mode = 'background';
 end
 
 if opt.max_queued == 0
