@@ -145,6 +145,7 @@ for num_w = 1:opt.max_queued
     name_worker{num_w} = sprintf('psom%i',num_w);
     file_worker_heart{num_w} = [path_worker name_worker{num_w} filesep 'heartbeat.mat'];
     file_worker_reset{num_w} = [path_worker name_worker{num_w} filesep 'worker.reset'];
+    file_worker_end{num_w}   = [path_worker name_worker{num_w} filesep 'worker.end'];
 end
 name_worker{opt.max_queued+1} = 'psom_manager';
 file_worker_heart{opt.max_queued+1} = [path_logs 'heartbeat.mat'];
@@ -183,6 +184,7 @@ try
     flag_started = false([opt.max_queued+2 1]); % Has the worker ever started? two last entries are for the PM and the GC
     flag_alive   = false([opt.max_queued+2 1]); % Is the worker alive? two last entries are for the PM and the GC
     flag_wait    = false([opt.max_queued+2 1]); % Are we waiting for the worker to start? two last entries are for the PM and the GC
+    flag_end     = false([opt.max_queued 1]);   % did the manager request for the worker to end?
     
     %% Create logs folder for each worker
     path_worker_w = cell(opt.max_queued,1);
@@ -358,7 +360,7 @@ try
         
         %% Now start workers
         for num_w = 1:opt.max_queued
-            if ~flag_wait(num_w)&&~flag_alive(num_w)&&(~flag_started(num_w)||(nb_resub<=opt.nb_resub))
+            if ~flag_end(num_w)&&~flag_wait(num_w)&&~flag_alive(num_w)&&(~flag_started(num_w)||(nb_resub<=opt.nb_resub))
                 fprintf('Starting worker number %i...\n',num_w)
                 [flag_failed,msg] = psom_run_script(cmd_worker{num_w},script_worker{num_w},opt_worker(num_w),opt_logs_worker(num_w),opt.flag_verbose);
                 flag_wait(num_w) = true;

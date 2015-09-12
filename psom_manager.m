@@ -98,6 +98,7 @@ for num_w = 1:opt.max_queued
     file_worker_job{num_w}   = sprintf('%spsom%i%snew_jobs.mat',path_worker,num_w,filesep);
     file_worker_ready{num_w} = sprintf('%spsom%i%snew_jobs.ready',path_worker,num_w,filesep);
     file_worker_reset{num_w} = sprintf('%spsom%i%sworker.reset',path_worker,num_w,filesep);
+    file_worker_end{num_w}   = sprintf('%spsom%i%sworker.end',path_worker,num_w,filesep);
 end
           
 %% Start heartbeat
@@ -178,6 +179,7 @@ try
     nb_checks     = 0;                         % The number of checks before printing a point
     worker_reset  = false(opt.max_queued,1);   % A binary list of workers that have been reset
     worker_ready  = false(opt.max_queued,1);   % A binary list of workers that are ready to receive jobs
+    worker_active = false(opt.max_queued,1);   % A binary list of workers that are active
     nb_char_news  = zeros(opt.max_queued,1);   % A list of the number of characters read from the news per worker
     nb_sch_worker = zeros(opt.max_queued,1);   % A list of the number of jobs scheduled for execution per worker   
     news_worker   = repmat({''},[opt.max_queued,1]); % a list to store the news of all workers
@@ -212,8 +214,9 @@ try
         %% and read the news
         flag_nothing_happened = true;
         for num_w = 1:opt.max_queued
-            worker_ready(num_w) = psom_exist(file_worker_heart{num_w})&&~psom_exist(file_worker_job{num_w});
-            if psom_exist(file_worker_heart{num_w})
+            worker_active(num_w) = ~psom_exist(file_worker_end{num_w})&&psom_exist(file_worker_heart{num_w}); 
+            worker_ready(num_w) = worker_active(num_w)&&~psom_exist(file_worker_job{num_w});
+            if worker_active(num_w)
                 if nb_sch_worker(num_w)==Inf
                     nb_sch_worker(num_w) = 0;
                 end
@@ -243,7 +246,7 @@ try
                     switch event_worker{num_e,2}
                         case 'registered'
                             if opt.flag_verbose == 2
-                                msg = sprintf('%s %s%s registered ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
+                                msg = sprintf('%s %s%s registered',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
                             else
                                 msg = ''; % empty message will not be printed
                             end
@@ -312,10 +315,11 @@ try
             mask_todo(list_num_to_run(curr_job)) = false;
             psom_plan(list_num_to_run(curr_job)) = ind;
             if opt.flag_verbose >= 2
-                msg = sprintf('%s %s%s submitted  ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
+                msg = sprintf('%s %s%s submitted ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
                 fprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_running,nb_failed,nb_finished,nb_todo);
             end
         end
+        
         if opt.flag_verbose == 3
             if ~any(nb_sch_worker~=Inf)
                 max_sch_worker = 0;
@@ -326,6 +330,7 @@ try
             end
             fprintf('%i/%i jobs submitted, # jobs per worker: %i (max) %i (min) %i (unavailable)\n',curr_job,nb_to_submit,max_sch_worker,min_sch_worker,sum(nb_sch_worker==Inf))
         end
+        
         %% Mark new submissions as ready to process
         for num_w = 1:opt.max_queued
             if mask_new_submit(num_w)
@@ -336,6 +341,24 @@ try
             end
         end
         
+        %% End workers that do not have jobs left to do
+        mask_idle = worker_active&(nb_sch_worker==0);
+        if (sum(mask_todo) < sum(worker_active)) && any(mask_idle)
+            list_idle = find(mask_idle);
+            list_idle = list_idle(1:min(length(list_idle),sum(worker_active)-sum(mask_todo)));
+            for num_w = list_idle(:)'
+                tmp = [];
+                save(file_worker_end{num_w},'tmp');
+                if opt.flag_verbose>=2
+                    fprintf('Stopping idle worker %i (not enough jobs left to do).\n',num_w);
+                end
+            end
+            if opt.flag_verbose>=2
+                fprintf('%i active worker(s) left, %i job(s) left to submit.\n',sum(worker_active)-length(list_idle),sum(mask_todo));
+            end
+        end
+        
+        %% Sleep if nothing happened
         if flag_nothing_happened && (any(mask_todo) || any(mask_running)) && psom_exist(file_pipe_running)
             sub_sleep(opt.time_between_checks)
          

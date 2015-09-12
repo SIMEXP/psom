@@ -65,6 +65,7 @@ end
 %% Generating file names
 file_heartbeat = [path_worker filesep 'heartbeat.mat'];
 file_kill      = [path_worker filesep 'worker.kill'];
+file_end       = [path_worker filesep 'worker.end'];
 file_news_feed = [path_worker filesep 'news_feed.csv'];
 file_lock      = [path_logs filesep 'PIPE.lock'];
 
@@ -114,6 +115,7 @@ try
     time_scheduled = struct();
     list_jobs = {};
     pipeline = struct;
+    flag_end = false;
     while test_loop
 
         %% Check for new spawns
@@ -168,7 +170,11 @@ try
             save(file_prof_job,'-struct','-append','new_prof');
         end 
         
-        test_loop = psom_exist(file_lock);
+        test_loop = psom_exist(file_lock)&&(~flag_end||(num_job<length(list_jobs)));
+        flag_end = psom_exist(file_end);
+        if flag_end
+            fprintf('%s - The manager has requested to end the work asap!\n',datestr(clock));
+        end
         if (num_job == length(list_jobs))&&test_loop
             if exist('OCTAVE_VERSION','builtin')  
                 [res,msg] = system('sleep 0.1');
@@ -179,7 +185,7 @@ try
     end % While there are jobs to do
     
     %% Close the news feed
-    sub_add_line_log(hf_news,'PIPE , terminated\n');
+    sub_add_line_log(hf_news,'PIPE , terminated');
     if strcmp(gb_psom_language,'matlab')
         fclose(hf_news);
     end
