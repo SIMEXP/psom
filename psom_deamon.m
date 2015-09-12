@@ -138,6 +138,7 @@ time_death = 60; % Time before a worker is considered dead
 file_pipeline     = [path_logs 'PIPE.mat'];
 file_pipe_running = [path_logs 'PIPE.lock'];
 file_kill         = [path_logs 'PIPE.kill'];
+file_time         = [path_logs 'PIPE_time.mat'];
 path_tmp          = [path_logs 'tmp' filesep];
 path_worker       = [path_logs 'worker' filesep];
 path_garbage      = [path_logs 'garbage' filesep];
@@ -157,6 +158,10 @@ psom_mkdir(path_tmp);
 if ~exist(file_pipeline,'file') % Does the pipeline exist ?
     error('Could not find the pipeline file %s. Please use psom_run_pipeline instead of psom_deamon directly.',file_pipeline);
 end
+
+%% Save the time
+time_pipeline = datestr(clock);
+save(file_time,'time_pipeline');
 
 % a try/catch block is used to clean temporary file if the user is
 % interrupting the pipeline of if an error occurs
@@ -214,7 +219,7 @@ try
     opt_logs_pipe.exit   = [path_logs 'PIPE.exit'];   
     opt_pipe = opt_script;
     opt_pipe.name_job = 'psom_manager';   
-    cmd_pipe = sprintf('opt.flag_verbose = %i; opt.max_buffer = %i; opt.max_queued = %i; opt.time_between_checks = %1.2f; opt.nb_checks_per_point = %i; psom_manager(''%s'',opt);',opt.flag_verbose,opt.max_buffer,opt.max_queued,opt.time_between_checks,opt.nb_checks_per_point,path_logs);    
+    cmd_pipe = sprintf('opt.time_pipeline = ''%s''; opt.flag_verbose = %i; opt.max_buffer = %i; opt.max_queued = %i; opt.time_between_checks = %1.2f; opt.nb_checks_per_point = %i; psom_manager(''%s'',opt);',time_pipeline,opt.flag_verbose,opt.max_buffer,opt.max_queued,opt.time_between_checks,opt.nb_checks_per_point,path_logs);    
     if ispc % this is windows
         script_pipe = [path_tmp filesep 'psom_manager.bat'];
     else
@@ -229,7 +234,7 @@ try
     opt_logs_garb.exit   = [path_garbage 'garbage.exit'];   
     opt_garb = opt_script;
     opt_garb.name_job = 'psom_garbage';   
-    cmd_garb = sprintf('opt.max_queued = %i; opt.time_between_checks = %1.2f; opt.nb_checks_per_point = %i; psom_garbage(''%s'',opt);',opt.max_queued,opt.time_between_checks,opt.nb_checks_per_point,path_logs);    
+    cmd_garb = sprintf('opt.time_pipeline = ''%s''; opt.max_queued = %i; opt.time_between_checks = %1.2f; opt.nb_checks_per_point = %i; psom_garbage(''%s'',opt);',time_pipeline,opt.max_queued,opt.time_between_checks,opt.nb_checks_per_point,path_logs);    
     if ispc % this is windows
         script_garb = [path_tmp filesep 'psom_garbage.bat'];
     else
@@ -245,7 +250,7 @@ try
         opt_logs_worker(num_w).exit   = sprintf('%spsom%i%sworker.exit',path_worker,num_w,filesep);   
         opt_worker(num_w) = opt_script;
         opt_worker(num_w).name_job = name_worker{num_w};
-        cmd_worker{num_w} = sprintf('psom_worker(''%s'',''%s'',%i);',path_worker_w{num_w},path_logs,num_w);
+        cmd_worker{num_w} = sprintf('psom_worker(''%s'',''%s'',%i,''%s'');',path_worker_w{num_w},path_logs,num_w,time_pipeline);
         if ispc % this is windows
             script_worker{num_w} = [path_tmp filesep opt_worker(num_w).name_job '.bat'];
         else

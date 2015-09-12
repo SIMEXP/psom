@@ -9,6 +9,8 @@ function status_pipe = psom_manager(path_logs,opt)
 % OPT
 %   (structure) with the following fields :
 %
+%   TIME_PIPELINE
+%
 %   TIME_BETWEEN_CHECKS
 %
 %   NB_CHECKS_PER_POINT
@@ -74,8 +76,8 @@ if nargin < 2
     opt = struct;
 end
 opt = psom_struct_defaults( opt , ...
-   {  'flag_verbose' , 'time_between_checks' , 'nb_checks_per_point' , 'max_queued' , 'max_buffer' }, ...
-   {  1              , NaN                   , NaN                   , NaN          , 5            });
+   {  'flag_verbose' , 'time_pipeline' , 'time_between_checks' , 'nb_checks_per_point' , 'max_queued' , 'max_buffer' }, ...
+   {  1              , NaN             , NaN                   , NaN                   , NaN          , 5            });
 
 %% Logs folder
 if ~strcmp(path_logs(end),filesep)
@@ -86,6 +88,7 @@ end
 file_pipeline     = [path_logs 'PIPE.mat'];
 file_jobs         = [path_logs 'PIPE_jobs.mat'];
 file_status       = [path_logs 'PIPE_status.mat'];
+file_time         = [path_logs 'PIPE_time.mat'];
 file_pipe_running = [path_logs 'PIPE.lock'];
 file_heartbeat    = [path_logs 'heartbeat.mat'];
 file_kill         = [path_logs 'PIPE.kill'];
@@ -100,7 +103,16 @@ for num_w = 1:opt.max_queued
     file_worker_reset{num_w} = sprintf('%spsom%i%sworker.reset',path_worker,num_w,filesep);
     file_worker_end{num_w}   = sprintf('%spsom%i%sworker.end',path_worker,num_w,filesep);
 end
-          
+    
+%% Check that the time of the pipeline matches the record
+%% This check is done to ensure a new pipeline has not been started
+%% since the manager was started
+logs_time = load(file_time);
+if ~strcmp(opt.time_pipeline,logs_time.time_pipeline)
+    fprintf('The time of the pipeline does not match the logs. I am quitting.')
+    exit
+end
+
 %% Start heartbeat
 main_pid = getpid;
 cmd = sprintf('psom_heartbeat(''%s'',''%s'',%i)',file_heartbeat,file_kill,main_pid);

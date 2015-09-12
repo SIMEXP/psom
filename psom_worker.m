@@ -1,4 +1,4 @@
-function status_pipe = psom_worker(path_worker,path_logs,num_worker)
+function status_pipe = psom_worker(path_worker,path_logs,num_worker,time_pipeline)
 % Execute jobs.
 %
 % status = psom_worker( path_worker , path_logs , num_worker )
@@ -6,6 +6,7 @@ function status_pipe = psom_worker(path_worker,path_logs,num_worker)
 % PATH_WORKER (string) The name of a path where all logs will be saved.
 % PATH_LOGS (string)
 % NUM_WORKER (integer, default 1)
+% TIME_PIPELINE
 %
 % See licensing information in the code.
 
@@ -56,6 +57,10 @@ end
 if nargin < 3
     error('Please specify NUM_WORKER')
 end
+
+if nargin < 4
+    error('Please specify TIME_PIPELINE')
+end
      
 %% Create folder for worker
 if ~psom_exist(path_worker)
@@ -68,6 +73,16 @@ file_kill      = [path_worker filesep 'worker.kill'];
 file_end       = [path_worker filesep 'worker.end'];
 file_news_feed = [path_worker filesep 'news_feed.csv'];
 file_lock      = [path_logs filesep 'PIPE.lock'];
+file_time         = [path_logs 'PIPE_time.mat'];
+
+%% Check that the time of the pipeline matches the record
+%% This check is done to ensure a new pipeline has not been started
+%% since the manager was started
+logs_time = load(file_time);
+if ~strcmp(time_pipeline,logs_time.time_pipeline)
+    fprintf('The time of the pipeline does not match the logs. I am quitting.')
+    exit
+end
 
 %% Open the news feed file
 if strcmp(gb_psom_language,'matlab');

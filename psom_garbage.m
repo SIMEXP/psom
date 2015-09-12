@@ -7,6 +7,7 @@ function [] = psom_garbage(path_logs,opt)
 % OPT.TIME_BETWEEN_CHECKS
 % OPT.NB_CHECKS_PER_POINT
 % OPT.MAX_QUEUED
+% OPT.TIME_PIPELINE
 % OPT.FLAG_VERBOSE (integer 0, 1 or 2, default 1) No verbose (0), verbose (1).
 %
 % See licensing information in the code.
@@ -52,8 +53,8 @@ if nargin < 2
     opt = struct;
 end
 opt = psom_struct_defaults( opt , ...
-   {  'flag_verbose' , 'time_between_checks' , 'nb_checks_per_point' , 'max_queued' }, ...
-   {  1              , NaN                   , NaN                   , NaN          });
+   {  'flag_verbose' , 'time_pipeline' , 'time_between_checks' , 'nb_checks_per_point' , 'max_queued' }, ...
+   {  1              , NaN             , NaN                   , NaN                   , NaN          });
 
 %% Logs folder
 if ~strcmp(path_logs(end),filesep)
@@ -71,6 +72,7 @@ file_profile_backup = [path_logs 'PIPE_profile_backup.mat'];
 file_pipe_running   = [path_logs 'PIPE.lock'];
 file_heartbeat      = [path_garbage 'heartbeat.mat'];
 file_kill           = [path_garbage 'garbage.kill'];
+file_time           = [path_logs 'PIPE_time.mat'];
 path_worker         = [path_logs 'worker' filesep];
 file_news           = [path_logs 'news_feed.csv'];
 
@@ -84,6 +86,15 @@ else
     end
 end   
    
+%% Check that the time of the pipeline matches the record
+%% This check is done to ensure a new pipeline has not been started
+%% since the manager was started
+logs_time = load(file_time);
+if ~strcmp(opt.time_pipeline,logs_time.time_pipeline)
+    fprintf('The time of the pipeline does not match the logs. I am quitting.')
+    exit
+end
+
 %% Start heartbeat
 main_pid = getpid;
 cmd = sprintf('psom_heartbeat(''%s'',''%s'',%i)',file_heartbeat,file_kill,main_pid);
