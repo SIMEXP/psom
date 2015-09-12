@@ -120,7 +120,7 @@ while ~flag_exit
     new_logs = struct;
     if psom_exist(file_news)
             
-       %% Parse news_feed.csv for one worker
+       %% Parse news_feed.csv for the pipeline manager
        [str_read,nb_char_news] = sub_tail(file_news,nb_char_news);
        news = [news str_read];
        [events,news] = sub_parse_news(news);
