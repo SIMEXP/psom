@@ -93,9 +93,25 @@ function res = psom_pipeline_visu(path_logs,action,opt_action,flag_visu)
 %    Plot the number of jobs running as a function of the elapsed time 
 %    since the start-up of the first job. If specified, OPT will be used 
 %    as an argument sent to the PLOT command. RES is a structure with 
-%    three fields : 
+%    the following fields : 
 %        NB_JOBS_RUNNING (vector), entry I is the number of submitted
 %           jobs at time ALL_TIME(I)
+%        ALL_TIME (vector) a (sorted) list of the times when the number
+%           of submitted jobs changed.
+%        TIME_START (vector) TIME_START(J) is the time when the job 
+%           LIST_JOBS{I} started.
+%        TIME_END (vector) TIME_END(J) is the time when the job 
+%           LIST_JOBS{I} ended.
+%        LIST_JOBS (cell of strings) LIST_JOBS{J} is the name of the Jth
+%           job.
+%
+% ACTION = 'nb_jobs_worker'
+%    Plot the number of jobs running as a function of the elapsed time 
+%    since the start-up of the first job, for each worker. If specified, 
+%    OPT will be used as an argument sent to the PLOT command. 
+%    RES is a structure with the following fields : 
+%        NB_JOBS_RUNNING (array time x worker), entry I,W is the number of 
+%           submitted jobs at time ALL_TIME(I) for worker W
 %        ALL_TIME (vector) a (sorted) list of the times when the number
 %           of submitted jobs changed.
 %        TIME_START (vector) TIME_START(J) is the time when the job 
@@ -121,9 +137,9 @@ function res = psom_pipeline_visu(path_logs,action,opt_action,flag_visu)
 %
 % Copyright (c) Pierre Bellec, 
 % Montreal Neurological Institute, 2008-2010
-% Département d'informatique et de recherche opérationnelle
-% Centre de recherche de l'institut de Gériatrie de Montréal
-% Université de Montréal, 2011
+% Dpartement d'informatique et de recherche oprationnelle
+% Centre de recherche de l'institut de Griatrie de Montral
+% Universit de Montral, 2011-2015
 % Maintainer : pierre.bellec@criugm.qc.ca
 % See licensing information in the code.
 % Keywords : pipeline
@@ -236,24 +252,24 @@ switch action
         file_monitor = [path_logs filesep name_pipeline '_history.txt'];
         file_pipe_running = [path_logs filesep name_pipeline '.lock'];
 
-        if exist(file_pipe_running,'file')
-            msg = 'The pipeline is currently running';
-        else
-            msg = 'The pipeline is NOT currently running';
-        end
-
-        stars = repmat('*',size(msg));
-        fprintf('\n\n%s\n%s\n%s\n\n',stars,msg,stars);
-
-        while ~psom_exist(file_monitor) && psom_exist(file_pipe_running) % the pipeline started but the log file has not yet been created
-
-            fprintf('I could not find any log file. This pipeline has not been started (yet?). Press CTRL-C to cancel.\n');
-            pause(1)
-
+        if ~psom_exist(file_pipe_running) && (nargin<3)
+            fprintf('The pipeline is NOT currently running\n');
         end
         
-        sub_tail(file_monitor,file_pipe_running,opt_action);
-        res = [];
+        while ~psom_exist(file_monitor) && psom_exist(file_pipe_running) % the pipeline started but the log file has not yet been created
+            fprintf('I could not find any log file. This pipeline has not been started (yet?). Press CTRL-C to cancel.\n');
+            if exist('OCTAVE_VERSION','builtin')  
+                [res,msg] = system('sleep 1');
+            else
+                sleep(1); 
+            end
+        end
+        
+        if nargin<3
+            res = sub_tail(file_monitor,file_pipe_running,opt_action);
+        else 
+            res = sub_read_update(file_monitor,opt_action);
+        end
         
     case 'time'
 
@@ -372,34 +388,92 @@ switch action
         end
         res = log_job.(opt_action);
 
-    case 'nb_jobs_running'
+    case {'nb_jobs_running','nb_jobs_worker'}
 
         profile_jobs = load(file_profile);
         list_jobs = fieldnames(profile_jobs);
         time_start = zeros([length(list_jobs) 1]);
         time_end = zeros([length(list_jobs) 1]);
+        time_scheduled = zeros([length(list_jobs) 1]);
         
+        % find the number of workers
+        nb_worker = 0;
+        for num_j = 1:length(list_jobs)
+            if isfield(profile_jobs.(list_jobs{num_j}),'worker')
+                nb_worker = max(nb_worker,profile_jobs.(list_jobs{num_j}).worker);
+            end
+        end
+        
+        % Extract timing info from the jobs profile
+        worker = zeros(length(list_jobs),nb_worker);
         for num_j = 1:length(list_jobs)
             if isfield(profile_jobs.(list_jobs{num_j}),'end_time')&&~isempty(profile_jobs.(list_jobs{num_j}).end_time)
                 [tmp,time_start(num_j)] = datenum(profile_jobs.(list_jobs{num_j}).start_time);
                 [tmp,time_end(num_j)] = datenum(profile_jobs.(list_jobs{num_j}).end_time);
+                [tmp,time_scheduled(num_j)] = datenum(profile_jobs.(list_jobs{num_j}).time_scheduled);
+            end
+            if isfield(profile_jobs.(list_jobs{num_j}),'worker')
+                worker(num_j,profile_jobs.(list_jobs{num_j}).worker) = 1;
             end
         end
-        mask = time_end ~= 0; % Ignore jobs that did not complete
-        time_start = time_start(mask);
+        
+        % Ignore jobs that did not complete
+        mask = time_end ~= 0; 
+        if strcmp(action,'nb_jobs_running')
+            time_start = time_start(mask); 
+        else
+            time_start = time_scheduled(mask); % to plot the #jobs per worker, use the scheduled time rather than start time
+        end
         time_end = time_end(mask);
+        worker = worker(mask,:);
+        
+        % Manipulate the timing to extract the number of jobs as a function of time
+        % Note that each time (either a job starting or ending) is coded twice with 
+        % a small epsilon, to make an instant bump in the plot, rather than 
+        % a linear interpolation between time points
         changes = [ones([length(time_start) 1]) ; -ones([length(time_start) 1])];
         [all_time,order] = sort([time_start;time_end]);
+        all_time = [all_time(:)'-eps ; all_time(:)'];
+        all_time = all_time(:);
         changes = changes(order);
-        nb_jobs_running = cumsum(changes);
+        worker = [worker ; worker];
+        worker = worker(order,:);
+        if strcmp(action,'nb_jobs_running')
+            nb_jobs_running = cumsum(changes);
+            nb_jobs_running = [ [ 0 nb_jobs_running(1:end-1)'] ; nb_jobs_running'];
+            nb_jobs_running = nb_jobs_running(:);
+            jitter = zeros(size(nb_jobs_running));
+        else
+            nb_jobs_worker = zeros(2*length(changes),nb_worker);
+            for num_w = 1:nb_worker
+                nb_jobs_running = cumsum(changes.*worker(:,num_w));
+                nb_jobs_running = [ [ 0 nb_jobs_running(1:end-1)'] ; nb_jobs_running'];
+                nb_jobs_worker(:,num_w) = nb_jobs_running(:);
+            end
+            nb_jobs_running = nb_jobs_worker;
+            jitter = 0.25*repmat(rand(1,size(nb_jobs_running,2)),[size(nb_jobs_running,1) 1]);
+        end
+        
+        % decide on the unit
+        if (max(all_time)-all_time(1))>3600
+            unit_plot = 'hr';
+            factor_norm = 3600;
+        elseif (max(all_time)-all_time(1))>300
+            unit_plot = 'mn';
+            factor_norm = 60;
+        else 
+            unit_plot = 's';
+            factor_norm = 1;
+        end
         if flag_visu
             if ~exist('opt_action','var')||isempty(opt_action)
-                plot((all_time-all_time(1))/(60*60),nb_jobs_running);
+                plot((all_time-all_time(1))/factor_norm,nb_jobs_running+jitter);
             else
-                plot((all_time-all_time(1))/(60*60),nb_jobs_running,opt_action);
+                plot((all_time-all_time(1))/factor_norm,nb_jobs_running+jitter,opt_action);
             end
             ha = gca;
-            set(get(ha,'xlabel'),'string','time elapsed (hrs)')
+            axis([0 (all_time(end)-all_time(1))/factor_norm 0 max(nb_jobs_running(:))+1]);
+            set(get(ha,'xlabel'),'string',['time elapsed (' unit_plot ')'])
             set(get(ha,'ylabel'),'string','# jobs running')
         end
         res.nb_jobs_running = nb_jobs_running;
@@ -440,7 +514,17 @@ end
 %% sub-functions %%
 %%%%%%%%%%%%%%%%%%%
 
-function [] = sub_tail(file_read,file_running,nb_chars)
+function nb_chars = sub_read_update(file_read,nb_chars)
+
+% prints out update on FILE_READ 
+hf = fopen(file_read,'r');
+fseek(hf,nb_chars,'bof');
+str_read = fread(hf, Inf , 'uint8=>char')';
+nb_chars = ftell(hf);
+fclose(hf);    
+fprintf('%s',str_read);            
+
+function nb_chars = sub_tail(file_read,file_running)
 
 % prints out the content of the text file FILE_READ with constant updates
 % as long as the file FILE_RUNNING exists. 

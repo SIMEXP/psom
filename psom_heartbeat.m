@@ -12,8 +12,6 @@ function [] = psom_heartbeat(file_heart,file_kill,pid)
 % PID (scalar) a process ID.
 %
 % See licensing information in the code.
-%  
-%system(['octave --eval "cd /home/pbellec/, build_path_std, cd /home/pbellec/tmp/tmp, psom_heartbeat(''toto.mat'',''tata.mat'',' num2str(getpid) '); exit"'],false,'async')
 
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008-2010.
 % Departement d'informatique et de recherche operationnelle
@@ -42,6 +40,7 @@ function [] = psom_heartbeat(file_heart,file_kill,pid)
 % THE SOFTWARE.
 tic;
 flag_beat = true;
+path_heart = fileparts(file_kill);
 while flag_beat
     if exist('OCTAVE_VERSION','builtin')  
         [err,msg] = kill(pid,0); % use the kill octave command
@@ -50,8 +49,14 @@ while flag_beat
     end
     flag_beat = err==0;
     curr_time = clock;
-    save(file_heart,'curr_time');
-    if exist(file_kill,'file')
+    try
+        save(file_heart,'curr_time');
+    end
+    if exist(file_kill,'file')||~psom_exist(path_heart)
+        if exist(file_kill,'file')
+            psom_clean(file_kill);
+        end
+        
         if exist('OCTAVE_VERSION','builtin')  
             kill(pid,9)
         else
