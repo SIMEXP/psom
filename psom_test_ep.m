@@ -9,6 +9,9 @@ function [pipel,opt_pipe] = psom_test_ep(path_test,opt)
 %   PATH_LOGS is forced to [path_test filesep 'logs']
 %   TIME (scalar, default 3) the time (in seconds) that takes each 
 %      job.
+%   TIME_RAND (scalar, default 0) an additional time added to the job. Each
+%      job will get a random value assigned, distributed uniformly between
+%      0 and TIME_RAND.
 %   NB_JOBS (integer, default 100) the number of jobs.
 %   NB_CHAINS (integer, default 1) the number of chains. The final 
 %     number of jobs is NB_JOBS x NB_CHAINS.
@@ -32,8 +35,8 @@ if nargin < 2
     opt = struct;
 end
 
-list_opt = { 'time' , 'nb_jobs' , 'nb_chains' , 'flag_test' };
-list_def = { 3      , 100       , 1           , false       };
+list_opt = { 'time_rand' , 'time' , 'nb_jobs' , 'nb_chains' , 'flag_test' };
+list_def = { 0           , 3      , 100       , 1           , false       };
 opt = psom_struct_defaults(opt,list_opt,list_def,false);
 
 if (nargin < 1)||isempty(path_test)
@@ -52,7 +55,7 @@ opt_pipe = rmfield(opt,list_opt);
 for num_j = 1:opt.nb_jobs
     for num_c = 1:opt.nb_chains
         job_name = sprintf('job%i_%i',num_j,num_c);   
-        pipel.(job_name).command = sprintf('system(''sleep %1.3f'');',opt.time);
+        pipel.(job_name).command = sprintf('system(''sleep %1.3f'');',opt.time+opt.time_rand*rand(1));
         if num_j > 1
             pipel.(job_name).dep = {sprintf('job%i_%i',num_j-1,num_c)};
         end
