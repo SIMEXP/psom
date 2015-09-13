@@ -60,19 +60,14 @@ if ~strcmp(gb_psom_tmp(end),filesep)
     gb_psom_tmp = [gb_psom_tmp filesep];
 end
 
-% How to open pdf files, will choos the firte one to exist 
-pdf_viewers = {'xpdf', 'evince', 'okular'};
-nb_v = length(pdf_viewers);
-
-for i = 1:nb_v
-
-    cmd = [ pdf_viewers{i} ' --help >/dev/null 2>&1'];
-    [retcode, text] = system(cmd) ;
-    if retcode ~= 127
-        gb_psom_pdf_viewer = pdf_viewers{i};
+% How to open pdf files, will choose the first one that exists 
+gb_psom_list_pdf = {'xpdf' , 'evince', 'okular' , 'undefined'};
+for gb_psom_pdf_viewer = gb_psom_list_pdf
+    gb_psom_pdf_viewer = gb_psom_pdf_viewer{1};
+    [gb_psom_retcode,gb_psom_txt] = system([ gb_psom_pdf_viewer ' --help >/dev/null 2>&1']);
+    if  gb_psom_retcode ~= 127
         break
     end
-
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
