@@ -132,7 +132,7 @@ if ~strcmp(path_logs(end),filesep)
 end
 
 %% Constants
-time_death = 60; % Time before a worker is considered dead
+time_death = 10; % Time before a worker is considered dead
 
 %% File names
 file_pipeline     = [path_logs 'PIPE.mat'];
@@ -343,10 +343,10 @@ try
                         % I did not hear a heartbeat
                         % how long has it been?
                         elapsed_time = etime(clock,tab_refresh(num_w,:,2));
-                        if opt.flag_verbose == 2
+                        if opt.flag_verbose >= 3
                             fprintf('No heartbeat in %1.2fs for process %s\n',elapsed_time,name_worker{num_w})
                         end
-                        if elapsed_time > time_death
+                        if (elapsed_time > time_death)&&~psom_exist(file_worker_end{num_w})
                             if opt.flag_verbose
                                 fprintf('No heartbeat for process %s, counted as dead.\n',name_worker{num_w});
                             end 
@@ -367,6 +367,11 @@ try
         for num_w = 1:opt.max_queued
             if ~flag_end(num_w)&&~flag_wait(num_w)&&~flag_alive(num_w)&&(~flag_started(num_w)||(nb_resub<=opt.nb_resub))
                 fprintf('Starting worker number %i...\n',num_w)
+                if flag_started(num_w)
+                    %% Cleaning the worker folder
+                    psom_clean([path_worker name_worker{num_w} filesep]);
+                    psom_mkdir([path_worker name_worker{num_w} filesep]);
+                end
                 [flag_failed,msg] = psom_run_script(cmd_worker{num_w},script_worker{num_w},opt_worker(num_w),opt_logs_worker(num_w),opt.flag_verbose);
                 flag_wait(num_w) = true;
                 tab_refresh(num_w,:,1) = -1;

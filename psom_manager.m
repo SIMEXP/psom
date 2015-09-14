@@ -185,6 +185,7 @@ try
     %% Initialize miscallenaous variables
     psom_plan     = zeros(nb_jobs,1);          % a summary of which worker is running which job
     mask_running  = false(nb_jobs,1);          % A binary mask of running jobs
+    mask_register = false(nb_jobs,1);          % A binary mask of jobs registered for execution
     mask_failed   = false(nb_jobs,1);          % A binary mask of failed jobs
     nb_failed     = 0;                         % The number of failed jobs
     nb_running    = 0;                         % The number of running jobs
@@ -203,24 +204,26 @@ try
     end
 
     %% Start submitting jobs
-    while (any(mask_todo) || any(mask_running)) && psom_exist(file_pipe_running)
+    flag_loop = true;
+    while flag_loop
 
-%        %% Check for workers that have been reset
-%        for num_w = 1:opt.max_queued
-%            worker_reset(num_w) = psom_exist(file_worker_reset{num_w});
-%            if worker_reset(num_w)
-%                if opt.flag_verbose == 2
-%                    fprintf('Worker %i has been reset.\n');
-%                end
-%                psom_clean(file_worker_reset{num_w});
-%                nb_running = nb_running - sum(mask_running(psom_plan==num_w));
-%                mask_running(psom_plan==num_w) = false;
-%                mask_todo(psom_plan==num_w) = true;
-%                nb_todo = nb_todo + sum(psom_plan==num_w);
-%                nb_sch_worker(num_w) = 0;
-%                psom_plan(psom_plan==num_w) = 0;
-%            end 
-%        end
+        %% Check for workers that have been reset
+        for num_w = 1:opt.max_queued
+            worker_reset(num_w) = psom_exist(file_worker_reset{num_w});
+            if worker_reset(num_w)
+                if opt.flag_verbose >= 2
+                    fprintf('Worker %i has been reset.\n',num_w);
+                end
+                psom_clean(file_worker_reset{num_w},struct('flag_verbose',false));
+                nb_running = nb_running - sum(mask_running(psom_plan==num_w));
+                mask_running(psom_plan==num_w) = false;
+                mask_register(psom_plan==num_w) = false;
+                mask_todo(psom_plan==num_w) = true;
+                nb_todo = nb_todo + sum(psom_plan==num_w);
+                nb_sch_worker(num_w) = 0;
+                psom_plan(psom_plan==num_w) = 0;
+            end 
+        end
         
         %% Check the state of workers
         %% and read the news
@@ -265,6 +268,8 @@ try
                         case 'running'
                             nb_running = nb_running+1;
                             nb_todo = nb_todo-1;
+                            mask_register(mask_job) = false;
+                            mask_running(mask_job) = true;
                             msg = sprintf('%s %s%s running   ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
                         case 'failed'
                             nb_sch_worker(num_w) = nb_sch_worker(num_w)-1;
@@ -323,7 +328,7 @@ try
             mask_new_submit(ind) = true;
             nb_sch_worker(ind) = nb_sch_worker(ind)+1;
             nb_sch_worker_r(ind) = nb_sch_worker_r(ind)+1;
-            mask_running(list_num_to_run(curr_job)) = true;
+            mask_register(list_num_to_run(curr_job)) = true;
             mask_todo(list_num_to_run(curr_job)) = false;
             psom_plan(list_num_to_run(curr_job)) = ind;
             if opt.flag_verbose >= 2
@@ -371,7 +376,8 @@ try
         end
         
         %% Sleep if nothing happened
-        if flag_nothing_happened && (any(mask_todo) || any(mask_running)) && psom_exist(file_pipe_running)
+        flag_loop = (any(mask_todo) || any(mask_register) || any(mask_running)) && psom_exist(file_pipe_running);
+        if flag_nothing_happened && flag_loop
             sub_sleep(opt.time_between_checks)
          
             if (nb_checks >= opt.nb_checks_per_point)
