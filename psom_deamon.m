@@ -234,7 +234,7 @@ try
     opt_logs_garb.exit   = [path_garbage 'garbage.exit'];   
     opt_garb = opt_script;
     opt_garb.name_job = 'psom_garbage';   
-    cmd_garb = sprintf('opt.time_pipeline = ''%s''; opt.max_queued = %i; opt.time_between_checks = %1.2f; opt.nb_checks_per_point = %i; psom_garbage(''%s'',opt);',time_pipeline,opt.max_queued,opt.time_between_checks,opt.nb_checks_per_point,path_logs);    
+    cmd_garb = sprintf('opt.time_pipeline = ''%s''; opt.time_between_checks = %1.2f; opt.nb_checks_per_point = %i; psom_garbage(''%s'',opt);',time_pipeline,opt.time_between_checks,opt.nb_checks_per_point,path_logs);    
     if ispc % this is windows
         script_garb = [path_tmp filesep 'psom_garbage.bat'];
     else
@@ -346,7 +346,12 @@ try
                         if opt.flag_verbose >= 3
                             fprintf('No heartbeat in %1.2fs for process %s\n',elapsed_time,name_worker{num_w})
                         end
-                        if (elapsed_time > time_death)&&~psom_exist(file_worker_end{num_w})
+                        if num_w<=opt.max_queued
+                            flag_worker_end = psom_exist(file_worker_end{num_w});
+                        else
+                            flag_worker_end = false;
+                        end
+                        if (elapsed_time > time_death)&&~flag_worker_end
                             if opt.flag_verbose
                                 fprintf('No heartbeat for process %s, counted as dead.\n',name_worker{num_w});
                             end 

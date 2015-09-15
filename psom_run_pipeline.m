@@ -85,7 +85,7 @@ function status = psom_run_pipeline(pipeline,opt)
 %        on that. Contact your local system administrator for more info.
 %
 %    MAX_BUFFER
-%        (integer, default 1)
+%        (integer, default 2)
 % 
 %    NB_RESUB
 %        (integer, default 0 in 'session', opt.max_queued otherwise) 
@@ -304,7 +304,7 @@ name_pipeline = 'PIPE';
 
 opt = psom_struct_defaults( opt , ... 
    {'max_buffer' , 'flag_spawn' , 'flag_fail' , 'flag_short_job_names' , 'nb_resub'       , 'type_restart' , 'flag_pause' , 'init_matlab'       , 'flag_update' , 'path_search'       , 'restart' , 'shell_options'       , 'path_logs' , 'command_matlab' , 'flag_verbose' , 'mode'       , 'mode_pipeline_manager' , 'max_queued'       , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' }, ...
-   {1            , false        , false       , true                   , gb_psom_nb_resub , 'substring'    , false        , gb_psom_init_matlab , true          , gb_psom_path_search , {}        , gb_psom_shell_options , NaN         , ''               , 1              , gb_psom_mode , gb_psom_mode_pm         , gb_psom_max_queued , gb_psom_qsub_options , []                    , []                    , []               });
+   {2            , false        , false       , true                   , gb_psom_nb_resub , 'substring'    , false        , gb_psom_init_matlab , true          , gb_psom_path_search , {}        , gb_psom_shell_options , NaN         , ''               , 1              , gb_psom_mode , gb_psom_mode_pm         , gb_psom_max_queued , gb_psom_qsub_options , []                    , []                    , []               });
 
 opt.flag_debug = opt.flag_verbose>1;
 
@@ -424,9 +424,14 @@ opt_init.type_restart   = opt.type_restart;
 if ~flag_start
     return
 end
+
+%% Save the configuration
+file_config = [opt.path_logs 'PIPE_config.mat'];
+save(file_config,'-struct','opt')
     
 %% Run the pipeline manager
 file_pipeline = cat(2,opt.path_logs,filesep,name_pipeline,'.mat');
+
 %% Create a folder for the PSOM deamon
 path_deamon = [opt.path_logs 'deamon' filesep];
 if psom_exist(path_deamon)

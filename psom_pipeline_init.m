@@ -381,6 +381,13 @@ end
 %% Stage 2: Load previous pipeline description, logs and status %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% update the logs 
+try 
+    opt_g.flag_init = true;
+    opt_g.flag_verbose = opt.flag_verbose >= 2;
+    psom_garbage(path_logs,opt_g);
+end
+
 %% Test for the existence of an old pipeline 
 flag_old_pipeline = psom_exist(file_jobs);
 
@@ -432,16 +439,6 @@ mask_finished = ismember(curr_status,'finished');
 list_num_finished = list_num_inq(mask_finished);
 list_num_finished = list_num_finished(:)';
 for num_j = list_num_finished
-    name_job = list_jobs{num_j};
-    text_log = sub_read_txt([path_logs filesep name_job '.log']);
-    text_qsub_o = sub_read_txt([path_logs filesep name_job '.oqsub']);
-    text_qsub_e = sub_read_txt([path_logs filesep name_job '.eqsub']);
-    
-    if ~isempty(text_qsub_o)&&isempty(text_qsub_e)
-        text_log = [text_log hat_qsub_o text_qsub_o hat_qsub_e text_qsub_e];
-    end
-    
-    all_logs.(name_job) = text_log;
     job_status{num_j} = 'finished';
 end
 job_status_old = job_status;

@@ -9,7 +9,7 @@ function [] = psom_garbage(path_logs,opt)
 % OPT.MAX_QUEUED
 % OPT.TIME_PIPELINE
 % OPT.FLAG_VERBOSE (integer 0, 1 or 2, default 1) No verbose (0), verbose (1).
-%
+% OPT.FLAG_INIT
 % See licensing information in the code.
 
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008-2010.
@@ -53,8 +53,8 @@ if nargin < 2
     opt = struct;
 end
 opt = psom_struct_defaults( opt , ...
-   {  'flag_verbose' , 'time_pipeline' , 'time_between_checks' , 'nb_checks_per_point' , 'max_queued' }, ...
-   {  1              , NaN             , NaN                   , NaN                   , NaN          });
+   {  'flag_init' , 'flag_verbose' , 'time_pipeline' , 'time_between_checks' , 'nb_checks_per_point' }, ...
+   {  false       , 1              , ''              , 0.1                   , 100                   });
 
 %% Logs folder
 if ~strcmp(path_logs(end),filesep)
@@ -73,15 +73,18 @@ file_pipe_running   = [path_logs 'PIPE.lock'];
 file_heartbeat      = [path_garbage 'heartbeat.mat'];
 file_kill           = [path_garbage 'garbage.kill'];
 file_time           = [path_logs 'PIPE_time.mat'];
+file_conf           = [path_logs 'PIPE_config.mat'];
 path_worker         = [path_logs 'worker' filesep];
 file_news           = [path_logs 'news_feed.csv'];
 
-if opt.max_queued == 0
+%% Load the pipeline configuration
+cfg = load(file_conf);
+if cfg.max_queued == 0
     % This pipeline is executed in session mode
     % log files are located in the main pipeline directory
     path_search{1} = path_logs;    
 else
-    for num_w = 1:opt.max_queued
+    for num_w = 1:cfg.max_queued
         path_search{num_w} = sprintf('%spsom%i%s',path_worker,num_w,filesep);
     end
 end   
@@ -90,7 +93,7 @@ end
 %% This check is done to ensure a new pipeline has not been started
 %% since the manager was started
 logs_time = load(file_time);
-if ~strcmp(opt.time_pipeline,logs_time.time_pipeline)
+if ~isempty(opt.time_pipeline)&&~strcmp(opt.time_pipeline,logs_time.time_pipeline)
     fprintf('The time of the pipeline does not match the logs. I am quitting.')
     exit
 end
@@ -123,6 +126,7 @@ flag_started = false;
 nb_char_news = 0;
 nb_checks = 0;
 news = [];
+
 while ~flag_exit
 
     %% Read the news
@@ -178,7 +182,9 @@ while ~flag_exit
         end
         if ~flag_found&&~mask_warning(list_todo(num_t))
             mask_warning(list_todo(num_t)) = true;
-            warning('Could not find logs for job %s',name_job)
+            if opt.flag_verbose
+                fprintf('\nCould not find logs for job %s',name_job)
+            end
         end
     end
     
@@ -213,7 +219,7 @@ while ~flag_exit
     end
         
     %% Test if it is time to quit
-    flag_exit = flag_started&&flag_last_run;
+    flag_exit = (flag_started&&flag_last_run)||opt.flag_init;
     if flag_run
         flag_last_run = ~psom_exist(file_pipe_running);
         flag_started = true;
