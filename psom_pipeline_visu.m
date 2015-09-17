@@ -518,10 +518,15 @@ function nb_chars = sub_read_update(file_read,nb_chars)
 
 % prints out update on FILE_READ 
 hf = fopen(file_read,'r');
-fseek(hf,nb_chars,'bof');
-str_read = fread(hf, Inf , 'uint8=>char')';
-nb_chars = ftell(hf);
-fclose(hf);    
+if hf >= 0
+    fseek(hf,nb_chars,'bof');
+    str_read = fread(hf, Inf , 'uint8=>char')';
+    nb_chars = ftell(hf);
+    fclose(hf);
+else
+    str_read = '';
+    nb_chars = -1;
+end    
 fprintf('%s',str_read);            
 
 function nb_chars = sub_tail(file_read,file_running)

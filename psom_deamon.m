@@ -137,6 +137,7 @@ time_death = 10; % Time before a worker is considered dead
 %% File names
 file_pipeline     = [path_logs 'PIPE.mat'];
 file_pipe_running = [path_logs 'PIPE.lock'];
+file_pipe_heart   = [path_logs 'heartbeat.mat'];
 file_kill         = [path_logs 'PIPE.kill'];
 file_time         = [path_logs 'PIPE_time.mat'];
 path_tmp          = [path_logs 'tmp' filesep];
@@ -184,12 +185,11 @@ try
     nb_checks   = 0;                   % Number of checks to print a points
     nb_points   = 0;                   % Number of printed points
     nb_chars_logs = 0;                 % Number of characters printed from the pipeline history                
-    flag_pipe_running  = false;        % Is the pipeline started?
     flag_pipe_finished = false;        % Is the pipeline finished?
     flag_started = false([opt.max_queued+2 1]); % Has the worker ever started? two last entries are for the PM and the GC
     flag_alive   = false([opt.max_queued+2 1]); % Is the worker alive? two last entries are for the PM and the GC
     flag_wait    = false([opt.max_queued+2 1]); % Are we waiting for the worker to start? two last entries are for the PM and the GC
-    flag_end     = false([opt.max_queued 1]);   % did the manager request for the worker to end?
+    flag_end     = false([opt.max_queued+2 1]); % did the manager request for the worker to end?
     
     %% Create logs folder for each worker
     path_worker_w = cell(opt.max_queued,1);
@@ -260,42 +260,6 @@ try
     
     %% Start submitting jobs
     while ~flag_pipe_finished 
-    
-        %% Start the pipeline manager
-        flag_pipe_running = psom_exist(file_pipe_running);
-        if ~flag_alive(end-1)&&(nb_resub < opt.nb_resub)
-            [flag_failed,msg] = psom_run_script(cmd_pipe,script_pipe,opt_pipe,opt_logs_pipe,opt.flag_verbose);
-            fprintf('Starting the pipeline manager...\n')
-            if flag_started(end-1)
-                nb_resub = nb_resub+1;
-                tab_refresh(end-1,:,1) = -1;
-            end
-            %% Wait for the pipeline manager to start
-            while ~psom_exist(file_pipe_running)
-                sub_sleep(opt.time_between_checks)
-            end
-            flag_alive(end-1) = true;
-            flag_pipe_running = true;
-            flag_started(end-1) = true;
-        end
-        
-        %% Start the garbage collector
-        if ~flag_wait(end)&&~flag_alive(end)&&(~flag_started(end)||(nb_resub < opt.nb_resub))
-            if psom_exist(path_garbage)
-                psom_clean(path_garbage,struct('flag_verbose',false));
-            end
-            psom_mkdir(path_garbage);
-            [flag_failed,msg] = psom_run_script(cmd_garb,script_garb,opt_garb,opt_logs_garb,opt.flag_verbose);
-            tab_refresh(end,:,1)   = -1;
-            flag_alive(end) = false;
-            flag_wait(end)  = true;
-            if flag_started(end)
-                fprintf('Restarting the garbage collector...\n')
-                nb_resub = nb_resub+1;
-            else
-                fprintf('Starting the garbage collector...\n')    
-            end
-        end
     
         %% Check the heartbeats
         for num_w = 1:(opt.max_queued+2)
@@ -369,21 +333,61 @@ try
         end
         
         %% Now start workers
-        for num_w = 1:opt.max_queued
-            if ~flag_end(num_w)&&~flag_wait(num_w)&&~flag_alive(num_w)&&(~flag_started(num_w)||(nb_resub<=opt.nb_resub))
-                fprintf('Starting worker number %i...\n',num_w)
-                if flag_started(num_w)
-                    %% Cleaning the worker folder
-                    psom_clean([path_worker name_worker{num_w} filesep]);
-                    psom_mkdir([path_worker name_worker{num_w} filesep]);
+        list_worker = [opt.max_queued+[1 2] 1:opt.max_queued]; % first start the manager, then the collector, then workers
+        for num_w = list_worker
+            if ~flag_end(num_w)&&~flag_wait(num_w)&&~flag_alive(num_w)&&(~flag_started(num_w)||(nb_resub<opt.nb_resub))
+            
+                if opt.flag_verbose
+                    if num_w <= opt.max_queued
+                        fprintf('Starting worker number %i...\n',num_w)
+                    elseif num_w == opt.max_queued+1
+                        fprintf('Starting the pipeline manager...\n');
+                    elseif num_w == opt.max_queued+2
+                        fprintf('Starting the garbage collector...\n');
+                    end
                 end
-                [flag_failed,msg] = psom_run_script(cmd_worker{num_w},script_worker{num_w},opt_worker(num_w),opt_logs_worker(num_w),opt.flag_verbose);
-                flag_wait(num_w) = true;
-                tab_refresh(num_w,:,1) = -1;
+             
+                if flag_started(num_w)
+                    if num_w <= opt.max_queued
+                        %% Cleaning the worker folder
+                        psom_clean([path_worker name_worker{num_w} filesep]);
+                        psom_mkdir([path_worker name_worker{num_w} filesep]);
+                    elseif num_w == opt.max_queued+1
+                        psom_clean_logs(path_logs);
+                    elseif num_w == opt.max_queued+2
+                        if psom_exist(path_garbage)
+                            psom_clean(path_garbage,struct('flag_verbose',false));
+                        end
+                        psom_mkdir(path_garbage);
+                    end
+                end
+                
+                if num_w <= opt.max_queued
+                    [flag_failed,msg] = psom_run_script(cmd_worker{num_w},script_worker{num_w},opt_worker(num_w),opt_logs_worker(num_w),opt.flag_verbose);
+                elseif num_w == opt.max_queued+1
+                    [flag_failed,msg] = psom_run_script(cmd_pipe,script_pipe,opt_pipe,opt_logs_pipe,opt.flag_verbose);
+                elseif num_w == opt.max_queued+2
+                    [flag_failed,msg] = psom_run_script(cmd_garb,script_garb,opt_garb,opt_logs_garb,opt.flag_verbose);
+                end
+                if ~flag_failed
+                    flag_wait(num_w) = true;
+                    tab_refresh(num_w,:,1) = -1;
+                else
+                    flag_alive(num_w) = false;
+                    flag_wait(num_w) = false;
+                end
                 if flag_started(num_w)
                     nb_resub = nb_resub+1;
-                    time_reset = clock;
-                    save(file_worker_reset{num_w},'time_reset')
+                    if opt.flag_verbose
+                        fprintf('Resubmission number %i/%i\n',nb_resub,opt.nb_resub);
+                    end
+                    if num_w <= opt.max_queued
+                        time_reset = clock;
+                        save(file_worker_reset{num_w},'time_reset')
+                    end
+                end
+                if flag_failed
+                    flag_started(num_w) = true;
                 end
             end
         end
@@ -391,9 +395,9 @@ try
             nb_chars_logs = psom_pipeline_visu(path_logs,'monitor',nb_chars_logs);      
         end
         sub_sleep(opt.time_between_checks)
-        flag_pipe_finished = ~psom_exist(file_pipe_running);
+        flag_pipe_finished = (~psom_exist(file_pipe_running))||(nb_resub==opt.nb_resub);
     end
-    
+
 catch
     
     errmsg = lasterror;        
@@ -411,8 +415,21 @@ end
 if opt.flag_verbose&&strcmp(opt.mode_pipeline_manager,'session')
     nb_chars_logs = psom_pipeline_visu(path_logs,'monitor',nb_chars_logs);
 end
-fprintf('Deamon terminated on %s\n',datestr(now));
-status_pipe = 0;
+
+if psom_exist(file_pipe_running)
+    if opt.flag_verbose
+        fprintf('The pipeline has not completed, but the max number of allowed submissions was reached or the deamon crashed.\n');
+    end
+    if ~flag_alive(opt.max_queued+1)
+        psom_clean(file_pipe_running,struct('flag_verbose',false))
+    end
+    status_pipe = 1;
+else
+    if opt.flag_verbose
+        fprintf('Deamon terminated on %s\n',datestr(now));
+    end
+    status_pipe = 0;
+end
 
 %%%%%%%%%%%%%%%%%%
 %% subfunctions %%

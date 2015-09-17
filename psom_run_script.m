@@ -357,7 +357,7 @@ switch opt.mode
                 fprintf(opt.file_handle,'%s',msg);
             end
         end
-        [flag_failed,errmsg] = system(instr_batch);    
+        [flag_failed,msg] = system(instr_batch);    
         
     case {'qsub','msub','condor','bsub'}
         script_submit = [gb_psom_path_psom 'psom_submit.sh'];
@@ -396,25 +396,21 @@ switch opt.mode
                 fprintf(opt.file_handle,'%s',msg);
             end
         end
-        [flag_failed,errmsg] = system(instr_qsub);
+        [flag_failed,msg] = system(instr_qsub);
 end
 
-if (flag_failed~=0)&&exist('errmsg','var')
-    if isstruct(errmsg)
-        fprintf('\n    The execution of the job %s failed.\n The feedback was:\n',opt.name_job);
-        for num_e = 1:length(errmsg.stack)
-            fprintf('File %s at line %i\n',errmsg.stack(num_e).file,errmsg.stack(num_e).line);
+if (flag_failed~=0)&&exist('msg','var')
+    if isstruct(msg)
+        fprintf('The feedback was:\n');
+        for num_e = 1:length(msg.stack)
+            fprintf('File %s at line %i\n',msg.stack(num_e).file,msg.stack(num_e).line);
         end
     else
-        fprintf('\n    The execution of the job %s failed.\n The feedback was:\n%s\n',opt.name_job,errmsg);
+        fprintf('The feedback was:\n%s\n',msg);
     end
-elseif (flag_failed==0)&&exist('errmsg','var')&&opt.flag_debug
-    fprintf('\n    The feedback from the execution of job %s was : %s\n',opt.name_job,errmsg);
+elseif (flag_failed==0)&&exist('msg','var')&&opt.flag_debug
+    fprintf('The feedback from the execution of job %s was : %s\n',opt.name_job,msg);
 end
-
-if (flag_failed~=0)
-    error('Something went bad with the execution of the job.')
-end    
 
 %%%%%% Subfunctions %%%%%%
 
