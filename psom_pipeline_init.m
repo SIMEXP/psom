@@ -825,20 +825,8 @@ end
 if psom_exist(file_news_feed)
     psom_clean(file_news_feed,struct('flag_verbose',false));
 end
-list_ext = { 'running' , 'failed' , 'finished' , 'exit' , 'kill' , ...
- 'heartbeat.mat' , 'log' , 'oqsub' , 'eqsub' , 'profile.mat' };
 
-for num_ext = 1:length(list_ext)
-    list_files = dir([path_logs filesep '*.' list_ext{num_ext}]);
-    list_files = {list_files.name};
-    if ~isempty(list_files)
-        list_files_p = cell(size(list_files));
-        for num_f = 1:length(list_files)
-            list_files_p{num_f} = [path_logs list_files{num_f}];
-        end
-        psom_clean(list_files_p,struct('flag_verbose',false));
-    end
-end
+psom_clean_logs(path_logs);
 
 if exist([path_logs 'tmp'],'dir')
     [status,msg] = psom_clean([path_logs 'tmp'],struct('flag_verbose',false));
@@ -862,28 +850,6 @@ end
 %%%%%%%%%%%%%%%%%%
 %% Subfunctions %%
 %%%%%%%%%%%%%%%%%%
-
-%% Save the fields of a structure as independent variables in a .mat file
-function sub_save_struct_fields(file_name,var_struct,flag_append)
-
-if nargin < 3
-    flag_append = false;
-end
-
-gb_psom_list_fields = fieldnames(var_struct);
-
-for gb_psom_num_f = 1:length(gb_psom_list_fields)
-    gb_psom_field_name = gb_psom_list_fields{gb_psom_num_f};
-    eval([gb_psom_field_name ' = var_struct.(gb_psom_field_name);']);
-end
-
-clear gb_psom_num_f gb_psom_list_fields var_struct gb_psom_field_name argn
-
-if flag_append
-    eval(['clear file_name flag_append; save -append ' file_name ' [a-zA-Z]*']);
-else
-    eval(['clear file_name flag_append; save ' file_name ' [a-zA-Z]*']);
-end
 
 %% Read a text file
 function str_txt = sub_read_txt(file_name)
