@@ -1,14 +1,15 @@
 function [] = psom_manager(path_logs,time_pipeline)
+% Not meant to be used directly. See PSOM_RUN_PIPELINE.
 % Manage the execution of a pipeline.
-% SYNTAX: STATUS = PSOM_MANAGER(PATH_LOGS,TIME_PIPELINE)
-% PATH_LOGS (string) the path name to a logs folder.
+% SYNTAX: [] = PSOM_MANAGER(PATH_LOGS,TIME_PIPELINE)
+% PATH_LOGS (string) the logs folder.
 % TIME_PIPELINE (string) the time at which the pipeline was started.
 % See licensing information in the code.
 
-% Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008-2010.
+% Copyright (c) Pierre Bellec
 % Departement d'informatique et de recherche operationnelle
 % Centre de recherche de l'institut de Geriatrie de Montreal
-% Universite de Montreal, 2010-2015.
+% Universite de Montreal, 2015.
 % Maintainer : pierre.bellec@criugm.qc.ca
 % Keywords : pipeline
 %
@@ -59,17 +60,17 @@ opt = load(file_config);
 
 %% File names for the workers
 for num_w = 1:opt.max_queued
-    file_worker_news{num_w}  = sprintf('%spsom%i%snews_feed.csv',path_worker,num_w,filesep);
-    file_worker_heart{num_w} = sprintf('%spsom%i%sheartbeat.mat',path_worker,num_w,filesep);
-    file_worker_job{num_w}   = sprintf('%spsom%i%snew_jobs.mat',path_worker,num_w,filesep);
-    file_worker_ready{num_w} = sprintf('%spsom%i%snew_jobs.ready',path_worker,num_w,filesep);
-    file_worker_reset{num_w} = sprintf('%spsom%i%sworker.reset',path_worker,num_w,filesep);
-    file_worker_end{num_w}   = sprintf('%spsom%i%sworker.end',path_worker,num_w,filesep);
+    file_worker_news{num_w}  = sprintf('%spsom%i%snews_feed.csv'  ,path_worker,num_w,filesep);
+    file_worker_heart{num_w} = sprintf('%spsom%i%sheartbeat.mat'  ,path_worker,num_w,filesep);
+    file_worker_job{num_w}   = sprintf('%spsom%i%snew_jobs.mat'   ,path_worker,num_w,filesep);
+    file_worker_ready{num_w} = sprintf('%spsom%i%snew_jobs.ready' ,path_worker,num_w,filesep);
+    file_worker_reset{num_w} = sprintf('%spsom%i%sworker.reset'   ,path_worker,num_w,filesep);
+    file_worker_end{num_w}   = sprintf('%spsom%i%sworker.end'     ,path_worker,num_w,filesep);
 end
     
 %% Check that the time of the pipeline matches the record
 %% This check is done to ensure a new pipeline has not been started
-%% since the manager was started
+%% after the manager was submitted for execution.
 logs_time = load(file_time);
 if ~strcmp(time_pipeline,logs_time.time_pipeline)
     fprintf('The time of the pipeline does not match the logs. I am quitting.')
@@ -128,6 +129,7 @@ try
         end
     end
     graph_deps(mask_finished,:) = 0;
+    
     %% spread the news
     list_finished = list_jobs(mask_finished);
     for ff = 1:length(list_finished)
@@ -159,6 +161,7 @@ try
     nb_sch_worker = zeros(opt.max_queued,1);   % A list of the number of jobs scheduled for execution per worker   
     news_worker   = repmat({''},[opt.max_queued,1]); % a list to store the news of all workers
     flag_point    = false; % A flag to indicate if a . was verbosed last
+    
     %% Find the longest job name
     lmax = 0;
     for num_j = 1:length(list_jobs)
