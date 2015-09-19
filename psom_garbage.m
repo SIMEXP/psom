@@ -1,21 +1,15 @@
-function [] = psom_garbage(path_logs,opt)
-% Manage the execution of a pipeline
-%
-% status = psom_garbage(path_logs,opt)
-%
-% PATH_LOGS (string) the path name to a logs folder.
-% OPT.TIME_BETWEEN_CHECKS
-% OPT.NB_CHECKS_PER_POINT
-% OPT.MAX_QUEUED
-% OPT.TIME_PIPELINE
-% OPT.FLAG_VERBOSE (integer 0, 1 or 2, default 1) No verbose (0), verbose (1).
-% OPT.FLAG_INIT
+function [] = psom_garbage(path_logs,time_pipeline)
+% Not meant to be used directly. See PSOM_RUN_PIPELINE.
+% Collect garbage (log file etc) during pipeline execution.
+% SYNTAX: [] = PSOM_GARBAGE(PATH_LOGS,TIME_PIPELINE)
+% PATH_LOGS (string) the logs folder.
+% TIME_PIPELINE (string) the time at which the pipeline was started.
 % See licensing information in the code.
 
-% Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008-2010.
+% Copyright (c) Pierre Bellec, 
 % Departement d'informatique et de recherche operationnelle
 % Centre de recherche de l'institut de Geriatrie de Montreal
-% Universite de Montreal, 2010-2015.
+% Universite de Montreal, 2015.
 % Maintainer : pierre.bellec@criugm.qc.ca
 % Keywords : pipeline
 %
@@ -48,14 +42,6 @@ if ~exist('path_logs','var')
     error('Syntax: [] = psom_garbage(path_logs,opt)')
 end
 
-%% Options
-if nargin < 2
-    opt = struct;
-end
-opt = psom_struct_defaults( opt , ...
-   {  'flag_init' , 'flag_verbose' , 'time_pipeline' , 'time_between_checks' , 'nb_checks_per_point' }, ...
-   {  false       , 1              , ''              , 0.1                   , 100                   });
-
 %% Logs folder
 if ~strcmp(path_logs(end),filesep)
     path_logs = [ path_logs filesep];
@@ -78,13 +64,14 @@ path_worker         = [path_logs 'worker' filesep];
 file_news           = [path_logs 'news_feed.csv'];
 
 %% Load the pipeline configuration
-cfg = load(file_conf);
-if cfg.max_queued == 0
+opt = load(file_conf);
+opt = psom_struct_defaults(opt,{'flag_init'},{false},false);
+if opt.max_queued == 0
     % This pipeline is executed in session mode
     % log files are located in the main pipeline directory
     path_search{1} = path_logs;    
 else
-    for num_w = 1:cfg.max_queued
+    for num_w = 1:opt.max_queued
         path_search{num_w} = sprintf('%spsom%i%s',path_worker,num_w,filesep);
     end
 end   
@@ -93,7 +80,7 @@ end
 %% This check is done to ensure a new pipeline has not been started
 %% since the manager was started
 logs_time = load(file_time);
-if ~isempty(opt.time_pipeline)&&~strcmp(opt.time_pipeline,logs_time.time_pipeline)
+if ~isempty(time_pipeline)&&~strcmp(time_pipeline,logs_time.time_pipeline)
     fprintf('The time of the pipeline does not match the logs. I am quitting.')
     exit
 end
