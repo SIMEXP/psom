@@ -1,7 +1,7 @@
 function status = psom_run_pipeline(pipeline,opt)
 % Run a pipeline.
 %
-% SYNTAX: status = psom_run_pipeline( pipeline , opt )
+% SYNTAX: STATUS = PSOM_RUN_PIPELINE( PIPELINE , OPT )
 %
 % _________________________________________________________________________
 % INPUTS:
@@ -80,16 +80,20 @@ function status = psom_run_pipeline(pipeline,opt)
 %
 %    MAX_QUEUED
 %        (integer, default GB_PSOM_MAX_QUEUED defined in PSOM_GB_VARS)
-%        The maximum number of jobs that can be processed
-%        simultaneously. Some qsub systems actually put restrictions
-%        on that. Contact your local system administrator for more info.
+%        The number of workers. The maximum for this depend on the number
+%        of threads / cores / servers accessible. In Xsub mode, note that 
+%        exactly MAX_QUEUED workers will be started plus two other processes
+%        (one pipeline manager and one garbage collector).
 %
 %    MAX_BUFFER
-%        (integer, default 2)
+%        (integer, default 2) the maximum number of jobs assigned to a 
+%        worker at any given time. Increase this number when lots of very
+%        short jobs can be found in the pipeline. 
 % 
 %    NB_RESUB
 %        (integer, default 0 in 'session', opt.max_queued otherwise) 
-%        The number of times a worker will be resubmitted if it fails.
+%        The number of times a worker (or manager/garbage collector) will 
+%        be resubmitted if it fails.
 %
 %    SHELL_OPTIONS
 %        (string, default GB_PSOM_SHELL_OPTIONS defined in PSOM_GB_VARS)
@@ -172,8 +176,8 @@ function status = psom_run_pipeline(pipeline,opt)
 % THE LOGS FOLDER:
 %
 % The pipeline manager is going to try to process the pipeline and create
-% all the output files. In addition logs and parameters of the pipeline are
-% stored in the log folder :
+% all the output files. In addition some logs are generated in OPT.PATH_LOGS. 
+% The main logs are stored in the following files:
 %
 % PIPE.mat
 %
@@ -208,7 +212,7 @@ function status = psom_run_pipeline(pipeline,opt)
 %    string which contains the log of the job. Jobs that have not been
 %    processed yet have an empty log.
 %
-% PIPE_news_feed.csv
+% news_feed.csv
 %
 %    A comma-separated values (csv) file, with one line per job 
 %    submission/completion/failure. This file is reset everytime the 
@@ -231,10 +235,12 @@ function status = psom_run_pipeline(pipeline,opt)
 %    structure where each field is a profile variable fot the execution
 %    of the job.
 %
-% _________________________________________________________________________
-% SEE ALSO:
-% PSOM_DEMO_PIPELINE, PSOM_CONFIG, PSOM_PIPELINE_VISU, 
-% PSOM_PIPELINE_PROCESS, PSOM_PIPELINE_INIT
+% Some additional information are stored in the following folders:
+%    'garbage' the logs of the garbage collector
+%    'worker' contain a series of subfolder, each one with the logs of one 
+%       worker. 
+%    'deamon' the logs of the deamon.
+%    'manager' the logs of the manager. 
 %
 % _________________________________________________________________________
 % COMMENTS:
@@ -255,13 +261,12 @@ function status = psom_run_pipeline(pipeline,opt)
 % not restart these ones. If a job description has somehow been
 % modified since a previous processing, this job and all its children will
 % be restarted. For more details on this behavior, please read the
-% documentation of PSOM_PIPELINE_INIT or run the pipeline demo in
-% PSOM_DEMO_PIPELINE.
+% documentation psom.simexp-lab.org
 %
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008-2010.
 % Departement d'informatique et de recherche operationnelle
 % Centre de recherche de l'institut de Geriatrie de Montreal
-% Universite de Montreal, 2011
+% Universite de Montreal, 2011-2015
 % Maintainer : pierre.bellec@criugm.qc.ca
 % See licensing information in the code.
 % Keywords : pipeline
@@ -429,9 +434,6 @@ end
 file_config = [opt.path_logs 'PIPE_config.mat'];
 save(file_config,'-struct','opt')
     
-%% Run the pipeline manager
-file_pipeline = cat(2,opt.path_logs,filesep,name_pipeline,'.mat');
-
 %% Create a folder for the PSOM deamon
 path_deamon = [opt.path_logs 'deamon' filesep];
 if psom_exist(path_deamon)
@@ -445,29 +447,8 @@ if psom_exist(path_garbage)
     psom_clean(path_garbage,struct('flag_verbose',false));
 end
 psom_mkdir(path_garbage);
-
-%% The options for the deamon
-if strcmp(opt.mode,'session')
-    opt_d.heartbeat = true;
-    opt_d.spawn = false;
-else
-    opt_d.mode           = opt.mode;
-    opt_d.mode_pipeline_manager = opt.mode_pipeline_manager;
-    opt_d.max_queued     = opt.max_queued;
-    opt_d.max_buffer     = opt.max_buffer;
-    opt_d.nb_resub       = opt.nb_resub;
-    opt_d.shell_options  = opt.shell_options;
-    opt_d.qsub_options   = opt.qsub_options;
-    opt_d.command_matlab = opt.command_matlab;
-    opt_d.init_matlab    = opt.init_matlab;
-    opt_d.flag_verbose   = opt.flag_verbose;
-    opt_d.time_between_checks = opt.time_between_checks;
-    opt_d.nb_checks_per_point = opt.nb_checks_per_point;
-end
-file_opt_deamon = [path_deamon 'opt_deamon.mat'];
-save(file_opt_deamon,'-struct','opt_d');
     
-%% Options to submit scripts
+%% Options to submit the deamon
 opt_script.path_search    = [opt.path_logs 'PIPE.mat'];
 opt_script.mode           = opt.mode_pipeline_manager;
 opt_script.init_matlab    = opt.init_matlab;
@@ -477,21 +458,12 @@ opt_script.command_matlab = opt.command_matlab;
 opt_script.qsub_options   = opt.qsub_options;
 opt_script.name_job       = 'psom_deamon';   
     
-%% Options for submission of the pipeline manager
-if strcmp(opt.mode,'session')
-    opt_logs.txt = file_logs;
-else
-    opt_logs.txt = [path_deamon 'deamon.log'];
-end
+opt_logs.txt    = [path_deamon 'deamon.log'];
 opt_logs.eqsub  = [path_deamon 'deamon.eqsub'];
 opt_logs.oqsub  = [path_deamon 'deamon.oqsub'];
 opt_logs.failed = [path_deamon 'deamon.failed'];
 opt_logs.exit   = [path_deamon 'deamon.exit'];
-if strcmp(opt.mode,'session') 
-    cmd_deamon = sprintf('flag = load(''%s''); psom_worker(''%s'',flag);',file_opt_deamon,opt.path_logs);    
-else
-    cmd_deamon = sprintf('opt = load(''%s''); psom_deamon(''%s'',opt);',file_opt_deamon,opt.path_logs);    
-end
+cmd_deamon = sprintf('psom_deamon(''%s'');',opt.path_logs);    
 
 if ispc % this is windows
     script_deamon = [path_deamon filesep 'psom_deamon.bat'];
