@@ -1,92 +1,15 @@
 function status_pipe = psom_deamon(path_logs,opt)
+% Not meant to be used directly. See PSOM_RUN_PIPELINE.
+%
 % Start workers, a pipeline manager and a garbage collector
-%
-% status = psom_deamon(path_logs,opt)
-%
-% PATH_LOGS 
-%   (string) the path name to a logs folder.
-%
-% OPT
-%   (structure) with the following fields :
-%
-%   MODE
-%      (string) how to start the workers:
-%      'background' : background execution, not-unlogin-proofed 
-%                     (asynchronous system call).
-%      'batch'      : background execution, unlogin-proofed ('at' in 
-%                     UNIX, start in WINDOWS).
-%      'qsub'       : remote execution using qsub (torque, SGE, PBS).
-%      'msub'       : remote execution using msub (MOAB)
-%      'bsub'       : remote execution using bsub (IBM)
-%      'condor'     : remote execution using condor
-%
-%   MODE_PIPELINE_MANAGER
-%      (string) same as OPT.MODE, but applies to the pipeline manager itself.
-%
-%   MAX_QUEUED
-%      (integer) The maximum number of jobs that can be processed
-%      simultaneously. Some qsub systems actually put restrictions
-%      on that. Contact your local system administrator for more info.
-%
-%   MAX_BUFFER
-%       (integer) the maximum number of jobs submitted to a worker at a 
-%       given time.
-%
-%   NB_RESUB
-%      (integer) The number of times a worker will be resubmitted if it 
-%      fails.
-%
-%   SHELL_OPTIONS
-%      (string) some commands that will be added at the begining of the 
-%      shell script submitted to batch or qsub. This can be used to set
-%      important variables, or source an initialization script.
-%
-%   QSUB_OPTIONS
-%      (string) This field can be used to pass any argument when submitting a
-%      job with bsub/msub/qsub. For example, '-q all.q@yeatman,all.q@zeus' will
-%      force qsub to only use the yeatman and zeus workstations in the
-%      all.q queue. It can also be used to put restrictions on the
-%      minimum avalaible memory, etc.
-%
-%   COMMAND_MATLAB
-%      (string) how to invoke matlab (or OCTAVE).
-%      You may want to update that to add the full path of the command.
-%      The defaut for this field can be set using the variable
-%      GB_PSOM_COMMAND_MATLAB/OCTAVE in the file PSOM_GB_VARS.
-%
-%   INIT_MATLAB
-%      (string) a matlab command (multiple commands can actually be 
-%      passed using comma separation) that will be executed at the begining 
-%      of any matlab/Octave job.
-%
-%   TIME_BETWEEN_CHECKS
-%
-%   NB_CHECKS_PER_POINT
-%
-%   FLAG_VERBOSE
-%      (integer 0, 1 or 2, default 1) No verbose (0), standard 
-%      verbose (1), a lot of verbose, useful for debugging (2).
-%
-%   There are actually other minor options available, see
-%   PSOM_PIPELINE_INIT and PSOM_PIPELINE_PROCESS for details.
-%
-% _________________________________________________________________________
-% OUTPUTS:
-%
-% STATUS 
-%   (integer) if the pipeline manager runs in 'session' mode, STATUS is 
-%   0 if all jobs have been successfully completed, 1 if there were errors.
-%   In all other modes, STATUS is NaN.
-%
-% STATUS (integer) STATUS is 0 if all jobs have been successfully completed, 
-%   1 if there were errors.
-%
+% SYNTAX: [] = PSOM_DEAMON(PATH_LOGS)
+% PATH_LOGS (string) the logs folder.
 % See licensing information in the code.
 
-% Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008-2010.
+% Copyright (c) Pierre Bellec, 
 % Departement d'informatique et de recherche operationnelle
 % Centre de recherche de l'institut de Geriatrie de Montreal
-% Universite de Montreal, 2010-2015.
+% Universite de Montreal, 2015.
 % Maintainer : pierre.bellec@criugm.qc.ca
 % Keywords : pipeline
 %
@@ -119,14 +42,7 @@ if ~exist('path_logs','var')
     error('Syntax: [] = psom_deamon(path_logs,opt)')
 end
 
-%% Options
-if nargin < 2
-    opt = struct;
-end
-opt = psom_struct_defaults( opt , ...
-   {  'mode_pipeline_manager' , 'nb_resub' , 'flag_verbose' , 'init_matlab' , 'shell_options' , 'command_matlab' , 'mode' , 'max_queued' , 'max_buffer' , 'qsub_options' , 'time_between_checks' , 'nb_checks_per_point' }, ...
-   {  NaN                     , NaN        , 1              , NaN           , NaN             , NaN              , NaN    , NaN          , NaN          , NaN            , NaN                   , NaN                   });
-
+%% fixing the format of path_logs
 if ~strcmp(path_logs(end),filesep)
     path_logs = [path_logs filesep];
 end
@@ -134,7 +50,7 @@ end
 %% Constants
 time_death = 10; % Time before a worker is considered dead
 
-%% File names
+%% Pipeline file names
 file_pipeline     = [path_logs 'PIPE.mat'];
 file_pipe_running = [path_logs 'PIPE.lock'];
 file_pipe_heart   = [path_logs 'heartbeat.mat'];
@@ -143,6 +59,12 @@ file_time         = [path_logs 'PIPE_time.mat'];
 path_tmp          = [path_logs 'tmp' filesep];
 path_worker       = [path_logs 'worker' filesep];
 path_garbage      = [path_logs 'garbage' filesep];
+file_conf         = [path_logs 'PIPE_config.mat'];
+
+%% Load opt
+opt = load(file_conf);
+
+%% Worker file names
 for num_w = 1:opt.max_queued
     name_worker{num_w} = sprintf('psom%i',num_w);
     file_worker_heart{num_w} = [path_worker name_worker{num_w} filesep 'heartbeat.mat'];
