@@ -439,6 +439,13 @@ if psom_exist(path_deamon)
 end
 psom_mkdir(path_deamon);
 
+%% Create a folder for the garbage collector 
+path_garbage = [opt.path_logs 'garbage' filesep];
+if psom_exist(path_garbage)
+    psom_clean(path_garbage,struct('flag_verbose',false));
+end
+psom_mkdir(path_garbage);
+
 %% The options for the deamon
 if strcmp(opt.mode,'session')
     opt_d.heartbeat = true;

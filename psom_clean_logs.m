@@ -36,17 +36,12 @@ if nargin<1
     error('Please specify PATH_LOGS')
 end
 
-list_ext = { 'running' , 'failed' , 'finished' , 'exit' , 'kill' , ...
- 'heartbeat.mat' , 'log' , 'oqsub' , 'eqsub' , 'profile.mat' };
+list_files = { 'PIPE.running' , 'PIPE.failed' , 'PIPE.finished' , 'PIPE.exit' , 'PIPE.kill' , ...
+ 'heartbeat.mat' , 'PIPE.oqsub' , 'PIPE.eqsub' , 'news_feed.csv' };
 
-for num_ext = 1:length(list_ext)
-    list_files = dir([path_logs filesep '*.' list_ext{num_ext}]);
-    list_files = {list_files.name};
-    if ~isempty(list_files)
-        list_files_p = cell(size(list_files));
-        for num_f = 1:length(list_files)
-            list_files_p{num_f} = [path_logs list_files{num_f}];
-        end
-        psom_clean(list_files_p,struct('flag_verbose',false));
+for num_f = 1:length(list_files)
+    file_name = [path_logs list_files{num_f}];
+    if psom_exist(file_name)
+        psom_clean(file_name,struct('flag_verbose',false));
     end
 end

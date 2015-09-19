@@ -1,38 +1,8 @@
-function status_pipe = psom_manager(path_logs,opt)
-% Manage the execution of a pipeline
-%
-% status = psom_manager(path_logs,opt)
-%
-% PATH_LOGS 
-%   (string) the path name to a logs folder.
-%
-% OPT
-%   (structure) with the following fields :
-%
-%   TIME_PIPELINE
-%
-%   TIME_BETWEEN_CHECKS
-%
-%   NB_CHECKS_PER_POINT
-%
-%   MAX_QUEUED
-%
-%   MAX_BUFFER
-%
-%   FLAG_VERBOSE
-%      (integer 0, 1 or 2, default 1) No verbose (0), verbose (1).
-%
-% _________________________________________________________________________
-% OUTPUTS:
-%
-% STATUS 
-%   (integer) if the pipeline manager runs in 'session' mode, STATUS is 
-%   0 if all jobs have been successfully completed, 1 if there were errors.
-%   In all other modes, STATUS is NaN.
-%
-% STATUS (integer) STATUS is 0 if all jobs have been successfully completed, 
-%   1 if there were errors.
-%
+function [] = psom_manager(path_logs,time_pipeline)
+% Manage the execution of a pipeline.
+% SYNTAX: STATUS = PSOM_MANAGER(PATH_LOGS,TIME_PIPELINE)
+% PATH_LOGS (string) the path name to a logs folder.
+% TIME_PIPELINE (string) the time at which the pipeline was started.
 % See licensing information in the code.
 
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008-2010.
@@ -62,39 +32,32 @@ function status_pipe = psom_manager(path_logs,opt)
 
 psom_gb_vars
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Setting up default values for inputs %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 %% SYNTAX
 if ~exist('path_logs','var')
     error('Syntax: [] = psom_manager(path_logs,opt)')
 end
-
-%% Options
-if nargin < 2
-    opt = struct;
-end
-opt = psom_struct_defaults( opt , ...
-   {  'flag_verbose' , 'time_pipeline' , 'time_between_checks' , 'nb_checks_per_point' , 'max_queued' , 'max_buffer' }, ...
-   {  1              , NaN             , NaN                   , NaN                   , NaN          , 5            });
 
 %% Logs folder
 if ~strcmp(path_logs(end),filesep)
     path_logs = [ path_logs filesep];
 end
 
-%% File names
+%% File names for the pipeline
 file_pipeline     = [path_logs 'PIPE.mat'];
 file_jobs         = [path_logs 'PIPE_jobs.mat'];
-file_status       = [path_logs 'PIPE_status.mat'];
+file_status       = [path_logs 'PIPE_status_init.mat'];
 file_time         = [path_logs 'PIPE_time.mat'];
 file_pipe_running = [path_logs 'PIPE.lock'];
 file_heartbeat    = [path_logs 'heartbeat.mat'];
 file_kill         = [path_logs 'PIPE.kill'];
 file_news_feed    = [path_logs 'news_feed.csv'];
+file_config       = [path_logs 'PIPE_config.mat'];
 path_worker       = [path_logs 'worker' filesep];
 
+%% Load configuration
+opt = load(file_config);
+
+%% File names for the workers
 for num_w = 1:opt.max_queued
     file_worker_news{num_w}  = sprintf('%spsom%i%snews_feed.csv',path_worker,num_w,filesep);
     file_worker_heart{num_w} = sprintf('%spsom%i%sheartbeat.mat',path_worker,num_w,filesep);
@@ -108,7 +71,7 @@ end
 %% This check is done to ensure a new pipeline has not been started
 %% since the manager was started
 logs_time = load(file_time);
-if ~strcmp(opt.time_pipeline,logs_time.time_pipeline)
+if ~strcmp(time_pipeline,logs_time.time_pipeline)
     fprintf('The time of the pipeline does not match the logs. I am quitting.')
     exit
 end
@@ -126,12 +89,6 @@ system([instr_heartbeat '&']);
 %% Check for the existence of the pipeline
 if ~exist(file_jobs,'file') % Does the pipeline exist ?
     error('Could not find the pipeline file %s. Please use psom_run_pipeline instead of psom_manager directly.',file_jobs);
-end
-
-%% Create a running tag on the pipeline (if not done during the initialization phase)
-if ~psom_exist(file_pipe_running)
-    str_now = datestr(clock);
-    save(file_pipe_running,'str_now');
 end
 
 % a try/catch block is used to clean temporary file if the user is
@@ -170,16 +127,21 @@ try
             sub_add_line_log(hf_news,sprintf('%s , finished\n',list_jobs{num_j}),false);
         end
     end
-    nb_finished = sum(mask_finished); % The number of finished jobs                         
     graph_deps(mask_finished,:) = 0;
+    %% spread the news
+    list_finished = list_jobs(mask_finished);
+    for ff = 1:length(list_finished)
+        sub_add_line_log(hf_news,sprintf('%s , %s\n',list_finished{ff},'finished'),false);
+    end
     mask_deps = max(graph_deps,[],1)>0;
     mask_deps = mask_deps(:);
-    
+    nb_finished = sum(mask_finished); % The number of finished jobs                         
+        
     %% Initialize the to-do list
     mask_todo = false([length(list_jobs) 1]);
     for num_j = 1:length(list_jobs)
         mask_todo(num_j) = strcmp(status.(list_jobs{num_j}),'none');
-    end    
+    end
     nb_todo = sum(mask_todo);    % The number of jobs to do
     
     %% Initialize miscallenaous variables
@@ -269,6 +231,7 @@ try
                             nb_running = nb_running+1;
                             nb_todo = nb_todo-1;
                             mask_register(mask_job) = false;
+                            mask_todo(mask_job) = false;
                             mask_running(mask_job) = true;
                             msg = sprintf('%s %s%s running   ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
                         case 'failed'
@@ -276,6 +239,7 @@ try
                             nb_running = nb_running-1;
                             nb_failed = nb_failed+1;
                             mask_running(mask_job) = false;
+                            mask_todo(mask_job) = false;
                             mask_failed(mask_job) = true;
                             % Remove the children of the failed job from the to-do list
                             mask_child = sub_find_children(mask_job',graph_deps);
@@ -287,6 +251,7 @@ try
                             nb_running = nb_running-1;
                             nb_finished = nb_finished+1;
                             mask_running(mask_job) = false;
+                            mask_todo(mask_job) = false;
                             mask_finished(mask_job) = true;
                             graph_deps(mask_job,:) = false;
                             psom_plan(mask_job) = 0;

@@ -292,6 +292,7 @@ file_logs_backup    = [path_logs name_pipeline '_logs_backup.mat'    ];
 file_news_feed      = [path_logs name_pipeline '_news_feed.csv'      ];
 file_status         = [path_logs name_pipeline '_status.mat'         ];
 file_status_backup  = [path_logs name_pipeline '_status_backup.mat'  ];
+file_status_init    = [path_logs name_pipeline '_status_init.mat'    ];
 file_profile        = [path_logs name_pipeline '_profile.mat'        ];
 file_profile_backup = [path_logs name_pipeline '_profile_backup.mat' ];
 file_pipe_running   = [path_logs name_pipeline '.lock'               ];
@@ -773,6 +774,7 @@ for num_j = 1:nb_jobs
 end
 save(file_status,'-struct','all_status');
 copyfile(file_status,file_status_backup,'f');
+save(file_status_init,'-struct','all_status');
 
 %% Save the logs 
 if flag_verbose>1
