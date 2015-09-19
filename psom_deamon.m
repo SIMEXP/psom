@@ -234,7 +234,7 @@ try
     opt_logs_garb.exit   = [path_garbage 'garbage.exit'];   
     opt_garb = opt_script;
     opt_garb.name_job = 'psom_garbage';   
-    cmd_garb = sprintf('psom_garbage(''%s'',''%s'');',path_logs,time_pipeline);    
+    cmd_garb = sprintf('psom_garbage(''%s'',''%s'',false);',path_logs,time_pipeline);    
     if ispc % this is windows
         script_garb = [path_tmp filesep 'psom_garbage.bat'];
     else

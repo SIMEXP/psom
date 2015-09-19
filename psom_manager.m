@@ -1,9 +1,11 @@
 function [] = psom_manager(path_logs,time_pipeline)
 % Not meant to be used directly. See PSOM_RUN_PIPELINE.
+%
 % Manage the execution of a pipeline.
 % SYNTAX: [] = PSOM_MANAGER(PATH_LOGS,TIME_PIPELINE)
 % PATH_LOGS (string) the logs folder.
 % TIME_PIPELINE (string) the time at which the pipeline was started.
+%
 % See licensing information in the code.
 
 % Copyright (c) Pierre Bellec

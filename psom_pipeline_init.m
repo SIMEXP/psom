@@ -384,9 +384,7 @@ end
 
 %% update the logs 
 try 
-    opt_g.flag_init = true;
-    opt_g.flag_verbose = opt.flag_verbose >= 2;
-    psom_garbage(path_logs,opt_g);
+    psom_garbage(path_logs,opt_g,true);
 end
 
 %% Test for the existence of an old pipeline 

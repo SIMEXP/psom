@@ -1,9 +1,13 @@
-function [] = psom_garbage(path_logs,time_pipeline)
+function [] = psom_garbage(path_logs,time_pipeline,flag_init)
 % Not meant to be used directly. See PSOM_RUN_PIPELINE.
+%
 % Collect garbage (log file etc) during pipeline execution.
-% SYNTAX: [] = PSOM_GARBAGE(PATH_LOGS,TIME_PIPELINE)
+% SYNTAX: [] = PSOM_GARBAGE(PATH_LOGS,TIME_PIPELINE,FLAG_INIT)
 % PATH_LOGS (string) the logs folder.
 % TIME_PIPELINE (string) the time at which the pipeline was started.
+% FLAG_INIT (boolean) if true, the garbage is only collected once,
+%    otherwise the process will loop until the pipeline is finished. 
+%
 % See licensing information in the code.
 
 % Copyright (c) Pierre Bellec, 
@@ -65,16 +69,14 @@ file_news           = [path_logs 'news_feed.csv'];
 
 %% Load the pipeline configuration
 opt = load(file_conf);
-opt = psom_struct_defaults(opt,{'flag_init'},{false},false);
-if opt.max_queued == 0
-    % This pipeline is executed in session mode
-    % log files are located in the main pipeline directory
-    path_search{1} = path_logs;    
-else
-    for num_w = 1:opt.max_queued
-        path_search{num_w} = sprintf('%spsom%i%s',path_worker,num_w,filesep);
-    end
-end   
+if flag_init
+    opt.flag_verbose = false;
+end
+
+%% Path of workers
+for num_w = 1:opt.max_queued
+    path_search{num_w} = sprintf('%spsom%i%s',path_worker,num_w,filesep);
+end
    
 %% Check that the time of the pipeline matches the record
 %% This check is done to ensure a new pipeline has not been started
@@ -206,7 +208,7 @@ while ~flag_exit
     end
         
     %% Test if it is time to quit
-    flag_exit = (flag_started&&flag_last_run)||opt.flag_init;
+    flag_exit = (flag_started&&flag_last_run)||flag_init;
     if flag_run
         flag_last_run = ~psom_exist(file_pipe_running);
         flag_started = true;
