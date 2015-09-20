@@ -250,25 +250,29 @@ switch action
         %% Prints the history of the pipeline, with updates
 
         file_monitor = [path_logs filesep name_pipeline '_history.txt'];
+        file_deamon = [path_logs filesep 'deamon' filesep 'deamon.log'];
         file_pipe_running = [path_logs filesep name_pipeline '.lock'];
 
         if ~psom_exist(file_pipe_running) && (nargin<3)
             fprintf('The pipeline is NOT currently running\n');
         end
         
-        while ~psom_exist(file_monitor) && psom_exist(file_pipe_running) % the pipeline started but the log file has not yet been created
+        flag_wait = ~psom_exist(file_monitor) && psom_exist(file_pipe_running);
+        while flag_wait % the pipeline started but the log file has not yet been created
             fprintf('I could not find any log file. This pipeline has not been started (yet?). Press CTRL-C to cancel.\n');
             if exist('OCTAVE_VERSION','builtin')  
                 [res,msg] = system('sleep 1');
             else
                 sleep(1); 
             end
+            flag_wait = ~psom_exist(file_monitor) && psom_exist(file_pipe_running) && (nargin<3);
         end
         
         if nargin<3
             res = sub_tail(file_monitor,file_pipe_running,opt_action);
-        else 
-            res = sub_read_update(file_monitor,opt_action);
+        else
+            res(2) = sub_read_update(file_deamon,opt_action(2));
+            res(1) = sub_read_update(file_monitor,opt_action(1));
         end
         
     case 'time'

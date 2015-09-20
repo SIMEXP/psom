@@ -258,21 +258,11 @@ try
         list_worker = [opt.max_queued+[1 2] 1:opt.max_queued]; % first start the manager, then the collector, then workers
         for num_w = list_worker
             if ~flag_end(num_w)&&~flag_wait(num_w)&&~flag_alive(num_w)&&(~flag_started(num_w)||(nb_resub<opt.nb_resub))
-            
-                if opt.flag_verbose
-                    if num_w <= opt.max_queued
-                        fprintf('Starting worker number %i...\n',num_w)
-                    elseif num_w == opt.max_queued+1
-                        fprintf('Starting the pipeline manager...\n');
-                    elseif num_w == opt.max_queued+2
-                        fprintf('Starting the garbage collector...\n');
-                    end
-                end
              
                 if flag_started(num_w)
                     if num_w <= opt.max_queued
                         %% Cleaning the worker folder
-                        psom_clean([path_worker name_worker{num_w} filesep]);
+                        psom_clean([path_worker name_worker{num_w} filesep],struct('flag_verbose',false));
                         psom_mkdir([path_worker name_worker{num_w} filesep]);
                     elseif num_w == opt.max_queued+1
                         psom_clean_logs(path_logs);
@@ -300,12 +290,21 @@ try
                 end
                 if flag_started(num_w)
                     nb_resub = nb_resub+1;
-                    if opt.flag_verbose
-                        fprintf('Resubmission number %i/%i\n',nb_resub,opt.nb_resub);
-                    end
+                    pref_verb = sprintf('Restarting (%i/%i)',nb_resub,opt.nb_resub);
                     if num_w <= opt.max_queued
                         time_reset = clock;
                         save(file_worker_reset{num_w},'time_reset')
+                    end
+                else
+                    pref_verb = 'Starting';
+                end
+                if opt.flag_verbose
+                    if num_w <= opt.max_queued
+                        fprintf('%s worker number %i...\n',pref_verb,num_w)
+                    elseif num_w == opt.max_queued+1
+                        fprintf('%s the pipeline manager...\n',pref_verb);
+                    elseif num_w == opt.max_queued+2
+                        fprintf('%s the garbage collector...\n',pref_verb);
                     end
                 end
                 if flag_failed
@@ -348,7 +347,7 @@ if psom_exist(file_pipe_running)
     status_pipe = 1;
 else
     if opt.flag_verbose
-        fprintf('Deamon terminated on %s\n',datestr(now));
+        fprintf('Deamon terminated on %s',datestr(now));
     end
     status_pipe = 0;
 end

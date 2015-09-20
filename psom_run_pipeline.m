@@ -406,6 +406,16 @@ file_pipe_running = cat(2,opt.path_logs,filesep,name_pipeline,'.lock');
 file_logs = cat(2,opt.path_logs,filesep,name_pipeline,'_history.txt');
 file_status = cat(2,opt.path_logs,filesep,name_pipeline,'_status.mat');
 
+%% Read old logs 
+hf = fopen(file_logs,'r');
+nb_chars = [0 0];
+if hf >= 0
+    fseek(hf,0,'bof');
+    str_read = fread(hf, Inf , 'uint8=>char')';
+    nb_chars(1) = ftell(hf);
+    fclose(hf);
+end    
+
 %% Check for a 'lock' tag
 if exist(file_pipe_running,'file') % Is the pipeline running ?
 
@@ -475,13 +485,13 @@ end
 %% If not in session mode, monitor the output of the pipeline
 flag_exit = false;
 if opt.flag_verbose&&~strcmp(opt.mode_pipeline_manager,'session')
-    nb_chars = 0;
-    nb_chars_old = 0;
-    while (nb_chars==0)||~flag_exit
+    nb_chars_old = nb_chars;
+    nb_chars_init = nb_chars;
+    while (nb_chars(1)==nb_chars_init(1))||~flag_exit
         flag_exit = ~psom_exist(file_pipe_running);
         nb_chars_old = nb_chars;
         nb_chars = psom_pipeline_visu(opt.path_logs,'monitor',nb_chars);
-        if nb_chars == nb_chars_old        
+        if ~any(nb_chars ~= nb_chars_old)
             if exist('OCTAVE_VERSION','builtin')  
                 [res,msg] = system('sleep 0.2');
             else

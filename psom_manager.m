@@ -439,10 +439,8 @@ end
 status_pipe = double(flag_any_fail);
 
 %% Terminate the pipeline
-if exist('file_pipe_running','var')
-    if exist(file_pipe_running,'file')
-        delete(file_pipe_running); % remove the 'running' tag
-    end
+if exist('file_pipe_running','var')&&psom_exist(file_pipe_running)
+    psom_clean(file_pipe_running,struct('flag_verbose',false)); % remove the PIPE.lock file
 end
 
 %%%%%%%%%%%%%%%%%%
