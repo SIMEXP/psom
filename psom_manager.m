@@ -197,7 +197,7 @@ try
         flag_nothing_happened = true;
         for num_w = 1:opt.max_queued
             worker_active(num_w) = ~psom_exist(file_worker_end{num_w})&&psom_exist(file_worker_heart{num_w}); 
-            worker_ready(num_w) = worker_active(num_w)&&~psom_exist(file_worker_job{num_w});
+            worker_ready(num_w) = worker_active(num_w)&&~psom_exist(file_worker_ready{num_w});
             if worker_active(num_w)
                 if nb_sch_worker(num_w)==Inf
                     nb_sch_worker(num_w) = 0;
@@ -424,7 +424,8 @@ end
 
 %% Suggest using psom_pipeline_visu
 if flag_any_fail
-    fprintf('Use psom_pipeline_visu to access logs, e.g.:\n\n   psom_pipeline_visu(''%s'',''log'',''%s'')\n',path_logs,list_jobs{list_num_failed(1)});
+    fprintf('Use psom_pipeline_visu to access logs, e.g.:\n\n   psom_pipeline_visu(''%s'',''log'',''%s'')\n\n',path_logs,list_jobs{list_num_failed(1)});
+    fprintf('You can also get the list of failed jobs using the command:\n\n   psom_pipeline_visu(''%s'',''failed'')\n',path_logs);
 end
 
 %% Give a final one-line summary of the processing
