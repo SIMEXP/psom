@@ -1,7 +1,7 @@
-function [pipel,opt_pipe] = psom_test_ep(path_test,opt)
-% A test pipeline with embarassingly parallel jobs
+function [pipel,opt_pipe] = psom_test_sleep(path_test,opt)
+% A test pipeline with chains of sleeping jobs
 %
-% [pipe,opt_pipe] = psom_test_ep(path_test,opt)
+% [pipe,opt_pipe] = psom_test_sleep(path_test,opt)
 %
 % PATH_TEST (string, default current path) where to run the test.
 % OPT (structure) any option passed to PSOM will do. In addition the 
