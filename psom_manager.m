@@ -424,8 +424,8 @@ end
 
 %% Suggest using psom_pipeline_visu
 if flag_any_fail
-    fprintf('Use psom_pipeline_visu to access logs, e.g.:\n\n   psom_pipeline_visu(''%s'',''log'',''%s'')\n\n',path_logs,list_jobs{list_num_failed(1)});
-    fprintf('You can also get the list of failed jobs using the command:\n\n   psom_pipeline_visu(''%s'',''failed'')\n',path_logs);
+    fprintf('Use psom_pipeline_visu to access logs, e.g.:\n\n   psom_pipeline_visu(''%s'',''log'',''%s'');\n\n',path_logs,list_jobs{list_num_failed(1)});
+    fprintf('You can also get the list of failed jobs using the command:\n\n   psom_pipeline_visu(''%s'',''failed'');\n',path_logs);
 end
 
 %% Give a final one-line summary of the processing
