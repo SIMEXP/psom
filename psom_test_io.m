@@ -21,6 +21,10 @@ function [pipel,opt_pipe] = psom_test_io(path_test,opt)
 % PIPE (structure) the pipeline.
 % OPT_PIPE (structure) the options to run the pipeline.
 %
+% Note: 1 Mb is defined here as 1000 kb, consistent the international system of units. 
+% This is slightly different from the definition used by linux and windows file systems 
+% where 1 Mb = 1024 kb
+%
 % Copyright (c) Pierre Bellec, 
 % Departement d'informatique et de recherche operationnelle
 % Centre de recherche de l'institut de Geriatrie de Montreal
@@ -53,7 +57,7 @@ opt.path_logs = [path_test 'logs'];
 opt_pipe = rmfield(opt,list_opt);
 
 %% compute the size of the array
-nb_vec = round(1000000*(opt.size/8));
+nb_vec = round(10^6*(opt.size/8));
 
 %% Build the pipeline
 for num_j = 1:opt.nb_jobs
@@ -62,20 +66,20 @@ for num_j = 1:opt.nb_jobs
         pipel.(job_name).opt.nb_vec = nb_vec;
         if (num_j > 1)&&opt.flag_read
             pipel.(job_name).command = sprintf(['hf = fopen(files_in,''r'');' ...
-                                                ' data0 = fread(hf,Inf,''float'');' ...
+                                                ' data0 = fread(hf,Inf,''double'');' ...
                                                 ' fclose(hf);' ...
                                                 ' data = rand(opt.nb_vec,1);' ...
                                                 ' hf = fopen(files_out,''w'');' ...
-                                                ' fwrite(hf,data,''float'');' ...
+                                                ' fwrite(hf,data,''double'');' ...
                                                 ' fclose(hf);']);
-            pipel.(job_name).files_in = sprintf('%sdata_job%i_%i.mat',path_test,num_j-1,num_c);
+            pipel.(job_name).files_in = sprintf('%sdata_job%i_%i.dat',path_test,num_j-1,num_c);
         else
             pipel.(job_name).command = sprintf([' data = rand(opt.nb_vec,1);' ...
                                                 ' hf = fopen(files_out,''w'');' ...
-                                                ' fwrite(hf,data,''float'');' ...
+                                                ' fwrite(hf,data,''double'');' ...
                                                 ' fclose(hf);']);       
         end
-        pipel.(job_name).files_out = sprintf('%sdata_job%i_%i.mat',path_test,num_j,num_c);   
+        pipel.(job_name).files_out = sprintf('%sdata_job%i_%i.dat',path_test,num_j,num_c);   
     end
 end
 
