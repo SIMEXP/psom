@@ -347,7 +347,7 @@ if psom_exist(file_pipe_running)
     status_pipe = 1;
 else
     if opt.flag_verbose
-        fprintf('Deamon terminated on %s',datestr(now));
+        fprintf('Deamon terminated on %s\n',datestr(now));
     end
     status_pipe = 0;
 end
