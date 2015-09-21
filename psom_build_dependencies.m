@@ -184,8 +184,12 @@ for num_j = 1:nb_jobs
     graph_deps(ind_out(mask_dep),num_j) = true;
     
     % Files_clean
+    % do not clean a file before the jobs that use it as inputs have been generated
     mask_dep = ismember(num_in,num_clean(ind_clean==num_j));
+    mask_dep = mask_dep & (ind_in~=num_j); % A job does not depend on itself, i.e. it's acceptable for a job to clean one of its input
     graph_deps(ind_in(mask_dep),num_j) = true;
+    
+    % do not clean a file before it has been generated
     mask_dep = ismember(num_out,num_clean(ind_clean==num_j));
     graph_deps(ind_out(mask_dep),num_j) = true;
     
