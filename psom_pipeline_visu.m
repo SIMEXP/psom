@@ -271,8 +271,12 @@ switch action
         if nargin<3
             res = sub_tail(file_monitor,file_pipe_running,opt_action);
         else
-            res(2) = sub_read_update(file_deamon,opt_action(2));
-            res(1) = sub_read_update(file_monitor,opt_action(1));
+            if length(opt_action)==2
+                res(2) = sub_read_update(file_deamon,opt_action(2));
+                res(1) = sub_read_update(file_monitor,opt_action(1));
+            else
+                res = sub_read_update(file_monitor,opt_action);
+            end
         end
         
     case 'time'
