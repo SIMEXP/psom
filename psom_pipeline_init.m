@@ -660,24 +660,19 @@ for num_f = 1:length(files_necessary)
 end
 
 if ~flag_OK
-    if flag_pause
-        fprintf('\n!!! The input files of some jobs were found missing.\n');                    
-    else
-        warning('The input files of some jobs were found missing !');
-    end
+    fprintf('\n!!! The input files of some jobs were found missing.\n');                    
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Stage 4: Save the pipeline description in the logs folder %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+if flag_pause||~flag_OK
+    fprintf('Press CTRL-C now to cancel or press any key to continue.\n');   
+    pause
+end
 
 if flag_verbose>1
     fprintf('\nSaving the pipeline description in the logs folder ...\n');
-end
-
-if flag_pause
-    fprintf('Press CTRL-C now to cancel or press any key to continue.\n');   
-    pause
 end
 
 %% Create logs folder
