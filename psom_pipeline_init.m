@@ -466,7 +466,7 @@ for num_j = 1:nb_jobs
     end
     if strcmp(job_status_old{num_j},'failed')||strcmp(job_status_old{num_j},'exit')
         flag_restart_job = true;
-        if flag_verbose
+        if flag_verbose>1
             fprintf('   %s%s(failed)\n',name_job,repmat(' ',[1 lmax-length(name_job)]))
         end
     else
