@@ -135,6 +135,11 @@ function res = psom_pipeline_visu(path_logs,action,opt_action,flag_visu)
 % _________________________________________________________________________
 % COMMENTS:
 %
+% When used with a single argument, PATH_LOGS is set to the current path, 
+% and ACTION is set to the first argument, e.g.
+%   psom_pipeline_visu failed
+% will list failed jobs assuming the current directory contains the logs. 
+%
 % Copyright (c) Pierre Bellec, 
 % Montreal Neurological Institute, 2008-2010
 % Dpartement d'informatique et de recherche oprationnelle
@@ -161,6 +166,11 @@ function res = psom_pipeline_visu(path_logs,action,opt_action,flag_visu)
 % LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
+
+if nargin == 1
+    action = path_logs;
+    path_logs = pwd;
+end
 
 psom_gb_vars
 
