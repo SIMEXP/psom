@@ -141,7 +141,8 @@ try
                 [tmp,base_spawn] = fileparts(list_ready{num_r});
                 file_spawn = [path_worker base_spawn '.mat'];
                 if ~psom_exist(file_spawn)
-                    error('I could not find %s for spawning',file_spawn)
+                    warning('I could not find %s for spawning',file_spawn)
+                    continue
                 end
                 spawn = load(file_spawn);
                 list_new_jobs = fieldnames(spawn);
