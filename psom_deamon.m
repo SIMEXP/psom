@@ -1,4 +1,4 @@
-function status_pipe = psom_deamon(path_logs,opt)
+function status_pipe = psom_deamon(path_logs)
 % Not meant to be used directly. See PSOM_RUN_PIPELINE.
 %
 % Start workers, a pipeline manager and a garbage collector
@@ -39,7 +39,7 @@ psom_gb_vars
 
 %% SYNTAX
 if ~exist('path_logs','var')
-    error('Syntax: [] = psom_deamon(path_logs,opt)')
+    error('Syntax: [] = psom_deamon(path_logs)')
 end
 
 %% fixing the format of path_logs
@@ -241,7 +241,7 @@ try
                             if opt.flag_verbose
                                 fprintf('No heartbeat for process %s, counted as dead.\n',name_worker{num_w});
                             end 
-                            % huho 30 seconds without a heartbeat, he's dead Jim
+                            % huho it's been too long without a heartbeat, he's dead Jim
                             flag_alive(num_w) = false;
                             flag_wait(num_w) = false;
                         else
@@ -316,7 +316,7 @@ try
             nb_chars_logs = psom_pipeline_visu(path_logs,'monitor',nb_chars_logs);      
         end
         sub_sleep(opt.time_between_checks)
-        flag_pipe_finished = (~psom_exist(file_pipe_running))||(nb_resub==opt.nb_resub);
+        flag_pipe_finished = ~psom_exist(file_pipe_running);
     end
 
 catch
