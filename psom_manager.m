@@ -196,7 +196,7 @@ try
         %% and read the news
         flag_nothing_happened = true;
         for num_w = 1:opt.max_queued
-            worker_active(num_w) = ~psom_exist(file_worker_end{num_w})&&psom_exist(file_worker_heart{num_w}); 
+            worker_active(num_w) = psom_exist(file_worker_news{num_w})&&~psom_exist(file_worker_end{num_w})&&psom_exist(file_worker_heart{num_w}); 
             worker_ready(num_w) = worker_active(num_w)&&~psom_exist(file_worker_ready{num_w});
             if worker_active(num_w)
                 if nb_sch_worker(num_w)==Inf
@@ -494,10 +494,15 @@ end
 function [str_read,nb_chars] = sub_tail(file_read,nb_chars)
 % Read the tail of a text file
 hf = fopen(file_read,'r');
-fseek(hf,nb_chars,'bof');
-str_read = fread(hf, Inf , 'uint8=>char')';
-nb_chars = ftell(hf);
-fclose(hf);
+if hf >= 0
+    fseek(hf,nb_chars,'bof');
+    str_read = fread(hf, Inf , 'uint8=>char')';
+    nb_chars = ftell(hf);
+    fclose(hf);
+else
+    str_read = '';
+    nb_chars = 0;
+end
 
 function [events,news] = sub_parse_news(news)
 if isempty(news)
