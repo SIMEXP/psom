@@ -222,7 +222,7 @@ try
                         tab_refresh(num_w,:,2) = clock;
                         flag_alive(num_w) = true;
                         flag_wait(num_w) = false;
-                        if opt.flag_verbose == 2
+                        if opt.flag_verbose >= 3
                             fprintf('I heard a heartbeat for process %s\n',name_worker{num_w})
                         end
                     else 
