@@ -4,6 +4,7 @@
 %% you want, this might be the place to fix that.
 
 %% Use the local configuration file if any
+gb_psom_gb_vars = true;
 if ~exist('gb_psom_gb_vars_local','var')&&exist('psom_gb_vars_local.m','file')		
     gb_psom_gb_vars_local = true;
     psom_gb_vars_local
@@ -32,10 +33,10 @@ gb_psom_qsub_options = '';
 gb_psom_shell_options = ''; 
 
 % Options for the execution mode of the pipeline 
-gb_psom_mode = 'background'; 
+gb_psom_mode = 'session'; 
 
 % Options for the execution mode of the pipeline manager
-gb_psom_mode_pm = 'background'; 
+gb_psom_mode_pm = 'session'; 
 
 % Options for the maximal number of jobs
 gb_psom_max_queued = 2;
@@ -61,20 +62,19 @@ if ~strcmp(gb_psom_tmp(end),filesep)
 end
 
 % How to open pdf files, will choos the firte one to exist 
-pdf_viewers = {'xpdf', 'evince', 'okular'};
+pdf_viewers = {'evince', 'xpdf', 'okular'};
 nb_v = length(pdf_viewers);
 
 for i = 1:nb_v
 
-    cmd = [ pdf_viewers{i} ' --help >/dev/null 2>&1'];
-    [retcode, text] = system(cmd) ;
+    l_cmd = [ pdf_viewers{i} ' --help 1>NUL 2>NUL'];
+    [retcode, text] = system(l_cmd) ;
     if retcode ~= 127
-        gb_psom_pdf_viewer = pdf_viewers{i};
+        gb_psom_pdf_viewer = [ pdf_viewers{i}];
         break
     end
 
 end
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% The following variables should not be changed %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

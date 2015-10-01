@@ -422,4 +422,5 @@ end
 %%%%%% Subfunctions %%%%%%
 
 function [] = sub_eval(cmd)
+disp(cmd)
 eval(cmd)
