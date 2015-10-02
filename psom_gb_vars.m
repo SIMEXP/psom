@@ -33,13 +33,14 @@ gb_psom_qsub_options = '';
 gb_psom_shell_options = ''; 
 
 % Options for the execution mode of the pipeline 
-gb_psom_mode = 'session'; 
+%gb_psom_mode = 'session'; 
+gb_psom_mode = 'background'; 
 
 % Options for the execution mode of the pipeline manager
 gb_psom_mode_pm = 'session'; 
 
 % Options for the maximal number of jobs
-gb_psom_max_queued = 2;
+gb_psom_max_queued = 8;
 
 % Default number of attempts of re-submission for failed jobs
 % [] is 0 for session, batch and background modes, and 1 for
@@ -61,20 +62,6 @@ if ~strcmp(gb_psom_tmp(end),filesep)
     gb_psom_tmp = [gb_psom_tmp filesep];
 end
 
-% How to open pdf files, will choos the firte one to exist 
-pdf_viewers = {'evince', 'xpdf', 'okular'};
-nb_v = length(pdf_viewers);
-
-for i = 1:nb_v
-
-    l_cmd = [ pdf_viewers{i} ' --help 1>NUL 2>NUL'];
-    [retcode, text] = system(l_cmd) ;
-    if retcode ~= 127
-        gb_psom_pdf_viewer = [ pdf_viewers{i}];
-        break
-    end
-
-end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% The following variables should not be changed %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -138,8 +125,10 @@ end
 switch (gb_psom_OS)
     case 'unix'
         gb_psom_user = getenv('USER');
+        devnull = "1>/dev/null 2>&1";
     case 'windows'
         gb_psom_user = getenv('USERNAME');	
+        devnull = "1>NUL 2>&1";
     otherwise
         gb_psom_user = 'unknown';
 end
@@ -151,6 +140,21 @@ switch (gb_psom_OS)
         gb_psom_localhost = deblank(gb_psom_localhost);
     otherwise
         gb_psom_localhost = 'unknown';
+end
+
+% How to open pdf files, will choos the firte one to exist 
+pdf_viewers = {'evince', 'xpdf', 'okular', 'acroread'};
+nb_v = length(pdf_viewers);
+
+for i = 1:nb_v
+
+    l_cmd = [ pdf_viewers{i} ' --help ' devnull];
+    [retcode, text] = system(l_cmd) ;
+    if retcode ~= 127
+        gb_psom_pdf_viewer = [ pdf_viewers{i}];
+        break
+    end
+
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
