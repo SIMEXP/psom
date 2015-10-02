@@ -258,6 +258,10 @@ gb_list_defaults  = { gb_psom_path_search , false        , true          , {}   
 psom_set_defaults
 name_pipeline = 'PIPE';
 
+if ~strcmp(path_logs(end),filesep)
+    path_logs = [path_logs filesep];
+end
+
 if isempty(path_search)
     path_search = path;
     opt.path_search = path_search;
@@ -281,16 +285,17 @@ if flag_verbose
 end
 
 %% Generate file names 
-file_pipeline       = [path_logs filesep name_pipeline '.mat'                ];
-file_jobs           = [path_logs filesep name_pipeline '_jobs.mat'           ];
-file_logs           = [path_logs,filesep name_pipeline '_logs.mat'           ];
-file_logs_backup    = [path_logs,filesep name_pipeline '_logs_backup.mat'    ];
-file_news_feed      = [path_logs,filesep name_pipeline '_news_feed.csv'      ];
-file_status         = [path_logs,filesep name_pipeline '_status.mat'         ];
-file_status_backup  = [path_logs,filesep name_pipeline '_status_backup.mat'  ];
-file_profile        = [path_logs,filesep name_pipeline '_profile.mat'        ];
-file_profile_backup = [path_logs,filesep name_pipeline '_profile_backup.mat' ];
-file_pipe_running   = [path_logs,filesep name_pipeline '.lock'               ];
+file_pipeline       = [path_logs name_pipeline '.mat'                ];
+file_jobs           = [path_logs name_pipeline '_jobs.mat'           ];
+file_logs           = [path_logs name_pipeline '_logs.mat'           ];
+file_logs_backup    = [path_logs name_pipeline '_logs_backup.mat'    ];
+file_news_feed      = [path_logs name_pipeline '_news_feed.csv'      ];
+file_status         = [path_logs name_pipeline '_status.mat'         ];
+file_status_backup  = [path_logs name_pipeline '_status_backup.mat'  ];
+file_status_init    = [path_logs name_pipeline '_status_init.mat'    ];
+file_profile        = [path_logs name_pipeline '_profile.mat'        ];
+file_profile_backup = [path_logs name_pipeline '_profile_backup.mat' ];
+file_pipe_running   = [path_logs name_pipeline '.lock'               ];
 
 list_jobs = fieldnames(pipeline);
 nb_jobs = length(list_jobs);
@@ -377,6 +382,11 @@ end
 %% Stage 2: Load previous pipeline description, logs and status %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% update the logs 
+try 
+    psom_garbage(path_logs,opt_g,true);
+end
+
 %% Test for the existence of an old pipeline 
 flag_old_pipeline = psom_exist(file_jobs);
 
@@ -428,16 +438,6 @@ mask_finished = ismember(curr_status,'finished');
 list_num_finished = list_num_inq(mask_finished);
 list_num_finished = list_num_finished(:)';
 for num_j = list_num_finished
-    name_job = list_jobs{num_j};
-    text_log = sub_read_txt([path_logs filesep name_job '.log']);
-    text_qsub_o = sub_read_txt([path_logs filesep name_job '.oqsub']);
-    text_qsub_e = sub_read_txt([path_logs filesep name_job '.eqsub']);
-    
-    if ~isempty(text_qsub_o)&&isempty(text_qsub_e)
-        text_log = [text_log hat_qsub_o text_qsub_o hat_qsub_e text_qsub_e];
-    end
-    
-    all_logs.(name_job) = text_log;
     job_status{num_j} = 'finished';
 end
 job_status_old = job_status;
@@ -466,7 +466,7 @@ for num_j = 1:nb_jobs
     end
     if strcmp(job_status_old{num_j},'failed')||strcmp(job_status_old{num_j},'exit')
         flag_restart_job = true;
-        if flag_verbose
+        if flag_verbose>1
             fprintf('   %s%s(failed)\n',name_job,repmat(' ',[1 lmax-length(name_job)]))
         end
     else
@@ -660,24 +660,19 @@ for num_f = 1:length(files_necessary)
 end
 
 if ~flag_OK
-    if flag_pause
-        fprintf('\n!!! The input files of some jobs were found missing.\n');                    
-    else
-        warning('The input files of some jobs were found missing !');
-    end
+    fprintf('\n!!! The input files of some jobs were found missing.\n');                    
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Stage 4: Save the pipeline description in the logs folder %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+if flag_pause||~flag_OK
+    fprintf('Press CTRL-C now to cancel or press any key to continue.\n');   
+    pause
+end
 
 if flag_verbose>1
     fprintf('\nSaving the pipeline description in the logs folder ...\n');
-end
-
-if flag_pause
-    fprintf('Press CTRL-C now to cancel or press any key to continue.\n');   
-    pause
 end
 
 %% Create logs folder
@@ -738,21 +733,7 @@ save(file_pipe_running,'str_now');
 if flag_verbose>1
     fprintf('    Saving the individual ''jobs'' file %s ...\n',file_jobs);
 end
-
-if psom_exist(file_jobs)
-    pipeline_all = psom_merge_pipeline(pipeline_old,pipeline);
-    if strcmp(gb_psom_language,'octave')
-        sub_save_struct_fields(file_jobs,pipeline_all);
-    else        
-        save(file_jobs,'-struct','pipeline_all');
-    end
-else
-    if strcmp(gb_psom_language,'octave')
-        sub_save_struct_fields(file_jobs,pipeline);
-    else
-        save(file_jobs,'-struct','pipeline');
-    end
-end
+save(file_jobs,'-struct','pipeline');
 
 %% Save the dependencies
 if flag_verbose>1
@@ -784,17 +765,9 @@ for num_j = 1:nb_jobs
     name_job = list_jobs{num_j};
     all_status.(name_job) = job_status{num_j};
 end
-
-if psom_exist(file_status)
-    all_status = psom_merge_pipeline(all_status_old,all_status);
-end
-if strcmp(gb_psom_language,'octave')
-    sub_save_struct_fields(file_status,all_status);
-else
-    save(file_status,'-struct','all_status');
-end
-
+save(file_status,'-struct','all_status');
 copyfile(file_status,file_status_backup,'f');
+save(file_status_init,'-struct','all_status');
 
 %% Save the logs 
 if flag_verbose>1
@@ -816,16 +789,7 @@ for num_j = 1:nb_jobs
         all_logs.(name_job) = '';        
     end
 end
-
-if psom_exist(file_logs)
-    all_logs = psom_merge_pipeline(all_logs_old,all_logs);
-end
-if strcmp(gb_psom_language,'octave')
-    sub_save_struct_fields(file_logs,all_logs);
-else
-    save(file_logs,'-struct','all_logs');
-end
-
+save(file_logs,'-struct','all_logs');
 copyfile(file_logs,file_logs_backup,'f'); 
 
 %% Save the profile
@@ -845,16 +809,7 @@ for num_j = 1:nb_jobs
         profile.(name_job) = '';
     end
 end
-
-if psom_exist(file_profile)
-    profile = psom_merge_pipeline(profile_old,profile);
-end
-if strcmp(gb_psom_language,'octave')
-    sub_save_struct_fields(file_profile,profile);
-else
-    save(file_profile,'-struct','profile');
-end
-
+save(file_profile,'-struct','profile');
 copyfile(file_profile,file_profile_backup,'f');
 
 %% Clean up the log folders from old tag and log files
@@ -865,20 +820,20 @@ end
 if psom_exist(file_news_feed)
     psom_clean(file_news_feed,struct('flag_verbose',false));
 end
-list_ext = { 'running' , 'failed' , 'finished' , 'exit' , 'kill' , ...
- 'heartbeat.mat' , 'log' , 'oqsub' , 'eqsub' , 'profile.mat' };
 
-for num_ext = 1:length(list_ext)
-    list_files = dir([path_logs filesep '*.' list_ext{num_ext}]);
-    if ~isempty(list_files)
-        psom_clean({list_files.name},struct('flag_verbose',false));
-    end
-end
+psom_clean_logs(path_logs);
 
 if exist([path_logs 'tmp'],'dir')
     [status,msg] = psom_clean([path_logs 'tmp'],struct('flag_verbose',false));
     if status
         warning('Could not remove the temporary folder %s. Check for permissions.',[path_logs 'tmp']);
+    end            
+end
+
+if exist([path_logs 'worker'],'dir')
+    [status,msg] = psom_clean([path_logs 'worker'],struct('flag_verbose',false));
+    if status
+        warning('Could not remove the folder %s. Check for permissions.',[path_logs 'worker']);
     end            
 end
 
@@ -890,28 +845,6 @@ end
 %%%%%%%%%%%%%%%%%%
 %% Subfunctions %%
 %%%%%%%%%%%%%%%%%%
-
-%% Save the fields of a structure as independent variables in a .mat file
-function sub_save_struct_fields(file_name,var_struct,flag_append)
-
-if nargin < 3
-    flag_append = false;
-end
-
-gb_psom_list_fields = fieldnames(var_struct);
-
-for gb_psom_num_f = 1:length(gb_psom_list_fields)
-    gb_psom_field_name = gb_psom_list_fields{gb_psom_num_f};
-    eval([gb_psom_field_name ' = var_struct.(gb_psom_field_name);']);
-end
-
-clear gb_psom_num_f gb_psom_list_fields var_struct gb_psom_field_name argn
-
-if flag_append
-    eval(['clear file_name flag_append; save -append ' file_name ' [a-zA-Z]*']);
-else
-    eval(['clear file_name flag_append; save ' file_name ' [a-zA-Z]*']);
-end
 
 %% Read a text file
 function str_txt = sub_read_txt(file_name)
@@ -976,7 +909,7 @@ if psom_exist(file_name)
         pipeline_str = load(file_name);
     catch
         [path_f,name_f,ext_f] = fileparts(file_name);
-        file_backup = [path_f name_f '_backup' ext_f];
+        file_backup = [path_f filesep name_f '_backup' ext_f];
         warning('There was something wrong when loading the file %s, I''ll try loading the backup instead',file_name)
         pipeline_str = load(file_backup);
         copyfile(file_backup,file_name,'f');

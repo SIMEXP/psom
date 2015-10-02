@@ -136,19 +136,15 @@ switch (gb_psom_OS)
         gb_psom_localhost = 'unknown';
 end
 
-% How to open pdf files, will choos the firte one to exist 
-pdf_viewers = {'evince', 'xpdf', 'okular', 'acroread'};
-nb_v = length(pdf_viewers);
 
-for i = 1:nb_v
-
-    l_cmd = [ pdf_viewers{i} ' --help ' devnull];
-    [retcode, text] = system(l_cmd) ;
-    if retcode ~= 127
-        gb_psom_pdf_viewer = [ pdf_viewers{i}];
+% How to open pdf files, will choose the first one that exists 
+gb_psom_list_pdf = {'xpdf' , 'evince', 'okular' ,'reader', 'undefined'};
+for gb_psom_pdf_viewer = gb_psom_list_pdf
+    gb_psom_pdf_viewer = gb_psom_pdf_viewer{1};
+    [gb_psom_retcode,gb_psom_txt] = system([ gb_psom_pdf_viewer ' --help ' devnull]);
+    if  gb_psom_retcode ~= 127
         break
     end
-
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

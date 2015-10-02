@@ -1,8 +1,7 @@
 function status = psom_run_pipeline(pipeline,opt)
-% Run a pipeline using the Pipeline System for Octave and Matlab (PSOM).
+% Run a pipeline.
 %
-% SYNTAX:
-% STATUS = PSOM_RUN_PIPELINE(PIPELINE,OPT)
+% SYNTAX: STATUS = PSOM_RUN_PIPELINE( PIPELINE , OPT )
 %
 % _________________________________________________________________________
 % INPUTS:
@@ -15,8 +14,8 @@ function status = psom_run_pipeline(pipeline,opt)
 %
 %    COMMAND
 %        (string) the name of the command applied for this job.
-%        This command can use the variables FILES_IN, FILES_OUT and OPT
-%        associated with the job (see below).
+%        This command can use the variables FILES_IN, FILES_OUT, FILES_CLEAN 
+%        and OPT associated with the job (see below).
 %        Examples :
 %         'niak_brick_something(files_in,files_out,opt);'
 %         'my_function(opt)'
@@ -45,7 +44,7 @@ function status = psom_run_pipeline(pipeline,opt)
 %
 %    DEP 
 %        (cell of strings) a list of job names. The job <JOB_NAME> 
-%        will depend on these jobs.
+%        will have a dependency set on these jobs.
 %
 %    OPT
 %        (any matlab variable) options of the job. This field has no
@@ -65,7 +64,7 @@ function status = psom_run_pipeline(pipeline,opt)
 %    MODE
 %        (string, default GB_PSOM_MODE defined in PSOM_GB_VARS)
 %        how to execute the jobs :
-%        'session'    : current Matlab session.
+%        'session'    : same as 'background', with MAX_QUEUED=1.
 %        'background' : background execution, not-unlogin-proofed 
 %                       (asynchronous system call).
 %        'batch'      : background execution, unlogin-proofed ('at' in 
@@ -81,14 +80,20 @@ function status = psom_run_pipeline(pipeline,opt)
 %
 %    MAX_QUEUED
 %        (integer, default GB_PSOM_MAX_QUEUED defined in PSOM_GB_VARS)
-%        The maximum number of jobs that can be processed
-%        simultaneously. Some qsub systems actually put restrictions
-%        on that. Contact your local system administrator for more info.
+%        The number of workers. The maximum for this depend on the number
+%        of threads / cores / servers accessible. In Xsub mode, note that 
+%        exactly MAX_QUEUED workers will be started plus two other processes
+%        (one pipeline manager and one garbage collector).
 %
+%    MAX_BUFFER
+%        (integer, default 2) the maximum number of jobs assigned to a 
+%        worker at any given time. Increase this number when lots of very
+%        short jobs can be found in the pipeline. 
+% 
 %    NB_RESUB
-%        (integer, default 0 in 'session', 'batch' and 'background' modes,
-%        1 otherwise) The number of times a job will be resubmitted if it 
-%        fails.
+%        (integer, default 0 in 'session', opt.max_queued otherwise) 
+%        The number of times a worker (or manager/garbage collector) will 
+%        be resubmitted if it fails.
 %
 %    SHELL_OPTIONS
 %        (string, default GB_PSOM_SHELL_OPTIONS defined in PSOM_GB_VARS)
@@ -154,7 +159,8 @@ function status = psom_run_pipeline(pipeline,opt)
 %
 %    FLAG_VERBOSE
 %        (integer 0, 1 or 2, default 1) No verbose (0), standard 
-%        verbose (1), a lot of verbose, useful for debugging (2).
+%        verbose (1), a lot of verbose, useful for setting up the configuration (2), 
+%        way too much verbose, only for debugging (3).
 %
 %    There are actually other minor options available, see
 %    PSOM_PIPELINE_INIT and PSOM_PIPELINE_PROCESS for details.
@@ -170,8 +176,8 @@ function status = psom_run_pipeline(pipeline,opt)
 % THE LOGS FOLDER:
 %
 % The pipeline manager is going to try to process the pipeline and create
-% all the output files. In addition logs and parameters of the pipeline are
-% stored in the log folder :
+% all the output files. In addition some logs are generated in OPT.PATH_LOGS. 
+% The main logs are stored in the following files:
 %
 % PIPE.mat
 %
@@ -206,7 +212,7 @@ function status = psom_run_pipeline(pipeline,opt)
 %    string which contains the log of the job. Jobs that have not been
 %    processed yet have an empty log.
 %
-% PIPE_news_feed.csv
+% news_feed.csv
 %
 %    A comma-separated values (csv) file, with one line per job 
 %    submission/completion/failure. This file is reset everytime the 
@@ -229,10 +235,12 @@ function status = psom_run_pipeline(pipeline,opt)
 %    structure where each field is a profile variable fot the execution
 %    of the job.
 %
-% _________________________________________________________________________
-% SEE ALSO:
-% PSOM_DEMO_PIPELINE, PSOM_CONFIG, PSOM_PIPELINE_VISU, 
-% PSOM_PIPELINE_PROCESS, PSOM_PIPELINE_INIT
+% Some additional information are stored in the following folders:
+%    'garbage' the logs of the garbage collector
+%    'worker' contain a series of subfolder, each one with the logs of one 
+%       worker. 
+%    'deamon' the logs of the deamon.
+%    'manager' the logs of the manager. 
 %
 % _________________________________________________________________________
 % COMMENTS:
@@ -253,13 +261,12 @@ function status = psom_run_pipeline(pipeline,opt)
 % not restart these ones. If a job description has somehow been
 % modified since a previous processing, this job and all its children will
 % be restarted. For more details on this behavior, please read the
-% documentation of PSOM_PIPELINE_INIT or run the pipeline demo in
-% PSOM_DEMO_PIPELINE.
+% documentation psom.simexp-lab.org
 %
 % Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008-2010.
 % Departement d'informatique et de recherche operationnelle
 % Centre de recherche de l'institut de Geriatrie de Montreal
-% Universite de Montreal, 2011
+% Universite de Montreal, 2011-2015
 % Maintainer : pierre.bellec@criugm.qc.ca
 % See licensing information in the code.
 % Keywords : pipeline
@@ -293,25 +300,26 @@ if ~exist('pipeline','var')||~exist('opt','var')
     error('SYNTAX: [] = PSOM_RUN_PIPELINE(FILE_PIPELINE,OPT). Type ''help psom_run_pipeline'' for more info.')
 end
 
+%% Constants
+% Time to wait after the pipeline exited
+wait_exit = 1;
+
 %% Options
 name_pipeline = 'PIPE';
 
-gb_name_structure = 'opt';
-gb_list_fields    = {'flag_spawn' , 'flag_fail' , 'flag_short_job_names' , 'nb_resub'       , 'type_restart' , 'flag_pause' , 'init_matlab'       , 'flag_update' , 'path_search'       , 'restart' , 'shell_options'       , 'path_logs' , 'command_matlab' , 'flag_verbose' , 'mode'       , 'mode_pipeline_manager' , 'max_queued'       , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' };
-gb_list_defaults  = {false        , false       , true                   , gb_psom_nb_resub , 'substring'    , false        , gb_psom_init_matlab , true          , gb_psom_path_search , {}        , gb_psom_shell_options , NaN         , ''               , 1              , gb_psom_mode , gb_psom_mode_pm         , gb_psom_max_queued , gb_psom_qsub_options , []                    , []                    , []               };
-psom_set_defaults
+opt = psom_struct_defaults( opt , ... 
+   {'max_buffer' , 'flag_spawn' , 'flag_fail' , 'flag_short_job_names' , 'nb_resub'       , 'type_restart' , 'flag_pause' , 'init_matlab'       , 'flag_update' , 'path_search'       , 'restart' , 'shell_options'       , 'path_logs' , 'command_matlab' , 'flag_verbose' , 'mode'       , 'mode_pipeline_manager' , 'max_queued'       , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' }, ...
+   {2            , false        , false       , true                   , gb_psom_nb_resub , 'substring'    , false        , gb_psom_init_matlab , true          , gb_psom_path_search , {}        , gb_psom_shell_options , NaN         , ''               , 1              , gb_psom_mode , gb_psom_mode_pm         , gb_psom_max_queued , gb_psom_qsub_options , []                    , []                    , []               });
 
 opt.flag_debug = opt.flag_verbose>1;
-flag_debug = opt.flag_debug;
 
 if ~strcmp(opt.path_logs(end),filesep)
     opt.path_logs = [opt.path_logs filesep];
-    path_logs = opt.path_logs;
 end
+psom_mkdir(opt.path_logs);
 
-if isempty(path_search)
-    path_search = path;
-    opt.path_search = path_search;
+if isempty(opt.path_search)
+    opt.path_search = path;
 end
 
 if isempty(opt.command_matlab)
@@ -325,28 +333,28 @@ end
 if strcmp(opt.mode,'session')
     opt.max_queued = 1;
     max_queued = 1;
+    opt.mode = 'background';
 end
 
-if max_queued == 0
+if opt.max_queued == 0
     switch opt.mode
         case {'batch','background'}
             if isempty(gb_psom_max_queued)
                 opt.max_queued = 1;
-                max_queued = 1;
             else
                 opt.max_queued = gb_psom_max_queued;
-                max_queued = gb_psom_max_queued;
             end
         case {'session','qsub','msub','condor','bsub'}
             if isempty(gb_psom_max_queued)
                 opt.max_queued = Inf;
-                max_queued = Inf;
             else
                 opt.max_queued = gb_psom_max_queued;
-                max_queued = gb_psom_max_queued;
             end
     end % switch action
 end % default of max_queued
+
+% Limit the number of workers based on the number of jobs in the pipeline
+opt.max_queued = min(opt.max_queued,length(fieldnames(pipeline)));
 
 if ~ismember(opt.mode,{'session','background','batch','qsub','msub','bsub','condor'})
     error('%s is an unknown mode of pipeline execution. Sorry dude, I must quit ...',opt.mode);
@@ -354,94 +362,146 @@ end
 
 switch opt.mode
     case 'session'
-        if isempty(time_between_checks)
-            time_between_checks = 0;
+        if isempty(opt.time_between_checks)
+            opt.time_between_checks = 0;
         end
-        if isempty(nb_checks_per_point)
-            nb_checks_per_point = Inf;
+        if isempty(opt.nb_checks_per_point)
+            opt.nb_checks_per_point = Inf;
+        end
+        if isempty(opt.nb_resub)
+            opt.nb_resub = 0;
         end
     otherwise
-        if isempty(time_between_checks)
-            time_between_checks = 0;
+        if isempty(opt.time_between_checks)
+            opt.time_between_checks = 0.5;
         end
-        if isempty(nb_checks_per_point)
-            nb_checks_per_point = 60;
+        if isempty(opt.nb_checks_per_point)
+            opt.nb_checks_per_point = 60;
+        end
+        if isempty(opt.nb_resub)
+            opt.nb_resub = opt.max_queued;
         end
 end
 
+if opt.flag_verbose == 2
+    fprintf('PSOM deamon is running in mode: ''%s''\n',opt.mode_pipeline_manager);
+    fprintf('Jobs are running in mode: ''%s''\n',opt.mode_pipeline_manager);
+    fprintf('Number of workers: %i\n',opt.max_queued);
+    fprintf('Max number of buffered jobs: %i\n',opt.max_buffer)
+    fprintf('Number of resubmissions: %i\n',opt.nb_resub)
+    fprintf('Options for qsub: %s\n',opt.qsub_options)
+    fprintf('Options for the shell: %s\n',opt.shell_options)
+    fprintf('Command to start matlab/octave: %s\n',opt.command_matlab)
+    fprintf('Search path for matlab/octave: %s (...)\n',opt.path_search(1:200))
+    fprintf('Time between checks: %1.1f\n',opt.time_between_checks)
+    fprintf('Number of checks per point: %i\n',opt.nb_checks_per_point)
+end
+    
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% The pipeline processing starts now  %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% file names
+file_pipe_running = cat(2,opt.path_logs,filesep,name_pipeline,'.lock');
+file_logs = cat(2,opt.path_logs,filesep,name_pipeline,'_history.txt');
+file_status = cat(2,opt.path_logs,filesep,name_pipeline,'_status.mat');
+
+%% Read old logs 
+hf = fopen(file_logs,'r');
+nb_chars = [0 0];
+if hf >= 0
+    fseek(hf,0,'bof');
+    str_read = fread(hf, Inf , 'uint8=>char')';
+    nb_chars(1) = ftell(hf);
+    fclose(hf);
+end    
+
 %% Check for a 'lock' tag
-file_pipe_running = cat(2,path_logs,filesep,name_pipeline,'.lock');
-file_logs = cat(2,path_logs,filesep,name_pipeline,'_history.txt');
 if exist(file_pipe_running,'file') % Is the pipeline running ?
 
     fprintf('\nA lock file %s has been found on the pipeline !\nIf the pipeline crashed, press CTRL-C now, delete manually the lock and restart the pipeline.\nOtherwise press any key to monitor the current pipeline execution.\n\n',file_pipe_running)
     pause
-    psom_pipeline_visu(path_logs,'monitor');
+    psom_pipeline_visu(opt.path_logs,'monitor');
+    return
+end
 
+%% Initialize the logs folder
+opt_init.path_logs      = opt.path_logs;
+opt_init.path_search    = opt.path_search;
+opt_init.command_matlab = opt.command_matlab;
+opt_init.flag_verbose   = opt.flag_verbose;
+opt_init.restart        = opt.restart;
+opt_init.flag_update    = opt.flag_update;    
+opt_init.flag_pause     = opt.flag_pause;
+opt_init.type_restart   = opt.type_restart;
+
+[tmp,flag_start] = psom_pipeline_init(pipeline,opt_init);   
+if ~flag_start
+    return
+end
+
+%% Save the configuration
+file_config = [opt.path_logs 'PIPE_config.mat'];
+save(file_config,'-struct','opt')
+    
+%% Create a folder for the PSOM deamon
+path_deamon = [opt.path_logs 'deamon' filesep];
+if psom_exist(path_deamon)
+    psom_clean(path_deamon,struct('flag_verbose',false));
+end
+psom_mkdir(path_deamon);
+
+%% Create a folder for the garbage collector 
+path_garbage = [opt.path_logs 'garbage' filesep];
+if psom_exist(path_garbage)
+    psom_clean(path_garbage,struct('flag_verbose',false));
+end
+psom_mkdir(path_garbage);
+    
+%% Options to submit the deamon
+opt_script.path_search    = [opt.path_logs 'PIPE.mat'];
+opt_script.mode           = opt.mode_pipeline_manager;
+opt_script.init_matlab    = opt.init_matlab;
+opt_script.flag_debug     = opt.flag_verbose == 2;        
+opt_script.shell_options  = opt.shell_options;
+opt_script.command_matlab = opt.command_matlab;
+opt_script.qsub_options   = opt.qsub_options;
+opt_script.name_job       = 'psom_deamon';   
+    
+opt_logs.txt    = [path_deamon 'deamon.log'];
+opt_logs.eqsub  = [path_deamon 'deamon.eqsub'];
+opt_logs.oqsub  = [path_deamon 'deamon.oqsub'];
+opt_logs.failed = [path_deamon 'deamon.failed'];
+opt_logs.exit   = [path_deamon 'deamon.exit'];
+cmd_deamon = sprintf('psom_deamon(''%s'');',opt.path_logs);    
+
+if ispc % this is windows
+    script_deamon = [path_deamon filesep 'psom_deamon.bat'];
 else
+    script_deamon = [path_deamon filesep 'psom_deamon.sh'];
+end
+[flag_failed,msg] = psom_run_script(cmd_deamon,script_deamon,opt_script,opt_logs,opt.flag_verbose);
 
-    %% Initialize the logs folder
-    opt_init.path_logs      = opt.path_logs;
-    opt_init.path_search    = opt.path_search;
-    opt_init.command_matlab = opt.command_matlab;
-    opt_init.flag_verbose   = opt.flag_verbose;
-    opt_init.restart        = opt.restart;
-    opt_init.flag_update    = opt.flag_update;    
-    opt_init.flag_pause     = opt.flag_pause;
-    opt_init.type_restart   = opt.type_restart;
-    
-    if flag_debug
-        opt_init
-    end
-
-    [tmp,flag_start] = psom_pipeline_init(pipeline,opt_init);   
-    if ~flag_start
-        return
-    end
-    
-    %% Run the pipeline manager
-    file_pipeline = cat(2,path_logs,filesep,name_pipeline,'.mat');
-
-    opt_proc.mode                  = opt.mode;
-    opt_proc.mode_pipeline_manager = opt.mode_pipeline_manager;
-    opt_proc.max_queued            = opt.max_queued;
-    opt_proc.qsub_options          = opt.qsub_options;
-    opt_proc.shell_options         = shell_options;
-    opt_proc.command_matlab        = opt.command_matlab;
-    opt_proc.time_between_checks   = opt.time_between_checks;
-    opt_proc.nb_checks_per_point   = opt.nb_checks_per_point;
-    opt_proc.flag_short_job_names  = opt.flag_short_job_names;
-    opt_proc.flag_debug            = opt.flag_debug;
-    opt_proc.flag_spawn            = opt.flag_spawn;
-    opt_proc.flag_verbose          = opt.flag_verbose;
-    opt_proc.init_matlab           = opt.init_matlab;
-    opt_proc.nb_resub              = opt.nb_resub;
-    opt_proc.flag_fail             = opt.flag_fail;
-    
-    if flag_debug
-        opt_proc
-    end
-    
-    % Read the number of characters that are currently in the history
-    if flag_verbose&&~strcmp(opt.mode_pipeline_manager,'session')
-        hf = fopen(file_logs,'r');
-        if hf~=-1
-            str_logs = fread(hf,Inf,'uint8=>char')';
-            nb_chars = ftell(hf);
-            fclose(hf);
-        else
-            nb_chars = 0;
+%% If not in session mode, monitor the output of the pipeline
+flag_exit = false;
+if opt.flag_verbose&&~strcmp(opt.mode_pipeline_manager,'session')
+    nb_chars_old = nb_chars;
+    nb_chars_init = nb_chars;
+    while (nb_chars(1)==nb_chars_init(1))||~flag_exit
+        flag_exit = ~psom_exist(file_pipe_running);
+        nb_chars_old = nb_chars;
+        nb_chars = psom_pipeline_visu(opt.path_logs,'monitor',nb_chars);
+        if ~any(nb_chars ~= nb_chars_old)
+            if exist('OCTAVE_VERSION','builtin')  
+                [res,msg] = system('sleep 0.2');
+            else
+                sleep(0.2); 
+            end
         end
     end
-
-    status = psom_pipeline_process(file_pipeline,opt_proc);
-
-    %% If not in session mode, monitor the output of the pipeline
-    if flag_verbose&&~strcmp(opt.mode_pipeline_manager,'session')
-        psom_pipeline_visu(path_logs,'monitor',nb_chars);
-    end
 end
+
+%% check the status of the pipeline
+status = load(file_status);
+status = struct2cell(status);
+status = any(strcmp(status,'failed'));
