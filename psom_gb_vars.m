@@ -34,7 +34,7 @@ gb_psom_mode = 'background';
 gb_psom_mode_pm = 'session'; 
 
 % Options for the maximal number of jobs
-gb_psom_max_queued = 8;
+gb_psom_max_queued = 2;
 
 % Default number of attempts of re-submission for failed jobs
 % [] is 0 for session, batch and background modes, and 1 for
