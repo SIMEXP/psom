@@ -71,7 +71,6 @@ end
 file_heartbeat = [path_worker filesep 'heartbeat.mat'];
 file_kill      = [path_worker filesep 'worker.kill'];
 file_end       = [path_worker filesep 'worker.end'];
-file_news_feed = [path_worker filesep 'news_feed.csv'];
 file_lock      = [path_logs filesep 'PIPE.lock'];
 file_time         = [path_logs 'PIPE_time.mat'];
 
@@ -83,9 +82,6 @@ if ~strcmp(time_pipeline,logs_time.time_pipeline)
     fprintf('The time of the pipeline does not match the logs. I am quitting.')
     exit
 end
-
-%% Open the news feed file
-hf_news = fopen(file_news_feed,'w');
 
 %% Clean-up old submissions
 list_ready = dir([path_worker '*.ready']);
@@ -139,8 +135,8 @@ try
                 list_new_jobs = fieldnames(spawn);
                 %% Add to the news feed
                 for nn = 1:length(list_new_jobs)
-                    sub_add_line_log(hf_news,sprintf('%s , registered\n',list_new_jobs{nn}));
-                    time_scheduled.(list_new_jobs{nn}) = clock;
+                    time_job = clock;
+                    save([path_worker list_new_jobs{nn} '.registered'],time_job);
                 end
                 list_jobs = [ list_jobs ; list_new_jobs ];
                 pipeline = psom_merge_pipeline(pipeline,spawn);
@@ -159,20 +155,20 @@ try
             name_job = list_jobs{num_job};
             
             %% Add to the news feed
-            sub_add_line_log(hf_news,sprintf('%s , running\n',name_job));
-            
+            time_job = clock;
+            save([path_worker list_new_jobs{nn} '.running'],time_job);
+                
             %% Execute the job in a "shelled" environment
             flag_failed = psom_run_job(pipeline.(name_job),path_worker,name_job);    
             
             %% Update the news feed
+            time_job = clock;
             if flag_failed
-                sub_add_line_log(hf_news,sprintf('%s , failed\n',name_job));
-                flag_any_fail = true;
-                new_status = struct(name_job,'failed');
+                status_job = 'failed';
             else
-                sub_add_line_log(hf_news,sprintf('%s , finished\n',name_job));
-                new_status = struct(name_job,'finished');
+                status_job = 'finished';
             end
+            save([path_worker list_new_jobs{nn} '.finish'],time_job);
             
             %% Update profile info
             file_prof_job = [path_worker name_job '_profile.mat'];
@@ -197,10 +193,6 @@ try
         end
     end % While there are jobs to do
     
-    %% Close the news feed
-    sub_add_line_log(hf_news,'PIPE , terminated');
-    fclose(hf_news);
-    
     %% Return a 1 status if any job has failed
     status_pipe = double(flag_any_fail);
     
@@ -213,12 +205,7 @@ catch
             fprintf('File %s at line %i\n',errmsg.stack(num_e).file,errmsg.stack(num_e).line);
         end
     end
-    
-    %% Close the log file
-    sub_add_line_log(hf_news,'PIPE , crashed\n');
-    if strcmp(gb_psom_language,'matlab')
-        fclose(hf_news);
-    end
+   
     status_pipe = 1;
     return
 end
@@ -235,8 +222,3 @@ else
     str_txt = fread(hf,Inf,'uint8=>char')';
     fclose(hf);    
 end
-
-%% Add one line to the news_feed
-function [] = sub_add_line_log(file_write,str_write);
-
-fprintf(file_write,'%s',str_write);
