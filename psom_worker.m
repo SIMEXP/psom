@@ -85,16 +85,7 @@ if ~strcmp(time_pipeline,logs_time.time_pipeline)
 end
 
 %% Open the news feed file
-if strcmp(gb_psom_language,'matlab');
-    hf_news = fopen(file_news_feed,'w');
-else
-    if psom_exist(file_news_feed)
-        psom_clean(file_news_feed);
-    end
-    hf_news = file_news_feed;
-    hf = fopen(hf_news,'w');
-    fclose(hf);
-end
+hf_news = fopen(file_news_feed,'w');
 
 %% Clean-up old submissions
 list_ready = dir([path_worker '*.ready']);
@@ -156,7 +147,12 @@ try
                 psom_clean({file_spawn,[path_worker list_ready{num_r}]});
             end
         end
-            
+        
+        %% Flush out the verbose
+        if strcmp(gb_psom_language,'octave')
+            fflush(hf_news);
+        end  
+        
         %% If there are jobs to run
         if num_job < length(list_jobs)
             num_job = num_job + 1;
@@ -191,6 +187,7 @@ try
         if flag_end
             fprintf('%s - The manager has requested to end the work asap!\n',datestr(clock));
         end
+        
         if (num_job == length(list_jobs))&&test_loop
             if exist('OCTAVE_VERSION','builtin')  
                 [res,msg] = system('sleep 0.1');
@@ -202,9 +199,7 @@ try
     
     %% Close the news feed
     sub_add_line_log(hf_news,'PIPE , terminated');
-    if strcmp(gb_psom_language,'matlab')
-        fclose(hf_news);
-    end
+    fclose(hf_news);
     
     %% Return a 1 status if any job has failed
     status_pipe = double(flag_any_fail);
@@ -244,10 +239,4 @@ end
 %% Add one line to the news_feed
 function [] = sub_add_line_log(file_write,str_write);
 
-if ischar(file_write)
-    hf = fopen(file_write,'a');
-    fprintf(hf,'%s',str_write);
-    fclose(hf);
-else
-    fprintf(file_write,'%s',str_write);
-end
+fprintf(file_write,'%s',str_write);
