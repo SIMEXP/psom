@@ -142,8 +142,8 @@ function res = psom_pipeline_visu(path_logs,action,opt_action,flag_visu)
 %
 % Copyright (c) Pierre Bellec, 
 % Montreal Neurological Institute, 2008-2010
-% Dpartement d'informatique et de recherche oprationnelle
-% Centre de recherche de l'institut de Griatrie de Montral
+% Departement d'informatique et de recherche operationnelle
+% Centre de recherche de l'institut de Geriatrie de Montreal
 % Universit de Montral, 2011-2015
 % Maintainer : pierre.bellec@criugm.qc.ca
 % See licensing information in the code.
