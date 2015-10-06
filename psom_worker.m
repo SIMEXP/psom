@@ -115,6 +115,7 @@ try
     num_job = 0;
     flag_any_fail = false;
     time_scheduled = struct();
+    time_running = struct();
     list_jobs = {};
     pipeline = struct;
     flag_end = false;
@@ -133,12 +134,10 @@ try
                 end
                 spawn = load(file_spawn);
                 list_new_jobs = fieldnames(spawn);
-                
+                % Record scheduling time
                 for nn = 1:length(list_new_jobs)
-                    time_job = clock;
                     name_job = list_new_jobs{nn};
                     time_scheduled.(name_job) = clock;
-                    save([path_worker list_new_jobs{nn} '.registered'],'time_job','name_job');
                 end
                 list_jobs = [ list_jobs ; list_new_jobs ];
                 pipeline = psom_merge_pipeline(pipeline,spawn);
@@ -151,9 +150,8 @@ try
             num_job = num_job + 1;
             name_job = list_jobs{num_job};
             
-            %% Add to the news feed
-            time_job = clock;
-            save([path_worker list_new_jobs{nn} '.running'],'time_job','name_job');
+            %% Record running time
+            time_running.(name_job) = clock;
                 
             %% Execute the job in a "shelled" environment
             flag_failed = psom_run_job(pipeline.(name_job),path_worker,name_job);    
@@ -171,6 +169,7 @@ try
             file_prof_job = [path_worker name_job '_profile.mat'];
             new_prof = struct();
             new_prof.time_scheduled = time_scheduled.(name_job);
+            new_prof.time_running = time_running.(name_job);
             new_prof.worker = num_worker;
             save(file_prof_job,'-struct','-append','new_prof');
         end 
