@@ -307,7 +307,7 @@ try
             end
         end
         
-        if opt.flag_verbose == 3
+        if opt.flag_verbose >= 3
             if ~any(nb_sch_worker~=Inf)
                 max_sch_worker = 0;
                 min_sch_worker = 0;
@@ -315,7 +315,7 @@ try
                 max_sch_worker = max(nb_sch_worker(nb_sch_worker~=Inf));
                 min_sch_worker = min(nb_sch_worker(nb_sch_worker~=Inf));
             end
-            fprintf('%i/%i jobs submitted, # jobs per worker: %i (max) %i (min) %i (unavailable)\n',curr_job,nb_to_submit,max_sch_worker,min_sch_worker,sum(nb_sch_worker==Inf))
+            fprintf('%i/%i jobs submitted, # jobs per worker: %i to %i. %i workers unavailable.\n',curr_job,nb_to_submit,max_sch_worker,min_sch_worker,sum(nb_sch_worker==Inf))
         end
         
         %% Mark new submissions as ready to process
