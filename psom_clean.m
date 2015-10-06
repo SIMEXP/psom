@@ -34,9 +34,11 @@ function [status,msg] = psom_clean(files_clean,opt)
 % _________________________________________________________________________
 % COMMENTS
 %
+% FLAG_VERBOSE can be specified directly instead of OPT. 
+%
 % Copyright (c) Pierre Bellec, Centre de recherche de l'institut de
 % griatrie de Montral, Dpartement d'informatique et de recherche
-% oprationnelle, Universit de Montral, Canada, 2010-2012
+% oprationnelle, Universit de Montral, Canada, 2010-2015
 % Maintainer : pierre.bellec@criugm.qc.ca
 % See licensing information in the code.
 
@@ -74,6 +76,9 @@ files_clean = psom_files2cell(files_clean);
 %% Options
 if nargin < 2
     opt = struct();
+end
+if isbool(opt)
+    opt = struct('flag_verbose',opt);
 end
 opt = psom_struct_defaults(opt,{'flag_verbose'},{true});
 
