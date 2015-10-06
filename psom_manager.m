@@ -442,18 +442,24 @@ end
 
 %% Get news
 function event_worker = sub_news(path_w);
-list_tag     = dir([path_w '*.finish']);
+list_tag = dir([path_w '*.finish']);
 ee = 1;
 event_worker = struct([]);
 for tt = 1:length(list_tag)
     file_tag = [path_w list_tag(tt).name];
-    data = load(file_tag);
-    event_worker(ee).name_job   = data.name_job;
-    event_worker(ee).clock      = data.time_job(:);
-    event_worker(ee).time_job   = datestr(data.time_job);
-    event_worker(ee).status_job = data.status_job;
-    psom_clean(file_tag,false);
-    ee = ee+1;
+    name_job = list_tag(tt).name(1:end-7);
+    if psom_exist([path_w name_job '_profile.mat'])
+        % Do not process tag files if the profile file has not been generated
+        data = load(file_tag);
+        event_worker(ee).name_job   = data.name_job;
+        event_worker(ee).clock      = data.time_job(:);
+        event_worker(ee).time_job   = datestr(data.time_job);
+        event_worker(ee).status_job = data.status_job;
+        psom_clean(file_tag,true);
+        ee = ee+1;
+    else
+        fprintf('waiting to process %s\n',name_job)
+    end
 end
 
 %% Order events
