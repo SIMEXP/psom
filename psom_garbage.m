@@ -161,8 +161,8 @@ while ~flag_exit
                 new_logs.(name_job) = logs.(name_job);
                 tmp = load(file_profile_job);
                 new_prof.(name_job) = tmp;
-                psom_clean(file_logs_job,struct('flag_verbose',false));
-                psom_clean(file_profile_job,struct('flag_verbose',false));
+                psom_clean(file_logs_job,false);
+                psom_clean(file_profile_job,false);
                 mask_done(list_todo(num_t)) = true;
                 if opt.flag_verbose
                     fprintf('\nCollecting logs of job %s',name_job)
