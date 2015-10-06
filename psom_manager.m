@@ -318,21 +318,21 @@ try
         end
         
         %% End workers that do not have jobs left to do
-        mask_idle = worker_active&(nb_sch_worker==0);
-        if (sum(mask_todo) < sum(worker_active)) && any(mask_idle)
-            list_idle = find(mask_idle);
-            list_idle = list_idle(1:min(length(list_idle),sum(worker_active)-sum(mask_todo)));
-            for num_w = list_idle(:)'
-                tmp = [];
-                save(file_worker_end{num_w},'tmp');
-                if opt.flag_verbose>=2
-                    fprintf('Stopping idle worker %i (not enough jobs left to do).\n',num_w);
-                end
-            end
-            if opt.flag_verbose>=2
-                fprintf('%i active worker(s) left, %i job(s) left to submit.\n',sum(worker_active)-length(list_idle),sum(mask_todo));
-            end
-        end
+%        mask_idle = worker_active&(nb_sch_worker==0);
+%        if (sum(mask_todo) < sum(worker_active)) && any(mask_idle)
+%            list_idle = find(mask_idle);
+%            list_idle = list_idle(1:min(length(list_idle),sum(worker_active)-sum(mask_todo)));
+%            for num_w = list_idle(:)'
+%                tmp = [];
+%                save(file_worker_end{num_w},'tmp');
+%                if opt.flag_verbose>=2
+%                    fprintf('Stopping idle worker %i (not enough jobs left to do).\n',num_w);
+%                end
+%            end
+%            if opt.flag_verbose>=2
+%                fprintf('%i active worker(s) left, %i job(s) left to submit.\n',sum(worker_active)-length(list_idle),sum(mask_todo));
+%            end
+%        end
         
         %% Sleep if nothing happened
         flag_loop = (any(mask_todo) || any(mask_register) || any(mask_running)) && psom_exist(file_pipe_running);
@@ -455,46 +455,26 @@ end
 
 %% Get news
 function event_worker = sub_news(path_w);
-list_reg     = dir([path_w '*.registered']);
-list_running = dir([path_w '*.running']);
-list_finish  = dir([path_w '*.finish']);
+list.registered = dir([path_w '*.registered']);
+list.running    = dir([path_w '*.running']);
+list.finish     = dir([path_w '*.finish']);
 
+status = {'registered','running','finish'};
 ee = 1;
 event_worker = struct([]);
-for rr = 1:length(list_reg)
-    try
-        file_tag = [path_w list_reg(rr).name];
+for ss = 1:length(status)
+    for rr = 1:length(list.(status{ss}))
+        list_files = list.(status{ss});
+        file_tag = [path_w list_files(rr).name];
         data = load(file_tag);
         event_worker(ee).name_job   = data.name_job;
         event_worker(ee).clock      = data.time_job(:);
         event_worker(ee).time_job   = datestr(data.time_job);
-        event_worker(ee).status_job = 'registered';
-        psom_clean(file_tag,false);
-        ee = ee+1;
-    end
-end
-
-for rr = 1:length(list_running)
-    try
-        file_tag = [path_w list_running(rr).name];
-        data = load(file_tag);
-        event_worker(ee).name_job   = data.name_job;
-        event_worker(ee).clock      = data.time_job(:);
-        event_worker(ee).time_job   = datestr(data.time_job);
-        event_worker(ee).status_job = 'running';
-        psom_clean(file_tag,false);
-        ee = ee+1;
-    end
-end
-
-for rr = 1:length(list_finish)
-    try
-        file_tag = [path_w list_finish(rr).name];
-        data = load(file_tag);
-        event_worker(ee).name_job   = data.name_job;
-        event_worker(ee).clock      = data.time_job(:);
-        event_worker(ee).time_job   = datestr(data.time_job);
-        event_worker(ee).status_job = data.status_job;
+        if ~strcmp(status{ss},'finish')
+            event_worker(ee).status_job = status{ss};
+        else
+            event_worker(ee).status_job = data.status_job;
+        end
         psom_clean(file_tag,false);
         ee = ee+1;
     end
