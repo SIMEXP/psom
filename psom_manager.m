@@ -99,16 +99,7 @@ end
 try    
     
     %% Open the news feed file
-    if strcmp(gb_psom_language,'matlab')
-        hf_news = fopen(file_news_feed,'w');
-    else
-        if psom_exist(file_news_feed)
-            psom_clean(file_news_feed);
-        end
-        hf_news = file_news_feed;
-        hf = fopen(hf_news,'w');
-        fclose(hf);
-    end
+    hf_news = fopen(file_news_feed,'w');
        
     %% Print general info about the pipeline
     msg_line1 = sprintf('Pipeline started on %s',datestr(clock));
@@ -162,6 +153,7 @@ try
     nb_char_news  = zeros(opt.max_queued,1);   % A list of the number of characters read from the news per worker
     nb_sch_worker = zeros(opt.max_queued,1);   % A list of the number of jobs scheduled for execution per worker   
     news_worker   = repmat({''},[opt.max_queued,1]); % a list to store the news of all workers
+    h_news_worker = zeros([opt.max_queued,1]); % Handles for the news feed of the workers
     flag_point    = false; % A flag to indicate if a . was verbosed last
     
     %% Find the longest job name
@@ -181,13 +173,14 @@ try
                 if opt.flag_verbose >= 2
                     fprintf('Worker %i has been reset.\n',num_w);
                 end
+                fclose(h_news_worker);
                 psom_clean(file_worker_reset{num_w},struct('flag_verbose',false));
                 nb_running = nb_running - sum(mask_running(psom_plan==num_w));
                 mask_running(psom_plan==num_w) = false;
                 mask_register(psom_plan==num_w) = false;
                 mask_todo(psom_plan==num_w) = true;
                 nb_todo = nb_todo + sum(psom_plan==num_w);
-                nb_sch_worker(num_w) = 0;
+                nb_sch_worker(num_w) = Inf;
                 psom_plan(psom_plan==num_w) = 0;
             end 
         end
@@ -201,10 +194,11 @@ try
             if worker_active(num_w)
                 if nb_sch_worker(num_w)==Inf
                     nb_sch_worker(num_w) = 0;
+                    h_news_worker(num_w) = fopen(file_worker_news{num_w});
                 end
                 
                 %% Parse news_feed.csv for one worker
-                [str_read,nb_char_news(num_w)] = sub_tail(file_worker_news{num_w},nb_char_news(num_w));
+                [str_read,nb_char_news(num_w)] = sub_tail(h_news_worker(num_w),nb_char_news(num_w));
                 news_worker{num_w} = [news_worker{num_w} str_read];
                 [event_worker,news_worker{num_w}] = sub_parse_news(news_worker{num_w});
                 
@@ -274,7 +268,12 @@ try
                 nb_sch_worker(num_w) = Inf; % The worker is not ready. Mark infinite number of jobs running to ensure no new submission will occur.
             end    
         end
-               
+             
+        %% Flush into the news  feed
+        if strcmp(gb_psom_language,'octave')
+            fflush(hf_news);
+        end  
+        
         %% Update the dependency mask
         if ~flag_nothing_happened
             mask_deps = max(graph_deps,[],1)>0;
@@ -379,9 +378,7 @@ catch
     end
     
     %% Close the log file
-    if strcmp(gb_psom_language,'matlab')
-        fclose(hf_news);
-    end
+    fclose(hf_news);
     status_pipe = 1;
     return
 end
@@ -434,9 +431,12 @@ if ~flag_any_fail&&isempty(list_num_none)
 end
 
 %% Close the log file
-if strcmp(gb_psom_language,'matlab')
-    fclose(hf_news);
+for num_w = 1:opt.max_queued
+    if h_news_worker(num_w)>0
+        fclose(h_news_worker(num_w));
+    end
 end
+fclose(hf_news);
 status_pipe = double(flag_any_fail);
 
 %% Terminate the pipeline
@@ -474,14 +474,7 @@ function [] = sub_add_line_log(file_write,str_write,flag_verbose);
 if flag_verbose
     fprintf('%s',str_write)
 end
-
-if ischar(file_write)
-    hf = fopen(file_write,'a');
-    fprintf(hf,'%s',str_write);
-    fclose(hf);
-else
-    fprintf(file_write,'%s',str_write);
-end
+fprintf(file_write,'%s',str_write);
 
 function [] = sub_sleep(time_sleep)
 
@@ -491,14 +484,12 @@ else
     pause(time_sleep); 
 end
 
-function [str_read,nb_chars] = sub_tail(file_read,nb_chars)
+function [str_read,nb_chars] = sub_tail(hf,nb_chars)
 % Read the tail of a text file
-hf = fopen(file_read,'r');
 if hf >= 0
     fseek(hf,nb_chars,'bof');
     str_read = fread(hf, Inf , 'uint8=>char')';
     nb_chars = ftell(hf);
-    fclose(hf);
 else
     str_read = '';
     nb_chars = 0;
