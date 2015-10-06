@@ -48,7 +48,7 @@ if ~strcmp(path_logs(end),filesep)
 end
 
 %% Constants
-time_death = 10; % Time before a worker is considered dead
+time_death = 300; % Time before a worker is considered dead
 
 %% Pipeline file names
 file_pipeline     = [path_logs 'PIPE.mat'];
