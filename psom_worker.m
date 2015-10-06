@@ -133,21 +133,18 @@ try
                 end
                 spawn = load(file_spawn);
                 list_new_jobs = fieldnames(spawn);
-                %% Add to the news feed
+                
                 for nn = 1:length(list_new_jobs)
                     time_job = clock;
-                    save([path_worker list_new_jobs{nn} '.registered'],time_job);
+                    name_job = list_new_jobs{nn};
+                    time_scheduled.(name_job) = clock;
+                    save([path_worker list_new_jobs{nn} '.registered'],'time_job','name_job');
                 end
                 list_jobs = [ list_jobs ; list_new_jobs ];
                 pipeline = psom_merge_pipeline(pipeline,spawn);
                 psom_clean({file_spawn,[path_worker list_ready{num_r}]});
             end
         end
-        
-        %% Flush out the verbose
-        if strcmp(gb_psom_language,'octave')
-            fflush(hf_news);
-        end  
         
         %% If there are jobs to run
         if num_job < length(list_jobs)
@@ -156,7 +153,7 @@ try
             
             %% Add to the news feed
             time_job = clock;
-            save([path_worker list_new_jobs{nn} '.running'],time_job);
+            save([path_worker list_new_jobs{nn} '.running'],'time_job','name_job');
                 
             %% Execute the job in a "shelled" environment
             flag_failed = psom_run_job(pipeline.(name_job),path_worker,name_job);    
@@ -168,7 +165,7 @@ try
             else
                 status_job = 'finished';
             end
-            save([path_worker list_new_jobs{nn} '.finish'],time_job);
+            save([path_worker list_new_jobs{nn} '.finish'],'time_job','status_job','name_job');
             
             %% Update profile info
             file_prof_job = [path_worker name_job '_profile.mat'];
