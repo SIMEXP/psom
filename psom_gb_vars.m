@@ -3,12 +3,7 @@
 %% this script to initialize the variables. If PSOM does not behave the way
 %% you want, this might be the place to fix that.
 
-%% Use the local configuration file if any
-if ~exist('gb_psom_gb_vars_local','var')&&exist('psom_gb_vars_local.m','file')		
-    gb_psom_gb_vars_local = true;
-    psom_gb_vars_local
-    return
-end
+gb_psom_gb_vars = true;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% The following variables need to be changed to configure the pipeline %%
@@ -32,10 +27,11 @@ gb_psom_qsub_options = '';
 gb_psom_shell_options = ''; 
 
 % Options for the execution mode of the pipeline 
+%gb_psom_mode = 'session'; 
 gb_psom_mode = 'background'; 
 
 % Options for the execution mode of the pipeline manager
-gb_psom_mode_pm = 'background'; 
+gb_psom_mode_pm = 'session'; 
 
 % Options for the maximal number of jobs
 gb_psom_max_queued = 2;
@@ -58,16 +54,6 @@ gb_psom_path_search = '';
 gb_psom_tmp = tempdir; 
 if ~strcmp(gb_psom_tmp(end),filesep)
     gb_psom_tmp = [gb_psom_tmp filesep];
-end
-
-% How to open pdf files, will choose the first one that exists 
-gb_psom_list_pdf = {'xpdf' , 'evince', 'okular' , 'undefined'};
-for gb_psom_pdf_viewer = gb_psom_list_pdf
-    gb_psom_pdf_viewer = gb_psom_pdf_viewer{1};
-    [gb_psom_retcode,gb_psom_txt] = system([ gb_psom_pdf_viewer ' --help >/dev/null 2>&1']);
-    if  gb_psom_retcode ~= 127
-        break
-    end
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -133,8 +119,10 @@ end
 switch (gb_psom_OS)
     case 'unix'
         gb_psom_user = getenv('USER');
+        devnull = "1>/dev/null 2>&1";
     case 'windows'
         gb_psom_user = getenv('USERNAME');	
+        devnull = "1>NUL 2>&1";
     otherwise
         gb_psom_user = 'unknown';
 end
@@ -146,6 +134,17 @@ switch (gb_psom_OS)
         gb_psom_localhost = deblank(gb_psom_localhost);
     otherwise
         gb_psom_localhost = 'unknown';
+end
+
+
+% How to open pdf files, will choose the first one that exists 
+gb_psom_list_pdf = {'xpdf' , 'evince', 'okular' ,'reader', 'undefined'};
+for gb_psom_pdf_viewer = gb_psom_list_pdf
+    gb_psom_pdf_viewer = gb_psom_pdf_viewer{1};
+    [gb_psom_retcode,gb_psom_txt] = system([ gb_psom_pdf_viewer ' --help ' devnull]);
+    if  gb_psom_retcode ~= 127
+        break
+    end
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -169,3 +168,10 @@ end
 %% taken into account.
 
 % ignore_function_time_stamp ('all')  
+
+%% Use the local configuration file if any, will overwite global config
+if ~exist('gb_psom_gb_vars_local','var')&&exist('psom_gb_vars_local.m','file')		
+    gb_psom_gb_vars_local = true;
+    psom_gb_vars_local
+    return
+end
