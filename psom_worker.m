@@ -159,11 +159,10 @@ try
             %% Update the news feed
             time_job = clock;
             if flag_failed
-                status_job = 'failed';
+                save([path_worker name_job '.failed'],'time_job');
             else
-                status_job = 'finished';
+                save([path_worker name_job '.finished'],'time_job');
             end
-            save([path_worker name_job '.finish'],'time_job','status_job','name_job');
             
             %% Update profile info
             file_prof_job = [path_worker name_job '_profile.mat'];

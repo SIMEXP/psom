@@ -181,67 +181,66 @@ try
         %% Check the state of workers
         %% and read the news
         flag_nothing_happened = true;
+        
+        %% Look for events
+        events = sub_news(path_worker,list_jobs(mask_running));
+        if ~isempty(events)
+            flag_nothing_happened = false;
+            if flag_point 
+                fprintf('\n')
+            end
+            flag_point = false;                    
+        end
+        
+        %% Check worker status
         for num_w = 1:opt.max_queued
             worker_active(num_w) = ~psom_exist(file_worker_end{num_w})&&psom_exist(file_worker_heart{num_w}); 
             worker_ready(num_w) = worker_active(num_w)&&~psom_exist(file_worker_ready{num_w});
-            if worker_active(num_w)
-            
-                if nb_sch_worker(num_w)==Inf
+            if worker_active(num_w) 
+                if (nb_sch_worker(num_w)==Inf)
                     nb_sch_worker(num_w) = 0;
-                end
-                
-                %% Look for tag files
-                event_worker = sub_news([path_worker filesep sprintf('psom%i',num_w) filesep]);
-                
-                %% Check if something happened
-                if ~isempty(event_worker)
-                    flag_nothing_happened = false;
-                    if flag_point 
-                        fprintf('\n')
-                    end
-                    flag_point = false;                    
-                end
-                
-                %% Some verbose for the events
-                for num_e = 1:length(event_worker)
-                    %% Update status
-                    name_job = event_worker(num_e).name_job;
-                    mask_job = strcmp(list_jobs,name_job);
-                    switch event_worker(num_e).status_job
-                        case 'failed'
-                            nb_sch_worker(num_w) = nb_sch_worker(num_w)-1;
-                            nb_running = nb_running-1;
-                            nb_failed = nb_failed+1;
-                            mask_running(mask_job) = false;
-                            mask_todo(mask_job) = false;
-                            mask_failed(mask_job) = true;
-                            % Remove the children of the failed job from the to-do list
-                            mask_child = sub_find_children(mask_job',graph_deps);
-                            mask_todo(mask_child) = false; 
-                            psom_plan(mask_job) = 0;
-                            msg = sprintf('%s %s%s failed    ',event_worker(num_e).time_job,name_job,repmat(' ',[1 lmax-length(name_job)]));
-                        case 'finished'
-                            nb_sch_worker(num_w) = nb_sch_worker(num_w)-1;
-                            nb_running = nb_running-1;
-                            nb_finished = nb_finished+1;
-                            mask_running(mask_job) = false;
-                            mask_todo(mask_job) = false;
-                            mask_finished(mask_job) = true;
-                            graph_deps(mask_job,:) = false;
-                            psom_plan(mask_job) = 0;
-                            msg = sprintf('%s %s%s finished  ',event_worker(num_e).time_job,name_job,repmat(' ',[1 lmax-length(name_job)]));
-                        otherwise 
-                            error('%s is an unkown status',event_worker{num_e,2})
-                    end
-                    %% Add to the news feed
-                    sub_add_line_log(hf_news,sprintf('%s , %s\n',name_job,event_worker(num_e).status_job),false);
-                    if opt.flag_verbose && ~isempty(msg)
-                        fprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_running,nb_failed,nb_finished,nb_todo);
-                    end
                 end
             else
                 nb_sch_worker(num_w) = Inf; % The worker is not ready. Mark infinite number of jobs running to ensure no new submission will occur.
             end    
+        end    
+        
+        %% Some verbose for the events
+        for num_e = 1:size(events,1)
+            %% Update status
+            name_job = events{num_e,1};
+            mask_job = strcmp(list_jobs,name_job);
+            switch events{num_e,2}
+                case 'failed'
+                    nb_sch_worker(psom_plan(mask_job)) = nb_sch_worker(psom_plan(mask_job))-1;
+                    nb_running = nb_running-1;
+                    nb_failed = nb_failed+1;
+                    mask_running(mask_job) = false;
+                    mask_todo(mask_job) = false;
+                    mask_failed(mask_job) = true;
+                    % Remove the children of the failed job from the to-do list
+                    mask_child = sub_find_children(mask_job',graph_deps);
+                    mask_todo(mask_child) = false; 
+                    psom_plan(mask_job) = 0;
+                    msg = sprintf('%s %s%s failed    ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
+                case 'finished'
+                    nb_sch_worker(psom_plan(mask_job)) = nb_sch_worker(psom_plan(mask_job))-1;
+                    nb_running = nb_running-1;
+                    nb_finished = nb_finished+1;
+                    mask_running(mask_job) = false;
+                    mask_todo(mask_job) = false;
+                    mask_finished(mask_job) = true;
+                    graph_deps(mask_job,:) = false;
+                    psom_plan(mask_job) = 0;
+                    msg = sprintf('%s %s%s finished  ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
+                    otherwise 
+                        error('%s is an unkown status',events{num_e,2})
+            end
+            %% Add to the news feed
+            sub_add_line_log(hf_news,sprintf('%s , %s\n',name_job,events{num_e,2}),false);
+            if opt.flag_verbose && ~isempty(msg)
+                fprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_running,nb_failed,nb_finished,nb_todo);
+            end
         end
              
         %% Flush into the news  feed
@@ -441,31 +440,22 @@ if any(mask_child)
 end
 
 %% Get news
-function event_worker = sub_news(path_w);
-list_tag = dir([path_w '*.finish']);
-ee = 1;
-event_worker = struct([]);
+function events = sub_news(path_w,list_job_worker);
+list_finished = dir([path_w '*' filesep '*.finished']);
+list_failed = dir([path_w '*' filesep '*.failed']);
+list_tag = [list_finished ; list_failed];
+list_status = [repmat({'finished'},size(list_finished)) ; repmat({'failed'},size(list_finished))];
+mask_finished = [true(size(list_finished)) ; false(size(list_finished))];
+list_name = cell(length(list_tag),1);
 for tt = 1:length(list_tag)
-    file_tag = [path_w list_tag(tt).name];
-    name_job = list_tag(tt).name(1:end-7);
-    if psom_exist([path_w name_job '_profile.mat'])
-        % Do not process tag files if the profile file has not been generated
-        data = load(file_tag);
-        event_worker(ee).name_job   = data.name_job;
-        event_worker(ee).clock      = data.time_job(:);
-        event_worker(ee).time_job   = datestr(data.time_job);
-        event_worker(ee).status_job = data.status_job;
-        psom_clean(file_tag,true);
-        ee = ee+1;
-    else
-        fprintf('waiting to process %s\n',name_job)
+    if mask_finished(tt)
+        list_name{tt} = list_tag(tt).name(1:end-9);
+    else 
+        list_name{tt} = list_tag(tt).name(1:end-7);
     end
 end
-
-%% Order events
-all_clock = [event_worker.clock]';
-[all_clock,order] = sortrows(all_clock);
-event_worker = event_worker(order);
+mask_process = ismember(list_name,list_job_worker);
+events = [list_name(mask_process) list_status(mask_process)];
 
 function [] = sub_add_line_log(file_write,str_write,flag_verbose);
 

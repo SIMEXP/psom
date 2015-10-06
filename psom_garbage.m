@@ -155,6 +155,7 @@ while ~flag_exit
         for num_s = 1:length(path_search)
             file_logs_job = [path_search{num_s} name_job '.log'];
             file_profile_job = [path_search{num_s} name_job '_profile.mat'];
+            file_tag = [path_search{num_s} name_job '.' status_cell{list_todo(num_t)}];
             if psom_exist(file_logs_job)&&psom_exist(file_profile_job)
                 flag_found = true;
                 logs.(name_job) = sub_read_txt(file_logs_job);
@@ -163,6 +164,7 @@ while ~flag_exit
                 new_prof.(name_job) = tmp;
                 psom_clean(file_logs_job,false);
                 psom_clean(file_profile_job,false);
+                psom_clean(file_tag,false);
                 mask_done(list_todo(num_t)) = true;
                 if opt.flag_verbose
                     fprintf('\nCollecting logs of job %s',name_job)
