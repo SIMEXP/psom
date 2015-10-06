@@ -163,7 +163,7 @@ try
             else
                 status_job = 'finished';
             end
-            save([path_worker list_new_jobs{nn} '.finish'],'time_job','status_job','name_job');
+            save([path_worker name_job '.finish'],'time_job','status_job','name_job');
             
             %% Update profile info
             file_prof_job = [path_worker name_job '_profile.mat'];
