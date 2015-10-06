@@ -62,7 +62,6 @@ opt = load(file_config);
 
 %% File names for the workers
 for num_w = 1:opt.max_queued
-    file_worker_news{num_w}  = sprintf('%spsom%i%snews_feed.csv'  ,path_worker,num_w,filesep);
     file_worker_heart{num_w} = sprintf('%spsom%i%sheartbeat.mat'  ,path_worker,num_w,filesep);
     file_worker_job{num_w}   = sprintf('%spsom%i%snew_jobs.mat'   ,path_worker,num_w,filesep);
     file_worker_ready{num_w} = sprintf('%spsom%i%snew_jobs.ready' ,path_worker,num_w,filesep);
@@ -150,10 +149,7 @@ try
     worker_reset  = false(opt.max_queued,1);   % A binary list of workers that have been reset
     worker_ready  = false(opt.max_queued,1);   % A binary list of workers that are ready to receive jobs
     worker_active = false(opt.max_queued,1);   % A binary list of workers that are active
-    nb_char_news  = zeros(opt.max_queued,1);   % A list of the number of characters read from the news per worker
     nb_sch_worker = zeros(opt.max_queued,1);   % A list of the number of jobs scheduled for execution per worker   
-    news_worker   = repmat({''},[opt.max_queued,1]); % a list to store the news of all workers
-    h_news_worker = zeros([opt.max_queued,1]); % Handles for the news feed of the workers
     flag_point    = false; % A flag to indicate if a . was verbosed last
     
     %% Find the longest job name
@@ -173,7 +169,6 @@ try
                 if opt.flag_verbose >= 2
                     fprintf('Worker %i has been reset.\n',num_w);
                 end
-                fclose(h_news_worker);
                 psom_clean(file_worker_reset{num_w},struct('flag_verbose',false));
                 nb_running = nb_running - sum(mask_running(psom_plan==num_w));
                 mask_running(psom_plan==num_w) = false;
@@ -189,21 +184,19 @@ try
         %% and read the news
         flag_nothing_happened = true;
         for num_w = 1:opt.max_queued
-            worker_active(num_w) = psom_exist(file_worker_news{num_w})&&~psom_exist(file_worker_end{num_w})&&psom_exist(file_worker_heart{num_w}); 
+            worker_active(num_w) = ~psom_exist(file_worker_end{num_w})&&psom_exist(file_worker_heart{num_w}); 
             worker_ready(num_w) = worker_active(num_w)&&~psom_exist(file_worker_ready{num_w});
             if worker_active(num_w)
+            
                 if nb_sch_worker(num_w)==Inf
                     nb_sch_worker(num_w) = 0;
-                    h_news_worker(num_w) = fopen(file_worker_news{num_w});
                 end
                 
-                %% Parse news_feed.csv for one worker
-                [str_read,nb_char_news(num_w)] = sub_tail(h_news_worker(num_w),nb_char_news(num_w));
-                news_worker{num_w} = [news_worker{num_w} str_read];
-                [event_worker,news_worker{num_w}] = sub_parse_news(news_worker{num_w});
+                %% Look for tag files
+                event_worker = sub_news([path_worker filesep sprintf('psom%i',num_w) filesep]);
                 
                 %% Check if something happened
-                if length(event_worker)>1
+                if ~isempty(event_worker)
                     flag_nothing_happened = false;
                     if flag_point 
                         fprintf('\n')
@@ -212,17 +205,14 @@ try
                 end
                 
                 %% Some verbose for the events
-                for num_e = 1:size(event_worker,1)
+                for num_e = 1:length(event_worker)
                     %% Update status
-                    name_job = event_worker{num_e,1};
-                    if strcmp(name_job,'PIPE')
-                        continue % That is the signal that the pipeline has terminated
-                    end
+                    name_job = event_worker(num_e).name_job;
                     mask_job = strcmp(list_jobs,name_job);
-                    switch event_worker{num_e,2}
+                    switch event_worker(num_e).status_job
                         case 'registered'
                             if opt.flag_verbose == 2
-                                msg = sprintf('%s %s%s registered',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
+                                msg = sprintf('%s %s%s registered',event_worker(num_e).time_job,name_job,repmat(' ',[1 lmax-length(name_job)]));
                             else
                                 msg = ''; % empty message will not be printed
                             end
@@ -232,7 +222,7 @@ try
                             mask_register(mask_job) = false;
                             mask_todo(mask_job) = false;
                             mask_running(mask_job) = true;
-                            msg = sprintf('%s %s%s running   ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
+                            msg = sprintf('%s %s%s running   ',event_worker(num_e).time_job,name_job,repmat(' ',[1 lmax-length(name_job)]));
                         case 'failed'
                             nb_sch_worker(num_w) = nb_sch_worker(num_w)-1;
                             nb_running = nb_running-1;
@@ -244,7 +234,7 @@ try
                             mask_child = sub_find_children(mask_job',graph_deps);
                             mask_todo(mask_child) = false; 
                             psom_plan(mask_job) = 0;
-                            msg = sprintf('%s %s%s failed    ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
+                            msg = sprintf('%s %s%s failed    ',event_worker(num_e).time_job,name_job,repmat(' ',[1 lmax-length(name_job)]));
                         case 'finished'
                             nb_sch_worker(num_w) = nb_sch_worker(num_w)-1;
                             nb_running = nb_running-1;
@@ -254,12 +244,12 @@ try
                             mask_finished(mask_job) = true;
                             graph_deps(mask_job,:) = false;
                             psom_plan(mask_job) = 0;
-                            msg = sprintf('%s %s%s finished  ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
+                            msg = sprintf('%s %s%s finished  ',event_worker(num_e).time_job,name_job,repmat(' ',[1 lmax-length(name_job)]));
                         otherwise 
                             error('%s is an unkown status',event_worker{num_e,2})
                     end
                     %% Add to the news feed
-                    sub_add_line_log(hf_news,sprintf('%s , %s\n',event_worker{num_e,1},event_worker{num_e,2}),false);
+                    sub_add_line_log(hf_news,sprintf('%s , %s\n',name_job,event_worker(num_e).status_job),false);
                     if opt.flag_verbose && ~isempty(msg)
                         fprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_running,nb_failed,nb_finished,nb_todo);
                     end
@@ -431,11 +421,6 @@ if ~flag_any_fail&&isempty(list_num_none)
 end
 
 %% Close the log file
-for num_w = 1:opt.max_queued
-    if h_news_worker(num_w)>0
-        fclose(h_news_worker(num_w));
-    end
-end
 fclose(hf_news);
 status_pipe = double(flag_any_fail);
 
@@ -468,6 +453,57 @@ if any(mask_child)
     mask_child = mask_child | sub_find_children(mask_child_strict,graph_deps);
 end
 
+%% Get news
+function event_worker = sub_news(path_w);
+list_reg     = dir([path_w '*.registered']);
+list_running = dir([path_w '*.running']);
+list_finish  = dir([path_w '*.finish']);
+
+ee = 1;
+event_worker = struct([]);
+for rr = 1:length(list_reg)
+    try
+        file_tag = [path_w list_reg(rr).name];
+        data = load(file_tag);
+        event_worker(ee).name_job   = data.name_job;
+        event_worker(ee).clock      = data.time_job(:);
+        event_worker(ee).time_job   = datestr(data.time_job);
+        event_worker(ee).status_job = 'registered';
+        psom_clean(file_tag,false);
+        ee = ee+1;
+    end
+end
+
+for rr = 1:length(list_running)
+    try
+        file_tag = [path_w list_running(rr).name];
+        data = load(file_tag);
+        event_worker(ee).name_job   = data.name_job;
+        event_worker(ee).clock      = data.time_job(:);
+        event_worker(ee).time_job   = datestr(data.time_job);
+        event_worker(ee).status_job = 'running';
+        psom_clean(file_tag,false);
+        ee = ee+1;
+    end
+end
+
+for rr = 1:length(list_finish)
+    try
+        file_tag = [path_w list_finish(rr).name];
+        data = load(file_tag);
+        event_worker(ee).name_job   = data.name_job;
+        event_worker(ee).clock      = data.time_job(:);
+        event_worker(ee).time_job   = datestr(data.time_job);
+        event_worker(ee).status_job = data.status_job;
+        psom_clean(file_tag,false);
+        ee = ee+1;
+    end
+end
+
+%% Order events
+all_clock = [event_worker.clock]';
+[all_clock,order] = sortrows(all_clock);
+event_worker = event_worker(order);
 
 function [] = sub_add_line_log(file_write,str_write,flag_verbose);
 
@@ -482,38 +518,4 @@ if exist('OCTAVE_VERSION','builtin')
     [res,msg] = system(sprintf('sleep %1.3f',time_sleep));
 else
     pause(time_sleep); 
-end
-
-function [str_read,nb_chars] = sub_tail(hf,nb_chars)
-% Read the tail of a text file
-if hf >= 0
-    fseek(hf,nb_chars,'bof');
-    str_read = fread(hf, Inf , 'uint8=>char')';
-    nb_chars = ftell(hf);
-else
-    str_read = '';
-    nb_chars = 0;
-end
-
-function [events,news] = sub_parse_news(news)
-if isempty(news)
-    events = {};
-    return
-end
-
-% Parse the news feed
-news_line = psom_string2lines(news);
-if strcmp(news(end),char(10))||strcmp(news(end),char(13))
-    % The last line happens to be complete
-    news = ''; % we are able to parse eveything
-else
-    news = news_line{end};
-    news_line = news_line(1:end-1);
-end
-nb_lines = length(news_line);
-events = cell(nb_lines,2);
-for num_e = 1:nb_lines
-    pos = strfind(news_line{num_e},' , ');
-    events{num_e,1} = news_line{num_e}(1:pos-1);
-    events{num_e,2} = news_line{num_e}(pos+3:end);
 end
