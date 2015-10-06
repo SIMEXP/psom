@@ -190,7 +190,7 @@ try
             flag_heartbeat = psom_exist(file_worker_heart{num_w});
             
             if ~flag_heartbeat
-                if opt.flag_verbose == 2
+                if opt.flag_verbose == 3
                     fprintf('No heartbeat for process %s\n',name_worker{num_w})
                 end
             else
