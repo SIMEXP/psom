@@ -448,8 +448,8 @@ for jj = 1:length(list_job_worker)
     job_name = list_job_worker{jj};
     file_finished = [path_w sprintf('psom%i',num_worker(jj)) filesep job_name '.finished'];
     file_failed   = [path_w sprintf('psom%i',num_worker(jj)) filesep job_name '.failed'];
-    flag_finished = psom_exist(file_finished);
-    flag_failed = ~flag_finished&&psom_exist(file_failed);
+    flag_finished = psom_exist(file_finished,false);
+    flag_failed = ~flag_finished&&psom_exist(file_failed,false);
     mask_completed(jj) = flag_failed || flag_finished;
     if flag_finished
         events{jj,2} = 'finished';
