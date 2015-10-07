@@ -183,7 +183,7 @@ try
         flag_nothing_happened = true;
         
         %% Look for events
-        events = sub_news(path_worker,list_jobs(mask_running));
+        events = sub_news(path_worker,psom_plan(mask_running),list_jobs(mask_running));
         if ~isempty(events)
             flag_nothing_happened = false;
             if flag_point 
@@ -440,22 +440,24 @@ if any(mask_child)
 end
 
 %% Get news
-function events = sub_news(path_w,list_job_worker);
-list_finished = dir([path_w '*' filesep '*.finished']);
-list_failed = dir([path_w '*' filesep '*.failed']);
-list_tag = [list_finished ; list_failed];
-list_status = [repmat({'finished'},size(list_finished)) ; repmat({'failed'},size(list_finished))];
-mask_finished = [true(size(list_finished)) ; false(size(list_finished))];
-list_name = cell(length(list_tag),1);
-for tt = 1:length(list_tag)
-    if mask_finished(tt)
-        list_name{tt} = list_tag(tt).name(1:end-9);
-    else 
-        list_name{tt} = list_tag(tt).name(1:end-7);
+function events = sub_news(path_w,num_worker,list_job_worker);
+mask_completed = false(length(list_job_worker),1);
+events = cell(length(list_job_worker),2);
+events(:,1) = list_job_worker;
+for jj = 1:length(list_job_worker)
+    job_name = list_job_worker{jj};
+    file_finished = [path_w sprintf('psom%i',num_worker(jj)) filesep job_name '.finished'];
+    file_failed   = [path_w sprintf('psom%i',num_worker(jj)) filesep job_name '.failed'];
+    flag_finished = psom_exist(file_finished);
+    flag_failed = ~flag_finished&&psom_exist(file_failed);
+    mask_completed(jj) = flag_failed || flag_finished;
+    if flag_finished
+        events{jj,2} = 'finished';
+    elseif flag_failed
+        events{jj,2} = 'failed';
     end
 end
-mask_process = ismember(list_name,list_job_worker);
-events = [list_name(mask_process) list_status(mask_process)];
+events = events(mask_completed,:);
 
 function [] = sub_add_line_log(file_write,str_write,flag_verbose);
 

@@ -1,35 +1,23 @@
-function flag_exist = psom_exist(file_name)
+function flag_exist = psom_exist(file_name,flag_test_dir)
 % A fast version of "exist" specific of files with full path names.
 %
 % SYNTAX:
-% FLAG_EXIST = PSOM_EXIST(FILE_NAME)
+% FLAG_EXIST = PSOM_EXIST(FILE_NAME,FLAG_TEST_DIR)
 % 
-% _________________________________________________________________________
-% INPUTS:
+% FILE_NAME (string) a file name with full path
+% FLAG_TEST_DIR (boolean, default true) if the flag is true, also test for folders.
+% FLAG_EXIST (integer) 1 if FILE_NAME is a file, 7 if it is a folder, 0 otherwise.
 %
-% FILE_NAME
-%   (string) a file name with full path
-%
-% _________________________________________________________________________
-% OUTPUTS:
-%
-% FLAG_EXIST
-%   (integer) 1 if FILE_NAME is a file, 7 if it is a folder, 0 otherwise.
-%
-% _________________________________________________________________________
-% COMMENTS:
-% 
 % This is essentially the same as exist(FILE_NAME), restricted to files and 
 % directories, but it is much faster when the search path is large. It will 
-% only work for file names/folder names with full path though.
+% only work for file names/folder names with full path.
 %
-% _________________________________________________________________________
 % Copyright (c) Pierre Bellec, Centre de recherche de l'institut de
 % geriatrie de Montreal, Departement d'informatique et recherche 
-% operationnelle, Universite de Montreal, 2010.
+% operationnelle, Universite de Montreal, 2010-2015.
 % Maintainer : pbellec@criugm.qc.ca
 % See licensing information in the code.
-% Keywords : pipeline, niak, preprocessing, fMRI, psom
+% Keywords : files
 
 % Permission is hereby granted, free of charge, to any person obtaining a copy
 % of this software and associated documentation files (the "Software"), to deal
@@ -48,7 +36,9 @@ function flag_exist = psom_exist(file_name)
 % LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
-
+if nargin < 2
+    flag_test_dir = true;
+end
 if size(file_name,1)>1
     flag_exist = true;
     for num_f = 1:size(file_name,1)
@@ -64,6 +54,6 @@ else
     fclose(hf);
     flag_exist = true;
 end
-if ~flag_exist
+if ~flag_exist&&flag_test_dir
     flag_exist = exist(file_name,'dir');
 end
