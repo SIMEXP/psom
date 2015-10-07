@@ -30,7 +30,13 @@ function res = psom_pipeline_visu(path_logs,action,opt_action,flag_visu)
 %
 %    'nb_jobs_running'
 %        plot the number of jobs running as a function of time.
+% 
+%    'nb_jobs_worker'
+%        plot the number of jobs running per worker as a function of time.
 %
+%    'nb_jobs_finished'
+%        plot the number of finished jobs as a function of time. 
+% 
 %    'parallel_time'
 %        the execution time using parallel computing, i.e. the time elapsed 
 %        between the beginning of the first job and the end of the last job.
@@ -102,8 +108,6 @@ function res = psom_pipeline_visu(path_logs,action,opt_action,flag_visu)
 %           LIST_JOBS{I} started.
 %        TIME_END (vector) TIME_END(J) is the time when the job 
 %           LIST_JOBS{I} ended.
-%        LIST_JOBS (cell of strings) LIST_JOBS{J} is the name of the Jth
-%           job.
 %
 % ACTION = 'nb_jobs_worker'
 %    Plot the number of jobs running as a function of the elapsed time 
@@ -118,9 +122,19 @@ function res = psom_pipeline_visu(path_logs,action,opt_action,flag_visu)
 %           LIST_JOBS{I} started.
 %        TIME_END (vector) TIME_END(J) is the time when the job 
 %           LIST_JOBS{I} ended.
-%        LIST_JOBS (cell of strings) LIST_JOBS{J} is the name of the Jth
-%           job.
 %     
+% ACTION = 'nb_jobs_finished'
+%    Plot the number of completed jobs as a function of the elapsed time 
+%    since the start-up of the first job. If specified, OPT will be used 
+%    as an argument sent to the PLOT command. RES is a structure with 
+%    the following fields : 
+%        NB_JOBS_FINISHED (vector), entry I is the number of completed
+%           jobs at time ALL_TIME(I)
+%        ALL_TIME (vector) a (sorted) list of the times when the number
+%           of submitted jobs changed.
+%        LIST_JOBS (cell of strings) LIST_JOBS{I} is the name of the
+%           job completed at time I.
+%
 % ACTION = 'parallel_time'
 %    Print the parallel running time (from the start-up of the first job till 
 %    the end of the last job, excluding jobs that have not been processed).
@@ -406,6 +420,53 @@ switch action
         end
         res = log_job.(opt_action);
 
+    case 'nb_jobs_finished'
+    
+        profile_jobs = load(file_profile);
+        list_jobs = fieldnames(profile_jobs);
+        time_end = zeros([length(list_jobs) 1]);
+        
+        % Extract timing info from the jobs profile
+        for num_j = 1:length(list_jobs)
+            if isfield(profile_jobs.(list_jobs{num_j}),'end_time')&&~isempty(profile_jobs.(list_jobs{num_j}).end_time)
+                [tmp,time_end(num_j)] = datenum(profile_jobs.(list_jobs{num_j}).end_time);
+            end
+        end
+        
+        % Ignore jobs that did not complete
+        mask = time_end ~= 0; 
+        time_end = time_end(mask);
+        list_jobs = list_jobs(mask);
+        [all_time,order] = sort(time_end);
+        list_jobs = list_jobs(order);
+        nb_jobs_finished = 1:length(time_end);
+        
+        % decide on the unit
+        if (max(all_time)-all_time(1))>3600
+            unit_plot = 'hr';
+            factor_norm = 3600;
+        elseif (max(all_time)-all_time(1))>300
+            unit_plot = 'mn';
+            factor_norm = 60;
+        else 
+            unit_plot = 's';
+            factor_norm = 1;
+        end
+        if flag_visu
+            if ~exist('opt_action','var')||isempty(opt_action)
+                plot((all_time-all_time(1))/factor_norm,nb_jobs_finished);
+            else
+                plot((all_time-all_time(1))/factor_norm,nb_jobs_running,opt_action);
+            end
+            ha = gca;
+            axis([0 (all_time(end)-all_time(1))/factor_norm 0 max(nb_jobs_finished(:))+1]);
+            set(get(ha,'xlabel'),'string',['time elapsed (' unit_plot ')'])
+            set(get(ha,'ylabel'),'string','# jobs finished')
+        end
+        res.nb_jobs_finished = nb_jobs_finished;
+        res.all_time = all_time;
+        res.list_jobs = list_jobs;
+
     case {'nb_jobs_running','nb_jobs_worker'}
 
         profile_jobs = load(file_profile);
@@ -498,8 +559,7 @@ switch action
         res.all_time = all_time;
         res.time_end = time_end;
         res.time_start = time_start;
-        res.list_jobs = list_jobs;
-
+        
     case 'parallel_time'
 
         profile_jobs = load(file_profile);
