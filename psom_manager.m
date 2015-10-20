@@ -53,6 +53,7 @@ file_time         = [path_logs 'PIPE_time.mat'];
 file_pipe_running = [path_logs 'PIPE.lock'];
 file_heartbeat    = [path_logs 'heartbeat.mat'];
 file_kill         = [path_logs 'PIPE.kill'];
+file_pipe_end     = [path_logs 'PIPE.end'];
 file_news_feed    = [path_logs 'news_feed.csv'];
 file_config       = [path_logs 'PIPE_config.mat'];
 path_worker       = [path_logs 'worker' filesep];
@@ -290,7 +291,7 @@ try
                 max_sch_worker = max(nb_sch_worker(nb_sch_worker~=Inf));
                 min_sch_worker = min(nb_sch_worker(nb_sch_worker~=Inf));
             end
-            fprintf('%i/%i jobs submitted, # jobs per worker: %i to %i. %i workers unavailable.\n',curr_job,nb_to_submit,max_sch_worker,min_sch_worker,sum(nb_sch_worker==Inf))
+            fprintf('%i/%i jobs submitted, # jobs per worker: %i to %i. %i workers unavailable.\n',curr_job,nb_to_submit,min_sch_worker,max_sch_worker,sum(nb_sch_worker==Inf))
         end
         
         %% Mark new submissions as ready to process
@@ -311,8 +312,8 @@ try
             for num_w = list_idle(:)'
                 tmp = [];
                 save(file_worker_end{num_w},'tmp');
-                if opt.flag_verbose>=2
-                    fprintf('Stopping idle worker %i (not enough jobs left to do).\n',num_w);
+                if opt.flag_verbose>=1
+                    fprintf('%s Stopping idle worker %i (not enough jobs left to do).\n',datestr(clock),num_w);
                 end
             end
             if opt.flag_verbose>=2
@@ -321,7 +322,7 @@ try
         end
         
         %% Sleep if nothing happened
-        flag_loop = (any(mask_todo) || any(mask_running)) && psom_exist(file_pipe_running);
+        flag_loop = (any(mask_todo) || any(mask_running)) && psom_exist(file_pipe_running) && ~psom_exist(file_pipe_end);
         if flag_nothing_happened && flag_loop
             sub_sleep(opt.time_between_checks)
          
@@ -369,6 +370,11 @@ end
 %% Report if the lock file was manually removed
 if exist('file_pipe_running','var')&&~psom_exist(file_pipe_running)
     fprintf('The pipeline manager was interrupted because the .lock file was manually deleted.\n');
+end
+
+%% Report if the pipeline was ended by the deamon 
+if psom_exist(file_pipe_end)
+    fprintf('The pipeline manager was interrupted because there are no active workers available.\n');
 end
 
 %% Print a list of failed jobs

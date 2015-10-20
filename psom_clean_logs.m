@@ -36,7 +36,7 @@ if nargin<1
     error('Please specify PATH_LOGS')
 end
 
-list_files = { 'PIPE.running' , 'PIPE.failed' , 'PIPE.finished' , 'PIPE.exit' , 'PIPE.kill' , ...
+list_files = { 'PIPE.end' , 'PIPE.running' , 'PIPE.failed' , 'PIPE.finished' , 'PIPE.exit' , 'PIPE.kill' , ...
  'heartbeat.mat' , 'PIPE.oqsub' , 'PIPE.eqsub' , 'news_feed.csv' };
 
 for num_f = 1:length(list_files)

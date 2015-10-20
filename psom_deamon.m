@@ -55,6 +55,7 @@ file_pipeline     = [path_logs 'PIPE.mat'];
 file_pipe_running = [path_logs 'PIPE.lock'];
 file_pipe_heart   = [path_logs 'heartbeat.mat'];
 file_kill         = [path_logs 'PIPE.kill'];
+file_end          = [path_logs 'PIPE.end'];
 file_time         = [path_logs 'PIPE_time.mat'];
 path_tmp          = [path_logs 'tmp' filesep];
 path_worker       = [path_logs 'worker' filesep];
@@ -112,6 +113,7 @@ try
     flag_alive   = false([opt.max_queued+2 1]); % Is the worker alive? two last entries are for the PM and the GC
     flag_wait    = false([opt.max_queued+2 1]); % Are we waiting for the worker to start? two last entries are for the PM and the GC
     flag_end     = false([opt.max_queued+2 1]); % did the manager request for the worker to end?
+    flag_dead    = false([opt.max_queued+2 1]); % did the worker die with no opportunity to restart?
     
     %% Create logs folder for each worker
     path_worker_w = cell(opt.max_queued,1);
@@ -127,7 +129,7 @@ try
     opt_script.path_search    = file_pipeline;
     opt_script.mode           = opt.mode;
     opt_script.init_matlab    = opt.init_matlab;
-    opt_script.flag_debug     = opt.flag_verbose == 2;        
+    opt_script.flag_debug     = opt.flag_verbose >= 2;        
     opt_script.shell_options  = opt.shell_options;
     opt_script.command_matlab = opt.command_matlab;
     opt_script.qsub_options   = opt.qsub_options;
@@ -232,12 +234,24 @@ try
                         if opt.flag_verbose >= 3
                             fprintf('No heartbeat in %1.2fs for process %s\n',elapsed_time,name_worker{num_w})
                         end
+                        
+                        % Check if the manager has ended the worker
                         if num_w<=opt.max_queued
-                            flag_worker_end = psom_exist(file_worker_end{num_w});
+                            test_end = psom_exist(file_worker_end{num_w});
+                            if test_end&&~flag_end(num_w)
+                                if (opt.flag_verbose>=2)
+                                    fprintf('%s Worker %s terminated by the manager.\n',datestr(clock),name_worker{num_w});
+                                end
+                                flag_alive(num_w) = false;
+                                flag_wait(num_w) = false;
+                            end 
+                            flag_end(num_w) = test_end;
+                            
                         else
-                            flag_worker_end = false;
+                            flag_end(num_w) = false;
                         end
-                        if (elapsed_time > time_death)&&~flag_worker_end
+                        
+                        if (elapsed_time > time_death)&&~flag_end(num_w)
                             if opt.flag_verbose
                                 fprintf('%s No heartbeat for process %s, counted as dead.\n',datestr(clock),name_worker{num_w});
                             end 
@@ -282,31 +296,38 @@ try
                     elseif num_w == opt.max_queued+2
                         [flag_failed,msg] = psom_run_script(cmd_garb,script_garb,opt_garb,opt_logs_garb,opt.flag_verbose);
                     end
-                else 
-                    flag_failed = false;
+                    if ~flag_failed
+                        flag_wait(num_w) = true;
+                        tab_refresh(num_w,:,1) = -1;
+                    else
+                        flag_alive(num_w) = false;
+                        flag_wait(num_w) = false;
+                    end
                 end
-                if ~flag_failed
-                    flag_wait(num_w) = true;
-                    tab_refresh(num_w,:,1) = -1;
-                else
-                    flag_alive(num_w) = false;
-                    flag_wait(num_w) = false;
-                end
+                
                 if flag_started(num_w)
                     if (nb_resub<opt.nb_resub)
                         nb_resub = nb_resub+1;
                         pref_verb = sprintf('Restarting (%i/%i)',nb_resub,opt.nb_resub);
-                    else
+                        if num_w <= opt.max_queued
+                            time_reset = clock;
+                            save(file_worker_reset{num_w},'time_reset')
+                        end
+                    elseif ~flag_dead(num_w)
                         pref_verb = sprintf('Marked as dead:');
+                        if num_w <= opt.max_queued
+                            time_reset = clock;
+                            save(file_worker_reset{num_w},'time_reset')
+                        end
+                        flag_dead(num_w) = true;
+                    else
+                        pref_verb = '';
                     end
-                    if num_w <= opt.max_queued
-                        time_reset = clock;
-                        save(file_worker_reset{num_w},'time_reset')
-                    end
+                    
                 else
                     pref_verb = 'Starting';
                 end
-                if opt.flag_verbose
+                if (opt.flag_verbose)&&~isempty(pref_verb)
                     if num_w <= opt.max_queued
                         fprintf('%s %s worker number %i...\n',datestr(clock),pref_verb,num_w)
                     elseif num_w == opt.max_queued+1
@@ -322,6 +343,15 @@ try
         end
         if opt.flag_verbose&&strcmp(opt.mode_pipeline_manager,'session')
             nb_chars_logs = psom_pipeline_visu(path_logs,'monitor',nb_chars_logs);      
+        end
+        
+        %% If all workers are dead and no resubmissions are allowed, kill the pipeline
+        if psom_exist(file_pipe_running)&&~any(flag_wait(1:opt.max_queued))&&~any(flag_alive(1:opt.max_queued))&&(nb_resub>=opt.nb_resub)&&~psom_exist(file_end)
+            if opt.flag_verbose
+                 fprintf('%s No active workers left. I am interrupting the pipeline.\n',datestr(now))
+            end
+            time = clock;
+            save(file_end,'time');
         end
         sub_sleep(opt.time_between_checks)
         flag_pipe_finished = ~psom_exist(file_pipe_running);

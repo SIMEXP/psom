@@ -218,9 +218,8 @@ if ~ismember(opt.mode,{'session','background','batch','qsub','msub','bsub','cond
     error('%s is an unknown mode of command execution. Sorry dude, I must quit ...',opt.mode);
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Generate the script %%
-%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %% Set-up the search path for the job
 if ~strcmp(opt.mode,'session')&&~isempty(cmd)
     if (length(opt.path_search)>4)&&(strcmp(opt.path_search(end-3:end),'.mat'))
