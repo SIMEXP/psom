@@ -165,8 +165,8 @@ try
         for num_w = 1:opt.max_queued
             worker_reset(num_w) = psom_exist(file_worker_reset{num_w});
             if worker_reset(num_w)
-                if opt.flag_verbose >= 2
-                    fprintf('Worker %i has been reset.\n',num_w);
+                if opt.flag_verbose >= 1
+                    fprintf('%s Worker %i has been reset.\n',datestr(clock),num_w);
                 end
                 psom_clean(file_worker_reset{num_w},struct('flag_verbose',false));
                 nb_running = nb_running - sum(mask_running(psom_plan==num_w));

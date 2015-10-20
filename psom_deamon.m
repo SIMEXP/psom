@@ -239,7 +239,7 @@ try
                         end
                         if (elapsed_time > time_death)&&~flag_worker_end
                             if opt.flag_verbose
-                                fprintf('No heartbeat for process %s, counted as dead.\n',name_worker{num_w});
+                                fprintf('%s No heartbeat for process %s, counted as dead.\n',datestr(clock),name_worker{num_w});
                             end 
                             % huho it's been too long without a heartbeat, he's dead Jim
                             flag_alive(num_w) = false;
@@ -257,7 +257,7 @@ try
         %% Now start workers
         list_worker = [opt.max_queued+[1 2] 1:opt.max_queued]; % first start the manager, then the collector, then workers
         for num_w = list_worker
-            if ~flag_end(num_w)&&~flag_wait(num_w)&&~flag_alive(num_w)&&(~flag_started(num_w)||(nb_resub<opt.nb_resub))
+            if ~flag_end(num_w)&&~flag_wait(num_w)&&~flag_alive(num_w)
              
                 if flag_started(num_w)
                     if num_w <= opt.max_queued
@@ -274,12 +274,16 @@ try
                     end
                 end
                 
-                if num_w <= opt.max_queued
-                    [flag_failed,msg] = psom_run_script(cmd_worker{num_w},script_worker{num_w},opt_worker(num_w),opt_logs_worker(num_w),opt.flag_verbose);
-                elseif num_w == opt.max_queued+1
-                    [flag_failed,msg] = psom_run_script(cmd_pipe,script_pipe,opt_pipe,opt_logs_pipe,opt.flag_verbose);
-                elseif num_w == opt.max_queued+2
-                    [flag_failed,msg] = psom_run_script(cmd_garb,script_garb,opt_garb,opt_logs_garb,opt.flag_verbose);
+                if (nb_resub<opt.nb_resub)||~flag_started(num_w)
+                    if num_w <= opt.max_queued
+                        [flag_failed,msg] = psom_run_script(cmd_worker{num_w},script_worker{num_w},opt_worker(num_w),opt_logs_worker(num_w),opt.flag_verbose);
+                    elseif num_w == opt.max_queued+1
+                        [flag_failed,msg] = psom_run_script(cmd_pipe,script_pipe,opt_pipe,opt_logs_pipe,opt.flag_verbose);
+                    elseif num_w == opt.max_queued+2
+                        [flag_failed,msg] = psom_run_script(cmd_garb,script_garb,opt_garb,opt_logs_garb,opt.flag_verbose);
+                    end
+                else 
+                    flag_failed = false;
                 end
                 if ~flag_failed
                     flag_wait(num_w) = true;
@@ -289,8 +293,12 @@ try
                     flag_wait(num_w) = false;
                 end
                 if flag_started(num_w)
-                    nb_resub = nb_resub+1;
-                    pref_verb = sprintf('Restarting (%i/%i)',nb_resub,opt.nb_resub);
+                    if (nb_resub<opt.nb_resub)
+                        nb_resub = nb_resub+1;
+                        pref_verb = sprintf('Restarting (%i/%i)',nb_resub,opt.nb_resub);
+                    else
+                        pref_verb = sprintf('Marked as dead:');
+                    end
                     if num_w <= opt.max_queued
                         time_reset = clock;
                         save(file_worker_reset{num_w},'time_reset')
@@ -300,11 +308,11 @@ try
                 end
                 if opt.flag_verbose
                     if num_w <= opt.max_queued
-                        fprintf('%s worker number %i...\n',pref_verb,num_w)
+                        fprintf('%s %s worker number %i...\n',datestr(clock),pref_verb,num_w)
                     elseif num_w == opt.max_queued+1
-                        fprintf('%s the pipeline manager...\n',pref_verb);
+                        fprintf('%s %s the pipeline manager...\n',datestr(clock),pref_verb);
                     elseif num_w == opt.max_queued+2
-                        fprintf('%s the garbage collector...\n',pref_verb);
+                        fprintf('%s %s the garbage collector...\n',datestr(clock),pref_verb);
                     end
                 end
                 if flag_failed
