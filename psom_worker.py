@@ -78,5 +78,5 @@ def main(args=None):
 
 
 if __name__ == '__main__':
-    main(["-d", "/home/poquirion/simexp/test/result", "-w", "manager"])
-    # main()
+    # main(["-d", "/home/poquirion/simexp/test/result", "-w", "manager"])
+    main()
