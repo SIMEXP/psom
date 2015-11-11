@@ -175,7 +175,6 @@ end
 list_fields    = { 'flag_short_job_names' , 'path_search'       , 'file_handle' , 'name_job'    , 'init_matlab'       , 'flag_debug' , 'shell_options'       , 'command_matlab' , 'mode' , 'qsub_options'       };
 list_defaults  = { true                   , gb_psom_path_search , []            , 'psom_script' , gb_psom_init_matlab , false        , gb_psom_shell_options , ''               , NaN    , gb_psom_qsub_options };
 opt = psom_struct_defaults(opt,list_fields,list_defaults);
-
 if opt.flag_debug
     msg = sprintf('\n    The execution mode is %s\n',opt.mode);
     fprintf(msg);
@@ -205,7 +204,7 @@ if nargin < 4
     logs = [];
 else
     list_fields   = { 'txt' , 'eqsub' , 'oqsub' , 'failed' , 'exit' };
-    if ismember(opt.mode,{'qsub','msub','bsub','condor'})
+    if ismember(opt.mode,{'qsub','msub','bsub','condor','cbrain'})
         list_defaults = { NaN   , NaN     , NaN     , NaN    , ''     };
     else
         list_defaults = { NaN   , ''      , ''      , ''     , ''     };
@@ -214,7 +213,7 @@ else
 end
 
 %% Check that the execution mode exists
-if ~ismember(opt.mode,{'session','background','batch','qsub','msub','bsub','condor'})
+if ~ismember(opt.mode,{'session','background','batch','qsub','msub','bsub','condor','cbrain'})
     error('%s is an unknown mode of command execution. Sorry dude, I must quit ...',opt.mode);
 end
 
@@ -358,10 +357,11 @@ switch opt.mode
         end
         [flag_failed,msg] = system(instr_batch);    
         
-    case {'qsub','msub','condor','bsub'}
-        script_submit = [gb_psom_path_psom 'psom_submit.sh'];
+    case {'qsub','msub','condor','bsub','cbrain'}
+%         script_submit = [gb_psom_path_psom 'psom_submit.sh'];
+        script_submit = [gb_psom_path_psom 'cbrain_psom_worker_submit.sh'];
         switch opt.mode
-            case {'qsub','msub','bsub'}
+            case {'qsub','msub','bsub','cbrain'}
                 sub = opt.mode;
             case 'condor'
                 sub = [gb_psom_path_psom 'psom_condor.sh'];
@@ -379,6 +379,8 @@ switch opt.mode
         switch opt.mode
             case 'bsub'
                 instr_qsub = sprintf('%s%s %s %s',sub,qsub_logs,opt.qsub_options,['\"' script '\"']);     
+            case 'cbrain'
+                instr_qsub = sprintf('%s %s ',['\"' script '\"']);
             otherwise
                 instr_qsub = sprintf('%s%s -N %s %s %s',sub,qsub_logs,name_job,opt.qsub_options,['\"' script '\"']);     
         end
@@ -395,7 +397,12 @@ switch opt.mode
                 fprintf(opt.file_handle,'%s',msg);
             end
         end
-        [flag_failed,msg] = system(instr_qsub);
+%         [flag_failed,msg] = system(instr_qsub);
+% Watch out!!!!
+        le_path = regexp(script,'(^.*)/logs','tokens'){1}{1}
+        le_id = regexp(script,'psom_*(\w*)','tokens'){1}{1}
+        [flag_failed,msg] = system([script_submit " " le_path " " le_id ]);
+%
 end
 
 if (flag_failed~=0)&&exist('msg','var')
