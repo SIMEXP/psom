@@ -13,18 +13,12 @@ FILE=`mktemp new-task-XXXX.json`
 
 cat << NEWTASK > ${FILE}
 {
-  "tool-class": "PSOMWorker",
+  "tool-class": "CbrainTask::PSOMWorker",
   "description": "A PSOM worker submitted by PSOM through cbrain-psom-worker-submit.",
-  "parameters": [
-      {
-          "name": "output_dir",
-          "value" : "${OUTPUT_DIR}"
-      },
-      {
-          "name": "worker_id",
-          "value" : "${WORKER_ID}"
+  "parameters": {
+          "output_dir": "${OUTPUT_DIR}",
+          "worker_id": "${WORKER_ID}"
       }
-  ]
 }
 
 NEWTASK
