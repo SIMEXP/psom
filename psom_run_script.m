@@ -357,18 +357,17 @@ switch opt.mode
         end
         [flag_failed,msg] = system(instr_batch);    
         
-    case {'qsub','msub','condor','bsub','cbrain'}
-%         script_submit = [gb_psom_path_psom 'psom_submit.sh'];
-        script_submit = [gb_psom_path_psom 'cbrain_psom_worker_submit.sh'];
+    case {'qsub','msub','condor','bsub'}
+        script_submit = [gb_psom_path_psom 'psom_submit.sh'];
         switch opt.mode
-            case {'qsub','msub','bsub','cbrain'}
+            case {'qsub','msub','bsub'}
                 sub = opt.mode;
             case 'condor'
                 sub = [gb_psom_path_psom 'psom_condor.sh'];
         end
         if ~isempty(logs)
             qsub_logs = [' -e \"' logs.eqsub '\" -o \"' logs.oqsub '\"'];
-        else 
+        else
             qsub_logs = '';
         end
         if opt.flag_short_job_names
@@ -378,11 +377,9 @@ switch opt.mode
         end
         switch opt.mode
             case 'bsub'
-                instr_qsub = sprintf('%s%s %s %s',sub,qsub_logs,opt.qsub_options,['\"' script '\"']);     
-            case 'cbrain'
-                instr_qsub = sprintf('%s %s ',['\"' script '\"']);
+                instr_qsub = sprintf('%s%s %s %s',sub,qsub_logs,opt.qsub_options,['\"' script '\"']);
             otherwise
-                instr_qsub = sprintf('%s%s -N %s %s %s',sub,qsub_logs,name_job,opt.qsub_options,['\"' script '\"']);     
+                instr_qsub = sprintf('%s%s -N %s %s %s',sub,qsub_logs,name_job,opt.qsub_options,['\"' script '\"']);
         end
         if ~isempty(logs)
             instr_qsub = [script_submit ' "' instr_qsub '" ' logs.failed ' ' logs.exit ' ' logs.oqsub ];
@@ -397,12 +394,34 @@ switch opt.mode
                 fprintf(opt.file_handle,'%s',msg);
             end
         end
-%         [flag_failed,msg] = system(instr_qsub);
-% Watch out!!!!
-        le_path = regexp(script,'(^.*)/logs','tokens'){1}{1}
-        le_id = regexp(script,'psom_*(\w*)','tokens'){1}{1}
-        [flag_failed,msg] = system([script_submit " " le_path " " le_id ]);
-%
+
+         [flag_failed,msg] = system(instr_qsub);
+
+    case {'cbrain'}
+
+        sub = [gb_psom_path_psom 'cbrain_psom_worker_submit.sh'];
+        % There might be a better way to find the job path and id, however, I do not know the code well
+        %  enough at that point.
+        le_path = regexp(script,'(^.*)/logs','tokens'){1}{1};
+        le_id = regexp(script,'psom_*(\w*)','tokens'){1}{1};
+        instr_cbrain = sprintf('%s %s %s',sub,le_path,le_id);
+
+        if opt.flag_debug
+            if strcmp(gb_psom_language,'octave')
+                instr_cbrain = [instr_qsub ' 2>&1']; % In octave, the error stream is lost. Redirect it to standard output
+            end
+            msg = sprintf('    The script is executed using the command :\n%s\n\n',instr_qsub);
+            fprintf('%s',msg);
+            if ~isempty(opt.file_handle)
+                fprintf(opt.file_handle,'%s',msg);
+            end
+        end
+
+         fprintf(1,'%s \n',instr_cbrain);
+         fprintf(1,"PRRRRRRRRRRRRROOOOOOOOOUUTTTTTT\n")
+         [flag_failed,msg] = system(instr_cbrain);
+
+
 end
 
 if (flag_failed~=0)&&exist('msg','var')

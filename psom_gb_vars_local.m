@@ -30,7 +30,7 @@ gb_psom_qsub_options = '-A gsf-624-aa -q sw -l walltime=36:00:00';
 gb_psom_shell_options = ''; 
 
 % Options for the execution mode of the pipeline 
-gb_psom_mode = 'qsub';
+gb_psom_mode = 'cbrain';
 % gb_psom_mode = 'cbrain_psom_agent_start';
 
 % Options for the execution mode of the pipeline manager

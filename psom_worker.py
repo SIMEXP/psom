@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 This script starts a niak agent
 """
@@ -18,21 +18,21 @@ class Worker():
         # only three types of worker
         if worker_id == 'manager':
             self.cmd = ['/bin/bash', '{0}/logs/tmp/psom_manager.sh'.format(directory, worker_id)]
-            self.std_err = '{0}/logs/PIPE.eqsub'.format(directory, worker_id)
-            self.std_out = '{0}/logs/PIPE.oqsub'.format(directory, worker_id)
-            touch = ['PIPE.failed', 'PIPE.exit', 'PIPE.oqsub']
+            self.std_err = '{0}/logs/PIPE.err'.format(directory, worker_id)
+            self.std_out = '{0}/logs/PIPE.out'.format(directory, worker_id)
+            touch = ['PIPE.failed', 'PIPE.exit', 'PIPE.out']
             self.touch = ["{0}/logs/{1}".format(directory, t) for t in touch]
         elif worker_id == 'garbage':
             self.cmd = ['/bin/bash', '{0}/logs/tmp/psom_garbage.sh'.format(directory)]
-            self.std_err = '{0}/logs/garbage/garbage.eqsub'.format(directory)
-            self.std_out = '{0}/logs/garbage/garbage.oqsub'.format(directory)
-            touch = ['garbage.failed', 'garbage.exit', 'garbage.oqsub']
+            self.std_err = '{0}/logs/garbage/garbage.err'.format(directory)
+            self.std_out = '{0}/logs/garbage/garbage.out'.format(directory)
+            touch = ['garbage.failed', 'garbage.exit', 'garbage.out']
             self.touch = ["{0}/logs/garbage/{1}".format(directory, t) for t in touch]
         else:
             self.cmd =['/bin/bash', '{0}/logs/tmp/psom{1}.sh'.format(directory, worker_id)]
-            self.std_err = '{0}/logs/worker/psom{1}/worker.eqsub'.format(directory, worker_id)
-            self.std_out = '{0}/logs/worker/psom{1}/worker.oqsub'.format(directory, worker_id)
-            touch = ['worker.failed', 'worker.exit', 'worker.oqsub']
+            self.std_err = '{0}/logs/worker/psom{1}/worker.err'.format(directory, worker_id)
+            self.std_out = '{0}/logs/worker/psom{1}/worker.out'.format(directory, worker_id)
+            touch = ['worker.failed', 'worker.exit', 'worker.out']
             self.touch = ["{0}/logs/worker/psom{1}/{2}".format(directory, worker_id, t) for t in touch]
 
     def start(self):
