@@ -416,11 +416,8 @@ switch opt.mode
                 fprintf(opt.file_handle,'%s',msg);
             end
         end
-
          fprintf(1,'%s \n',instr_cbrain);
-         fprintf(1,"PRRRRRRRRRRRRROOOOOOOOOUUTTTTTT\n")
          [flag_failed,msg] = system(instr_cbrain);
-
 
 end
 
