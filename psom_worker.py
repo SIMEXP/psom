@@ -63,18 +63,18 @@ def main(args=None):
 
     parser.add_argument("--directory", "-d", type=str, required=True, help='The PSOM output directory')
 
-    parser.add_argument("--worker_id", "-w", type=str, required=True, help='The PSOM given worker id')
+    # parser.add_argument("--input_dir", "-i", type=str, required=False, help='The PSOM input directory')
 
-    # parser.add_argument("--time_stamp", "-t", type=str, required=True, help='The PSOM given time stamp')
+    parser.add_argument("--worker_id", "-w", type=str, required=True, help='The PSOM given worker id')
 
     parsed = parser.parse_args(args)
 
-    # build_cmd(parsed.directory, parsed.worker_n, parsed.time_stamp)
+    # We force the working directory to be at the root of the output directory
+    os.chdir("{0}/..".format(parsed.directory))
 
     w = Worker(parsed.directory, parsed.worker_id)
 
     w.start()
-    # subprocess.call(build_cmd())
 
 
 if __name__ == '__main__':
