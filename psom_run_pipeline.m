@@ -385,7 +385,7 @@ end
 
 if opt.flag_verbose == 2
     fprintf('PSOM deamon is running in mode: ''%s''\n',opt.mode_pipeline_manager);
-    fprintf('Jobs are running in mode: ''%s''\n',opt.mode_pipeline_manager);
+    fprintf('Jobs are running in mode: ''%s''\n',opt.mode);
     fprintf('Number of workers: %i\n',opt.max_queued);
     fprintf('Max number of buffered jobs: %i\n',opt.max_buffer)
     fprintf('Number of resubmissions: %i\n',opt.nb_resub)
