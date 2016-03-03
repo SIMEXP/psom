@@ -142,6 +142,7 @@ try
     opt_logs_pipe.failed = [path_logs 'PIPE.failed'];
     opt_logs_pipe.exit   = [path_logs 'PIPE.exit'];   
     opt_pipe = opt_script;
+    opt_pipe.mode = opt.mode_pipeline_manager;
     opt_pipe.name_job = 'psom_manager';   
     cmd_pipe = sprintf('psom_manager(''%s'',''%s'');',path_logs,time_pipeline);    
     if ispc % this is windows
@@ -157,6 +158,7 @@ try
     opt_logs_garb.failed = [path_garbage 'garbage.failed'];
     opt_logs_garb.exit   = [path_garbage 'garbage.exit'];   
     opt_garb = opt_script;
+    opt_garb.mode = opt.mode_garbage;
     opt_garb.name_job = 'psom_garbage';   
     cmd_garb = sprintf('psom_garbage(''%s'',''%s'',false);',path_logs,time_pipeline);    
     if ispc % this is windows
