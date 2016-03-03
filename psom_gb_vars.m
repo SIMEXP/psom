@@ -127,6 +127,10 @@ switch (gb_psom_OS)
         gb_psom_user = 'unknown';
 end
 
+if exist('flag_gb_niak_fast_gb','var')&&flag_gb_niak_fast_gb
+    return
+end
+
 % Getting the local computer's name
 switch (gb_psom_OS)
     case 'unix'
