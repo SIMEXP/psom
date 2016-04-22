@@ -125,10 +125,10 @@ end
 switch (gb_psom_OS)
     case 'unix'
         gb_psom_user = getenv('USER');
-        devnull = "1>/dev/null 2>&1";
+        devnull = '1>/dev/null 2>&1';
     case 'windows'
         gb_psom_user = getenv('USERNAME');	
-        devnull = "1>NUL 2>&1";
+        devnull = '1>NUL 2>&1';
     otherwise
         gb_psom_user = 'unknown';
 end
