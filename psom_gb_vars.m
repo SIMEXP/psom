@@ -31,7 +31,13 @@ gb_psom_shell_options = '';
 gb_psom_mode = 'background'; 
 
 % Options for the execution mode of the pipeline manager
-gb_psom_mode_pm = 'session'; 
+gb_psom_mode_pm = 'background'; 
+
+% Options for the execution mode of the deamon
+gb_psom_mode_deamon = 'background'; 
+
+% Options for the execution mode of the garbage collector
+gb_psom_mode_garbage = 'background'; 
 
 % Options for the maximal number of jobs
 gb_psom_max_queued = 2;
@@ -119,12 +125,16 @@ end
 switch (gb_psom_OS)
     case 'unix'
         gb_psom_user = getenv('USER');
-        devnull = "1>/dev/null 2>&1";
+        devnull = '1>/dev/null 2>&1';
     case 'windows'
         gb_psom_user = getenv('USERNAME');	
-        devnull = "1>NUL 2>&1";
+        devnull = '1>NUL 2>&1';
     otherwise
         gb_psom_user = 'unknown';
+end
+
+if exist('flag_gb_niak_fast_gb','var')&&flag_gb_niak_fast_gb
+    return
 end
 
 % Getting the local computer's name

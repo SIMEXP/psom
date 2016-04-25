@@ -293,7 +293,7 @@ switch action
         end
         
         if nargin<3
-            res = sub_tail(file_monitor,file_pipe_running,opt_action);
+            res = sub_tail(file_monitor,file_pipe_running);
         else
             if length(opt_action)==2
                 res(2) = sub_read_update(file_deamon,opt_action(2));
@@ -612,6 +612,7 @@ function nb_chars = sub_tail(file_read,file_running)
 % prints out the content of the text file FILE_READ with constant updates
 % as long as the file FILE_RUNNING exists. 
 flag_running = true;
+nb_chars = 0;
 while flag_running
     flag_running = psom_exist(file_running);
     hf = fopen(file_read,'r');

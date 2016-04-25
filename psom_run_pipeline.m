@@ -76,7 +76,15 @@ function status = psom_run_pipeline(pipeline,opt)
 %
 %    MODE_PIPELINE_MANAGER
 %        (string, default GB_PSOM_MODE_PM defined in PSOM_GB_VARS)
-%        same as OPT.MODE, but applies to the pipeline manager itself.
+%        same as OPT.MODE, but applies to the pipeline manager.
+%
+%    MODE_DEAMON
+%        (string, default GB_PSOM_MODE_DEAMON defined in PSOM_GB_VARS)
+%        same as OPT.MODE, but applies to the deamon.
+%
+%    MODE_GARBAGE
+%        (string, default GB_PSOM_MODE_GARBAGE defined in PSOM_GB_VARS)
+%        same as OPT.MODE, but applies to the garbage collector.
 %
 %    MAX_QUEUED
 %        (integer, default GB_PSOM_MAX_QUEUED defined in PSOM_GB_VARS)
@@ -308,8 +316,8 @@ wait_exit = 1;
 name_pipeline = 'PIPE';
 
 opt = psom_struct_defaults( opt , ... 
-   {'max_buffer' , 'flag_spawn' , 'flag_fail' , 'flag_short_job_names' , 'nb_resub'       , 'type_restart' , 'flag_pause' , 'init_matlab'       , 'flag_update' , 'path_search'       , 'restart' , 'shell_options'       , 'path_logs' , 'command_matlab' , 'flag_verbose' , 'mode'       , 'mode_pipeline_manager' , 'max_queued'       , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' }, ...
-   {2            , false        , false       , true                   , gb_psom_nb_resub , 'substring'    , false        , gb_psom_init_matlab , true          , gb_psom_path_search , {}        , gb_psom_shell_options , NaN         , ''               , 1              , gb_psom_mode , gb_psom_mode_pm         , gb_psom_max_queued , gb_psom_qsub_options , []                    , []                    , []               });
+   {'max_buffer' , 'flag_spawn' , 'flag_fail' , 'flag_short_job_names' , 'nb_resub'       , 'type_restart' , 'flag_pause' , 'init_matlab'       , 'flag_update' , 'path_search'       , 'restart' , 'shell_options'       , 'path_logs' , 'command_matlab' , 'flag_verbose' , 'mode'       , 'mode_pipeline_manager' , 'mode_deamon'       , 'mode_garbage'       , 'max_queued'       , 'qsub_options'       , 'time_between_checks' , 'nb_checks_per_point' , 'time_cool_down' }, ...
+   {2            , false        , false       , true                   , gb_psom_nb_resub , 'substring'    , false        , gb_psom_init_matlab , true          , gb_psom_path_search , {}        , gb_psom_shell_options , NaN         , ''               , 1              , gb_psom_mode , gb_psom_mode_pm         , gb_psom_mode_deamon , gb_psom_mode_garbage , gb_psom_max_queued , gb_psom_qsub_options , []                    , []                    , []               });
 
 opt.flag_debug = opt.flag_verbose>1;
 
@@ -334,6 +342,16 @@ if strcmp(opt.mode,'session')
     opt.max_queued = 1;
     max_queued = 1;
     opt.mode = 'background';
+end
+
+if strcmp(opt.mode_pipeline_manager,'session')
+    % Session mode is not supported for the pipeline manager
+    opt.mode_pipeline_manager = 'background';
+end
+
+if strcmp(opt.mode_garbage,'session')
+    % Session mode is not supported for the pipeline manager
+    opt.mode_garbage = 'background';
 end
 
 if opt.max_queued == 0
@@ -384,8 +402,10 @@ switch opt.mode
 end
 
 if opt.flag_verbose == 2
-    fprintf('PSOM deamon is running in mode: ''%s''\n',opt.mode_pipeline_manager);
-    fprintf('Jobs are running in mode: ''%s''\n',opt.mode_pipeline_manager);
+    fprintf('PSOM deamon is running in mode: ''%s''\n',opt.mode_deamon);
+    fprintf('PSOM pipeline manager is running in mode: ''%s''\n',opt.mode_pipeline_manager);
+    fprintf('PSOM garbage collector is running in mode: ''%s''\n',opt.mode_garbage);
+    fprintf('Jobs are running in mode: ''%s''\n',opt.mode);
     fprintf('Number of workers: %i\n',opt.max_queued);
     fprintf('Max number of buffered jobs: %i\n',opt.max_buffer)
     fprintf('Number of resubmissions: %i\n',opt.nb_resub)
@@ -460,7 +480,7 @@ psom_mkdir(path_garbage);
     
 %% Options to submit the deamon
 opt_script.path_search    = [opt.path_logs 'PIPE.mat'];
-opt_script.mode           = opt.mode_pipeline_manager;
+opt_script.mode           = opt.mode_deamon;
 opt_script.init_matlab    = opt.init_matlab;
 opt_script.flag_debug     = opt.flag_verbose == 2;        
 opt_script.shell_options  = opt.shell_options;
