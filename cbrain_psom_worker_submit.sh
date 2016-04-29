@@ -9,7 +9,7 @@ fi
 OUTPUT_DIR=$1
 WORKER_ID=$2
 
-FILE=`mktemp new-task-XXXX.json`
+FILE=`mktemp .new-task-XXXX.json`
 
 cat << NEWTASK > ${FILE}
 {
