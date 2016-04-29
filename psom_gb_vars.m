@@ -27,11 +27,11 @@ gb_psom_qsub_options = '';
 gb_psom_shell_options = ''; 
 
 % Options for the execution mode of the pipeline 
-%gb_psom_mode = 'session'; 
-gb_psom_mode = 'background'; 
+gb_psom_mode = 'session'; 
+%gb_psom_mode = 'background'; 
 
 % Options for the execution mode of the pipeline manager
-gb_psom_mode_pm = 'background'; 
+gb_psom_mode_pm = 'session'; 
 
 % Options for the execution mode of the deamon
 gb_psom_mode_deamon = 'background'; 
