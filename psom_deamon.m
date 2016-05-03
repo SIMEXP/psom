@@ -292,11 +292,11 @@ try
                 
                 if (nb_resub<opt.nb_resub)||~flag_started(num_w)
                     if num_w <= opt.max_queued
-                        [flag_failed,msg] = psom_run_script(cmd_worker{num_w},script_worker{num_w},opt_worker(num_w),opt_logs_worker(num_w),opt.flag_verbose);
+                        [flag_failed,msg] = psom_run_script(cmd_worker{num_w},script_worker{num_w},opt_worker(num_w),opt_logs_worker(num_w));
                     elseif num_w == opt.max_queued+1
-                        [flag_failed,msg] = psom_run_script(cmd_pipe,script_pipe,opt_pipe,opt_logs_pipe,opt.flag_verbose);
+                        [flag_failed,msg] = psom_run_script(cmd_pipe,script_pipe,opt_pipe,opt_logs_pipe);
                     elseif num_w == opt.max_queued+2
-                        [flag_failed,msg] = psom_run_script(cmd_garb,script_garb,opt_garb,opt_logs_garb,opt.flag_verbose);
+                        [flag_failed,msg] = psom_run_script(cmd_garb,script_garb,opt_garb,opt_logs_garb);
                     end
                     if ~flag_failed
                         flag_wait(num_w) = true;
