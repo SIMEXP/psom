@@ -355,7 +355,7 @@ try
             time = clock;
             save(file_end,'time');
         end
-        sub_sleep(opt.time_between_checks)
+        pause(opt.time_between_checks)
         flag_pipe_finished = ~psom_exist(file_pipe_running);
     end
 
@@ -391,14 +391,3 @@ else
     end
     status_pipe = 0;
 end
-
-%%%%%%%%%%%%%%%%%%
-%% subfunctions %%
-%%%%%%%%%%%%%%%%%%
-function [] = sub_sleep(time_sleep)
-
-if exist('OCTAVE_VERSION','builtin')  
-    [res,msg] = system(sprintf('sleep %1.3f',time_sleep));
-else
-    pause(time_sleep); 
-end 

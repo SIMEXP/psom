@@ -64,10 +64,6 @@ while flag_beat
         end 
         exit
     end
-    if exist('OCTAVE_VERSION','builtin')  
-        [res,msg] = system('sleep 5');
-    else
-        sleep(5); 
-    end
+    pause(5); 
 end
     

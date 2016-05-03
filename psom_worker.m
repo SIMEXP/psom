@@ -180,11 +180,7 @@ try
         end
         
         if (num_job == length(list_jobs))&&test_loop
-            if exist('OCTAVE_VERSION','builtin')  
-                [res,msg] = system('sleep 0.1');
-            else
-                sleep(0.1); 
-            end
+            pause(0.1); 
         end
     end % While there are jobs to do
     

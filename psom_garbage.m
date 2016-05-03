@@ -189,7 +189,7 @@ while ~flag_exit
 
     %% Wait if necessary
     if flag_nothing_happened && psom_exist(file_pipe_running)
-        sub_sleep(opt.time_between_checks)
+        pause(opt.time_between_checks)
         
         if (nb_checks >= opt.nb_checks_per_point)
             nb_checks = 0;
@@ -265,13 +265,4 @@ for num_e = 1:nb_lines
     pos = strfind(news_line{num_e},' , ');
     events{num_e,1} = news_line{num_e}(1:pos-1);
     events{num_e,2} = news_line{num_e}(pos+3:end);
-end
-
-%% Work around thee 'pause' bug in octave
-function [] = sub_sleep(time_sleep)
-
-if exist('OCTAVE_VERSION','builtin')  
-    [res,msg] = system(sprintf('sleep %1.3f',time_sleep));
-else
-    pause(time_sleep); 
 end

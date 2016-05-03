@@ -324,7 +324,7 @@ try
         %% Sleep if nothing happened
         flag_loop = (any(mask_todo) || any(mask_running)) && psom_exist(file_pipe_running) && ~psom_exist(file_pipe_end);
         if flag_nothing_happened && flag_loop
-            sub_sleep(opt.time_between_checks)
+            pause(opt.time_between_checks)
          
             if (nb_checks >= opt.nb_checks_per_point)
                 nb_checks = 0;
@@ -471,11 +471,3 @@ if flag_verbose
     fprintf('%s',str_write)
 end
 fprintf(file_write,'%s',str_write);
-
-function [] = sub_sleep(time_sleep)
-
-if exist('OCTAVE_VERSION','builtin')  
-    [res,msg] = system(sprintf('sleep %1.3f',time_sleep));
-else
-    pause(time_sleep); 
-end

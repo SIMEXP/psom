@@ -512,11 +512,7 @@ if opt.flag_verbose&&~strcmp(opt.mode_pipeline_manager,'session')
         nb_chars_old = nb_chars;
         nb_chars = psom_pipeline_visu(opt.path_logs,'monitor',nb_chars);
         if ~any(nb_chars ~= nb_chars_old)
-            if exist('OCTAVE_VERSION','builtin')  
-                [res,msg] = system('sleep 0.2');
-            else
-                sleep(0.2); 
-            end
+            pause(0.2);
         end
     end
 end
