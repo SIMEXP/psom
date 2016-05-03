@@ -184,12 +184,12 @@ while ~flag_exit
     end
     
     %% Update the status/logs/profile
-    save(file_logs,'-struct','-append','new_logs');
-    save(file_logs_backup,'-struct','-append','new_logs');
-    save(file_status,'-struct','-append','new_status');
-    save(file_status_backup,'-struct','-append','new_status');
-    save(file_profile,'-struct','-append','new_prof');
-    save(file_profile_backup,'-struct','-append','new_prof');
+    save(file_logs,'-append','-struct','new_logs');
+    save(file_logs_backup,'-append','-struct','new_logs');
+    save(file_status,'-append','-struct','new_status');
+    save(file_status_backup,'-append','-struct','new_status');
+    save(file_profile,'-append','-struct','new_prof');
+    save(file_profile_backup,'-append','-struct','new_prof');
 
     %% Wait if necessary
     if flag_nothing_happened && psom_exist(file_pipe_running)
