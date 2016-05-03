@@ -80,7 +80,11 @@ if ~strcmp(time_pipeline,logs_time.time_pipeline)
 end
 
 %% Start heartbeat
-main_pid = getpid;
+if exist('OCTAVE_VERSION','builtin')    
+    main_pid = getpid;
+else
+    main_pid = feature('getpid');
+end
 cmd = sprintf('psom_heartbeat(''%s'',''%s'',%i)',file_heartbeat,file_kill,main_pid);
 if strcmp(gb_psom_language,'octave')
     instr_heartbeat = sprintf('"%s" %s "addpath(''%s''), %s,exit"',gb_psom_command_octave,gb_psom_opt_matlab,gb_psom_path_psom,cmd);
