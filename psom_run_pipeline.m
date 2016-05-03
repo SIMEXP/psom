@@ -500,7 +500,7 @@ if ispc % this is windows
 else
     script_deamon = [path_deamon filesep 'psom_deamon.sh'];
 end
-[flag_failed,msg] = psom_run_script(cmd_deamon,script_deamon,opt_script,opt_logs,opt.flag_verbose);
+[flag_failed,msg] = psom_run_script(cmd_deamon,script_deamon,opt_script,opt_logs);
 
 %% If not in session mode, monitor the output of the pipeline
 flag_exit = false;
