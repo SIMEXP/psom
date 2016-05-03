@@ -174,7 +174,7 @@ try
             new_prof.time_scheduled = time_scheduled.(name_job);
             new_prof.time_running = time_running.(name_job);
             new_prof.worker = num_worker;
-            save(file_prof_job,'-struct','-append','new_prof');
+            save(file_prof_job,'-append','-struct','new_prof');
         end 
         
         test_loop = psom_exist(file_lock)&&(~flag_end||(num_job<length(list_jobs)));
