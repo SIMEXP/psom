@@ -45,7 +45,7 @@ while flag_beat
     if exist('OCTAVE_VERSION','builtin')  
         [err,msg] = kill(pid,0); % use the kill octave command
     else
-        [err,msg] = system(sprintf('kill %i',pid)); % kill is not available, try a system call
+        [err,msg] = system(sprintf('kill -0 %i',pid)); % kill is not available, try a system call
     end
     flag_beat = err==0;
     curr_time = clock;
