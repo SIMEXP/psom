@@ -443,6 +443,11 @@ if exist(file_pipe_running,'file') % Is the pipeline running ?
     pause
     psom_pipeline_visu(opt.path_logs,'monitor');
     return
+elseif gb_psom_DEBUG
+    fprintf('\nDEBUG MODE')
+    fprintf('\nA lock file %s has been found on the pipeline !\nIf the pipeline crashed, press CTRL-C now, delete manually the lock and restart the pipeline.\nOtherwise press any key to delete the file and continue execution.\n\n',file_pipe_running)
+    pause
+    delete(file_pipe_running);
 end
 
 %% Initialize the logs folder
