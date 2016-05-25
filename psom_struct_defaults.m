@@ -22,6 +22,7 @@ function opt_up = psom_struct_defaults(opt,list_fields,list_defaults,flag_warnin
 %
 % FLAG_WARNING
 %    (boolean, default true) if FLAG_WARNING is true, issue warnings for 
+%    unrecognized fields and remove them. Otherwise do nothing about
 %    unrecognized fields.
 %
 % _________________________________________________________________________
@@ -43,8 +44,8 @@ function opt_up = psom_struct_defaults(opt,list_fields,list_defaults,flag_warnin
 % i.e. they won't be copied into OPT_UP.
 %
 % Copyright (c) Pierre Bellec, Centre de recherche de l'institut de 
-% Gériatrie de Montréal, Département d'informatique et de recherche 
-% opérationnelle, Université de Montréal, 2010
+% Griatrie de Montral, Dpartement d'informatique et de recherche 
+% oprationnelle, Universit de Montral, 2010
 % Maintainer : pbellec@criugm.qc.ca
 % See licensing information in the code.
 

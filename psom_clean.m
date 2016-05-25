@@ -77,7 +77,7 @@ files_clean = psom_files2cell(files_clean);
 if nargin < 2
     opt = struct();
 end
-if isbool(opt)
+if islogical(opt)
     opt = struct('flag_verbose',opt);
 end
 opt = psom_struct_defaults(opt,{'flag_verbose'},{true});

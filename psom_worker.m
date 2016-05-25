@@ -98,7 +98,11 @@ if ~isempty(list_ready)
 end
 
 %% Start a heartbeat
-main_pid = getpid;
+if exist('OCTAVE_VERSION','builtin')
+    main_pid = getpid;
+else
+    main_pid = feature('getpid');
+end
 cmd = sprintf('psom_heartbeat(''%s'',''%s'',%i)',file_heartbeat,file_kill,main_pid);
 if strcmp(gb_psom_language,'octave')
     instr_heartbeat = sprintf('"%s" %s "addpath(''%s''), %s,exit"',gb_psom_command_octave,gb_psom_opt_matlab,gb_psom_path_psom,cmd);
@@ -170,7 +174,7 @@ try
             new_prof.time_scheduled = time_scheduled.(name_job);
             new_prof.time_running = time_running.(name_job);
             new_prof.worker = num_worker;
-            save(file_prof_job,'-struct','-append','new_prof');
+            save(file_prof_job,'-append','-struct','new_prof');
         end 
         
         test_loop = psom_exist(file_lock)&&(~flag_end||(num_job<length(list_jobs)));
@@ -180,11 +184,7 @@ try
         end
         
         if (num_job == length(list_jobs))&&test_loop
-            if exist('OCTAVE_VERSION','builtin')  
-                [res,msg] = system('sleep 0.1');
-            else
-                sleep(0.1); 
-            end
+            pause(0.1); 
         end
     end % While there are jobs to do
     

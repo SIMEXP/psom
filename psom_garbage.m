@@ -88,7 +88,11 @@ if ~isempty(time_pipeline)&&~strcmp(time_pipeline,logs_time.time_pipeline)
 end
 
 %% Start heartbeat
-main_pid = getpid;
+if exist('OCTAVE_VERSION','builtin')    
+    main_pid = getpid;
+else
+    main_pid = feature('getpid');
+end
 cmd = sprintf('psom_heartbeat(''%s'',''%s'',%i)',file_heartbeat,file_kill,main_pid);
 if strcmp(gb_psom_language,'octave')
     instr_heartbeat = sprintf('"%s" %s "addpath(''%s''), %s,exit"',gb_psom_command_octave,gb_psom_opt_matlab,gb_psom_path_psom,cmd);
@@ -180,16 +184,16 @@ while ~flag_exit
     end
     
     %% Update the status/logs/profile
-    save(file_logs,'-struct','-append','new_logs');
-    save(file_logs_backup,'-struct','-append','new_logs');
-    save(file_status,'-struct','-append','new_status');
-    save(file_status_backup,'-struct','-append','new_status');
-    save(file_profile,'-struct','-append','new_prof');
-    save(file_profile_backup,'-struct','-append','new_prof');
+    save(file_logs,'-append','-struct','new_logs');
+    save(file_logs_backup,'-append','-struct','new_logs');
+    save(file_status,'-append','-struct','new_status');
+    save(file_status_backup,'-append','-struct','new_status');
+    save(file_profile,'-append','-struct','new_prof');
+    save(file_profile_backup,'-append','-struct','new_prof');
 
     %% Wait if necessary
     if flag_nothing_happened && psom_exist(file_pipe_running)
-        sub_sleep(opt.time_between_checks)
+        pause(opt.time_between_checks)
         
         if (nb_checks >= opt.nb_checks_per_point)
             nb_checks = 0;
@@ -265,13 +269,4 @@ for num_e = 1:nb_lines
     pos = strfind(news_line{num_e},' , ');
     events{num_e,1} = news_line{num_e}(1:pos-1);
     events{num_e,2} = news_line{num_e}(pos+3:end);
-end
-
-%% Work around thee 'pause' bug in octave
-function [] = sub_sleep(time_sleep)
-
-if exist('OCTAVE_VERSION','builtin')  
-    [res,msg] = system(sprintf('sleep %1.3f',time_sleep));
-else
-    pause(time_sleep); 
 end

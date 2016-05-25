@@ -80,7 +80,11 @@ if ~strcmp(time_pipeline,logs_time.time_pipeline)
 end
 
 %% Start heartbeat
-main_pid = getpid;
+if exist('OCTAVE_VERSION','builtin')    
+    main_pid = getpid;
+else
+    main_pid = feature('getpid');
+end
 cmd = sprintf('psom_heartbeat(''%s'',''%s'',%i)',file_heartbeat,file_kill,main_pid);
 if strcmp(gb_psom_language,'octave')
     instr_heartbeat = sprintf('"%s" %s "addpath(''%s''), %s,exit"',gb_psom_command_octave,gb_psom_opt_matlab,gb_psom_path_psom,cmd);
@@ -324,7 +328,7 @@ try
         %% Sleep if nothing happened
         flag_loop = (any(mask_todo) || any(mask_running)) && psom_exist(file_pipe_running) && ~psom_exist(file_pipe_end);
         if flag_nothing_happened && flag_loop
-            sub_sleep(opt.time_between_checks)
+            pause(opt.time_between_checks)
          
             if (nb_checks >= opt.nb_checks_per_point)
                 nb_checks = 0;
@@ -471,11 +475,3 @@ if flag_verbose
     fprintf('%s',str_write)
 end
 fprintf(file_write,'%s',str_write);
-
-function [] = sub_sleep(time_sleep)
-
-if exist('OCTAVE_VERSION','builtin')  
-    [res,msg] = system(sprintf('sleep %1.3f',time_sleep));
-else
-    pause(time_sleep); 
-end

@@ -284,11 +284,7 @@ switch action
         flag_wait = ~psom_exist(file_monitor) && psom_exist(file_pipe_running);
         while flag_wait % the pipeline started but the log file has not yet been created
             fprintf('I could not find any log file. This pipeline has not been started (yet?). Press CTRL-C to cancel.\n');
-            if exist('OCTAVE_VERSION','builtin')  
-                [res,msg] = system('sleep 1');
-            else
-                sleep(1); 
-            end
+            pause(1); 
             flag_wait = ~psom_exist(file_monitor) && psom_exist(file_pipe_running) && (nargin<3);
         end
         

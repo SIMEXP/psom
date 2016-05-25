@@ -505,7 +505,7 @@ if ispc % this is windows
 else
     script_deamon = [path_deamon filesep 'psom_deamon.sh'];
 end
-[flag_failed,msg] = psom_run_script(cmd_deamon,script_deamon,opt_script,opt_logs,opt.flag_verbose);
+[flag_failed,msg] = psom_run_script(cmd_deamon,script_deamon,opt_script,opt_logs);
 
 %% If not in session mode, monitor the output of the pipeline
 flag_exit = false;
@@ -517,11 +517,7 @@ if opt.flag_verbose&&~strcmp(opt.mode_pipeline_manager,'session')
         nb_chars_old = nb_chars;
         nb_chars = psom_pipeline_visu(opt.path_logs,'monitor',nb_chars);
         if ~any(nb_chars ~= nb_chars_old)
-            if exist('OCTAVE_VERSION','builtin')  
-                [res,msg] = system('sleep 0.2');
-            else
-                sleep(0.2); 
-            end
+            pause(0.2);
         end
     end
 end
