@@ -161,7 +161,7 @@ try
     for num_j = 1:length(list_jobs)
         lmax = max(lmax,length(list_jobs{num_j}));
     end
-
+    
     %% Start submitting jobs
     flag_loop = true;
     while flag_loop
@@ -453,6 +453,9 @@ end
 function events = sub_news(path_w,num_worker,list_job_worker);
 mask_completed = false(length(list_job_worker),1);
 events = cell(length(list_job_worker),2);
+if isempty(list_job_worker)
+    return
+end
 events(:,1) = list_job_worker;
 for jj = 1:length(list_job_worker)
     job_name = list_job_worker{jj};
