@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-This script starts a niak agent
+This script starts a psom agent
 """
 __author__ = 'poquirion'
 
