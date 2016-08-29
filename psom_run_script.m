@@ -420,17 +420,16 @@ switch opt.mode
             end
 
         end
-        fprintf(1,'%s \n',instr_cbrain);
+        fprintf(1,'running\n  %s\n', instr_cbrain)
         [flag_failed,msg] = system(instr_cbrain)
     
     case {'docker'}
-    
         sub=['qsub']
-        script = [gb_psom_path_psom 'run_in_docker.sh'];
+        script = [gb_psom_path_psom 'psom_run_in_docker.sh'];
         % There might be a better way to find the job path and id, however, I do not know the code well
         %  enough at that point.
-        result_path = regexp(script,'(^.*)/logs','tokens'){1}{1};
-        agent_id = regexp(script,'psom_*(\w*)','tokens'){1}{1};
+        result_path = regexp(opt.path_search,'(^.*)/logs','tokens'){1}{1};
+        agent_id = regexp(opt.name_job,'psom([0-9]*)','tokens'){1}{1};
 
         if ~isempty(logs)
             qsub_logs = [' -e \"' logs.eqsub '\" -o \"' logs.oqsub '\"'];
@@ -443,9 +442,9 @@ switch opt.mode
             name_job = opt.name_job;
         end
 
-        instr_qsub_docker = sprintf('%s %s -N %s %s %s', sub, qsub_logs, name_job, opt.qsub_options ...
-                             , ['\"' script, gb_psom_path_psom, result_path, agent_id '\"']);
-
+        instr_qsub_docker = sprintf('%s %s -N %s %s %s %s %s' ...
+                             , sub, qsub_logs, name_job, opt.qsub_options ...
+                             , script , result_path, agent_id );
         if opt.flag_debug
             if strcmp(gb_psom_language,'octave')
                 % In octave, the error stream is lost. Redirect it to standard output
@@ -458,7 +457,7 @@ switch opt.mode
             end
 
         end
-        fprintf(1,'%s \n', instr_qsub_docker);
+        fprintf(1,'running\n  %s\n', instr_qsub_docker)
         [flag_failed,msg] = system(instr_qsub_docker)
 
 end
