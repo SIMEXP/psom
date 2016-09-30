@@ -8,13 +8,17 @@ __author__ = 'poquirion'
 
 import argparse
 import os
-import re
 import sys
 import subprocess
+import time
+
 
 class Worker():
     def __init__(self, directory, worker_id):
 
+
+        self.worker_id = worker_id
+        self.process_done = False
         # only three types of worker
         if worker_id == 'manager':
             self.cmd = ['/bin/bash', '{0}/logs/tmp/psom_manager.sh'.format(directory, worker_id)]
@@ -35,24 +39,54 @@ class Worker():
             touch = ['worker.failed', 'worker.exit', 'worker.out']
             self.touch = ["{0}/logs/worker/psom{1}/{2}".format(directory, worker_id, t) for t in touch]
 
+
+        self.process = None
+        self.fp_out = None
+        self.fp_err = None
+
     def start(self):
 
         #Start agent
-        with open(self.std_out, 'w') as fout:
-            with open(self.std_out, 'w') as ferr:
-                print('execution {0}'.format(self.cmd))
-                p = subprocess.Popen(self.cmd, stdout=fout, stderr=ferr)
-                ret_code = p.wait()
-                fout.flush()
-                ferr.flush()
+        self.fp_out = open(self.std_out, 'w')
+        self.fp_err = open(self.std_err, 'w')
 
+        print('execution {0}'.format(self.cmd))
+        self.process = subprocess.Popen(self.cmd, stdout=self.fp_out, stderr=self.fp_err)
+
+    def check_status(self):
+
+        retcode = self.process.poll()
         # Let know manager that there was a problem
-        if ret_code:
-            print("Failure")
+        if retcode is not None:
+            print("psom{0} done with with returncode {1}".format(self.worker_id, retcode))
             for t in self.touch:
                 print("touch {0}".format(t))
-                os.mknod(t)
+                with open(t, 'a'):
+                    os.utime(t, None)
+            self.fp_out.flush()
+            self.fp_err.flush()
+            self.process_done = True
+        return retcode
 
+def wait_till_all_process_are_done(workers, loop_sleep):
+    """
+    Return only when all workers have a process_done status to True
+
+    :param workers: worker list
+    :param loop_sleep: time to sleep after each loop
+    :return:
+    """
+
+    all_done = False
+    while not all_done:
+        all_done = True
+        for worker in workers:
+            if not worker.process_done:
+                worker.check_status()
+                all_done = False
+        time.sleep(loop_sleep)
+
+    print("all workers are done with their jobs")
 
 def main(args=None):
 
@@ -72,9 +106,23 @@ def main(args=None):
     # We force the working directory to be at the root of the output directory
     os.chdir("{0}/..".format(parsed.directory))
 
-    w = Worker(parsed.directory, parsed.worker_id)
 
-    w.start()
+    worker_per_node = os.getenv("PSOM_WORKER_PPN")
+    if worker_per_node is None:
+        worker_per_node = 1
+    else:
+        worker_per_node = int(worker_per_node)
+
+    first = (int(parsed.worker_id) - 1) * worker_per_node + 1
+
+    all_worker = []
+    for worker_id in range(first, first+worker_per_node):
+        w = Worker(parsed.directory, worker_id)
+        w.start()
+        all_worker.append(w)
+
+
+    wait_till_all_process_are_done(all_worker, 5)
 
 
 if __name__ == '__main__':

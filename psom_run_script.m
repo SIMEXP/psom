@@ -408,12 +408,27 @@ switch opt.mode
         agent_id = regexp(script,'psom_*(\w*)','tokens'){1}{1};
         instr_cbrain = sprintf('%s %s %s', sub, result_path, agent_id);
 
+        # Check the max number of worker per node
+        # This will start ppn worker per node
+        psom_ppn = getenv("PSOM_WORKER_PPN")
+        if psom_ppn
+           file_conf = [result_path '/logs/PIPE_config.mat'];
+           pipe_opt = load(file_conf);
+           ppm = str2num(psom_ppn);
+           max_queue = pipe_opt.max_queued;
+           max_sub_num = max_queue/ppm;
+           id = str2num(agent_id);
+           if id > max_sub_num
+             instr_cbrain = sprintf('echo skiping psom %d ', id);
+           end
+        end
+
         if opt.flag_debug
             if strcmp(gb_psom_language,'octave')
                 % In octave, the error stream is lost. Redirect it to standard output
                 instr_cbrain = [instr_cbrain ' 2>&1'];
             end
-            msg = sprintf('    The script is executed using the command :\n%s\n\n',instr_qsub);
+            msg = sprintf(' The script is executed using the command :\n%s\n\n',instr_qsub);
             fprintf('%s',msg);
             if ~isempty(opt.file_handle)
                 fprintf(opt.file_handle,'%s',msg);
