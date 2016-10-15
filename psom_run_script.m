@@ -205,7 +205,7 @@ if nargin < 4
     logs = [];
 else
     list_fields   = { 'txt' , 'eqsub' , 'oqsub' , 'failed' , 'exit' };
-    if ismember(opt.mode,{'qsub','msub','bsub','condor'})
+    if ismember(opt.mode,{'qsub','msub','bsub','condor','cbrain','docker'})
         list_defaults = { NaN   , NaN     , NaN     , NaN    , ''     };
     else
         list_defaults = { NaN   , ''      , ''      , ''     , ''     };
@@ -214,7 +214,7 @@ else
 end
 
 %% Check that the execution mode exists
-if ~ismember(opt.mode,{'session','background','batch','qsub','msub','bsub','condor'})
+if ~ismember(opt.mode,{'session','background','batch','qsub','msub','bsub','condor','cbrain','docker'})
     error('%s is an unknown mode of command execution. Sorry dude, I must quit ...',opt.mode);
 end
 
@@ -307,7 +307,7 @@ switch opt.mode
         else
             sub_eval(cmd);
         end
-        flag_failed = false;
+        flag_failed = 0;
         msg = '';
         
         if ~isempty(logs.exit)
@@ -368,7 +368,7 @@ switch opt.mode
         end
         if ~isempty(logs)
             qsub_logs = [' -e \"' logs.eqsub '\" -o \"' logs.oqsub '\"'];
-        else 
+        else
             qsub_logs = '';
         end
         if opt.flag_short_job_names
@@ -378,9 +378,9 @@ switch opt.mode
         end
         switch opt.mode
             case 'bsub'
-                instr_qsub = sprintf('%s%s %s %s',sub,qsub_logs,opt.qsub_options,['\"' script '\"']);     
+                instr_qsub = sprintf('%s%s %s %s',sub,qsub_logs,opt.qsub_options,['\"' script '\"']);
             otherwise
-                instr_qsub = sprintf('%s%s -N %s %s %s',sub,qsub_logs,name_job,opt.qsub_options,['\"' script '\"']);     
+                instr_qsub = sprintf('%s%s -N %s %s %s',sub,qsub_logs,name_job,opt.qsub_options,['\"' script '\"']);
         end
         if ~isempty(logs)
             instr_qsub = [script_submit ' "' instr_qsub '" ' logs.failed ' ' logs.exit ' ' logs.oqsub ];
@@ -395,7 +395,86 @@ switch opt.mode
                 fprintf(opt.file_handle,'%s',msg);
             end
         end
-        [flag_failed,msg] = system(instr_qsub);
+
+         [flag_failed,msg] = system(instr_qsub);
+
+    case {'cbrain'}
+
+        sub = [gb_psom_path_psom 'cbrain_psom_worker_submit.sh'];
+        % There might be a better way to find the job path and id, 
+        % however, I do not know the code well
+        % enough at that point.
+        result_path = regexp(script,'(^.*)/logs','tokens'){1}{1};
+        agent_id = regexp(script,'psom_*(\w*)','tokens'){1}{1};
+        instr_cbrain = sprintf('%s %s %s', sub, result_path, agent_id);
+
+        # Check the max number of worker per node
+        # This will start ppn worker per node
+        psom_ppn = getenv("PSOM_WORKER_PPN")
+        if psom_ppn
+           file_conf = [result_path '/logs/PIPE_config.mat'];
+           pipe_opt = load(file_conf);
+           ppm = str2num(psom_ppn);
+           max_queue = pipe_opt.max_queued;
+           max_sub_num = max_queue/ppm;
+           id = str2num(agent_id);
+           if id > max_sub_num
+             instr_cbrain = sprintf('echo skiping psom %d ', id);
+           end
+        end
+
+        if opt.flag_debug
+            if strcmp(gb_psom_language,'octave')
+                % In octave, the error stream is lost. Redirect it to standard output
+                instr_cbrain = [instr_cbrain ' 2>&1'];
+            end
+            msg = sprintf(' The script is executed using the command :\n%s\n\n',instr_qsub);
+            fprintf('%s',msg);
+            if ~isempty(opt.file_handle)
+                fprintf(opt.file_handle,'%s',msg);
+            end
+
+        end
+        fprintf(1,'running\n  %s\n', instr_cbrain)
+        [flag_failed,msg] = system(instr_cbrain)
+    
+    case {'docker'}
+        sub=['qsub']
+        script = [gb_psom_path_psom 'psom_run_in_docker.sh'];
+        % There might be a better way to find the job path and id, however, I do not know the code well
+        %  enough at that point.
+        result_path = regexp(opt.path_search,'(^.*)/logs','tokens'){1}{1};
+        agent_id = regexp(opt.name_job,'psom([0-9]*)','tokens'){1}{1};
+
+        if ~isempty(logs)
+            qsub_logs = [' -e \"' logs.eqsub '\" -o \"' logs.oqsub '\"'];
+        else
+            qsub_logs = '';
+        end
+        if opt.flag_short_job_names
+            name_job = opt.name_job(1:min(length(opt.name_job),8));
+        else
+            name_job = opt.name_job;
+        end
+
+        instr_qsub_docker = sprintf('%s %s -N %s %s %s %s %s' ...
+                             , sub, qsub_logs, name_job, opt.qsub_options ...
+                             , script , result_path, agent_id );
+        if opt.flag_debug
+            if strcmp(gb_psom_language,'octave')
+                % In octave, the error stream is lost. Redirect it to standard output
+                instr_qsub_docker = [instr_qsub_docker ' 2>&1'];
+            end
+            msg = sprintf('  The script is executed using the command :\n%s\n\n',instr_qsub);
+            fprintf('%s',msg);
+            if ~isempty(opt.file_handle)
+                fprintf(opt.file_handle,'%s',msg);
+            end
+
+        end
+        fprintf(1,'running\n  %s\n', instr_qsub_docker)
+        [flag_failed,msg] = system(instr_qsub_docker)
+
 end
 
 if (flag_failed~=0)&&exist('msg','var')

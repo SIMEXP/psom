@@ -27,11 +27,11 @@ gb_psom_qsub_options = '';
 gb_psom_shell_options = ''; 
 
 % Options for the execution mode of the pipeline 
-%gb_psom_mode = 'session'; 
-gb_psom_mode = 'background'; 
+gb_psom_mode = 'session'; 
+%gb_psom_mode = 'background'; 
 
 % Options for the execution mode of the pipeline manager
-gb_psom_mode_pm = 'background'; 
+gb_psom_mode_pm = 'session'; 
 
 % Options for the execution mode of the deamon
 gb_psom_mode_deamon = 'background'; 
@@ -40,7 +40,7 @@ gb_psom_mode_deamon = 'background';
 gb_psom_mode_garbage = 'background'; 
 
 % Options for the maximal number of jobs
-gb_psom_max_queued = 2;
+gb_psom_max_queued = 10;
 
 % Default number of attempts of re-submission for failed jobs
 % [] is 0 for session, batch and background modes, and 1 for

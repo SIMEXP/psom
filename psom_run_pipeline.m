@@ -374,7 +374,7 @@ end % default of max_queued
 % Limit the number of workers based on the number of jobs in the pipeline
 opt.max_queued = min(opt.max_queued,length(fieldnames(pipeline)));
 
-if ~ismember(opt.mode,{'session','background','batch','qsub','msub','bsub','condor'})
+if ~ismember(opt.mode,{'session','background','batch','qsub','msub','bsub','condor','cbrain','docker'})
     error('%s is an unknown mode of pipeline execution. Sorry dude, I must quit ...',opt.mode);
 end
 
