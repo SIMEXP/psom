@@ -205,7 +205,7 @@ if nargin < 4
     logs = [];
 else
     list_fields   = { 'txt' , 'eqsub' , 'oqsub' , 'failed' , 'exit' };
-    if ismember(opt.mode,{'qsub','msub','bsub','condor','cbrain','docker'})
+    if ismember(opt.mode,{'qsub','msub','bsub','condor','cbrain','singularity'})
         list_defaults = { NaN   , NaN     , NaN     , NaN    , ''     };
     else
         list_defaults = { NaN   , ''      , ''      , ''     , ''     };
@@ -214,7 +214,7 @@ else
 end
 
 %% Check that the execution mode exists
-if ~ismember(opt.mode,{'session','background','batch','qsub','msub','bsub','condor','cbrain','docker'})
+if ~ismember(opt.mode,{'session','background','batch','qsub','msub','bsub','condor','cbrain','singularity'})
     error('%s is an unknown mode of command execution. Sorry dude, I must quit ...',opt.mode);
 end
 
@@ -438,9 +438,9 @@ switch opt.mode
         fprintf(1,'running\n  %s\n', instr_cbrain)
         [flag_failed,msg] = system(instr_cbrain)
     
-    case {'docker'}
+    case {'singularity'}
         sub=['qsub']
-        script = [gb_psom_path_psom 'psom_run_in_docker.sh'];
+        script = [gb_psom_path_psom 'psom_run_in_singularity.sh'];
         % There might be a better way to find the job path and id, however, I do not know the code well
         %  enough at that point.
         result_path = regexp(opt.path_search,'(^.*)/logs','tokens'){1}{1};
@@ -457,13 +457,14 @@ switch opt.mode
             name_job = opt.name_job;
         end
 
-        instr_qsub_docker = sprintf('%s %s -N %s %s %s %s %s' ...
-                             , sub, qsub_logs, name_job, opt.qsub_options ...
+        instr_qsub_singularity = sprintf('%s %s -N %s -v PSOM_SINGULARITY_IMAGE=%s %s %s %s %s' ...
+                             , sub, qsub_logs, name_job,opt.singularity_image, opt.qsub_options ...
                              , script , result_path, agent_id );
+
         if opt.flag_debug
             if strcmp(gb_psom_language,'octave')
                 % In octave, the error stream is lost. Redirect it to standard output
-                instr_qsub_docker = [instr_qsub_docker ' 2>&1'];
+                instr_qsub_singularity = [instr_qsub_singularity ' 2>&1'];
             end
             msg = sprintf('  The script is executed using the command :\n%s\n\n',instr_qsub);
             fprintf('%s',msg);
@@ -472,8 +473,8 @@ switch opt.mode
             end
 
         end
-        fprintf(1,'running\n  %s\n', instr_qsub_docker)
-        [flag_failed,msg] = system(instr_qsub_docker)
+        fprintf(1,'running\n  %s\n', instr_qsub_singularity)
+        [flag_failed,msg] = system(instr_qsub_singularity)
 
 end
 
