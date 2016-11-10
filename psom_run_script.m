@@ -458,7 +458,7 @@ switch opt.mode
             name_job = opt.name_job;
         end
 
-        instr_qsub_singularity = sprintf('%s %s -N %s -v PSOM_SINGULARITY_IMAGE=%s %s %s %s %s' ...
+        instr_qsub_singularity = sprintf('psom_image_exec_redirection.sh %s %s -N %s -v PSOM_SINGULARITY_IMAGE=%s %s %s %s %s' ...
                              , sub, qsub_logs, name_job,opt.singularity_image, opt.qsub_options ...
                              , script , result_path, agent_id );
 
@@ -475,8 +475,8 @@ switch opt.mode
 
         end
         fprintf(1,'running\n  %s\n', instr_qsub_singularity)
-        %[flag_failed,msg] = system(instr_qsub_singularity)
-        [flag_failed,msg] = system(['echo ' instr_qsub_singularity])
+        [flag_failed,msg] = system(instr_qsub_singularity)
+        %[flag_failed,msg] = system(['echo ' instr_qsub_singularity])
 
 end
 
