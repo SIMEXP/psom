@@ -1,4 +1,5 @@
 #!/bin/bash
+
 if [ $# != 2 ]
 then
     echo "usage: $0 <output_dir> <worker_id>"
@@ -8,6 +9,5 @@ fi
 OUTPUT_DIR=$1
 WORKER_ID=$2
 
-
-
-singularity exec  $PSOM_SINGULARITY_IMAGE  psom_worker.py -d $OUPUT_DIR -w $WORKER_ID
+echo singularity exec  $PSOM_SINGULARITY_IMAGE  psom_worker.py -d $OUTPUT_DIR -w $WORKER_ID
+singularity exec  $PSOM_SINGULARITY_IMAGE  bash -ilc "psom_worker.py -d $OUTPUT_DIR -w $WORKER_ID"

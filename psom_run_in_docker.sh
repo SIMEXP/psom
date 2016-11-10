@@ -10,4 +10,4 @@ WORKER_ID=$2
 
 
 
-udocker run --rm -v$HOME:$HOME  $HOME/simexp/psom/psom_worker.py -d $OUPUT_DIR -w $WORKER_ID
+udocker run --rm -v$HOME:$HOME  $HOME/simexp/psom/psom_worker.py -d $OUTPUT_DIR -w $WORKER_ID

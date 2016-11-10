@@ -172,8 +172,8 @@ if nargin<3
 end
 
 %% Options
-list_fields    = { 'flag_short_job_names' , 'path_search'       , 'file_handle' , 'name_job'    , 'init_matlab'       , 'flag_debug' , 'shell_options'       , 'command_matlab' , 'mode' , 'qsub_options'       };
-list_defaults  = { true                   , gb_psom_path_search , []            , 'psom_script' , gb_psom_init_matlab , false        , gb_psom_shell_options , ''               , NaN    , gb_psom_qsub_options };
+list_fields    = { 'flag_short_job_names' , 'path_search'       , 'file_handle' , 'name_job'    , 'init_matlab'       , 'flag_debug' , 'shell_options'       , 'command_matlab' , 'mode' , 'qsub_options', 'singularity_image'};
+list_defaults  = { true                   , gb_psom_path_search , []            , 'psom_script' , gb_psom_init_matlab , false        , gb_psom_shell_options , ''               , NaN    , gb_psom_qsub_options, gb_psom_singularity_image };
 opt = psom_struct_defaults(opt,list_fields,list_defaults);
 
 if opt.flag_debug
@@ -447,7 +447,8 @@ switch opt.mode
         agent_id = regexp(opt.name_job,'psom([0-9]*)','tokens'){1}{1};
 
         if ~isempty(logs)
-            qsub_logs = [' -e \"' logs.eqsub '\" -o \"' logs.oqsub '\"'];
+            %qsub_logs = [' -e \"' logs.eqsub '\" -o \"' logs.oqsub '\"'];
+            qsub_logs = '';
         else
             qsub_logs = '';
         end
@@ -474,7 +475,8 @@ switch opt.mode
 
         end
         fprintf(1,'running\n  %s\n', instr_qsub_singularity)
-        [flag_failed,msg] = system(instr_qsub_singularity)
+        %[flag_failed,msg] = system(instr_qsub_singularity)
+        [flag_failed,msg] = system(['echo ' instr_qsub_singularity])
 
 end
 
