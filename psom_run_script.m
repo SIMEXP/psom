@@ -439,8 +439,8 @@ switch opt.mode
         [flag_failed,msg] = system(instr_cbrain)
     
     case {'singularity'}
-        sub=['qsub']
-        script = [gb_psom_path_psom 'psom_run_in_singularity.sh'];
+        sub=['qsub ']
+        script = ['\$\(which singularity\) exec'];
         % There might be a better way to find the job path and id, however, I do not know the code well
         %  enough at that point.
         result_path = regexp(opt.path_search,'(^.*)/logs','tokens'){1}{1};
@@ -458,9 +458,9 @@ switch opt.mode
             name_job = opt.name_job;
         end
 
-        instr_qsub_singularity = sprintf('psom_image_exec_redirection.sh %s %s -N %s -v PSOM_SINGULARITY_IMAGE=%s %s %s %s %s' ...
-                             , sub, qsub_logs, name_job,opt.singularity_image, opt.qsub_options ...
-                             , script , result_path, agent_id );
+        instr_qsub_singularity = sprintf('psom_image_exec_redirection.sh %s -N %s %s %s %s %s bash -ilc \\\"psom_worker.py -d %s -w %s\\\"' ...
+                             , sub, name_job ,qsub_logs, opt.qsub_options ...
+                             , script , opt.singularity_image ,result_path, agent_id );
 
         if opt.flag_debug
             if strcmp(gb_psom_language,'octave')
