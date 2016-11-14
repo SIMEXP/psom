@@ -1,15 +1,18 @@
 #!/bin/bash
+# Starts a NIAK instance inside a singularity container.
 
 if [ $# != 1 ]
 then
-    echo "usage: $0 <singularity_image>"
+    echo "usage: $0 <path_to_singularity_image>"
     exit 1
 fi
 
 
 IMAGE_PATH=$(realpath ${1})
 
-export PSOM_FIFO=$(mktemp -d /tmp/psom-fifo.XXXXXX)/pipe
+CONSOLE_ID=$$
+
+export PSOM_FIFO=$(mktemp -d /tmp/psom-${CONSOLE_ID}-fifo.XXXXXX)/pipe
 #
 psom_host_exec_loop.sh ${PSOM_FIFO} & 
 LOOP_ID=$!

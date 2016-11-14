@@ -1,4 +1,5 @@
 #!/bin/bash
+# This script is used to execute container command (typically qsub) on the host
 
 echo ${PSOM_FIFO}
 
