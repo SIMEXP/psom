@@ -7,5 +7,4 @@ echo ${PSOM_FIFO}
 
 cmd=$@
 
-echo $cmd 
 echo "$cmd" > ${PSOM_FIFO};
