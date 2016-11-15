@@ -18,10 +18,11 @@ list_all_image () {
     done  < <(find ${PSOM_SINGULARITY_IMAGES_PATH//:/ } -maxdepth 1 -type f -print0)
 
     # Available images
+    echo Available images:
     while read -r line ; do
       ONE_IMAGE=
       bidon=${line##*/}
-      echo ${bidon%.img}
+      echo "     ${bidon%.img}"
     done < <(echo ${ALL_IMAGES}| tr ':' '\n')
     if [[ ! ${ONE_IMAGE+x} ]]; then
        echo No Image installed
