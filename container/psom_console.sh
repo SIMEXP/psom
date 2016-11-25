@@ -115,4 +115,4 @@ host_exec_loop  &
 LOOP_ID=$!
 
 # Start singularity-psom
-singularity shell ${IMAGE_PATH} -c "export PSOM_FIFO=${PSOM_FIFO};octave"
+singularity shell ${IMAGE_PATH} -c "export PSOM_FIFO=${PSOM_FIFO};octave --no-init-file"
