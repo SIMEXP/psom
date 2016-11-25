@@ -101,7 +101,7 @@ if [ $OPTIND -eq 1 ]; then
   exit 1
 fi
 
-IMAGE_PATH=$(realpath ${IMAGE_PATH})
+IMAGE_PATH=$(readlink -f ${IMAGE_PATH})
 
 CONSOLE_ID=$$
 
