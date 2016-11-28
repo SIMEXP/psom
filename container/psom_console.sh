@@ -38,11 +38,9 @@ usage (){
     echo "   or: $(basename $0)  -p <path_to_singularity_image>"
     echo "   or: $(basename $0)  -l"
     echo
-    echo "  To know with image are available on your system, use the -l option"
+    echo "   -l                  List locally installed images"
     echo
-    echo "   -l                  list locally installed images "
-    echo
-    echo "   -p                  run from an arbitrary singularity image path"
+    echo "   -p                  Run from an arbitrary singularity image path"
     echo
 }
 
