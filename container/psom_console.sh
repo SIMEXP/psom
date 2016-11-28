@@ -18,7 +18,7 @@ list_all_image () {
     done  < <(find ${PSOM_SINGULARITY_IMAGES_PATH//:/ } -maxdepth 1 -type f -print0)
 
     # Available images
-    echo Available images:
+    echo Installed images:
     while read -r line ; do
       ONE_IMAGE=
       bidon=${line##*/}
@@ -34,14 +34,16 @@ usage (){
 
     echo "Starts octave in psom/singulrity mode"
     echo
-    echo "Usage: $(basename $0) -l"
-    echo "   or: $(basename $0) -i image_from_list"
-    echo "   or: $(basename $0) -p path_to_singularity_image"
+    echo "Usage: $(basename $0)  <installed_image>"
+    echo "   or: $(basename $0)  -p <path_to_singularity_image>"
+    echo "   or: $(basename $0)  -l"
     echo
-
-    echo "   -l                 list locally installed images "
-    echo "   -i <image_name>    run an installed images"
-    echo "   -p <path_to_image> run from an arbitrary singularity image path"
+    echo "  To know with image are available on your system, use the -l option"
+    echo
+    echo "   -l                  list locally installed images "
+    echo
+    echo "   -p                  run from an arbitrary singularity image path"
+    echo
 }
 
 finish () {
@@ -61,28 +63,18 @@ host_exec_loop () {
 }
 
 
-while getopts ":li:p:" opt; do
-
+# Check opt args
+while getopts ":lp:" opt; do
   case $opt in
     l)
       list_all_image
       exit 0
       ;;
     p)
-      echo "-p was triggered, Parameter: $OPTARG" >&2
       IMAGE_PATH=$OPTARG
       if [ ! -f "${IMAGE_PATH}" ]; then
         echo ${IMAGE_PATH} not found
-      fi
-      ;;
-    i)
-      IMAGE_PATH=$(find ${PSOM_SINGULARITY_IMAGES_PATH//:/ } \
-                    -maxdepth 1 -type f -name "${OPTARG%.img}.img" -print -quit)
-      if [[ -z "${IMAGE_PATH// }" ]]; then
-        echo image ${OPTARG} not found
-        echo
         usage
-        exit 1
       fi
       ;;
     \?)
@@ -96,9 +88,33 @@ while getopts ":li:p:" opt; do
       ;;
   esac
 done
-if [ $OPTIND -eq 1 ]; then
+
+# Check pos args
+if [ -z ${IMAGE_PATH} ] ; then
+    shift $(expr $OPTIND - 1 )
+
+    while test $# -gt 0; do
+      pos_arg=$1
+          IMAGE_PATH=$(find ${PSOM_SINGULARITY_IMAGES_PATH//:/ } \
+                        -maxdepth 1 -type f -name "${pos_arg%.img}.img" -print -quit)
+          if [[ -z "${IMAGE_PATH// }" ]]; then
+            echo image ${OPTARG} not found
+            echo
+            echo Please select
+            list_all_image
+            echo
+            usage
+            exit 1
+          else
+              break
+          fi
+    done
+fi
+
+if [ -z ${IMAGE_PATH} ] ; then
   usage
-  exit 1
+  list_all_image
+  exit
 fi
 
 IMAGE_PATH=$(readlink -f ${IMAGE_PATH})
