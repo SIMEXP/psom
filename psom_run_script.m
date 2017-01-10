@@ -172,7 +172,7 @@ if nargin<3
 end
 
 %% Options
-list_fields    = { 'flag_short_job_names' , 'path_search'       , 'file_handle' , 'name_job'    , 'init_matlab'       , 'flag_debug' , 'shell_options'       , 'command_matlab' , 'mode' , 'qsub_options', 'singularity_image'};
+list_fields    = { 'flag_short_job_names' , 'path_search'       , 'file_handle' , 'name_job'    , 'init_matlab'       , 'flag_debug' , 'shell_options'       , 'command_matlab' , 'mode' , 'qsub_options'      , 'singularity_image'      };
 list_defaults  = { true                   , gb_psom_path_search , []            , 'psom_script' , gb_psom_init_matlab , false        , gb_psom_shell_options , ''               , NaN    , gb_psom_qsub_options, gb_psom_singularity_image };
 opt = psom_struct_defaults(opt,list_fields,list_defaults);
 

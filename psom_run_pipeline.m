@@ -73,6 +73,8 @@ function status = psom_run_pipeline(pipeline,opt)
 %        'msub'       : remote execution using msub (MOAB)
 %        'bsub'       : remote execution using bsub (IBM)
 %        'condor'     : remote execution using condor
+%        'singularity': remote execution using singularity container and qsub
+%        'cbrain'     : remote execution using docker container and qsub
 %
 %    MODE_PIPELINE_MANAGER
 %        (string, default GB_PSOM_MODE_PM defined in PSOM_GB_VARS)
