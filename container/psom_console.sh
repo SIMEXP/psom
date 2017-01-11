@@ -48,14 +48,23 @@ finish () {
   # Your cleanup code here
   kill ${LOOP_ID} > /dev/null 2>&1
   rm -r ${PSOM_FIFO_DIR} > /dev/null 2>&1
+#  rm -r /tmp/niak_worker_qsub.*
 }
 trap finish EXIT
 
 host_exec_loop () {
+# creates a tmp file to execute code on singularity via qsub
   while true
   do
     if read line; then
-        eval $line
+       QSUB_OPT=(${line%SPLIT_LINE*})
+       if ${QSUB_OPT[0]} == 'qsub'; then
+         SINGULARITY=${line#*SPLIT_LINE}
+         tmpfile=$(mktemp /tmp/niak_worker_qsub.XXXXXX)
+         echo '#!/bin/bash' > ${tmpfile}
+         echo SINGULARITY >> ${tmpfile}
+         qsub ${QSUB_OPT[@]:1} ${tmpfile}
+       fi
     fi
   done <"$PSOM_FIFO"
 }

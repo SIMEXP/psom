@@ -52,7 +52,7 @@ gb_psom_nb_resub = [];
 
 % Initialization of matlab (is appendeds it to other init values in the code)
 if ~isempty(getenv('PSOM_LOCAL_CONF_DIR'))
-    gb_psom_init_matlab = sprintf('addpath(genpath("%s"))', getenv('PSOM_LOCAL_CONF_DIR'));
+    gb_psom_init_matlab = sprintf('addpath(genpath(\\\"%s\\\"))', getenv('PSOM_LOCAL_CONF_DIR'));
 else
     gb_psom_init_matlab = '';
 end

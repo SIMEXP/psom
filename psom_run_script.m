@@ -440,7 +440,7 @@ switch opt.mode
     
     case {'singularity'}
         sub=['qsub ']
-        script = ['\$\(which singularity\) exec'];
+        script = [' SPLIT_LINE singularity exec'];
         % There might be a better way to find the job path and id, however, I do not know the code well
         %  enough at that point.
         result_path = regexp(opt.path_search,'(^.*)/logs','tokens'){1}{1};
