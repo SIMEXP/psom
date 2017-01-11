@@ -447,8 +447,7 @@ switch opt.mode
         agent_id = regexp(opt.name_job,'psom([0-9]*)','tokens'){1}{1};
 
         if ~isempty(logs)
-            %qsub_logs = [' -e \"' logs.eqsub '\" -o \"' logs.oqsub '\"'];
-            qsub_logs = '';
+            qsub_logs = [' -e \"' logs.eqsub '\" -o \"' logs.oqsub '\"'];
         else
             qsub_logs = '';
         end
