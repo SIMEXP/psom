@@ -439,15 +439,15 @@ switch opt.mode
         [flag_failed,msg] = system(instr_cbrain)
     
     case {'singularity'}
-        sub=['qsub ']
-        script = [' SPLIT_LINE singularity exec'];
+        sub=['qsub_options ']
+        script = [' SPLIT_LINE singularity_exec_options'];
         % There might be a better way to find the job path and id, however, I do not know the code well
         %  enough at that point.
         result_path = regexp(opt.path_search,'(^.*)/logs','tokens'){1}{1};
         agent_id = regexp(opt.name_job,'psom([0-9]*)','tokens'){1}{1};
 
         if ~isempty(logs)
-            qsub_logs = [' -e \"' logs.eqsub '\" -o \"' logs.oqsub '\"'];
+            qsub_logs = [' -e ' logs.eqsub ' -o ' logs.oqsub ' '];
         else
             qsub_logs = '';
         end

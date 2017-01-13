@@ -7,6 +7,8 @@ CONFIG_FILE=psom.conf
 source /etc/${CONFIG_FILE} > /dev/null 2>&1
 source ${HOME}/.config/psom/${CONFIG_FILE} > /dev/null 2>&1
 #PSOM_SINGULARITY_IMAGES_PATH=~/simexp/singularity/:.
+# specific path where data lives but not home
+PSOM_SINGULARITY_OPTIONS='-B /scratch'
 
 list_all_image () {
 #ls ${PSOM_SINGULARITY_IMAGES}
@@ -58,14 +60,16 @@ host_exec_loop () {
   do
     if read line; then
        QSUB_OPT=(${line%SPLIT_LINE*})
-       if ${QSUB_OPT[0]} == 'qsub'; then
-         SINGULARITY=${line#*SPLIT_LINE}
+       if [[ ${QSUB_OPT[0]} == 'qsub_options' ]]; then
+         SINGULARITY=(${line#*SPLIT_LINE})
          tmpfile=$(mktemp /tmp/niak_worker_qsub.XXXXXX)
          echo '#!/bin/bash' > ${tmpfile}
-         echo SINGULARITY >> ${tmpfile}
+         echo singularity  exec ${PSOM_SINGULARITY_OPTIONS} ${SINGULARITY[@]:1}  >> ${tmpfile}
          qsub ${QSUB_OPT[@]:1} ${tmpfile}
-       fi
-    fi
+       else
+           echo INVALID qsub CMD "${QSUB_OPT[@]}"
+     fi
+   fi
   done <"$PSOM_FIFO"
 }
 
@@ -86,11 +90,13 @@ while getopts ":lp:" opt; do
       ;;
     \?)
       usage
+      list_all_image
       exit 1
       ;;
     :)
       echo "Option -$OPTARG requires an argument." >&2
       usage
+      list_all_image
       exit 1
       ;;
   esac
@@ -140,4 +146,4 @@ LOOP_ID=$!
 # Start singularity-psom
 
 PSOM_START_OCTAVE="octave --persist --no-init-file --eval \"addpath(genpath(${PSOM_LOCAL_CONF_DIR}))\"" 
-singularity shell -B /gs  ${IMAGE_PATH} -c "export PSOM_FIFO=${PSOM_FIFO};export PSOM_LOCAL_CONF_DIR=${PSOM_LOCAL_CONF_DIR}  ;bash -ilc "${PSOM_START_OCTAVE}""
+singularity shell ${PSOM_SINGULARITY_OPTIONS} ${IMAGE_PATH} -c "export PSOM_FIFO=${PSOM_FIFO};export PSOM_LOCAL_CONF_DIR=${PSOM_LOCAL_CONF_DIR}  ;bash -ilc "${PSOM_START_OCTAVE}""
