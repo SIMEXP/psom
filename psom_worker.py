@@ -113,17 +113,23 @@ def main(args=None):
     else:
         worker_per_node = int(worker_per_node)
 
-    first = (int(parsed.worker_id) - 1) * worker_per_node + 1
-
     all_worker = []
-    for worker_id in range(first, first+worker_per_node):
-        w = Worker(parsed.directory, worker_id)
+    try:
+
+        first = (int(parsed.worker_id) - 1) * worker_per_node + 1
+
+        for worker_id in range(first, first+worker_per_node):
+            w = Worker(parsed.directory, worker_id)
+            w.start()
+            all_worker.append(w)
+
+    except ValueError:
+        w = Worker(parsed.directory, parsed.worker_id)
         w.start()
         all_worker.append(w)
 
 
     wait_till_all_process_are_done(all_worker, 5)
-
 
 if __name__ == '__main__':
     # main(["-d", "/home/poquirion/simexp/test/result", "-w", "manager"])
