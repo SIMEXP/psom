@@ -2,16 +2,26 @@
 # Starts a NIAK instance inside a singularity container 
 # and a process to execute code on the host, typically qsub
 
-# load config file
+
 CONFIG_FILE=psom.conf
-source /etc/${CONFIG_FILE} > /dev/null 2>&1
-source ${HOME}/.config/psom/${CONFIG_FILE} > /dev/null 2>&1
-#PSOM_SINGULARITY_IMAGES_PATH=~/simexp/singularity/:.
-# specific path where data lives but not home
+#Options for singularity execution
 PSOM_SINGULARITY_OPTIONS='-B /scratch'
 
+# Were singularity images are keept 
+PSOM_SINGULARITY_IMAGES_PATH=${HOME}/singularity/:.
+
+# Directory contaning .m files to be loaded at startup 
+#    typically contains "psom_gb_vars_local.m" 
+PSOM_LOCAL_CONF_DIR='' 
+
+# load config file
+source /etc/${CONFIG_FILE} > /dev/null 2>&1
+source ${HOME}/.config/psom/${CONFIG_FILE} > /dev/null 2>&1
+CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source ${CURRENT_DIR}/${CONFIG_FILE}
+
+
 list_all_image () {
-#ls ${PSOM_SINGULARITY_IMAGES}
 
     while IFS= read -r -d $'\0' line; do
         if head -n1 $line | grep -q run-singularity ; then
@@ -140,6 +150,7 @@ export PSOM_FIFO=${PSOM_FIFO_DIR}/pipe
 [ -p $PSOM_FIFO ] || mkfifo $PSOM_FIFO;
 
 # Start the communication loop
+#host_exec_loop > /dev/null 2>&1 & 
 host_exec_loop  & 
 LOOP_ID=$!
 
