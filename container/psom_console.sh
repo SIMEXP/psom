@@ -157,4 +157,4 @@ LOOP_ID=$!
 # Start singularity-psom
 
 PSOM_START_OCTAVE="octave --persist --no-init-file --eval \"addpath(genpath(${PSOM_LOCAL_CONF_DIR}))\"" 
-singularity shell ${PSOM_SINGULARITY_OPTIONS} ${IMAGE_PATH} -c "export PSOM_FIFO=${PSOM_FIFO};export PSOM_LOCAL_CONF_DIR=${PSOM_LOCAL_CONF_DIR}  ;bash -ilc "${PSOM_START_OCTAVE}""
+singularity shell ${PSOM_SINGULARITY_OPTIONS} ${IMAGE_PATH} -c "export PSOM_FIFO=${PSOM_FIFO};export PSOM_LOCAL_CONF_DIR=${PSOM_LOCAL_CONF_DIR}  ; ${PSOM_START_OCTAVE}"

@@ -244,7 +244,7 @@ try
             %% Add to the news feed
             sub_add_line_log(hf_news,sprintf('%s , %s\n',name_job,events{num_e,2}),false);
             if opt.flag_verbose && ~isempty(msg)
-                fprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_running,nb_failed,nb_finished,nb_todo);
+                fprintf('%s (%i run | %i fail | %i done | %i left)\n',msg,nb_running,nb_failed,nb_finished,nb_todo);
             end
         end
              
@@ -283,7 +283,7 @@ try
             nb_todo = nb_todo-1;
             if opt.flag_verbose
                 msg = sprintf('%s %s%s submitted ',datestr(clock),name_job,repmat(' ',[1 lmax-length(name_job)]));
-                fprintf('%s (%i run / %i fail / %i done / %i left)\n',msg,nb_running,nb_failed,nb_finished,nb_todo);
+                fprintf('%s (%i run | %i fail | %i done | %i left)\n',msg,nb_running,nb_failed,nb_finished,nb_todo);
             end
         end
                         
