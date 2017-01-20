@@ -74,7 +74,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % PSOM version
-gb_psom_version = '2.2.1'; % PSOM release number
+gb_psom_version = '2.2.2'; % PSOM release number
 
 % Is the environment Octave or Matlab ?
 if exist('OCTAVE_VERSION','builtin')    

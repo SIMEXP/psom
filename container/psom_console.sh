@@ -60,7 +60,8 @@ finish () {
   # Your cleanup code here
   kill ${LOOP_ID} > /dev/null 2>&1
   rm -r ${PSOM_FIFO_DIR} > /dev/null 2>&1
-#  rm -r /tmp/niak_worker_qsub.*
+  rm -r /tmp/psom_worker_qsub.*
+  ## Could add a qdel cmd here to clean process when console is not running
 }
 trap finish EXIT
 
@@ -72,7 +73,7 @@ host_exec_loop () {
        QSUB_OPT=(${line%SPLIT_LINE*})
        if [[ ${QSUB_OPT[0]} == 'qsub_options' ]]; then
          SINGULARITY=(${line#*SPLIT_LINE})
-         tmpfile=$(mktemp /tmp/niak_worker_qsub.XXXXXX)
+         tmpfile=$(mktemp /tmp/psom_worker_qsub.XXXXXX)
          echo '#!/bin/bash' > ${tmpfile}
          echo singularity  exec ${PSOM_SINGULARITY_OPTIONS} ${SINGULARITY[@]:1}  >> ${tmpfile}
          qsub ${QSUB_OPT[@]:1} ${tmpfile}
