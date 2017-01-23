@@ -3,7 +3,12 @@
 %% this script to initialize the variables. If PSOM does not behave the way
 %% you want, this might be the place to fix that.
 
-gb_psom_gb_vars = true;
+
+if ~exist('gb_psom_gb_vars','var')
+	gb_psom_gb_vars = true;
+else
+	return
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% The following variables need to be changed to configure the pipeline %%
@@ -187,8 +192,7 @@ end
 % ignore_function_time_stamp ('all')  
 
 %% Use the local configuration file if any, will overwite global config
-if ~exist('gb_psom_gb_vars_local','var')&&exist('psom_gb_vars_local.m','file')		
-    gb_psom_gb_vars_local = true;
+if exist('psom_gb_vars_local.m','file')
     psom_gb_vars_local
     return
 end

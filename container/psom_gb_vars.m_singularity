@@ -3,7 +3,11 @@
 %% this script to initialize the variables. If PSOM does not behave the way
 %% you want, this might be the place to fix that.
 
-gb_psom_gb_vars = true;
+if ~exist('gb_psom_gb_vars','var')
+	gb_psom_gb_vars = true;
+else
+	return
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% The following variables need to be changed to configure the pipeline %%
@@ -74,7 +78,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % PSOM version
-gb_psom_version = '2.2.1'; % PSOM release number
+gb_psom_version = '2.2.2'; % PSOM release number
 
 % Is the environment Octave or Matlab ?
 if exist('OCTAVE_VERSION','builtin')    
@@ -164,31 +168,8 @@ for gb_psom_pdf_viewer = gb_psom_list_pdf
     end
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Any following line will be executed at the begining of every PSOM command and every job %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Uncomment the following line to load the image processing package in Octave
-
-% pkg load image
-
-%% Don't use more to verbose "on-the-fly" in Octave
-
-% more off
-
-%% Use .mat files compatible with Matlab in Octave
-
-% default_save_options('-7');    
-
-%% This is a bit of a dangerous option, but it makes things run faster in Octave. 
-%% You'll have to exit octave and start again if you want any change in the functions to be 
-%% taken into account.
-
-% ignore_function_time_stamp ('all')  
-
-%% Use the local configuration file if any, will overwite global config
-if ~exist('gb_psom_gb_vars_local','var')&&exist('psom_gb_vars_local.m','file')		
-    gb_psom_gb_vars_local = true;
+if exist('psom_gb_vars_local.m','file')
     psom_gb_vars_local
     return
 end
