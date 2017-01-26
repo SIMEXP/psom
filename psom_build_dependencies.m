@@ -29,7 +29,8 @@ function [graph_deps,list_jobs,files_in,files_out,files_clean] = psom_build_depe
 %
 % FLAG_VERBOSE
 %       (boolean, default true) if the flag is true, then the function
-%       prints some infos during the processing.
+%       prints some infos during the processing. Value > 1 will result in 
+%       lots of verbose.
 %
 % _________________________________________________________________________
 % OUTPUTS:
@@ -168,42 +169,98 @@ num_in  = num_all(1:length(cell_in));
 num_out = num_all(length(cell_in)+1:length(cell_in)+length(cell_out));
 num_clean = num_all(length(cell_in)+length(cell_out)+1:length(num_all));
 clear num_all val_tmp ind_tmp
+%
+%for num_j = 1:nb_jobs
+%
+%    % Files_in/Files_out
+%    name_job1 = list_jobs{num_j};
+%    mask_dep = ismember(num_out,num_in(ind_in==num_j));
+%    graph_deps(ind_out(mask_dep),num_j) = true;
+%    
+%    % Files_clean
+%    % do not clean a file before the jobs that use it as inputs have been generated
+%    mask_dep = ismember(num_in,num_clean(ind_clean==num_j));
+%    if ~isempty(mask_dep)
+%        mask_dep = mask_dep & (ind_in~=num_j); % A job does not depend on itself, i.e. it's acceptable for a job to clean one of its input
+%        graph_deps(ind_in(mask_dep),num_j) = true;
+%    end
+%   
+%    % do not clean a file before it has been generated
+%    mask_dep = ismember(num_out,num_clean(ind_clean==num_j));
+%    graph_deps(ind_out(mask_dep),num_j) = true;
+%    
+%    % User-specified dependencies
+%    if ~isempty(dep.(name_job1))
+%        mask_dep = ismember(list_jobs,dep.(name_job1));
+%        graph_deps(mask_dep,num_j) = true;
+%    end
+%    num_out   = num_out  (ind_out  ~num_j);
+%    ind_out   = ind_out  (ind_out  ~num_j);
+%    num_in    = num_in   (ind_in   ~num_j);
+%    ind_in    = ind_in   (ind_in   ~num_j);
+%    num_clean = num_clean(ind_clean~num_j);
+%    ind_clean = ind_clean(ind_clean~num_j);
+%end
 
-for num_j = 1:nb_jobs
-    if flag_verbose
-        new_perc = 5*floor(20*num_j/nb_jobs);
-        if curr_perc~=new_perc
-            fprintf(' %1.0f',new_perc);
-            curr_perc = new_perc;
-        end
-    end
+job_done = false(1,nb_jobs);
 
-    % Files_in/Files_out
-    name_job1 = list_jobs{num_j};
-    mask_dep = ismember(num_out,num_in(ind_in==num_j));
-    graph_deps(ind_out(mask_dep),num_j) = true;
+while ~isempty(ind_in)
+    % Number of output files
+    nb_out = hist(ind_out,1:length(list_jobs));
     
-    % Files_clean
-    % do not clean a file before the jobs that use it as inputs have been generated
-    mask_dep = ismember(num_in,num_clean(ind_clean==num_j));
-    if ~isempty(mask_dep)
-        mask_dep = mask_dep & (ind_in~=num_j); % A job does not depend on itself, i.e. it's acceptable for a job to clean one of its input
-        graph_deps(ind_in(mask_dep),num_j) = true;
-    end
+    % mask of terminal files (do not get fed into anything)
+    mask_term = ~ismember(num_out,num_in)&~ismember(num_out,num_clean);
+    
+    % Number of terminal files
+    nb_term = hist(ind_out(mask_term),1:length(list_jobs));
+    
+    % mask of terminal jobs
+    job_term = find((nb_term==nb_out)&~job_done);
    
-    % do not clean a file before it has been generated
-    mask_dep = ismember(num_out,num_clean(ind_clean==num_j));
-    graph_deps(ind_out(mask_dep),num_j) = true;
+    % Get rid of terminal files
+    num_out(mask_term) = 0;
+    ind_out(mask_term) = 0;
     
-    % User-specified dependencies
-    if ~isempty(dep.(name_job1))
-        mask_dep = ismember(list_jobs,dep.(name_job1));
-        graph_deps(mask_dep,num_j) = true;
+    for num_j = job_term
+
+        % Files_in/Files_out
+        name_job1 = list_jobs{num_j};
+        mask_dep = ismember(num_out,num_in(ind_in==num_j));
+        graph_deps(ind_out(mask_dep),num_j) = true;
+    
+        % Files_clean
+        % do not clean a file before the jobs that use it as inputs have been generated
+        mask_dep = ismember(num_in,num_clean(ind_clean==num_j));
+        if ~isempty(mask_dep)
+            mask_dep = mask_dep & (ind_in~=num_j); % A job does not depend on itself, i.e. it's acceptable for a job to clean one of its input
+            graph_deps(ind_in(mask_dep),num_j) = true;
+        end
+   
+        % do not clean a file before it has been generated
+        mask_dep = ismember(num_out,num_clean(ind_clean==num_j));
+        graph_deps(ind_out(mask_dep),num_j) = true;
+    
+        % User-specified dependencies
+        if ~isempty(dep.(name_job1))
+            mask_dep = ismember(list_jobs,dep.(name_job1));
+            graph_deps(mask_dep,num_j) = true;
+        end
+        
+        % One job done!
+        job_done(num_j) = true;
     end
+    
+    num_out = num_out(~ismember(ind_out,job_term));
+    ind_out = ind_out(~ismember(ind_out,job_term));
+    num_in  = num_in (~ismember(ind_in ,job_term));
+    ind_in  = ind_in (~ismember(ind_in ,job_term));
+    num_clean = num_clean (~ismember(ind_clean ,job_term));
+    ind_clean  = ind_clean (~ismember(ind_clean ,job_term));
+    
 end
 
 if flag_verbose
-    fprintf('- %1.2f sec\n',toc)
+    fprintf('Total time %1.2f sec\n',toc)
 end
             
 function [cell_struct,ind_struct] = sub_struct2cell(my_struct)
