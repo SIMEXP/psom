@@ -168,6 +168,7 @@ graph_deps = sparse(nb_jobs,nb_jobs);
 num_in  = num_all(1:length(cell_in));
 num_out = num_all(length(cell_in)+1:length(cell_in)+length(cell_out));
 num_clean = num_all(length(cell_in)+length(cell_out)+1:length(num_all));
+nb_files = max(num_all);
 clear num_all val_tmp ind_tmp
 %
 %for num_j = 1:nb_jobs
@@ -201,63 +202,20 @@ clear num_all val_tmp ind_tmp
 %    num_clean = num_clean(ind_clean~num_j);
 %    ind_clean = ind_clean(ind_clean~num_j);
 %end
+job_done = false(nb_jobs,1);
+mat_in = sparse(ind_in,num_in,ones(size(ind_in)),nb_jobs,nb_files);
+mat_out = sparse(ind_out,num_out,ones(size(ind_out)),nb_jobs,nb_files);
+mat_clean = sparse(ind_clean,num_clean,ones(size(ind_clean)),nb_jobs,nb_files);
 
-job_done = false(1,nb_jobs);
-
-while ~isempty(ind_in)
-    % Number of output files
-    nb_out = hist(ind_out,1:length(list_jobs));
-    
-    % mask of terminal files (do not get fed into anything)
-    mask_term = ~ismember(num_out,num_in)&~ismember(num_out,num_clean);
-    
-    % Number of terminal files
-    nb_term = hist(ind_out(mask_term),1:length(list_jobs));
-    
-    % mask of terminal jobs
-    job_term = find((nb_term==nb_out)&~job_done);
-   
-    % Get rid of terminal files
-    num_out(mask_term) = 0;
-    ind_out(mask_term) = 0;
-    
-    for num_j = job_term
-
-        % Files_in/Files_out
-        name_job1 = list_jobs{num_j};
-        mask_dep = ismember(num_out,num_in(ind_in==num_j));
-        graph_deps(ind_out(mask_dep),num_j) = true;
-    
-        % Files_clean
-        % do not clean a file before the jobs that use it as inputs have been generated
-        mask_dep = ismember(num_in,num_clean(ind_clean==num_j));
-        if ~isempty(mask_dep)
-            mask_dep = mask_dep & (ind_in~=num_j); % A job does not depend on itself, i.e. it's acceptable for a job to clean one of its input
-            graph_deps(ind_in(mask_dep),num_j) = true;
-        end
-   
-        % do not clean a file before it has been generated
-        mask_dep = ismember(num_out,num_clean(ind_clean==num_j));
-        graph_deps(ind_out(mask_dep),num_j) = true;
-    
-        % User-specified dependencies
-        if ~isempty(dep.(name_job1))
-            mask_dep = ismember(list_jobs,dep.(name_job1));
-            graph_deps(mask_dep,num_j) = true;
-        end
-        
-        % One job done!
-        job_done(num_j) = true;
-    end
-    
-    num_out = num_out(~ismember(ind_out,job_term));
-    ind_out = ind_out(~ismember(ind_out,job_term));
-    num_in  = num_in (~ismember(ind_in ,job_term));
-    ind_in  = ind_in (~ismember(ind_in ,job_term));
-    num_clean = num_clean (~ismember(ind_clean ,job_term));
-    ind_clean  = ind_clean (~ismember(ind_clean ,job_term));
-    
+graph_deps = (mat_out * mat_in')>0;    % If an output of I is an input of J, J depends on I
+graph_clean = (mat_in * mat_clean'); % If an input of I is cleaned by J, J depends on I. 
+% A job does not depend on itself, i.e. it's acceptable for a job to clean one of its input
+for jj = 1:nb_jobs
+    graph_clean(jj,jj) = 0;
 end
+graph_clean = graph_clean | (mat_out * mat_clean')>0; % wait that a file is created before cleaning it
+graph_deps = graph_deps | graph_clean;
+
 
 if flag_verbose
     fprintf('Total time %1.2f sec\n',toc)
