@@ -60,9 +60,10 @@ lab_vertices = 1:nb_vertices;
 
 while ~isempty(adj) && flag_dag
     
-    mask_not_term = max(adj,[],1); % find terminal nodes    
+    [x,y] = find(adj);
+    mask_not_term = ismember(1:size(adj,1),y);
     
-    if  min(mask_not_term)>0 
+    if  ~any(~mask_not_term) 
         %% There is no terminal node, but the matrix is not empty,
         %% there must be a cycle
         flag_dag = false;
