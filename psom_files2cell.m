@@ -82,12 +82,5 @@ end
 if (nargin == 1)&~isempty(cell_files)
     mask = strcmp(cell_files,'gb_niak_omitted');
     cell_files = cell_files(~mask);
+    cell_files = strrep(cell_files,[filesep '+'],filesep);
 end
-%    for num_i = 1:length(files)
-%
-%        if ~strcmp(files{num_i},'gb_psom_omitted')&&~strcmp(files{num_i},'gb_niak_omitted')&&~isempty(files{num_i})
-%            cell_files{num_cell} = regexprep(files{num_i},[filesep '+'],filesep);            
-%            num_cell = num_cell + 1;
-%        end
-%
-%    end
