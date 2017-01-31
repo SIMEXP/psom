@@ -29,7 +29,7 @@ function [graph_deps,list_jobs,files_in,files_out,files_clean] = psom_build_depe
 %
 % FLAG_VERBOSE
 %       (boolean, default true) if the flag is true, then the function
-%       prints some infos during the processing. V
+%       prints some infos during the processing.
 %
 % _________________________________________________________________________
 % OUTPUTS:

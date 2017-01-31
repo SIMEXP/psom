@@ -69,7 +69,7 @@ elseif iscellstr(files) %% That's a cell
     
 elseif ischar(files) % That's a string
 
-    cell_files = {files};
+    cell_files = {files};:
     
 else    
     
@@ -84,3 +84,6 @@ if (nargin == 1)&~isempty(cell_files)
     cell_files = cell_files(~mask);
     cell_files = strrep(cell_files,[filesep '+'],filesep);
 end
+
+
+
