@@ -1,4 +1,4 @@
-function cell_files = psom_files2cell(files)
+function cell_files = psom_files2cell(files,flag_rec)
 % Convert a string, cell of strings or a structure where each field is a
 % string into one single cell of strings.
 %
@@ -25,8 +25,9 @@ function cell_files = psom_files2cell(files)
 %
 % Empty file names, or file names equal to 'gb_niak_omitted' are ignored.
 %
-% Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008.
-% Maintainer : pbellec@bic.mni.mcgill.ca
+% Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008-2010.
+% DIRO, CRIUGM, University of Montreal, 2010-2017.
+% Maintainer : pierre.bellec@criugm.qc.ca
 % See licensing information in the code.
 % Keywords : string
 
@@ -48,48 +49,27 @@ function cell_files = psom_files2cell(files)
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
 
-num_cell = 1;
-cell_files = cell(0);
-
 if isstruct(files)     % That's a structure
     
     cell_files = struct2cell(files);
-    clear files
     cell_files = cell_files(:);
-    for num_e = 1:length(cell_files);        
-        cell_files{num_e} = psom_files2cell(cell_files{num_e});
+    mask_str = cellfun(@(n) ischar(n),cell_files,'UniformOutput',true);
+    if any(~mask_str)
+        ind = find(~mask_str);
+        for ii = ind 
+            cell_files{ii} = psom_files2cell(cell_files{ii});
+        end
+        cell_files = [cell_files{:}];
     end
-    cell_files = [cell_files{:}];
-    if isempty(cell_files)
-        cell_files = {};
-    end
+
 elseif iscellstr(files) %% That's a cell
     
-    files = files(:);
+    cell_files = files(:);
     
-    for num_i = 1:length(files)
-
-        if ~strcmp(files{num_i},'gb_psom_omitted')&&~strcmp(files{num_i},'gb_niak_omitted')&&~isempty(files{num_i})
-            cell_files{num_cell} = regexprep(files{num_i},[filesep '+'],filesep);            
-            num_cell = num_cell + 1;
-        end
-
-    end
     
 elseif ischar(files) % That's a string
 
-    if (size(files,1)==1)
-        if ~strcmp(files,'gb_niak_omitted')&&~strcmp(files,'gb_psom_omitted')
-            cell_files{num_cell} = regexprep(files,[filesep '+'],filesep);
-        end
-    else        
-        for num_f = 1:size(files,1)
-            if ~strcmp(files(num_f,:),'gb_niak_omitted')&&~strcmp(files(num_f,:),'gb_psom_omitted')
-                cell_files{num_cell} = regexprep(files(num_f,:),[filesep '+'],filesep);
-                num_cell = num_cell+1;
-            end
-        end
-    end
+    cell_files = {files};
     
 else    
     
@@ -98,3 +78,13 @@ else
     end
     
 end
+
+
+%    for num_i = 1:length(files)
+%
+%        if ~strcmp(files{num_i},'gb_psom_omitted')&&~strcmp(files{num_i},'gb_niak_omitted')&&~isempty(files{num_i})
+%            cell_files{num_cell} = regexprep(files{num_i},[filesep '+'],filesep);            
+%            num_cell = num_cell + 1;
+%        end
+%
+%    end
