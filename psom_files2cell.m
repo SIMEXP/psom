@@ -52,19 +52,19 @@ function cell_files = psom_files2cell(files,flag_rec)
 if isstruct(files)     % That's a structure
     
     cell_files = struct2cell(files);
-    cell_files = cell_files(:);
-    mask_str = cellfun(@(n) ischar(n),cell_files,'UniformOutput',true);
-    if any(~mask_str)
-        ind = find(~mask_str);
-        for ii = ind 
-            cell_files{ii} = psom_files2cell(cell_files{ii});
+    cell_files = cell_files(:)';
+    if ~iscellstr(cell_files)
+        for ii = 1:length(cell_files)
+            if ~ischar(cell_files{ii})
+                cell_files{ii} = psom_files2cell(cell_files{ii},true);
+            end
         end
         cell_files = [cell_files{:}];
     end
 
 elseif iscellstr(files) %% That's a cell
     
-    cell_files = files(:);
+    cell_files = files(:)';
     
     
 elseif ischar(files) % That's a string
@@ -79,7 +79,10 @@ else
     
 end
 
-
+if (nargin == 1)&~isempty(cell_files)
+    mask = strcmp(cell_files,'gb_niak_omitted');
+    cell_files = cell_files(~mask);
+end
 %    for num_i = 1:length(files)
 %
 %        if ~strcmp(files{num_i},'gb_psom_omitted')&&~strcmp(files{num_i},'gb_niak_omitted')&&~isempty(files{num_i})
