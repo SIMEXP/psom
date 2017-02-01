@@ -69,7 +69,7 @@ elseif iscellstr(files) %% That's a cell
     
 elseif ischar(files) % That's a string
 
-    cell_files = {files};:
+    cell_files = {files};
     
 else    
     
@@ -86,4 +86,18 @@ if (nargin == 1)&~isempty(cell_files)
 end
 
 
-
+%!test
+%! a_str = '/path/to/file.ext';
+%! a_funky_str = '/path/to//file.ext';
+%! an_ommited_str = 'gb_psom_omitted';
+%! an_empty_str = '';
+%! a_cell_o_str = {a_str,a_funky_str;an_ommited_str,an_empty_str} ;
+%! assert(psom_files2cell(a_str), {a_str}) ;
+%! assert(psom_files2cell(a_funky_str), {a_str}) ;
+%! assert(psom_files2cell(an_ommited_str), {}) ;
+%! assert(psom_files2cell(an_empty_str), {}) ;
+%! assert(psom_files2cell(a_cell_o_str), {a_str,a_str}) ;
+%! a_struct_o_str = struct('a_str', a_str, 'a_funky_str', a_funky_str ...
+%!                 ,'an_ommited_str',  an_ommited_str, 'an_empty_str', an_empty_str ...
+%!                 ,'a_cell_o_str', a_cell_o_str) ;
+%! assert(psom_files2cell(a_struct_o_str), {a_str, a_str, a_str, a_str}) ;
