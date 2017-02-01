@@ -81,6 +81,8 @@ end
 
 if (nargin == 1)&&~isempty(cell_files)
     mask = strcmp(cell_files,'gb_niak_omitted');
+    mask = mask | strcmp(cell_files,'gb_psom_omitted');
+    mask = mask | strcmp(cell_files,'');
     cell_files = cell_files(~mask);
     cell_files = regexprep(cell_files,[filesep '+'],filesep);
 end
@@ -88,3 +90,11 @@ end
 %!test 
 %! files.test = [filesep 'data' filesep filesep 'file.dat'];
 %! assert(psom_files2cell(files),{[filesep 'data' filesep 'file.dat']})
+
+%!test 
+%! files{1} = 'file.dat';
+%! files{2} = 'gb_niak_omitted';
+%! files{3} = 'gb_psom_omitted';
+%! files{4} = '';
+%! assert(psom_files2cell(files),{'file.dat'})
+
