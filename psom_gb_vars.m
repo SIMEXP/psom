@@ -84,7 +84,7 @@ gb_psom_version = '2.2.2'; % PSOM release number
 % Is the environment Octave or Matlab ?
 if exist('OCTAVE_VERSION','builtin')    
     % this is octave !
-    gb_psom_language = 'octave ';
+    gb_psom_language = 'octave';
 else
     % this is not octave, so it must be matlab
     gb_psom_language = 'matlab'; 
@@ -100,6 +100,8 @@ switch gb_psom_language
         end
     case 'octave'
         gb_psom_opt_matlab = '--silent --eval';
+    otherwise
+        error('\"%s\" is an unknown session mode. Sorry dude, I must quit ...', gb_psom_language);
 end
 
 % Get langage version
