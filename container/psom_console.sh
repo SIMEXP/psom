@@ -60,7 +60,7 @@ finish () {
   # Your cleanup code here
   kill ${LOOP_ID} > /dev/null 2>&1
   rm -r ${PSOM_FIFO_DIR} > /dev/null 2>&1
-  rm -r /tmp/psom_worker_qsub.*
+  rm -r /tmp/psom_worker_qsub.* > /dev/null 2>&1
   ## Could add a qdel cmd here to clean process when console is not running
 }
 trap finish EXIT
