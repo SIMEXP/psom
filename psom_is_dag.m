@@ -1,8 +1,4 @@
 function [flag_dag,list_vert_cycle] = psom_is_dag(adj)
-%
-% _________________________________________________________________________
-% SUMMARY PSOM_IS_DAG
-%
 % Test if a sparse binary matrix is the adjacency matrix of a directed
 % acyclic graph
 %
@@ -64,17 +60,18 @@ lab_vertices = 1:nb_vertices;
 
 while ~isempty(adj) && flag_dag
     
-    mask_term = max(adj,[],1) == 0; % find terminal nodes    
+    [x,y] = find(adj);
+    mask_not_term = ismember(1:size(adj,1),y);
     
-    if  max(double(mask_term))==0 % The doubel conversion is there for compatibility with Octave 3.0.4
+    if  ~any(~mask_not_term) 
         %% There is no terminal node, but the matrix is not empty,
         %% there must be a cycle
         flag_dag = false;
         list_vert_cycle = lab_vertices;
     else
         %% Get rid of terminal nodes and start again
-        adj = adj(~mask_term,~mask_term);
-        lab_vertices = lab_vertices(~mask_term);
+        adj = adj(mask_not_term>0,mask_not_term>0);
+        lab_vertices = lab_vertices(mask_not_term>0);
     end
     
 end
