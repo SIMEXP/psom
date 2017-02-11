@@ -523,3 +523,23 @@ end
 status = load(file_status);
 status = struct2cell(status);
 status = any(strcmp(status,'failed'));
+
+%!test
+%! path_demo = [pwd filesep 'tests' filesep 'simple_pipe' filesep]; 
+%! psom_clean(path_demo);
+%! pipeline.sample.command      = 'a = randn([opt.nb_samps 1]); save(files_out,''a'')';
+%! pipeline.sample.files_out    = [path_demo 'sample.mat'];
+%! pipeline.sample.opt.nb_samps = 10;
+%! pipeline.quadratic.command   = 'load(files_in); b = a.^2; save(files_out,''b'')';
+%! pipeline.quadratic.files_in  = pipeline.sample.files_out;
+%! pipeline.quadratic.files_out = [path_demo 'quadratic.mat']; 
+%! pipeline.cubic.command       = 'load(files_in); c = a.^3; save(files_out,''c'')';
+%! pipeline.cubic.files_in      = pipeline.sample.files_out;
+%! pipeline.cubic.files_out     = [path_demo 'cubic.mat']; 
+%! pipeline.sum.command       = 'load(files_in{1}); load(files_in{2}); d = b+c, save(files_out,''d'')';
+%! pipeline.sum.files_in{1}   = pipeline.quadratic.files_out;
+%! pipeline.sum.files_in{2}   = pipeline.cubic.files_out;
+%! pipeline.sum.files_out     = [path_demo 'sum.mat'];
+%! opt_p.path_logs = [path_demo 'logs'];
+%! status = psom_run_pipeline(pipeline,opt_p);
+%! assert(status)
