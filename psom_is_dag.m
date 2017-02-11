@@ -5,28 +5,18 @@ function [flag_dag,list_vert_cycle] = psom_is_dag(adj)
 % SYNTAX :
 % [FLAG_DAG,LIST_VERT_CYCLE] = PSOM_IS_DAG(ADJ)
 %
-% _________________________________________________________________________
-% INPUTS :
-%
 % ADJ         
-%       (sparse binary matris) ADJ(I,J) == 1 only if there is an edge from
-%       J to I.
-%
-% _________________________________________________________________________
-% OUTPUTS :
-%
+%  (sparse binary matris) ADJ(I,J) == 1 only if there is an edge from
+%  J to I.
 % FLAG_DAG
-%       (boolean) FLAG_DAG == 1 only if ADJ is the adjacency matrix of an
-%       acyclic directed graph.
-%
+%  (boolean) FLAG_DAG == 1 only if ADJ is the adjacency matrix of an
+%  acyclic directed graph.
 % LIST_VERT_CYCLE
-%       (vector) the list of vertices number which are involved in cycles.
+%  (vector) the list of vertices number which are involved in cycles.
 %
-% _________________________________________________________________________
-% COMMENTS : 
-%
-% Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008.
-% Maintainer : pbellec@bic.mni.mcgill.ca
+% Copyright (c) Pierre Bellec, Montreal Neurological Institute, 2008-2010.
+% CRIUGM, DIRO, University of Montreal, 2010-2017.
+% Maintainer : pierre.bellec@criugm.qc.ca
 % See licensing information in the code.
 % Keywords : string
 
