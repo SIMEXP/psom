@@ -239,7 +239,7 @@ end
 if ~isempty(cmd)            
     instr_job = sprintf('"%s" %s "%s %s,exit"',opt.command_matlab,gb_psom_opt_matlab,opt.init_matlab,cmd);
     if ~isempty(logs)
-        instr_job = sprintf('%s >%s 2>&1\n',instr_job,logs.txt);
+        instr_job = sprintf('%s >"%s" 2>&1\n',instr_job,logs.txt);
     else
         instr_job = sprintf('%s\n',instr_job);
     end
@@ -428,7 +428,7 @@ switch opt.mode
                 % In octave, the error stream is lost. Redirect it to standard output
                 instr_cbrain = [instr_cbrain ' 2>&1'];
             end
-            msg = sprintf(' The script is executed using the command :\n%s\n\n',instr_cbrain);
+            msg = sprintf(' The script is executed using the command :\n%s\n\n',instr_qsub);
             fprintf('%s',msg);
             if ~isempty(opt.file_handle)
                 fprintf(opt.file_handle,'%s',msg);
@@ -457,14 +457,14 @@ switch opt.mode
             name_job = opt.name_job;
         end
 
-        instr_qsub = sprintf('psom_image_exec_redirection.sh %s -N %s %s %s %s %s bash -ilc \\\"psom_worker.py -d %s -w %s\\\"' ...
+        instr_qsub_singularity = sprintf('psom_image_exec_redirection.sh %s -N %s %s %s %s %s bash -ilc \\\"psom_worker.py -d %s -w %s\\\"' ...
                              , sub, name_job ,qsub_logs, opt.qsub_options ...
                              , script , opt.singularity_image ,result_path, agent_id );
 
         if opt.flag_debug
             if strcmp(gb_psom_language,'octave')
                 % In octave, the error stream is lost. Redirect it to standard output
-                instr_qsub = [instr_qsub ' 2>&1'];
+                instr_qsub_singularity = [instr_qsub_singularity ' 2>&1'];
             end
             msg = sprintf('  The script is executed using the command :\n%s\n\n',instr_qsub);
             fprintf('%s',msg);
@@ -473,10 +473,9 @@ switch opt.mode
             end
 
         end
-        if opt.flag_verbose
-            fprintf(1,'running\n  %s\n', instr_qsub)
-        end
-        [flag_failed,msg] = system(instr_qsub)
+        fprintf(1,'running\n  %s\n', instr_qsub_singularity)
+        [flag_failed,msg] = system(instr_qsub_singularity)
+        %[flag_failed,msg] = system(['echo ' instr_qsub_singularity])
 
 end
 
@@ -498,30 +497,3 @@ end
 function [] = sub_eval(cmd)
 disp(cmd)
 eval(cmd)
-
-%!test
-%! logs.txt = [tempname '.txt']
-%! cmd = ["my_var = 1+1;fprintf(1,'%d',my_var)"];
-%! script = [tempname 'psom_no_name']
-%! opt.mode = struct();
-%! opt.mode = 'background';
-%! psom_gb_vars;
-%! opt.command_matlab = gb_psom_command_octave;
-%! opt.init_matlab = gb_psom_init_matlab;
-%! psom_run_script(cmd,script,opt,logs);
-%! assert(exist(script,'file'));
-%! the_mat_file = [script '_path.mat']
-%! assert(exist(the_mat_file,'file'));
-%! sleep(1) % To let time for the background run to complete
-%! assert(exist(logs.txt,'file'));
-%! fid = fopen(logs.txt);
-%! tline = fgetl(fid);
-%! works = false;
-%! while ischar(tline)
-%!     if regexpi(tline,'^2$')
-%!         works = true    ;
-%!     end
-%!     tline = fgetl(fid);
-%! end
-%! fclose(fid)
-%! assert(works)
