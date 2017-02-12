@@ -157,7 +157,6 @@ end
 [cell_in,ind_in]        = sub_struct2cell(files_in);
 [cell_out,ind_out]      = sub_struct2cell(files_out);
 [cell_clean,ind_clean]  = sub_struct2cell(files_clean);
-graph_deps = sparse(nb_jobs,nb_jobs);
 
 [val_tmp,ind_tmp,num_all] = unique([cell_in ; cell_out ; cell_clean]);
 num_in  = num_all(1:length(cell_in));
@@ -181,6 +180,8 @@ for jj = 1:nb_jobs
 end
 graph_clean = graph_clean | (mat_out * mat_clean')>0; % wait that a file is created before cleaning it
 graph_deps = graph_deps | graph_clean;
+graph_deps = double(graph_deps); % To work around a bug in Octave
+
 % User-specified dependencies
 for num_j = 1:nb_jobs
     name_job1 = list_jobs{num_j};
