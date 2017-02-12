@@ -215,3 +215,15 @@ if isfield(struct_test,'files_in')
 else
     files_in = {};
 end
+
+%!test
+%! path_demo = [pwd filesep 'tests' filesep 'simple_pipe' filesep]; 
+%! opt.flag_test = true;
+%! [pipe,opt_p] = psom_test_pipe_tutorial(path_demo,opt);
+%! graph_deps = psom_build_dependencies(pipe);
+%! ground_truth = [   0   0   0   0   0 ; ...
+%!                    1   0   0   0   1 ; ...
+%!                    1   0   0   0   1 ; ...
+%!                    1   1   1   0   0 ; ...
+%!                    0   0   0   0   0 ];
+%! assert(full(graph_deps),ground_truth)
