@@ -221,9 +221,9 @@ end
 %! opt.flag_test = true;
 %! [pipe,opt_p] = psom_test_pipe_tutorial(path_demo,opt);
 %! graph_deps = psom_build_dependencies(pipe);
-%! ground_truth = [   0   0   0   0   0 ; ...
-%!                    1   0   0   0   1 ; ...
-%!                    1   0   0   0   1 ; ...
-%!                    1   1   1   0   0 ; ...
-%!                    0   0   0   0   0 ];
+%! ground_truth = [      0   1   1   0   1
+%!                       0   0   0   1   1
+%!                       0   0   0   1   1
+%!                       0   0   0   0   0
+%!                       0   0   0   0   0 ]>0;
 %! assert(full(graph_deps),ground_truth)
