@@ -530,4 +530,4 @@ status = any(strcmp(status,'failed'));
 %! opt.flag_test = true;
 %! [pipe,opt_p] = psom_test_pipe_tutorial(path_demo,opt);
 %! status = psom_run_pipeline(pipe,opt_p);
-%! assert(status)
+%! assert(status==0)
