@@ -528,6 +528,6 @@ status = any(strcmp(status,'failed'));
 %! path_demo = [pwd filesep 'tests' filesep 'simple_pipe' filesep]; 
 %! psom_clean(path_demo);
 %! opt.flag_test = true;
-%| [pipe,opt_p] = psom_test_pipe_tutorial(path_demo,opt);
-%! status = psom_run_pipeline(pipeline,opt_p);
+%! [pipe,opt_p] = psom_test_pipe_tutorial(path_demo,opt);
+%! status = psom_run_pipeline(pipe,opt_p);
 %! assert(status)
