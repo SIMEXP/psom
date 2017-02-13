@@ -15,10 +15,13 @@ PSOM_SINGULARITY_IMAGES_PATH=${HOME}/singularity/:.
 PSOM_LOCAL_CONF_DIR='' 
 
 # load config file
+# Gobal
 source /etc/${CONFIG_FILE} > /dev/null 2>&1
-source ${HOME}/.config/psom/${CONFIG_FILE} > /dev/null 2>&1
+# Global when no su acces in granted
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source ${CURRENT_DIR}/${CONFIG_FILE}
+#User specific
+source ${HOME}/.config/psom/${CONFIG_FILE} > /dev/null 2>&1
 
 
 list_all_image () {
@@ -151,11 +154,10 @@ export PSOM_FIFO=${PSOM_FIFO_DIR}/pipe
 [ -p $PSOM_FIFO ] || mkfifo $PSOM_FIFO;
 
 # Start the communication loop
-#host_exec_loop > /dev/null 2>&1 & 
-host_exec_loop  & 
+host_exec_loop > /dev/null 2>&1 & 
 LOOP_ID=$!
 
 # Start singularity-psom
 
-PSOM_START_OCTAVE="octave --persist --no-init-file --eval \"addpath(genpath(${PSOM_LOCAL_CONF_DIR}))\"" 
+PSOM_START_OCTAVE="octave --persist --no-init-file --eval \"addpath(genpath(\\\"${PSOM_LOCAL_CONF_DIR}\\\"))\"" 
 singularity shell ${PSOM_SINGULARITY_OPTIONS} ${IMAGE_PATH} -c "export PSOM_FIFO=${PSOM_FIFO};export PSOM_LOCAL_CONF_DIR=${PSOM_LOCAL_CONF_DIR}  ; ${PSOM_START_OCTAVE}"
