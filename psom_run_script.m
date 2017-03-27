@@ -466,7 +466,7 @@ switch opt.mode
                 % In octave, the error stream is lost. Redirect it to standard output
                 instr_qsub_singularity = [instr_qsub_singularity ' 2>&1'];
             end
-            msg = sprintf('  The script is executed using the command :\n%s\n\n',instr_qsub);
+            msg = sprintf('  The script is executed using the command :\n%s\n\n',instr_qsub_singularity);
             fprintf('%s',msg);
             if ~isempty(opt.file_handle)
                 fprintf(opt.file_handle,'%s',msg);
