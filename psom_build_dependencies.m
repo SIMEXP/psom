@@ -98,7 +98,7 @@ nb_jobs = length(list_jobs);
 
 %% Reorganizing inputs/outputs (for every job, convert input/output/clean
 %% into cell of strings)
-if flag_verbose>1
+if flag_verbose
     fprintf('       Reorganizing inputs/outputs ... ')
     tic
 end
@@ -146,12 +146,8 @@ for num_j = 1:nb_jobs
     end
 end
 
-if flag_verbose>1
-    fprintf('%1.2f sec\n       Analyzing job inputs/outputs, percentage completed : ',toc)
-    curr_perc = -1;
-    tic;
-elseif flag_verbose
-    fprintf('   Percentage completed : ')
+if flag_verbose
+    fprintf('%1.2f sec\n       Analyzing job inputs/outputs... ',toc)
     curr_perc = -1;
     tic;
 end
@@ -161,41 +157,34 @@ end
 [cell_in,ind_in]        = sub_struct2cell(files_in);
 [cell_out,ind_out]      = sub_struct2cell(files_out);
 [cell_clean,ind_clean]  = sub_struct2cell(files_clean);
-graph_deps = sparse(nb_jobs,nb_jobs);
 
 [val_tmp,ind_tmp,num_all] = unique([cell_in ; cell_out ; cell_clean]);
 num_in  = num_all(1:length(cell_in));
 num_out = num_all(length(cell_in)+1:length(cell_in)+length(cell_out));
 num_clean = num_all(length(cell_in)+length(cell_out)+1:length(num_all));
+nb_files = max(num_all);
 clear num_all val_tmp ind_tmp
 
-for num_j = 1:nb_jobs
-    if flag_verbose
-        new_perc = 5*floor(20*num_j/nb_jobs);
-        if curr_perc~=new_perc
-            fprintf(' %1.0f',new_perc);
-            curr_perc = new_perc;
-        end
-    end
+%% Build adjacency matrices for jobs x files
+%% Separating the cases of input, output and clean
+mat_in = sparse(ind_in,num_in,ones(size(ind_in)),nb_jobs,nb_files);
+mat_out = sparse(ind_out,num_out,ones(size(ind_out)),nb_jobs,nb_files);
+mat_clean = sparse(ind_clean,num_clean,ones(size(ind_clean)),nb_jobs,nb_files);
 
-    % Files_in/Files_out
+%% Now use the adjacency matrices to generate the dependency graph
+graph_deps = (mat_out * mat_in')>0;    % If an output of I is an input of J, J depends on I
+graph_clean = (mat_in * mat_clean'); % If an input of I is cleaned by J, J depends on I. 
+% A job does not depend on itself, i.e. it's acceptable for a job to clean one of its input
+for jj = 1:nb_jobs
+    graph_clean(jj,jj) = 0;
+end
+graph_clean = graph_clean | (mat_out * mat_clean')>0; % wait that a file is created before cleaning it
+graph_deps = graph_deps | graph_clean;
+graph_deps = double(graph_deps); % To work around a bug in Octave
+
+% User-specified dependencies
+for num_j = 1:nb_jobs
     name_job1 = list_jobs{num_j};
-    mask_dep = ismember(num_out,num_in(ind_in==num_j));
-    graph_deps(ind_out(mask_dep),num_j) = true;
-    
-    % Files_clean
-    % do not clean a file before the jobs that use it as inputs have been generated
-    mask_dep = ismember(num_in,num_clean(ind_clean==num_j));
-    if ~isempty(mask_dep)
-        mask_dep = mask_dep & (ind_in~=num_j); % A job does not depend on itself, i.e. it's acceptable for a job to clean one of its input
-        graph_deps(ind_in(mask_dep),num_j) = true;
-    end
-   
-    % do not clean a file before it has been generated
-    mask_dep = ismember(num_out,num_clean(ind_clean==num_j));
-    graph_deps(ind_out(mask_dep),num_j) = true;
-    
-    % User-specified dependencies
     if ~isempty(dep.(name_job1))
         mask_dep = ismember(list_jobs,dep.(name_job1));
         graph_deps(mask_dep,num_j) = true;
@@ -203,7 +192,7 @@ for num_j = 1:nb_jobs
 end
 
 if flag_verbose
-    fprintf('- %1.2f sec\n',toc)
+    fprintf('%1.2f sec\n',toc)
 end
             
 function [cell_struct,ind_struct] = sub_struct2cell(my_struct)
@@ -227,3 +216,15 @@ if isfield(struct_test,'files_in')
 else
     files_in = {};
 end
+
+%!test
+%! path_demo = [pwd filesep 'tests' filesep 'simple_pipe' filesep]; 
+%! opt.flag_test = true;
+%! [pipe,opt_p] = psom_test_pipe_tutorial(path_demo,opt);
+%! graph_deps = psom_build_dependencies(pipe);
+%! ground_truth = [      0   1   1   0   1
+%!                       0   0   0   1   1
+%!                       0   0   0   1   1
+%!                       0   0   0   0   0
+%!                       0   0   0   0   0 ]>0;
+%! assert(full(graph_deps),ground_truth)

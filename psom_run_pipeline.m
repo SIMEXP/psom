@@ -523,3 +523,11 @@ end
 status = load(file_status);
 status = struct2cell(status);
 status = any(strcmp(status,'failed'));
+
+%!test
+%! path_demo = [pwd filesep 'tests' filesep 'simple_pipe' filesep]; 
+%! psom_clean(path_demo);
+%! opt.flag_test = true;
+%! [pipe,opt_p] = psom_test_pipe_tutorial(path_demo,opt);
+%! status = psom_run_pipeline(pipe,opt_p);
+%! assert(status==0)
