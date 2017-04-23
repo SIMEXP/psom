@@ -32,8 +32,7 @@ gb_psom_qsub_options = '';
 gb_psom_shell_options = ''; 
 
 % Options for the execution mode of the pipeline 
-gb_psom_mode = 'session'; 
-%gb_psom_mode = 'background'; 
+gb_psom_mode = 'background'; 
 
 % Path of the singularity image, used only if gb_psom_mode == 'singularity';
 gb_psom_singularity_image=getenv('SINGULARITY_IMAGE');
