@@ -5,7 +5,7 @@
 
 CONFIG_FILE=psom.conf
 #Options for singularity execution
-PSOM_SINGULARITY_OPTIONS='-B /scratch'
+PSOM_SINGULARITY_OPTIONS=''
 
 # Were singularity images are keept 
 PSOM_SINGULARITY_IMAGES_PATH=${HOME}/singularity/:.
