@@ -184,6 +184,10 @@ function res = psom_pipeline_visu(path_logs,action,opt_action,flag_visu)
 if nargin == 1
     action = path_logs;
     path_logs = pwd;
+elseif strcmp(path_logs,'log')
+    path_logs = pwd;
+    opt_action = action;
+    action = 'log';
 end
 
 psom_gb_vars
