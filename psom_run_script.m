@@ -461,6 +461,21 @@ switch opt.mode
                              , sub, name_job ,qsub_logs, opt.qsub_options ...
                              , script , opt.singularity_image ,result_path, agent_id );
 
+        psom_ppn = getenv("PSOM_WORKER_PPN")
+        if psom_ppn
+           file_conf = [result_path '/logs/PIPE_config.mat'];
+           pipe_opt = load(file_conf);
+           ppm = str2num(psom_ppn);
+           max_queue = pipe_opt.max_queued;
+           max_sub_num = max_queue/ppm;
+           id = str2num(agent_id);
+           if id > max_sub_num
+             instr_qsub_singularity = ...
+              sprintf('echo skiping psom %d sending %d ppm worker per qsub', ...
+                       id, ppm);
+           end
+        end
+
         if opt.flag_debug
             if strcmp(gb_psom_language,'octave')
                 % In octave, the error stream is lost. Redirect it to standard output
