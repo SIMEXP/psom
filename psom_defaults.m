@@ -26,7 +26,7 @@ end
 
 %% Set defaults
 list_val = struct2cell(def);
-opt = psom_struct_defaults(opt,list_def,list_val,false);
+opt = psom_struct_defaults(opt,list_def',list_val',false);
 
 %% Recursively set defaults inside substructures
 for ff = 1:length(list_def)
