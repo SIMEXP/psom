@@ -44,9 +44,9 @@ function opt_up = psom_struct_defaults(opt,list_fields,list_defaults,flag_warnin
 % i.e. they won't be copied into OPT_UP.
 %
 % Copyright (c) Pierre Bellec, Centre de recherche de l'institut de 
-% Griatrie de Montral, Dpartement d'informatique et de recherche 
-% oprationnelle, Universit de Montral, 2010
-% Maintainer : pbellec@criugm.qc.ca
+% Geriatrie de Montreal, Departement d'informatique et de recherche 
+% operationnelle, Universite de Montreal, 2017
+% Maintainer : pierre.bellec@criugm.qc.ca
 % See licensing information in the code.
 
 % Permission is hereby granted, free of charge, to any person obtaining a copy
