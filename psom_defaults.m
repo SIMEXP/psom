@@ -102,7 +102,7 @@ end
 
 %% Recursively set defaults inside substructures
 for ff = 1:length(list_def)
-  if isstruct(def.(list_def{ff}))
+  if isstruct(def.(list_def{ff}))&&isfield(opt,list_def{ff})
     opt_up.(list_def{ff}) = psom_defaults(def.(list_def{ff}),opt.(list_def{ff}),flag_warning);
   end
 end
