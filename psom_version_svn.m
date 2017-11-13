@@ -53,7 +53,7 @@ end
 %%%%%%%%%%%%%%%%%
 %%     SVN     %%
 %%%%%%%%%%%%%%%%%
-    
+svn = struct()    
 if verbose, tic,end
    
  k=0;
