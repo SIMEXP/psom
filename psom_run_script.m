@@ -408,8 +408,8 @@ switch opt.mode
         agent_id = regexp(script,'psom_*(\w*)','tokens'){1}{1};
         instr_cbrain = sprintf('%s %s %s', sub, result_path, agent_id);
 
-        # Check the max number of worker per node
-        # This will start ppn worker per node
+        % Check the max number of worker per node
+        % This will start ppn worker per node
         psom_ppn = getenv("PSOM_WORKER_PPN")
         if psom_ppn
            file_conf = [result_path '/logs/PIPE_config.mat'];
