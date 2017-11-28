@@ -427,6 +427,7 @@ end
 file_pipe_running = cat(2,opt.path_logs,filesep,name_pipeline,'.lock');
 file_logs = cat(2,opt.path_logs,filesep,name_pipeline,'_history.txt');
 file_status = cat(2,opt.path_logs,filesep,name_pipeline,'_status.mat');
+file_exit = cat(2, opt.path_logs, filesep, name_pipeline, '.exit');
 
 %% Read old logs 
 hf = fopen(file_logs,'r');
@@ -523,6 +524,19 @@ end
 status = load(file_status);
 status = struct2cell(status);
 status = any(strcmp(status,'failed'));
+
+% make sure the manager agree with the exit status
+start_time = now()
+e_status = 1
+while  ((now()-start_time)*86400) <= gb_status_wait_time
+    if exist(file_exit, 'file') == 2
+        e_status = load(file_exit);
+        strcmp(e_status.status_pipe, 'failed');
+    end
+end
+
+% a true status means a failure
+status = status || e_status
 
 %!test
 %! path_demo = [pwd filesep 'tests' filesep 'simple_pipe' filesep]; 

@@ -46,6 +46,7 @@ if ~strcmp(path_logs(end),filesep)
 end
 
 %% File names for the pipeline
+file_exit         = [path_logs 'PIPE.exit'];
 file_pipeline     = [path_logs 'PIPE.mat'];
 file_jobs         = [path_logs 'PIPE_jobs.mat'];
 file_status       = [path_logs 'PIPE_status_init.mat'];
@@ -57,6 +58,11 @@ file_pipe_end     = [path_logs 'PIPE.end'];
 file_news_feed    = [path_logs 'news_feed.csv'];
 file_config       = [path_logs 'PIPE_config.mat'];
 path_worker       = [path_logs 'worker' filesep];
+
+% Pipeline status for monitoring
+status_pipe       = "failed";
+psom_clean(file_exit);
+c = onCleanup(@() save(file_exit, 'status_pipe') ;
 
 %% Load configuration
 opt = load(file_config);
