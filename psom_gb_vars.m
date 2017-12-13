@@ -3,13 +3,7 @@
 %% this script to initialize the variables. If PSOM does not behave the way
 %% you want, this might be the place to fix that.
 
-if ~exist('gb_psom_gb_vars_local','var')&&exist('psom_gb_vars_local.m','file')		
-    gb_psom_gb_vars_local = true;
-    psom_gb_vars_local
-    return
-end
-
-if ~exist('gb_psom_gb_vars','var')
+if ~exist('gb_psom_gb_vars', 'var')
 	gb_psom_gb_vars = true;
 else
 	return
@@ -173,6 +167,11 @@ for gb_psom_pdf_viewer = gb_psom_list_pdf
     if  gb_psom_retcode ~= 127
         break
     end
+end
+
+if exist('psom_gb_vars_local.m','file')
+    psom_gb_vars_local
+    return
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
