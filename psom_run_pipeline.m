@@ -66,7 +66,10 @@ function status = psom_run_pipeline(pipeline,opt)
 %        how to execute the jobs :
 %        'session'    : same as 'background', with MAX_QUEUED=1.
 %        'background' : background execution, not-unlogin-proofed 
-%                       (asynchronous system call).
+%                       (asynchronous system call).r 0, 1 or 2, default 1) No verbose (0), standard 
+%        verbose (1), a lot of verbose, useful for setting up the configuration (2), 
+%        way too much verbose, only for debugging (3).
+
 %        'batch'      : background execution, unlogin-proofed ('at' in 
 %                       UNIX, start in WINDOWS).
 %        'qsub'       : remote execution using qsub (torque, SGE, PBS).
@@ -168,7 +171,7 @@ function status = psom_run_pipeline(pipeline,opt)
 %        if any of the job fails. 
 %
 %    FLAG_VERBOSE
-%        (integer 0, 1 or 2, default 1) No verbose (0), standard 
+%        (integer 0-3 default 1) No verbose (0), standard 
 %        verbose (1), a lot of verbose, useful for setting up the configuration (2), 
 %        way too much verbose, only for debugging (3).
 %
