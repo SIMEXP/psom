@@ -264,7 +264,7 @@ else
         instr_job = sprintf('%sexit\n',instr_job);
     end
 end
-
+instr_job = sprintf('#!/bin/sh\n%s',instr_job);
 %% Write the script
 if ~strcmp(opt.mode,'session')            
     if opt.flag_debug
@@ -404,13 +404,15 @@ switch opt.mode
         % There might be a better way to find the job path and id, 
         % however, I do not know the code well
         % enough at that point.
-        result_path = regexp(script,'(^.*)/logs','tokens'){1}{1};
-        agent_id = regexp(script,'psom_*(\w*)','tokens'){1}{1};
+        result_path = regexp(script,'(^.*)/logs','tokens');
+        result_path = result_path{1}{1};
+        agent_id = regexp(script,'psom_*(\w*)','tokens');
+        agent_id = agent_id{1}{1};
         instr_cbrain = sprintf('%s %s %s', sub, result_path, agent_id);
 
         % Check the max number of worker per node
         % This will start ppn worker per node
-        psom_ppn = getenv("PSOM_WORKER_PPN")
+        psom_ppn = getenv('PSOM_WORKER_PPN')
         if psom_ppn
            file_conf = [result_path '/logs/PIPE_config.mat'];
            pipe_opt = load(file_conf);
@@ -443,8 +445,10 @@ switch opt.mode
         script = [' SPLIT_LINE singularity_exec_options'];
         % There might be a better way to find the job path and id, however, I do not know the code well
         %  enough at that point.
-        result_path = regexp(opt.path_search,'(^.*)/logs','tokens'){1}{1};
-        agent_id = regexp(opt.name_job,'psom_*(\w*)','tokens'){1}{1};
+        result_path = regexp(opt.path_search,'(^.*)/logs','tokens');
+        result_path = result_path{1}{1};
+        agent_id = regexp(opt.name_job,'psom_*(\w*)','tokens');
+        agent_id = agent_id{1}{1};
 
         if ~isempty(logs)
             qsub_logs = [' -e ' logs.eqsub ' -o ' logs.oqsub ' '];
@@ -461,7 +465,7 @@ switch opt.mode
                              , sub, name_job ,qsub_logs, opt.qsub_options ...
                              , script , opt.singularity_image ,result_path, agent_id );
 
-        psom_ppn = getenv("PSOM_WORKER_PPN")
+        psom_ppn = getenv('PSOM_WORKER_PPN')
         if psom_ppn
            file_conf = [result_path '/logs/PIPE_config.mat'];
            pipe_opt = load(file_conf);

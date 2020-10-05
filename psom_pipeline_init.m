@@ -753,7 +753,7 @@ else
 end
 
 path_work = path_search;
-save(file_pipeline,'history','graph_deps','list_jobs','files_in','files_out','path_work')
+save(file_pipeline,'history','graph_deps','list_jobs','files_in','files_out','path_work', '-mat')
 
 %% Save the status
 if flag_verbose>1
