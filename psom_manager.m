@@ -98,6 +98,9 @@ if ~exist(file_jobs,'file') % Does the pipeline exist ?
     error('Could not find the pipeline file %s. Please use psom_run_pipeline instead of psom_manager directly.',file_jobs);
 end
 
+% pause for ten second in case workers are not ready yet.
+pause(30);
+
 % a try/catch block is used to clean temporary file if the user is
 % interrupting the pipeline of if an error occurs
 try    
