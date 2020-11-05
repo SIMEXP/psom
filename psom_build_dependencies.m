@@ -163,6 +163,9 @@ num_in  = num_all(1:length(cell_in));
 num_out = num_all(length(cell_in)+1:length(cell_in)+length(cell_out));
 num_clean = num_all(length(cell_in)+length(cell_out)+1:length(num_all));
 nb_files = max(num_all);
+if isempty(nb_files)
+    nb_files = 0;
+end
 clear num_all val_tmp ind_tmp
 
 %% Build adjacency matrices for jobs x files
